@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "jsx": "preserve",
+    "allowImportingTsExtensions": false,
+    "checkJs": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "vueCompilerOptions": {
+    "target": 3,
+    "globalTypesPath": "./node_modules/@vue/runtime-core/dist/runtime-core.d.ts"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

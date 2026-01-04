@@ -1,0 +1,29 @@
+:root {
+    --sidebar-min-width: 60px;
+
+    --white: #ffffff;
+    --white-95: #fffffe;
+    --bg-light: #f4f8fe;
+
+    --accent-red: #db3955;
+    --accent-pink: #f33f8a;
+    --accent-rose: #b86094;
+
+    --purple-1: #8660b3;
+    --purple-2: #9b6585;
+    --lavender: #a796be;
+
+    --sky: #96cff5;
+    --blue-1: #98b1e4;
+
+    --warm-1: #fdc46c;
+    --beige: #f6dec7;
+
+    --success: #8fc9cf;
+    --warning: var(--warm-1);
+
+    --grad-pink-purple: linear-gradient(135deg, var(--accent-pink) 0%, var(--purple-1) 100%);
+    --grad-rose-sky: linear-gradient(135deg, var(--accent-rose) 0%, var(--sky) 100%);
+    --grad-red-warm: linear-gradient(135deg, var(--accent-red) 0%, var(--warm-1) 100%);
+    --grad-lavender-blue: linear-gradient(135deg, var(--lavender) 0%, var(--sky) 100%);
+}

@@ -1,0 +1,133 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    color: #1e293b ;
+}
+/* Estilos para la barra de desplazamiento */
+::-webkit-scrollbar {
+    width: 12px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: transparent;
+}
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #888 transparent;
+}
+::-webkit-scrollbar-button {
+    display: none;
+}
+
+button {
+    outline: none;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding: 0;
+    color: #4a5568 ;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.icon img, .icon img {
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+}
+
+.TextInput {
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    padding-top: .9rem;
+    overflow: visible;
+}
+.TextInput.NumberInput {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: nowrap;
+}
+input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea {
+    outline: none;
+    border: 1px solid var(--sky) ;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: #4a5568;
+    width: 100%;
+    transition: 0.5s ease;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+input[type="number"] {
+    text-align: center;
+    border-radius: 0;
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus {
+    border: 2px solid var(--lavender);
+}
+
+.label-input {
+    position: absolute;
+    left: 0.75rem;
+    top: 1.7rem;
+    color: var(--blue-1);
+    font-size: 1rem;
+    transition: 0.5s ease;
+    pointer-events: none;
+    overflow: visible;
+}
+.TextInput.NumberInput .label-input {
+    left: 3.5rem;
+}
+.TextInput:has(input:focus) .label-input, 
+.TextInput:has(input:not(:placeholder-shown)) .label-input {
+    color: white;
+    font-size: 0.75rem;
+    top: -0.1rem;
+    left: 1.5rem;
+    background-color: var(--lavender);
+    padding: 0.1rem 0.25rem 0 0.25rem;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.TextInput.NumberInput button {
+    width: 2.5rem;
+    border-top: 1px solid var(--sky);
+    border-bottom: 1px solid var(--sky);
+    font-size: 1.5rem;
+    color: var(--blue-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s ease;
+}
+.TextInput.NumberInput button.left { border-radius: 1rem 0 0 1rem; border-left: 1px solid var(--sky); }
+.TextInput.NumberInput button.right { border-radius: 0 1rem 1rem 0; border-right: 1px solid var(--sky); }
