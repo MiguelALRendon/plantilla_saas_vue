@@ -1,9 +1,6 @@
 <template>
     <div class="ViewContainer">
-        <TopBarComponent 
-        :title="title",
-        :icon="icon"
-        @toggle-sidebar="$emit('toggle-sidebar')" />
+        <TopBarComponent />
         <div class="ComponentContainer">
             <component 
             v-if="currentComponent" :is="currentComponent"
@@ -14,30 +11,35 @@
 </template>
 
 <script lang="ts">
-import { markRaw } from 'vue';
+import { markRaw, watch } from 'vue';
 import LoadingScreenComponent from './LoadingScreenComponent.vue';
 import TopBarComponent from './TopBarComponent.vue';
 import { Module } from '@/models/module';
+import Application from '@/models/application';
 
 export default {
     name: 'ComponentContainerComponent',
     components: {
         TopBarComponent, LoadingScreenComponent
     },
-    emits: ['toggle-sidebar'],
-    methods: {
-        ChangeView(module : Module) {
-            this.title = module.nombre;
-            this.currentComponent = markRaw(module.type);
-            this.icon = module.icon;
-        },
-    },
     data() {
         return {
-            title: '',
             currentComponent: null as any,
-            icon: '',
         };
+    },
+    created() {
+        // initialize from Application active view
+        const init = Application.activeView.value;
+        if (init) {
+            this.currentComponent = markRaw(init.type);
+        }
+
+        // react to future changes
+        watch(Application.activeView, (newVal: Module | null) => {
+            if (newVal) {
+                this.currentComponent = markRaw(newVal.type);
+            }
+        });
     }
 }
 </script>

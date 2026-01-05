@@ -9,8 +9,6 @@
         v-for="module in MODULES" 
         :active="false" 
         :module="module"
-        :current="currentView"
-        @changeViewSignal="handleChangeView"
         />
         </div>
 
@@ -24,29 +22,21 @@
 import { Module } from '@/models/module';
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import { MODULES } from '@/constants/modules';
+import Application from '@/models/application';
 
 export default {
     name: 'SideBarComponent',
     components: {
         SideBarItemComponent
     },
-    signals: ['changeViewSignal'],
-    props: {
-        toggled: {
-            type: Boolean,
-            default: true
-        }
-    },
-    methods: {
-        handleChangeView(module: Module) {
-            this.$emit('changeViewSignal', module);
-            this.currentView = module.nombre;
+    computed: {
+        toggled() {
+            return (Application as any).sidebarToggled.value;
         }
     },
     data() {
         return {
             MODULES,
-            currentView : ''
         }
     }
 }

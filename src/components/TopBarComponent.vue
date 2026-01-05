@@ -1,7 +1,7 @@
 <template>
     <div class="topbar">
         <div class="top-left-side">
-            <button @click="toggleSidebar" :class="'push-side-nav-button' + (toggled_bar ? ' toggled' : '')">
+            <button @click="toggleSidebar" :class="'push-side-nav-button' + (!toggled_bar ? ' toggled' : '')">
                 <img :src="ICONS.MENU" alt="">
             </button>
             <div class="icon">
@@ -22,33 +22,32 @@
 
 <script>
 import ICONS from '@/constants/icons';
+import Application from '@/models/application';
 
 export default {
     name: 'TopBarComponent',
-    props: {
-        title: {
-            type: String,
-            default: 'Default'
-        },
-        icon: {
-            type: String,
-            default: ''
-        }
-    },
-    emits: ['toggle-sidebar'],
     methods: {
         toggleSidebar() {
-            this.$emit('toggle-sidebar');
-            this.toggled_bar = !this.toggled_bar;
+            Application.toggleSidebar();
         },
         logout() {
             console.log('Logout clicked');
         }
     },
+    computed: {
+        toggled_bar() {
+            return Application.sidebarToggled.value;
+        },
+        title() {
+            return Application.activeView.value?.nombre ?? 'Default';
+        },
+        icon() {
+            return Application.activeView.value?.icon ?? '';
+        }
+    },
     data() {
         return {
             ICONS,
-            toggled_bar : false,
             toggled_profile : false,
         }
     }

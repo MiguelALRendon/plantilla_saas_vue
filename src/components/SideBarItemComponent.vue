@@ -1,5 +1,5 @@
 <template>
-<div :class="'side-bar-item ' + (current == module.nombre ? ' active' : '')" @click="setNewView">
+<div :class="'side-bar-item ' + (isActive ? ' active' : '')" @click="setNewView">
     <div class="icon">
         <img :src="module.icon" alt="">
     </div>
@@ -9,27 +9,28 @@
 
 <script lang="ts">
 import { Module } from '@/models/module';
+import Application from '@/models/application';
 
 export default {
     name: 'SideBarItemComponent',
-    emits: ['changeViewSignal'],
     props: {
         active: {
             type: Boolean,
             default: false
-        },
-        current : {
-            type: String,
-            default: ''
         },
         module : {
             type: Object as () => Module,
             required: true
         }
     },
+    computed: {
+        isActive(): boolean {
+            return Application.activeView.value?.nombre === (this.module && this.module.nombre);
+        }
+    },
     methods: {
         setNewView() {
-            this.$emit('changeViewSignal', this.module);
+            Application.changeView(this.module as Module);
         }
     },
 }
