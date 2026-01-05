@@ -17,7 +17,7 @@ input[type="number"] {
     padding-top: .9rem;
     overflow: visible;
 }
-.TextInput.NumberInput, .TextInput.PasswordInput, .TextInput.DateInput {
+.TextInput.NumberInput, .TextInput.PasswordInput, .TextInput.DateInput, .TextInput.ObjectInput {
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -36,11 +36,11 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     box-sizing: border-box;
     font-size: 1rem;
 }
-input[type="number"], input[type="password"], .TextInput.DateInput input[type="text"] {
+input[type="number"], input[type="password"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
     text-align: center;
     border-radius: 0;
 }
-input[type="password"], .TextInput.DateInput input[type="text"] {
+input[type="password"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
     text-align: left;
     border-top-left-radius: 1rem;
     border-bottom-left-radius: 1rem;
@@ -88,7 +88,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border: 2px solid var(--lavender);
 }
 
-.TextInput.NumberInput button, .TextInput.PasswordInput button, .TextInput.DateInput button {
+.TextInput.NumberInput button, .TextInput.PasswordInput button, .TextInput.DateInput button, .TextInput.ObjectInput button {
     width: 2.5rem;
     border-top: 1px solid var(--sky);
     border-bottom: 1px solid var(--sky);
@@ -101,7 +101,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 .TextInput.NumberInput button.left { border-radius: 1rem 0 0 1rem; border-left: 1px solid var(--sky); }
 .TextInput.NumberInput button.right, 
-.TextInput.PasswordInput button.right, .TextInput.DateInput button.right
+.TextInput.PasswordInput button.right, .TextInput.DateInput button.right, .TextInput.ObjectInput button.right
 { border-radius: 0 1rem 1rem 0; border-right: 1px solid var(--sky); }
 
 .TextInput.DateInput .date-input {

@@ -7,6 +7,7 @@ export const GGICONS = {
   VISIBILITY_OFF: 'visibility_off',
   SEARCH: 'search',
   CALENDAR: 'calendar_month',
+  CLOSE: 'close',
 }
 
 export default GGICONS

@@ -1,13 +1,16 @@
 <template>
-<div class="TextInput">
+<div class="TextInput ObjectInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="email" class="main-input" placeholder=" " />
+    <input :id="'id-' + propertyName" :name="propertyName" type="text" class="main-input" placeholder=" " />
+    <button class="right"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
 </template>
 
 <script lang="ts">
+import { GGICONS, GGCLASS } from '@/constants/ggicons';
+
 export default {
-    name: 'EmailInputComponent',
+    name: 'ObjectInputComponent',
     props: {
         propertyName: {
             type: String,
@@ -23,6 +26,8 @@ export default {
     },
     data() {
         return {
+            GGICONS,
+            GGCLASS,
             textInputId: 'text-input-' + this.propertyName,
         }
     },

@@ -11,7 +11,7 @@
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 
 export default {
-    name: 'TextInputComponent',
+    name: 'NumberInputComponent',
     props: {
         propertyName: {
             type: String,

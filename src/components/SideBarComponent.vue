@@ -19,7 +19,6 @@
 </template>
 
 <script lang="ts">
-import { Module } from '@/models/module';
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import { MODULES } from '@/constants/modules';
 import Application from '@/models/application';

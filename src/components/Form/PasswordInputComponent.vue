@@ -10,7 +10,7 @@
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 
 export default {
-    name: 'TextInputComponent',
+    name: 'PasswordInputComponent',
     props: {
         propertyName: {
             type: String,

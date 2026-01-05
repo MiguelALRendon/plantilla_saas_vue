@@ -1,26 +1,30 @@
 :root {
+    --button-color: #a0a0a0;
+
     --sidebar-min-width: 60px;
 
     --white: #ffffff;
     --white-95: #fffffe;
     --bg-light: #f4f8fe;
-
     --accent-red: #db3955;
     --accent-pink: #f33f8a;
     --accent-rose: #b86094;
-
     --purple-1: #8660b3;
     --purple-2: #9b6585;
     --lavender: #a796be;
-
     --sky: #96cff5;
     --blue-1: #98b1e4;
-
     --warm-1: #fdc46c;
     --beige: #f6dec7;
-
     --success: #8fc9cf;
     --warning: var(--warm-1);
+
+    --btn-primary: #d63850;
+    --btn-secondary: #8b5fc7;
+    --btn-info: #4a9dd9;
+    --btn-success: #52b5bc;
+    --btn-warning: #f5a623;
+    --btn-accent: #c74d8a;
 
     --grad-pink-purple: linear-gradient(135deg, var(--accent-pink) 0%, var(--purple-1) 100%);
     --grad-rose-sky: linear-gradient(135deg, var(--accent-rose) 0%, var(--sky) 100%);

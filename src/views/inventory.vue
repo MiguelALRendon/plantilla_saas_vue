@@ -18,7 +18,7 @@
     <FormGroupComponent title="Inputs Secundarios">
         <FormRowTwoItemsComponent>
             <TextInputComponent propertyName="Proveedor" />
-            <TextInputComponent propertyName="Proveedor" />
+            <ObjectInputComponent propertyName="Objeto" />
             <NumberInputComponent propertyName="Precio Unitario" />
         </FormRowTwoItemsComponent>
     </FormGroupComponent>
@@ -31,6 +31,7 @@ import FormGroupComponent from '@/components/Form/FormGroupComponent.vue';
 import FormRowThreeItemsComponent from '@/components/Form/FormRowThreeItemsComponent.vue';
 import FormRowTwoItemsComponent from '@/components/Form/FormRowTwoItemsComponent.vue';
 import NumberInputComponent from '@/components/Form/NumberInputComponent.vue';
+import ObjectInputComponent from '@/components/Form/ObjectInputComponent.vue';
 import PasswordInputComponent from '@/components/Form/PasswordInputComponent.vue';
 import TextInputComponent from '@/components/Form/TextInputComponent.vue';
 
@@ -44,7 +45,8 @@ export default {
         NumberInputComponent,
         EmailInputComponent,
         PasswordInputComponent,
-        DateInputComponent
+        DateInputComponent,
+        ObjectInputComponent
     },
 }
 </script>
