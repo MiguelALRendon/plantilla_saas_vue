@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import './main.css'
+import './css/main.css'
 import App from './App.vue'
 import Application from '@/models/application'
 import { MODULES } from '@/constants/modules'

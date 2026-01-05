@@ -4,11 +4,13 @@ import type { Module } from './module';
 class ApplicationClass {
     activeView: Ref<Module | null>;
     sidebarToggled: Ref<boolean>;
+    isScreenLoading: Ref<boolean>;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
         this.activeView = ref<Module | null>(null);
         this.sidebarToggled = ref<boolean>(true);
+        this.isScreenLoading = ref<boolean>(false);
     }
 
     static getInstance() {
@@ -26,6 +28,14 @@ class ApplicationClass {
 
     setSidebar(state: boolean) {
         this.sidebarToggled.value = state;
+    }
+
+    showLoadingScreen() {
+        this.isScreenLoading.value = true;
+    }
+
+    hideLoadingScreen() {
+        this.isScreenLoading.value = false;
     }
 }
 

@@ -1,12 +1,14 @@
 <template>
 <div class="TextInput PasswordInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="password" placeholder=" " />
-    <button class="right">S</button>
+    <input :id="'id-' + propertyName" :name="propertyName" type="password" class="main-input" placeholder=" " />
+    <button class="right"><span :class="GGCLASS">{{ GGICONS.VISIBILITY }}</span></button>
 </div>
 </template>
 
 <script lang="ts">
+import { GGICONS, GGCLASS } from '@/constants/ggicons';
+
 export default {
     name: 'TextInputComponent',
     props: {
@@ -24,6 +26,8 @@ export default {
     },
     data() {
         return {
+            GGICONS,
+            GGCLASS,
             textInputId: 'text-input-' + this.propertyName,
         }
     },

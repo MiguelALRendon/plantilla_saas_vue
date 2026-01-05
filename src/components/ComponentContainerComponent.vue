@@ -6,7 +6,7 @@
             v-if="currentComponent" :is="currentComponent"
              />
         </div>
-        <!-- <LoadingScreenComponent /> -->
+        <LoadingScreenComponent />
     </div>
 </template>
 
@@ -28,16 +28,17 @@ export default {
         };
     },
     created() {
-        // initialize from Application active view
         const init = Application.activeView.value;
         if (init) {
             this.currentComponent = markRaw(init.type);
         }
 
-        // react to future changes
-        watch(Application.activeView, (newVal: Module | null) => {
+        watch(Application.activeView, async (newVal: Module | null) => {
             if (newVal) {
+                Application.showLoadingScreen();
+                await new Promise(resolve => setTimeout(resolve, 400));
                 this.currentComponent = markRaw(newVal.type);
+                Application.hideLoadingScreen();
             }
         });
     }

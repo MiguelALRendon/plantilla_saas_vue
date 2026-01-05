@@ -1,12 +1,19 @@
 <template>
-    <div class="loading-screen">
+    <div class="loading-screen" :class="{ active: Application.isScreenLoading }">
         Loading...
     </div>
 </template>
 
 <script lang="ts">
+import { Application } from '@/models/application';
+
 export default {
     name: 'LoadingScreenComponent',
+    data() {
+        return {
+            Application
+        }
+    }
 }
 </script>
 
@@ -22,7 +29,15 @@ export default {
         font-size: 1.5rem;
         top: 50px;
         z-index: 99999;
-        background-color: rgba(184, 135, 135, 0);
+        background-color: white;
         color: #555;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .loading-screen.active {
+        opacity: 1;
+        pointer-events: all;
     }
 </style>

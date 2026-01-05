@@ -1,7 +1,7 @@
 <template>
 <div class="TextInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="email" placeholder=" " />
+    <input :id="'id-' + propertyName" :name="propertyName" type="email" class="main-input" placeholder=" " />
 </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
     <h2>Template de Formulario</h2>
-    <FormGroupComponent title="Titulo del grupo">
+    <FormGroupComponent title="Inputs Principales">
         <FormRowTwoItemsComponent>
             <TextInputComponent propertyName="Nombre del Producto" />
             <NumberInputComponent propertyName="Cantidad" />
@@ -11,10 +11,21 @@
             <PasswordInputComponent propertyName="Password" />
             <NumberInputComponent propertyName="Descuento %" />
         </FormRowThreeItemsComponent>
+
+        <DateInputComponent propertyName="Fecha de Vencimiento" />
+    </FormGroupComponent>
+
+    <FormGroupComponent title="Inputs Secundarios">
+        <FormRowTwoItemsComponent>
+            <TextInputComponent propertyName="Proveedor" />
+            <TextInputComponent propertyName="Proveedor" />
+            <NumberInputComponent propertyName="Precio Unitario" />
+        </FormRowTwoItemsComponent>
     </FormGroupComponent>
 </template>
 
 <script>
+import DateInputComponent from '@/components/Form/DateInputComponent.vue';
 import EmailInputComponent from '@/components/Form/EmailInputComponent.vue';
 import FormGroupComponent from '@/components/Form/FormGroupComponent.vue';
 import FormRowThreeItemsComponent from '@/components/Form/FormRowThreeItemsComponent.vue';
@@ -32,7 +43,8 @@ export default {
         TextInputComponent,
         NumberInputComponent,
         EmailInputComponent,
-        PasswordInputComponent
+        PasswordInputComponent,
+        DateInputComponent
     },
 }
 </script>

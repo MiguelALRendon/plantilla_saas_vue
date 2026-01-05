@@ -1,11 +1,15 @@
 <template>
-<div class="TextInput">
+<div class="TextInput DateInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="text" class="main-input" placeholder=" " />
+    <input :id="'id-' + propertyName" :name="propertyName" type="text" class="main-input" placeholder=" " disabled="true"/>
+    <input :id="'date-id-' + propertyName" :name="propertyName" type="date" class="date-input" />
+    <button class="right"><span :class="GGCLASS">{{ GGICONS.CALENDAR }}</span></button>
 </div>
 </template>
 
 <script lang="ts">
+import { GGICONS, GGCLASS } from '@/constants/ggicons';
+
 export default {
     name: 'TextInputComponent',
     props: {
@@ -23,6 +27,8 @@ export default {
     },
     data() {
         return {
+            GGICONS,
+            GGCLASS,
             textInputId: 'text-input-' + this.propertyName,
         }
     },
