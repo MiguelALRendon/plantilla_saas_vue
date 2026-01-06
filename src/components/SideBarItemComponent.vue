@@ -1,9 +1,9 @@
 <template>
 <div :class="'side-bar-item ' + (isActive ? ' active' : '')" @click="setNewView">
     <div class="icon">
-        <img :src="module.icon" alt="">
+        <img :src="module.moduleIcon" alt="">
     </div>
-    <span>{{module.nombre}}</span>
+    <span>{{module.moduleName}}</span>
 </div>
 </template>
 
@@ -19,18 +19,18 @@ export default {
             default: false
         },
         module : {
-            type: Object as () => Module,
+            type: Object as () => Module<any>,
             required: true
         }
     },
     computed: {
         isActive(): boolean {
-            return Application.activeView.value?.nombre === (this.module && this.module.nombre);
+            return Application.activeView.value?.moduleName === (this.module && this.module.moduleName);
         }
     },
     methods: {
         setNewView() {
-            Application.changeView(this.module as Module);
+            Application.changeView(this.module as Module<any>);
         }
     },
 }

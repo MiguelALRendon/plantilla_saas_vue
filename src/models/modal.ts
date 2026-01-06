@@ -1,6 +1,9 @@
+import { ViewType } from '@/enums/view_type';
 import type { Module } from './module';
 
 export interface Modal {
-    modalView: Module | null;
+    modalView: Module<any> | null;
     modalOnCloseFunction: (() => void) | null;
+    viewType : ViewType;
+    customViewId?: string;
 }

@@ -4,16 +4,16 @@
         <div class="modal-head">
             <div class="left-side">
                 <div class="icon">
-                    <img :src="modalView.icon" alt="" v-if="modalView">
+                    <img v-if="modalView && modalModule" :src="modalModule.moduleIcon" alt="">
                 </div>
-                <span class="title" v-if="modalView">{{ modalView.nombre }}</span>
+                <span class="title" v-if="modalView && modalModule">{{ modalModule.moduleName }}</span>
             </div>
 
             <button class="close-button" @click="closeModal"><span :class="GGCLASS">{{ GGICONS.CLOSE }}</span></button>
         </div>
 
         <div class="modal-body">
-            <component :is="modalView.type" v-if="modalView"></component>
+            <component :is="modalView" v-if="modalView && modalModule"></component>
         </div>
 
         <div class="modal-footer">
@@ -24,10 +24,13 @@
 </div>
 </template>
 
-<script>
+<script lang="ts">
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import ICONS from '@/constants/icons';
+import { ViewType } from '@/enums/view_type';
 import Application from '@/models/application';
+import { Modal } from '@/models/modal';
+import { Module } from '@/models/module';
 
 export default {
     name: 'ModalComponent',
@@ -35,7 +38,7 @@ export default {
         closeModal() {
             Application.closeModal();
         },
-        handleKeydown(e) {
+        handleKeydown(e: KeyboardEvent) {
             if (e.key === 'Escape' && Application.isShowingModal) {
                 Application.closeModal();
             }
@@ -47,11 +50,29 @@ export default {
             GGCLASS,
             GGICONS,
             Application,
+            modalModule: null as Module<any> | null,
         }
     },
     computed: {
         modalView() {
-            return Application.modal.value.modalView;
+            const modal = Application.modal?.value as Modal;
+
+            if (!modal || !modal.modalView) return null;
+
+            this.modalModule = modal.modalView;
+
+            switch (modal.viewType as ViewType) {
+                case ViewType.LISTVIEW:
+                    return modal.modalView.moduleListType;
+                case ViewType.DETAILVIEW:
+                    return modal.modalView.moduleDetailType;
+                case ViewType.DEFAULTVIEW:
+                    return modal.modalView.moduleDefaultType;
+                case ViewType.CUSTOMVIEW:
+                    return modal.modalView.moduleFromCustomTypesList(modal.customViewId || '');
+                default:
+                    return null;
+            }
         }
     },
     mounted() {

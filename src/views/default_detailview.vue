@@ -1,9 +1,9 @@
 <template>
-    Store
+
 </template>
 
-<script>
+<script lang="ts">
 export default {
-    name: 'StoreView',
+    name: 'DefaultDetailView',
 }
 </script>

@@ -20,7 +20,7 @@
     </div>
 </template>
 
-<script>
+<script lang="ts">
 import ICONS from '@/constants/icons';
 import Application from '@/models/application';
 
@@ -39,10 +39,10 @@ export default {
             return Application.sidebarToggled.value;
         },
         title() {
-            return Application.activeView.value?.nombre ?? 'Default';
+            return Application.activeView.value!.moduleName ?? 'Default';
         },
         icon() {
-            return Application.activeView.value?.icon ?? '';
+            return Application.activeView.value!.moduleIcon ?? '';
         }
     },
     data() {

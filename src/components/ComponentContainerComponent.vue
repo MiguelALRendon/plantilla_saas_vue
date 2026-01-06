@@ -30,14 +30,14 @@ export default {
     created() {
         const init = Application.activeView.value;
         if (init) {
-            this.currentComponent = markRaw(init.type);
+            this.currentComponent = markRaw(init.moduleDefaultType);
         }
 
-        watch(Application.activeView, async (newVal: Module | null) => {
+        watch(Application.activeView, async (newVal: Module<any> | null) => {
             if (newVal) {
                 Application.showLoadingScreen();
                 await new Promise(resolve => setTimeout(resolve, 400));
-                this.currentComponent = markRaw(newVal.type);
+                this.currentComponent = markRaw(newVal.moduleDefaultType);
                 Application.hideLoadingScreen();
             }
         });
