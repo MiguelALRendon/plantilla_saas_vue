@@ -11,10 +11,9 @@
 </template>
 
 <script lang="ts">
-import { markRaw, watch } from 'vue';
+import { Component, markRaw, watch } from 'vue';
 import LoadingScreenComponent from './LoadingScreenComponent.vue';
 import TopBarComponent from './TopBarComponent.vue';
-import { Module } from '@/models/module';
 import Application from '@/models/application';
 
 export default {
@@ -33,11 +32,11 @@ export default {
             this.currentComponent = markRaw(init.moduleDefaultType);
         }
 
-        watch(Application.activeView, async (newVal: Module<any> | null) => {
+        watch(Application.activeViewComponent, async (newVal: Component | null) => {
             if (newVal) {
                 Application.showLoadingScreen();
                 await new Promise(resolve => setTimeout(resolve, 400));
-                this.currentComponent = markRaw(newVal.moduleDefaultType);
+                this.currentComponent = markRaw(newVal);
                 Application.hideLoadingScreen();
             }
         });

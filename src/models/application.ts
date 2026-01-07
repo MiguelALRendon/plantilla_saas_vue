@@ -1,10 +1,11 @@
-import { ref, Ref } from 'vue';
+import { Component, ref, Ref } from 'vue';
 import type { Module } from './module';
 import type { Modal } from './modal';
 import { ViewType } from '@/enums/view_type';
 
 class ApplicationClass {
     activeView: Ref<Module<any> | null>;
+    activeViewComponent: Ref<Component | null>;
     sidebarToggled: Ref<boolean>;
     isScreenLoading: Ref<boolean>;
     isShowingModal: Ref<boolean>;
@@ -13,6 +14,7 @@ class ApplicationClass {
 
     private constructor() {
         this.activeView = ref<Module<any> | null>(null) as Ref<Module<any> | null>;
+        this.activeViewComponent = ref<Component | null>(null) as Ref<Component | null>;
         this.sidebarToggled = ref<boolean>(true);
         this.isScreenLoading = ref<boolean>(false);
         this.isShowingModal = ref<boolean>(false);
@@ -30,6 +32,13 @@ class ApplicationClass {
 
     changeView(module: Module<any>) {
         this.activeView.value = module;
+        this.activeViewComponent.value = module.moduleDefaultType;
+    }
+    changeViewToDetailView() {
+        console.log('Changing to detail view');
+        if (this.activeView.value) {
+            this.activeViewComponent.value = this.activeView.value.moduleDetailType;
+        }
     }
 
     toggleSidebar() {

@@ -9,7 +9,7 @@
     </thead>
 
     <tbody>
-        <tr v-for="item in data">
+        <tr v-for="item in data" @click="openDetailView()">
             <td v-for="column in item.getKeys()" :class="item.getCSSClasses()[column]">
                 {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
             </td>
@@ -31,7 +31,7 @@ export default {
     name: 'TableComponent',
     methods: {
         openDetailView() {
-            
+            Application.changeViewToDetailView();
         }  
     },
     data() {
