@@ -1,5 +1,7 @@
 import { createApp } from 'vue'
 import './css/main.css'
+import './css/constants.css'
+import './css/form.css'
 import App from './App.vue'
 import Application from '@/models/application'
 import { MODULES } from '@/constants/modules'

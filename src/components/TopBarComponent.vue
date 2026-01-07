@@ -7,7 +7,7 @@
             <div class="icon">
                 <img :src="icon" alt="">
             </div>
-            <span>{{ title }}</span>
+            <span class="topbar-title">{{ title }}</span>
         </div>
         <div class="top-right-side">
             <button :class="'profile_button' + (toggled_profile ? ' toggled' : '')">
@@ -109,5 +109,10 @@ export default {
 
 .topbar .icon img{
     height: 100%;
+}
+
+.topbar .topbar-title {
+    font-size: 1.25rem;
+    color: #2d3748;
 }
 </style>

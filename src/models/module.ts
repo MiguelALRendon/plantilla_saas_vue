@@ -1,10 +1,11 @@
 import DefaultDetailView from "@/views/default_detailview.vue";
 import DefaultListView from "@/views/default_listview.vue";
 import { Component } from "vue";
+import { BaseEntity } from "@/entities/base_entitiy";
 
-export type ModuleClass<T> = new () => T;
+export type ModuleClass<T extends BaseEntity> = (new (...args: any[]) => T) & typeof BaseEntity;
 
-export abstract class Module<TModel> {
+export abstract class Module<TModel extends BaseEntity> {
     protected abstract module_name: string;
     protected abstract module_permission: string;
     protected abstract module_icon: string;
@@ -41,7 +42,7 @@ export abstract class Module<TModel> {
         return this.module_default_type;
     }
 
-    public get moduleModelType(): ModuleClass<TModel> {
+    public get moduleModelType(): ModuleClass<BaseEntity> {
         return this.module_model_type;
     }
 

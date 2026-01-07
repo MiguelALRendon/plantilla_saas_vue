@@ -1,5 +1,6 @@
 <template>
  <button class="button warning" @click="showModal">Show a Modal</button>
+<div v-for="n in 100" :key="n">para pa pi pap</div>
 </template>
 
 <script lang="ts">
