@@ -1,0 +1,39 @@
+.table-length-short {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+}
+
+.table-length-xs {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+}
+
+.table-length-small {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+.table-length-medium {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.table-length-large {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+}
+
+.table-length-xl {
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+}
+
+.table-length-full {
+    flex: 1;
+}

@@ -1,6 +1,7 @@
 import { COLUMN_NAME_KEY } from "@/decorations/column_name_decorator";
 import { TABLE_NAME_KEY } from "@/decorations/table_name_decorator";
 import { MASK_KEY } from "@/decorations/mask_decorator";
+import { CSS_COLUMN_CLASS_KEY } from "@/decorations/css_column_class_decorator";
 import type { MaskSides } from "@/enums/mask_sides";
 
 export abstract class BaseEntity {
@@ -15,6 +16,16 @@ export abstract class BaseEntity {
     public getKeys(): string[] {
         const columns = (this.constructor as typeof BaseEntity).getColumns();
         return Object.keys(columns);
+    }
+
+    public getMask(): Record<string, { mask: string; side: MaskSides }> {
+        const proto = (this.constructor as any).prototype;
+        return proto[MASK_KEY] || {};
+    }
+
+    public getCSSClasses(): Record<string, string> {
+        const proto = (this.constructor as any).prototype;
+        return proto[CSS_COLUMN_CLASS_KEY] || {};
     }
 
     public static getTableName(): string | undefined {
@@ -37,8 +48,8 @@ export abstract class BaseEntity {
         return columns[propertyName];
     }
 
-    public getMask(): Record<string, { mask: string; side: MaskSides }> {
-        const proto = (this.constructor as any).prototype;
-        return proto[MASK_KEY] || {};
+    public static getCSSClasses(): Record<string, string> {
+        const proto = this.prototype as any;
+        return proto[CSS_COLUMN_CLASS_KEY] || {};
     }
 }
