@@ -1,3 +1,3 @@
-export enum ViewType {
+export enum ViewTypes {
     LISTVIEW, DETAILVIEW, DEFAULTVIEW, CUSTOMVIEW
 }

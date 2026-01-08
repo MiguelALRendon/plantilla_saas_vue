@@ -1,11 +1,15 @@
 import { Component, ref, Ref } from 'vue';
 import type { Module } from './module';
 import type { Modal } from './modal';
-import { ViewType } from '@/enums/view_type';
+import { ViewTypes } from '@/enums/view_type';
+import { BaseEntity } from '@/entities/base_entitiy';
+import { DetailTypes } from '@/enums/detail_type';
+import { ViewPropsModel } from './view_props_model';
 
 class ApplicationClass {
     activeView: Ref<Module<any> | null>;
     activeViewComponent: Ref<Component | null>;
+    activeViewComponentProps: Ref<ViewPropsModel | null>;
     sidebarToggled: Ref<boolean>;
     isScreenLoading: Ref<boolean>;
     isShowingModal: Ref<boolean>;
@@ -21,8 +25,9 @@ class ApplicationClass {
         this.modal = ref<Modal>({
             modalView: null,
             modalOnCloseFunction: null,
-            viewType: ViewType.LISTVIEW
+            viewType: ViewTypes.LISTVIEW
         }) as Ref<Modal>;
+        this.activeViewComponentProps = ref<ViewPropsModel | null>(null) as Ref<ViewPropsModel | null>;
     }
 
     static getInstance() {
@@ -33,11 +38,15 @@ class ApplicationClass {
     changeView(module: Module<any>) {
         this.activeView.value = module;
         this.activeViewComponent.value = module.moduleDefaultType;
+        this.activeViewComponentProps.value = null;
     }
-    changeViewToDetailView() {
-        console.log('Changing to detail view');
+    changeViewToDetailView(entity : BaseEntity, detailType : DetailTypes) {
         if (this.activeView.value) {
             this.activeViewComponent.value = this.activeView.value.moduleDetailType;
+            this.activeViewComponentProps.value = {
+                viewEntity: entity,
+                viewType: detailType
+            };
         }
     }
 
@@ -57,7 +66,7 @@ class ApplicationClass {
         this.isScreenLoading.value = false;
     }
 
-    showModal(module: Module<any>, viewType: ViewType, customViewId?: string) {
+    showModal(module: Module<any>, viewType: ViewTypes, customViewId?: string) {
         this.modal.value.modalView = module;
         this.modal.value.modalOnCloseFunction = null;
         this.modal.value.viewType = viewType;
@@ -72,7 +81,7 @@ class ApplicationClass {
         }, 150);
     }
 
-    openModalOnFunction(module: Module<any>, onCloseFunction: () => void, viewType: ViewType, customViewId?: string) {
+    openModalOnFunction(module: Module<any>, onCloseFunction: () => void, viewType: ViewTypes, customViewId?: string) {
         this.modal.value.modalView = module;
         this.modal.value.modalOnCloseFunction = onCloseFunction;
         this.modal.value.viewType = viewType;

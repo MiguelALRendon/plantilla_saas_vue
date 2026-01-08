@@ -4,8 +4,12 @@ import { Column } from '@/decorations/column_name_decorator.ts';
 import { Mask } from '@/decorations/mask_decorator.ts';
 import { Table } from '@/decorations/table_name_decorator.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
+import { DefaultProperty } from '@/decorations/default_property_decorator.ts';
+import { StringTypeDef } from '@/decorations/string_type_decorator.ts';
+import { StringType } from '@/enums/string_type.ts';
 
 @Table('Productos')
+@DefaultProperty('name')
 export class Products extends BaseEntity {
     @Column('ID')
     @CSSColumnClass('table-length-small')
@@ -21,6 +25,7 @@ export class Products extends BaseEntity {
     price!: number;
 
     @Column('Description')
+    @StringTypeDef(StringType.TEXTAREA)
     description!: string;
 
     @Column('Stock')

@@ -9,7 +9,7 @@
     </thead>
 
     <tbody>
-        <tr v-for="item in data" @click="openDetailView()">
+        <tr v-for="item in data" @click="openDetailView(item)">
             <td v-for="column in item.getKeys()" :class="item.getCSSClasses()[column]">
                 {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
             </td>
@@ -25,13 +25,14 @@
 <script lang="ts">
 import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
+import { DetailTypes } from '@/enums/detail_type';
 import { MaskSides } from '@/enums/mask_sides';
 import Application from '@/models/application';
 export default {
     name: 'TableComponent',
     methods: {
-        openDetailView() {
-            Application.changeViewToDetailView();
+        openDetailView(entity : BaseEntity) {
+            Application.changeViewToDetailView(entity, DetailTypes.EDIT);
         }  
     },
     data() {

@@ -27,7 +27,7 @@
 <script lang="ts">
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import ICONS from '@/constants/icons';
-import { ViewType } from '@/enums/view_type';
+import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import { Modal } from '@/models/modal';
 import { Module } from '@/models/module';
@@ -61,14 +61,14 @@ export default {
 
             this.modalModule = modal.modalView;
 
-            switch (modal.viewType as ViewType) {
-                case ViewType.LISTVIEW:
+            switch (modal.viewType as ViewTypes) {
+                case ViewTypes.LISTVIEW:
                     return modal.modalView.moduleListType;
-                case ViewType.DETAILVIEW:
+                case ViewTypes.DETAILVIEW:
                     return modal.modalView.moduleDetailType;
-                case ViewType.DEFAULTVIEW:
+                case ViewTypes.DEFAULTVIEW:
                     return modal.modalView.moduleDefaultType;
-                case ViewType.CUSTOMVIEW:
+                case ViewTypes.CUSTOMVIEW:
                     return modal.modalView.moduleFromCustomTypesList(modal.customViewId || '');
                 default:
                     return null;
