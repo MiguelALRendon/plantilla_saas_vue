@@ -1,9 +1,20 @@
 <template>
 <div class="TextInput NumberInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <button class="left"><span :class="GGCLASS">{{ GGICONS.REMOVE }}</span></button>
-    <input :id="'id-' + propertyName" :name="propertyName" type="number" class="main-input" placeholder=" " />
-    <button class="right"><span :class="GGCLASS">{{ GGICONS.ADD }}</span></button>
+    <button class="left" @click="value--">
+    <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
+    </button>
+
+    <input
+        type="number"
+        class="main-input"
+        :value="value"
+        @input="value = Number(($event.target as HTMLInputElement).value)"
+    />
+
+    <button class="right" @click="value++">
+        <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+    </button>
 </div>
 </template>
 
@@ -18,11 +29,9 @@ export default {
             required: true,
             default: '',
         },
-    },
-    emits: ['update:modelValue'],
-    watch: {
-        modelValue(newValue) {
-            this.$emit('update:modelValue', newValue);
+        modelValue: {
+            type: Number,
+            required: true
         }
     },
     data() {
@@ -32,5 +41,15 @@ export default {
             textInputId: 'text-input-' + this.propertyName,
         }
     },
+    computed: {
+    value: {
+        get(): number {
+            return this.modelValue;
+        },
+        set(val: number) {
+            this.$emit('update:modelValue', val);
+        }
+    }
+}
 }
 </script>

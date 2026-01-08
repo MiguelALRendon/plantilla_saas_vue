@@ -8,6 +8,8 @@ import type { MaskSides } from "@/enums/mask_sides";
 import type { StringType } from "@/enums/string_type";
 
 export abstract class BaseEntity {
+    [key: string]: any;
+    
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
     }

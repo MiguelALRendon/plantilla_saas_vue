@@ -6,12 +6,14 @@
         <div v-for="prop in entity.getKeys()">
             <NumberInputComponent 
             v-if="typeof entity.toObject()[prop] === 'number'"
-            :property-name="entityClass.getColumnNameByKey(prop)" />
+            :property-name="entityClass.getColumnNameByKey(prop)"
+            v-model="entity[prop]" />
             
             <!-- APARTADO PARA LOS STRINGS EN BASE STRING -->
             <TextInputComponent 
             v-if="typeof entity.toObject()[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
-            :property-name="entityClass.getColumnNameByKey(prop)" />
+            :property-name="entityClass.getColumnNameByKey(prop)"
+            v-model="entity[prop]" />
             <!---------------------------------------------->
             <!-- {{  prop + ': ' + entity.toObject()[prop] + ' as ' + typeof entity.toObject()[prop] }} -->
         </div>
