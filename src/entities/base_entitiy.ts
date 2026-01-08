@@ -4,6 +4,7 @@ import { MASK_KEY } from "@/decorations/mask_decorator";
 import { CSS_COLUMN_CLASS_KEY } from "@/decorations/css_column_class_decorator";
 import { DEFAULT_PROPERTY_KEY } from "@/decorations/default_property_decorator";
 import { STRING_TYPE_KEY } from "@/decorations/string_type_decorator";
+import { VIEW_GROUP_KEY } from "@/decorations/view_group_decorator";
 import type { MaskSides } from "@/enums/mask_sides";
 import type { StringType } from "@/enums/string_type";
 
@@ -74,5 +75,10 @@ export abstract class BaseEntity {
     public getStringType(): Record<string, StringType> {
         const proto = (this.constructor as any).prototype;
         return proto[STRING_TYPE_KEY] || {};
+    }
+
+    public getViewGroups(): Record<string, string> {
+        const proto = (this.constructor as any).prototype;
+        return proto[VIEW_GROUP_KEY] || {};
     }
 }

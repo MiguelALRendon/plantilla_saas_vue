@@ -7,10 +7,12 @@ import { MaskSides } from '@/enums/mask_sides.ts';
 import { DefaultProperty } from '@/decorations/default_property_decorator.ts';
 import { StringTypeDef } from '@/decorations/string_type_decorator.ts';
 import { StringType } from '@/enums/string_type.ts';
+import { ViewGroup } from '@/decorations/view_group_decorator.ts';
 
 @Table('Productos')
 @DefaultProperty('name')
 export class Products extends BaseEntity {
+    @ViewGroup('Grupo 1')
     @Column('ID')
     @CSSColumnClass('table-length-small')
     id!: number;
@@ -24,6 +26,7 @@ export class Products extends BaseEntity {
     @CSSColumnClass('table-length-small')
     price!: number;
 
+    @ViewGroup('Grupo 2')
     @Column('Description')
     @StringTypeDef(StringType.TEXTAREA)
     description!: string;
