@@ -5,8 +5,10 @@ import { CSS_COLUMN_CLASS_KEY } from "@/decorations/css_column_class_decorator";
 import { DEFAULT_PROPERTY_KEY } from "@/decorations/default_property_decorator";
 import { STRING_TYPE_KEY } from "@/decorations/string_type_decorator";
 import { VIEW_GROUP_KEY } from "@/decorations/view_group_decorator";
+import { VIEW_GROUP_ROW_KEY } from "@/decorations/view_group_row_decorator";
 import type { MaskSides } from "@/enums/mask_sides";
 import type { StringType } from "@/enums/string_type";
+import type { ViewGroupRow } from "@/enums/view_group_row";
 
 export abstract class BaseEntity {
     [key: string]: any;
@@ -80,5 +82,10 @@ export abstract class BaseEntity {
     public getViewGroups(): Record<string, string> {
         const proto = (this.constructor as any).prototype;
         return proto[VIEW_GROUP_KEY] || {};
+    }
+
+    public getViewGroupRows(): Record<string, ViewGroupRow> {
+        const proto = (this.constructor as any).prototype;
+        return proto[VIEW_GROUP_ROW_KEY] || {};
     }
 }

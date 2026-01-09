@@ -3,51 +3,24 @@
 
 <div v-for="(group, groupName) in groupedProperties" :key="groupName">
     <FormGroupComponent :title="groupName">
-        <template v-for="(rowGroup, index) in group" :key="index">
-            <!-- SINGLE: div al 100% -->
-            <div v-if="rowGroup.type === ViewGroupRow.SINGLE" style="width: 100%;">
-                <div v-for="prop in rowGroup.props" :key="prop">
+        <template v-for="(chunk, index) in group" :key="index">
+            <component 
+                :is="getRowComponent(chunk.rowType)" 
+                :class="chunk.rowType === 'single' ? 'form-row-single' : ''">
+                <div v-for="prop in chunk.properties" :key="prop">
                     <NumberInputComponent 
                     v-if="typeof entity.toObject()[prop] === 'number'"
                     :property-name="entityClass.getColumnNameByKey(prop)"
                     v-model="entity[prop]" />
                     
+                    <!-- APARTADO PARA LOS STRINGS EN BASE STRING -->
                     <TextInputComponent 
                     v-if="typeof entity.toObject()[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
                     :property-name="entityClass.getColumnNameByKey(prop)"
                     v-model="entity[prop]" />
+                    <!---------------------------------------------->
                 </div>
-            </div>
-
-            <!-- PAIR: FormRowTwoItemsComponent -->
-            <FormRowTwoItemsComponent v-if="rowGroup.type === ViewGroupRow.PAIR">
-                <div v-for="prop in rowGroup.props" :key="prop">
-                    <NumberInputComponent 
-                    v-if="typeof entity.toObject()[prop] === 'number'"
-                    :property-name="entityClass.getColumnNameByKey(prop)"
-                    v-model="entity[prop]" />
-                    
-                    <TextInputComponent 
-                    v-if="typeof entity.toObject()[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
-                    :property-name="entityClass.getColumnNameByKey(prop)"
-                    v-model="entity[prop]" />
-                </div>
-            </FormRowTwoItemsComponent>
-
-            <!-- TRIPLE: FormRowThreeItemsComponent -->
-            <FormRowThreeItemsComponent v-if="rowGroup.type === ViewGroupRow.TRIPLE">
-                <div v-for="prop in rowGroup.props" :key="prop">
-                    <NumberInputComponent 
-                    v-if="typeof entity.toObject()[prop] === 'number'"
-                    :property-name="entityClass.getColumnNameByKey(prop)"
-                    v-model="entity[prop]" />
-                    
-                    <TextInputComponent 
-                    v-if="typeof entity.toObject()[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
-                    :property-name="entityClass.getColumnNameByKey(prop)"
-                    v-model="entity[prop]" />
-                </div>
-            </FormRowThreeItemsComponent>
+            </component>
         </template>
     </FormGroupComponent>
 </div>
@@ -77,7 +50,6 @@ export default {
     data() {
         return {
             StringType,
-            ViewGroupRow,
             entity: Application.activeViewComponentProps.value?.viewEntity as BaseEntity,
             entityClass: Application.activeView.value?.moduleModelType as typeof BaseEntity,
             detailType: Application.activeViewComponentProps.value?.viewType as DetailTypes,
@@ -89,7 +61,7 @@ export default {
             const viewGroupRows = this.entity.getViewGroupRows();
             const keys = this.entity.getKeys();
             
-            const groups: Record<string, any[]> = {};
+            const groups: Record<string, Array<{ rowType: string, properties: string[] }>> = {};
             let currentGroup = 'default';
             
             // Procesar las propiedades en orden
@@ -107,51 +79,45 @@ export default {
                     groups[currentGroup] = [];
                 }
                 
-                // Agregar la propiedad al grupo actual
-                if (!Array.isArray(groups[currentGroup])) {
-                    groups[currentGroup] = [];
-                }
-                groups[currentGroup].push(prop);
-            }
-            
-            // Ahora agrupar las propiedades por ViewGroupRow dentro de cada grupo
-            const result: Record<string, Array<{type: ViewGroupRow, props: string[]}>> = {};
-            
-            for (const [groupName, props] of Object.entries(groups)) {
-                result[groupName] = [];
-                let currentRowType: ViewGroupRow = ViewGroupRow.PAIR; // Default
-                let currentRowProps: string[] = [];
+                // Obtener el tipo de fila para esta propiedad
+                const rowType = viewGroupRows[prop] || ViewGroupRow.PAIR;
                 
-                for (const prop of props) {
-                    // Si esta propiedad tiene un ViewGroupRow definido
-                    if (viewGroupRows[prop]) {
-                        // Si ya tenemos propiedades acumuladas, guardarlas primero
-                        if (currentRowProps.length > 0) {
-                            result[groupName].push({
-                                type: currentRowType,
-                                props: [...currentRowProps]
-                            });
-                            currentRowProps = [];
-                        }
-                        // Cambiar al nuevo tipo de fila
-                        currentRowType = viewGroupRows[prop];
-                    }
-                    
-                    // Agregar la propiedad al grupo de fila actual
-                    currentRowProps.push(prop);
-                }
+                // Verificar si el último chunk tiene el mismo rowType
+                const lastChunk = groups[currentGroup][groups[currentGroup].length - 1];
                 
-                // No olvidar las últimas propiedades acumuladas
-                if (currentRowProps.length > 0) {
-                    result[groupName].push({
-                        type: currentRowType,
-                        props: currentRowProps
+                if (lastChunk && lastChunk.rowType === rowType) {
+                    // Agregar al chunk existente
+                    lastChunk.properties.push(prop);
+                } else {
+                    // Crear un nuevo chunk
+                    groups[currentGroup].push({
+                        rowType: rowType,
+                        properties: [prop]
                     });
                 }
             }
             
-            return result;
+            return groups;
+        }
+    },
+    methods: {
+        getRowComponent(rowType: string) {
+            switch (rowType) {
+                case ViewGroupRow.SINGLE:
+                    return 'div';
+                case ViewGroupRow.PAIR:
+                    return FormRowTwoItemsComponent;
+                case ViewGroupRow.TRIPLE:
+                    return FormRowThreeItemsComponent;
+                default:
+                    return FormRowTwoItemsComponent;
+            }
         }
     }
 }
 </script>
+<style scoped>
+.form-row-single {
+    width: 100%;
+}
+</style>

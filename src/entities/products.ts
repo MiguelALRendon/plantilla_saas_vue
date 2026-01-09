@@ -8,6 +8,8 @@ import { DefaultProperty } from '@/decorations/default_property_decorator.ts';
 import { StringTypeDef } from '@/decorations/string_type_decorator.ts';
 import { StringType } from '@/enums/string_type.ts';
 import { ViewGroup } from '@/decorations/view_group_decorator.ts';
+import { ViewGroupRowDecorator } from '@/decorations/view_group_row_decorator.ts';
+import { ViewGroupRow } from '@/enums/view_group_row.ts';
 
 @Table('Productos')
 @DefaultProperty('name')
@@ -15,6 +17,7 @@ export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
     @Column('ID')
     @CSSColumnClass('table-length-small')
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     id!: number;
 
     @Column('Name')
@@ -29,11 +32,13 @@ export class Products extends BaseEntity {
     @ViewGroup('Grupo 2')
     @Column('Description')
     @StringTypeDef(StringType.TEXTAREA)
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     description!: string;
 
     @Column('Stock')
     @Mask(' Pz.', MaskSides.END)
     @CSSColumnClass('table-length-short')
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     stock!: number;
 
     constructor(data: Record<string, any>) {
