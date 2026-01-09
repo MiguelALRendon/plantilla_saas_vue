@@ -1,7 +1,14 @@
 <template>
 <div class="TextInput ObjectInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="text" class="main-input" placeholder=" " />
+    <input 
+        :id="'id-' + propertyName" 
+        :name="propertyName" 
+        type="text" 
+        class="main-input" 
+        placeholder=" "
+        :value="modelValue"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
     <button class="right"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
 </template>
@@ -17,11 +24,9 @@ export default {
             required: true,
             default: '',
         },
-    },
-    emits: ['update:modelValue'],
-    watch: {
-        modelValue(newValue) {
-            this.$emit('update:modelValue', newValue);
+        modelValue: {
+            type: String,
+            required: true
         }
     },
     data() {

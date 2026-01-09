@@ -1,26 +1,11 @@
 <template>
     <h2>Template de Formulario</h2>
     <FormGroupComponent title="Inputs Principales">
-        <FormRowTwoItemsComponent>
-            <TextInputComponent propertyName="Nombre del Producto" />
-            <NumberInputComponent propertyName="Cantidad" />
-        </FormRowTwoItemsComponent>
-
         <FormRowThreeItemsComponent>
             <EmailInputComponent propertyName="Email" />
-            <PasswordInputComponent propertyName="Password" />
-            <NumberInputComponent propertyName="Descuento %" />
+            <PasswordInputComponent propertyName="Password" v-model="password" />
+            <DateInputComponent propertyName="Fecha de Vencimiento" v-model="date" />
         </FormRowThreeItemsComponent>
-
-        <DateInputComponent propertyName="Fecha de Vencimiento" />
-    </FormGroupComponent>
-
-    <FormGroupComponent title="Inputs Secundarios">
-        <FormRowTwoItemsComponent>
-            <TextInputComponent propertyName="Proveedor" />
-            <ObjectInputComponent propertyName="Objeto" />
-            <NumberInputComponent propertyName="Precio Unitario" />
-        </FormRowTwoItemsComponent>
     </FormGroupComponent>
 </template>
 
@@ -48,5 +33,11 @@ export default {
         DateInputComponent,
         ObjectInputComponent
     },
+    data() {
+        return {
+            date : '',
+            password : '',
+        }
+    }
 }
 </script>

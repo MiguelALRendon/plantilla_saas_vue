@@ -36,11 +36,11 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     box-sizing: border-box;
     font-size: 1rem;
 }
-input[type="number"], input[type="password"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
+input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
     text-align: center;
     border-radius: 0;
 }
-input[type="password"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
+input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
     text-align: left;
     border-top-left-radius: 1rem;
     border-bottom-left-radius: 1rem;
@@ -78,8 +78,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border-top-left-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
 }
-.TextInput:has(.main-input:focus) button, .TextInput:has(button:focus) button, 
-.TextInput:has(.main-input:not(:placeholder-shown)) button {
+.TextInput:has(.main-input:focus) button, .TextInput:has(button:focus) button {
     background-color: var(--lavender);
     color: white;
     border: 2px solid var(--lavender);

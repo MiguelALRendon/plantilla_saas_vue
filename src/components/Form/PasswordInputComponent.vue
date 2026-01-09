@@ -1,8 +1,17 @@
 <template>
 <div class="TextInput PasswordInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="password" class="main-input" placeholder=" " />
-    <button class="right"><span :class="GGCLASS">{{ GGICONS.VISIBILITY }}</span></button>
+    <input 
+        :id="'id-' + propertyName" 
+        :name="propertyName" 
+        :type="showPassword ? 'text' : 'password'" 
+        class="main-input" 
+        placeholder=" "
+        :value="modelValue"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+    <button class="right" @click="togglePasswordVisibility">
+        <span :class="GGCLASS">{{ showPassword ? GGICONS.VISIBILITY_OFF : GGICONS.VISIBILITY }}</span>
+    </button>
 </div>
 </template>
 
@@ -17,11 +26,9 @@ export default {
             required: true,
             default: '',
         },
-    },
-    emits: ['update:modelValue'],
-    watch: {
-        modelValue(newValue) {
-            this.$emit('update:modelValue', newValue);
+        modelValue: {
+            type: String,
+            required: true
         }
     },
     data() {
@@ -29,7 +36,13 @@ export default {
             GGICONS,
             GGCLASS,
             textInputId: 'text-input-' + this.propertyName,
+            showPassword: false,
         }
     },
+    methods: {
+        togglePasswordVisibility() {
+            this.showPassword = !this.showPassword;
+        }
+    }
 }
 </script>

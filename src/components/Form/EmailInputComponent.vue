@@ -1,7 +1,14 @@
 <template>
 <div class="TextInput">
     <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
-    <input :id="'id-' + propertyName" :name="propertyName" type="email" class="main-input" placeholder=" " />
+    <input 
+        :id="'id-' + propertyName" 
+        :name="propertyName" 
+        type="email" 
+        class="main-input" 
+        placeholder=" "
+        :value="modelValue"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
 </div>
 </template>
 
@@ -14,11 +21,9 @@ export default {
             required: true,
             default: '',
         },
-    },
-    emits: ['update:modelValue'],
-    watch: {
-        modelValue(newValue) {
-            this.$emit('update:modelValue', newValue);
+        modelValue: {
+            type: String,
+            required: true
         }
     },
     data() {
