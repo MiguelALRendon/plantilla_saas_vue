@@ -9,13 +9,17 @@
                 :class="chunk.rowType === 'single' ? 'form-row-single' : ''">
                 <div v-for="prop in chunk.properties" :key="prop">
                     <NumberInputComponent 
-                    v-if="typeof entity.toObject()[prop] === 'number'"
+                    v-if="typeof entity[prop] === 'number'"
                     :property-name="entityClass.getColumnNameByKey(prop)"
                     v-model="entity[prop]" />
-                    
-                    <!-- APARTADO PARA LOS STRINGS EN BASE STRING -->
+
+                    <ObjectInputComponent 
+                    v-if="entity[prop] instanceof BaseEntity"
+                    v-model="entity[prop]" />
+
+                    <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
                     <TextInputComponent 
-                    v-if="typeof entity.toObject()[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
+                    v-if="typeof entity[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
                     :property-name="entityClass.getColumnNameByKey(prop)"
                     v-model="entity[prop]" />
                     <!---------------------------------------------->
@@ -32,6 +36,7 @@ import FormRowTwoItemsComponent from '@/components/Form/FormRowTwoItemsComponent
 import FormRowThreeItemsComponent from '@/components/Form/FormRowThreeItemsComponent.vue';
 import NumberInputComponent from '@/components/Form/NumberInputComponent.vue';
 import TextInputComponent from '@/components/Form/TextInputComponent.vue';
+import ObjectInputComponent from '@/components/Form/ObjectInputComponent.vue';
 import { BaseEntity } from '@/entities/base_entitiy';
 import { DetailTypes } from '@/enums/detail_type';
 import { StringType } from '@/enums/string_type';
@@ -45,11 +50,13 @@ export default {
         FormRowTwoItemsComponent,
         FormRowThreeItemsComponent,
         TextInputComponent,
+        ObjectInputComponent,
         NumberInputComponent
     },
     data() {
         return {
             StringType,
+            BaseEntity,
             entity: Application.activeViewComponentProps.value?.viewEntity as BaseEntity,
             entityClass: Application.activeView.value?.moduleModelType as typeof BaseEntity,
             detailType: Application.activeViewComponentProps.value?.viewType as DetailTypes,

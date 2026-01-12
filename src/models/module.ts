@@ -1,5 +1,6 @@
 import DefaultDetailView from "@/views/default_detailview.vue";
 import DefaultListView from "@/views/default_listview.vue";
+import DefaultLookupListView from "@/views/default_lookup_listview.vue";
 import { Component } from "vue";
 import { BaseEntity } from "@/entities/base_entitiy";
 
@@ -14,6 +15,7 @@ export abstract class Module<TModel extends BaseEntity> {
 
     protected module_list_type: Component = DefaultListView;
     protected module_detail_type: Component = DefaultDetailView;
+    protected module_lookup_list_type: Component = DefaultLookupListView;
     protected module_default_type: Component = DefaultListView;
 
     protected module_custom_types_list: Map<string, Component> = new Map<string, Component>();

@@ -3,7 +3,7 @@ import type { Module } from './module';
 
 export interface Modal {
     modalView: Module<any> | null;
-    modalOnCloseFunction: (() => void) | null;
+    modalOnCloseFunction: ((param: any) => void) | null;
     viewType : ViewTypes;
     customViewId?: string;
 }

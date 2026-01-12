@@ -2,7 +2,6 @@
     <h2>Template de Formulario</h2>
     <FormGroupComponent title="Inputs Principales">
         <FormRowThreeItemsComponent>
-            <EmailInputComponent propertyName="Email" />
             <PasswordInputComponent propertyName="Password" v-model="password" />
             <DateInputComponent propertyName="Fecha de Vencimiento" v-model="date" />
         </FormRowThreeItemsComponent>

@@ -11,7 +11,7 @@
     <tbody>
         <tr v-for="item in data" @click="openDetailView(item)">
             <td v-for="column in item.getKeys()" :class="item.getCSSClasses()[column]">
-                {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
+                {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
             </td>
         </tr>
     </tbody>
@@ -45,6 +45,13 @@ export default {
                     description: `Descripción del producto asdf fasdfasdfasdf ta sdf sd fasdf   asdfasdfasdf asdfasfafsdf ${i}`,
                     price: Math.floor(Math.random() * 100) + 1,
                     stock: Math.floor(Math.random() * 50) + 1,
+                    product: new Products({
+                        id: i + 100,
+                        name: `Inner Producto ${i}`,
+                        description: `Inner Descripción del producto ${i}`,
+                        price: Math.floor(Math.random() * 100) + 1,
+                        stock: Math.floor(Math.random() * 50) + 1,
+                    })
                 })
             );
         }
@@ -52,6 +59,7 @@ export default {
         return {
             Application,
             MaskSides,
+            BaseEntity,
             data
         }
     },

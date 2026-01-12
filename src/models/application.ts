@@ -81,7 +81,7 @@ class ApplicationClass {
         }, 150);
     }
 
-    openModalOnFunction(module: Module<any>, onCloseFunction: () => void, viewType: ViewTypes, customViewId?: string) {
+    openModalOnFunction(module: Module<any>, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) {
         this.modal.value.modalView = module;
         this.modal.value.modalOnCloseFunction = onCloseFunction;
         this.modal.value.viewType = viewType;
@@ -89,9 +89,9 @@ class ApplicationClass {
         this.isShowingModal.value = true;
     }
 
-    closeModalOnFunction() {
+    closeModalOnFunction(param : any) {
         if (this.modal.value.modalOnCloseFunction) {
-            this.modal.value.modalOnCloseFunction();
+            this.modal.value.modalOnCloseFunction(param);
         }
         this.isShowingModal.value = false;
         setTimeout(() => {

@@ -1,14 +1,8 @@
-import { CSSColumnClass } from '@/decorations/css_column_class_decorator.ts';
+import { CSSColumnClass } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
-import { Column } from '@/decorations/column_name_decorator.ts';
-import { Mask } from '@/decorations/mask_decorator.ts';
-import { Table } from '@/decorations/table_name_decorator.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
-import { DefaultProperty } from '@/decorations/default_property_decorator.ts';
-import { StringTypeDef } from '@/decorations/string_type_decorator.ts';
 import { StringType } from '@/enums/string_type.ts';
-import { ViewGroup } from '@/decorations/view_group_decorator.ts';
-import { ViewGroupRowDecorator } from '@/decorations/view_group_row_decorator.ts';
+import { Column, Mask, Table, DefaultProperty, StringTypeDef, ViewGroup, ViewGroupRowDecorator } from '@/decorations';
 import { ViewGroupRow } from '@/enums/view_group_row.ts';
 
 @Table('Productos')
@@ -40,6 +34,14 @@ export class Products extends BaseEntity {
     @CSSColumnClass('table-length-short')
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     stock!: number;
+
+    @Column('Generic Date')
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    genericDate!: Date;
+
+    @Column('Inner Product')
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    product! : Products;
 
     constructor(data: Record<string, any>) {
         super(data);

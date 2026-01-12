@@ -1,31 +1,30 @@
 <template>
 <div class="TextInput ObjectInput">
-    <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
+    <label :for="'id-' + tableName" class="label-input">{{ tableName }}</label>
     <input 
-        :id="'id-' + propertyName" 
-        :name="propertyName" 
+        :id="'id-' + tableName" 
+        :name="tableName" 
         type="text" 
         class="main-input" 
         placeholder=" "
-        :value="modelValue"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+        :value="modelValue.getDefaultPropertyValue()"
+        readonly="true"
+        @input="$emit('update:modelValue', modelValue)" />
     <button class="right"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
 </template>
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import { BaseEntity } from '@/entities/base_entitiy';
+import Application from '@/models/application';
+import { PropType } from 'vue';
 
 export default {
     name: 'ObjectInputComponent',
     props: {
-        propertyName: {
-            type: String,
-            required: true,
-            default: '',
-        },
         modelValue: {
-            type: String,
+            type: Object as PropType<BaseEntity>,
             required: true
         }
     },
@@ -33,7 +32,13 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            textInputId: 'text-input-' + this.propertyName,
+            Application,
+            BaseEntity,
+        }
+    },
+    computed: {
+        tableName(): string | undefined {
+            return (this.modelValue.constructor as typeof BaseEntity).getTableName()
         }
     },
 }
