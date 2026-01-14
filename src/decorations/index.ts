@@ -1,4 +1,4 @@
-export { COLUMN_NAME_KEY, Column } from './column_name_decorator';
+export { PROPERTY_NAME_KEY, PropertyName } from './property_name_decorator';
 export { MASK_KEY, Mask } from './mask_decorator';
 export { CSS_COLUMN_CLASS_KEY, CSSColumnClass } from './css_column_class_decorator';
 export { DEFAULT_PROPERTY_KEY, DefaultProperty } from './default_property_decorator';

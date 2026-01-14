@@ -2,7 +2,7 @@ import { CSSColumnClass, ModuleIcon, ModuleName } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
-import { Column, Mask, DefaultProperty, StringTypeDef, ViewGroup, ViewGroupRowDecorator } from '@/decorations';
+import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ViewGroupRowDecorator } from '@/decorations';
 import { ViewGroupRow } from '@/enums/view_group_row.ts';
 import ICONS from '@/constants/icons.ts';
 
@@ -11,37 +11,41 @@ import ICONS from '@/constants/icons.ts';
 @ModuleIcon(ICONS.PRODUCTS)
 export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
-    @Column('ID')
+    @PropertyName('ID')
     @CSSColumnClass('table-length-small')
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     id!: number;
 
-    @Column('Name')
+    @PropertyName('Name')
     @CSSColumnClass('table-length-short')
     name!: string;
 
-    @Column('Price')
+    @PropertyName('Price')
     @Mask('$', MaskSides.START)
     @CSSColumnClass('table-length-small')
     price!: number;
 
     @ViewGroup('Grupo 2')
-    @Column('Description')
+    @PropertyName('Description')
     @StringTypeDef(StringType.TEXTAREA)
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     description!: string;
 
-    @Column('Stock')
+    @PropertyName('Stock')
     @Mask(' Pz.', MaskSides.END)
     @CSSColumnClass('table-length-short')
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     stock!: number;
 
-    @Column('Generic Date')
+    @PropertyName('Generic Date')
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     genericDate!: Date;
 
-    @Column('Inner Product')
+    @PropertyName('Catedral Product')
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    Catedral! : Products;
+
+    @PropertyName('Inner Product')
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     product! : Products;
 }

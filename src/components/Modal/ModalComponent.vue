@@ -31,6 +31,7 @@ import { BaseEntity } from '@/entities/base_entitiy';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import { Modal } from '@/models/modal';
+import Defaultlookuplistview from '@/views/default_lookup_listview.vue';
 import { Component } from 'vue';
 
 export default {
@@ -56,7 +57,7 @@ export default {
     },
     computed: {
         modalView() : Component | null {
-            const modal = Application.modal?.value as Modal;
+            const modal = Application.modal.value as Modal;
 
             if (!modal || !modal.modalView) return null;
 
@@ -69,6 +70,8 @@ export default {
                     return modal.modalView.getModuleDetailComponent();
                 case ViewTypes.DEFAULTVIEW:
                     return modal.modalView.getModuleDefaultComponent();
+                case ViewTypes.LOOKUPVIEW:
+                    return Defaultlookuplistview;
                 case ViewTypes.CUSTOMVIEW:
                     return modal.modalView.getModuleCustomComponents()?.get(modal.customViewId!) || null;
                 default:

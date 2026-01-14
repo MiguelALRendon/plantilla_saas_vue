@@ -1,5 +1,5 @@
 import {
-    COLUMN_NAME_KEY,
+    PROPERTY_NAME_KEY,
     MASK_KEY,
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
@@ -33,7 +33,7 @@ export abstract class BaseEntity {
     }
 
     public getKeys(): string[] {
-        const columns = (this.constructor as typeof BaseEntity).getColumns();
+        const columns = (this.constructor as typeof BaseEntity).getProperties();
         return Object.keys(columns);
     }
 
@@ -47,13 +47,13 @@ export abstract class BaseEntity {
         return proto[CSS_COLUMN_CLASS_KEY] || {};
     }
 
-    public static getColumns(): Record<string, string> {
+    public static getProperties(): Record<string, string> {
         const proto = this.prototype as any;
-        return proto[COLUMN_NAME_KEY] || {};
+        return proto[PROPERTY_NAME_KEY] || {};
     }
 
-    public static getColumnName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
-        const columns = this.getColumns();
+    public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
+        const columns = this.getProperties();
         const proxy = new Proxy({}, {
             get(prop) {
                 return prop;
@@ -63,8 +63,8 @@ export abstract class BaseEntity {
         return columns[propertyName];
     }
 
-    public static getColumnNameByKey(propertyKey: string): string | undefined {
-        const columns = this.getColumns();
+    public static getPropertyNameByKey(propertyKey: string): string | undefined {
+        const columns = this.getProperties();
         return columns[propertyKey];
     }
 

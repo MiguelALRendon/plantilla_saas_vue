@@ -1,6 +1,10 @@
 <template>
 <h2 class="title">{{ entity.getDefaultPropertyValue() }}</h2>
 
+<ul>
+    <li v-for="propiedad in entityClass.getProperties()">{{ propiedad }}</li>
+</ul>
+
 <div v-for="(group, groupName) in groupedProperties" :key="groupName">
     <FormGroupComponent :title="groupName">
         <template v-for="(chunk, index) in group" :key="index">
@@ -10,17 +14,23 @@
                 <div v-for="prop in chunk.properties" :key="prop">
                     <NumberInputComponent 
                     v-if="typeof entity[prop] === 'number'"
-                    :property-name="entityClass.getColumnNameByKey(prop)"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
 
                     <ObjectInputComponent 
                     v-if="entity[prop] instanceof BaseEntity"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
+                    v-model="entity[prop]" />
+
+                    <DateInputComponent
+                    v-if="entity[prop] === 'date' || entity[prop] instanceof Date"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
 
                     <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
                     <TextInputComponent 
                     v-if="typeof entity[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
-                    :property-name="entityClass.getColumnNameByKey(prop)"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
                     <!---------------------------------------------->
                 </div>
@@ -37,6 +47,7 @@ import FormRowThreeItemsComponent from '@/components/Form/FormRowThreeItemsCompo
 import NumberInputComponent from '@/components/Form/NumberInputComponent.vue';
 import TextInputComponent from '@/components/Form/TextInputComponent.vue';
 import ObjectInputComponent from '@/components/Form/ObjectInputComponent.vue';
+import DateInputComponent from '@/components/Form/DateInputComponent.vue';
 import { BaseEntity } from '@/entities/base_entitiy';
 import { DetailTypes } from '@/enums/detail_type';
 import { StringType } from '@/enums/string_type';
@@ -46,6 +57,7 @@ import Application from '@/models/application';
 export default {
     name: 'DefaultDetailView',
     components: {
+        DateInputComponent,
         FormGroupComponent,
         FormRowTwoItemsComponent,
         FormRowThreeItemsComponent,
@@ -71,9 +83,7 @@ export default {
             const groups: Record<string, Array<{ rowType: string, properties: string[] }>> = {};
             let currentGroup = 'default';
             
-            // Procesar las propiedades en orden
             for (const prop of keys) {
-                // Si esta propiedad tiene un grupo definido, cambiamos al nuevo grupo
                 if (viewGroups[prop]) {
                     currentGroup = viewGroups[prop];
                     if (!groups[currentGroup]) {
@@ -81,22 +91,15 @@ export default {
                     }
                 }
                 
-                // Si no hay grupo actual, crear uno por defecto
                 if (!groups[currentGroup]) {
                     groups[currentGroup] = [];
                 }
-                
-                // Obtener el tipo de fila para esta propiedad
                 const rowType = viewGroupRows[prop] || ViewGroupRow.PAIR;
-                
-                // Verificar si el último chunk tiene el mismo rowType
                 const lastChunk = groups[currentGroup][groups[currentGroup].length - 1];
                 
                 if (lastChunk && lastChunk.rowType === rowType) {
-                    // Agregar al chunk existente
                     lastChunk.properties.push(prop);
                 } else {
-                    // Crear un nuevo chunk
                     groups[currentGroup].push({
                         rowType: rowType,
                         properties: [prop]

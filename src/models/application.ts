@@ -35,35 +35,35 @@ class ApplicationClass {
         return this.instance;
     }
 
-    changeView(entity: typeof BaseEntity) {
+    changeView = (entity: typeof BaseEntity) => {
         this.activeViewEntity.value = entity;
         this.activeViewComponent.value = entity.getModuleDefaultComponent();
     }
 
-    changeViewToDetailView(entity: BaseEntity) {
+    changeViewToDetailView = (entity: BaseEntity) => {
         if (this.activeViewEntity.value) {
             this.activeViewComponentProps.value = entity;
             this.activeViewComponent.value = this.activeViewEntity.value.getModuleDetailComponent();
         }
     }
 
-    toggleSidebar() {
+    toggleSidebar = () => {
         this.sidebarToggled.value = !this.sidebarToggled.value;
     }
 
-    setSidebar(state: boolean) {
+    setSidebar = (state: boolean) => {
         this.sidebarToggled.value = state;
     }
 
-    showLoadingScreen() {
+    showLoadingScreen = () => {
         this.isScreenLoading.value = true;
     }
 
-    hideLoadingScreen() {
+    hideLoadingScreen = () => {
         this.isScreenLoading.value = false;
     }
 
-    showModal(entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) {
+    showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
         this.modal.value.modalView = entity;
         this.modal.value.modalOnCloseFunction = null;
         this.modal.value.viewType = viewType;
@@ -71,14 +71,14 @@ class ApplicationClass {
         this.isShowingModal.value = true;
     }
 
-    closeModal() {
+    closeModal = () => {
         this.isShowingModal.value = false;
         setTimeout(() => {
             this.modal.value.modalView = null;
         }, 150);
     }
 
-    openModalOnFunction(entity: typeof BaseEntity, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) {
+    showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) => {
         this.modal.value.modalView = entity;
         this.modal.value.modalOnCloseFunction = onCloseFunction;
         this.modal.value.viewType = viewType;
@@ -86,7 +86,7 @@ class ApplicationClass {
         this.isShowingModal.value = true;
     }
 
-    closeModalOnFunction(param : any) {
+    closeModalOnFunction = (param : any) => {
         if (this.modal.value.modalOnCloseFunction) {
             this.modal.value.modalOnCloseFunction(param);
         }

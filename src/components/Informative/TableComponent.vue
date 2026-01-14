@@ -2,7 +2,7 @@
 <table>
     <thead>
         <tr>
-            <td v-for="(item, key) in Application.activeViewEntity?.getColumns()" :class="Application.activeViewEntity?.getCSSClasses()[key]">
+            <td v-for="(item, key) in Application.activeViewEntity?.getProperties()" :class="Application.activeViewEntity?.getCSSClasses()[key]">
                 {{ item }}
             </td>
         </tr>
