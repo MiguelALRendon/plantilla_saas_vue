@@ -1,36 +1,33 @@
 <template>
 <div :class="'side-bar-item ' + (isActive ? ' active' : '')" @click="setNewView">
     <div class="icon">
-        <img :src="module.moduleIcon" alt="">
+        <img :src="module.getModuleIcon()" alt="">
     </div>
-    <span>{{module.moduleName}}</span>
+    <span>{{module.getModuleName()}}</span>
 </div>
 </template>
 
 <script lang="ts">
-import { Module } from '@/models/module';
+import { BaseEntity } from '@/entities/base_entitiy';
 import Application from '@/models/application';
+import { PropType } from 'vue';
 
 export default {
     name: 'SideBarItemComponent',
     props: {
-        active: {
-            type: Boolean,
-            default: false
-        },
-        module : {
-            type: Object as () => Module<any>,
+        module: {
+            type: Function as unknown as PropType<typeof BaseEntity>,
             required: true
         }
     },
     computed: {
         isActive(): boolean {
-            return Application.activeView.value?.moduleName === (this.module && this.module.moduleName);
+            return Application.activeViewEntity.value?.getModuleName() === (this.module && this.module.getModuleName());
         }
     },
     methods: {
         setNewView() {
-            Application.changeView(this.module as Module<any>);
+            Application.changeView(this.module as typeof BaseEntity);
         }
     },
 }

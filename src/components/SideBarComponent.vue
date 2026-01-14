@@ -6,8 +6,7 @@
 
         <div class="body">
         <SideBarItemComponent 
-        v-for="module in MODULES" 
-        :active="false" 
+        v-for="module in Application.ModuleList.values()" 
         :module="module"
         />
         </div>
@@ -20,7 +19,6 @@
 
 <script lang="ts">
 import SideBarItemComponent from './SideBarItemComponent.vue';
-import { MODULES } from '@/constants/modules';
 import Application from '@/models/application';
 
 export default {
@@ -35,7 +33,7 @@ export default {
     },
     data() {
         return {
-            MODULES,
+            Application,
         }
     }
 }

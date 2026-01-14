@@ -2,7 +2,7 @@
 <table>
     <thead>
         <tr>
-            <td v-for="(item, key) in Application.activeView?.moduleModelType.getColumns()" :class="Application.activeView?.moduleModelType.getCSSClasses()[key]">
+            <td v-for="(item, key) in Application.activeViewEntity?.getColumns()" :class="Application.activeViewEntity?.getCSSClasses()[key]">
                 {{ item }}
             </td>
         </tr>
@@ -25,14 +25,13 @@
 <script lang="ts">
 import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
-import { DetailTypes } from '@/enums/detail_type';
 import { MaskSides } from '@/enums/mask_sides';
 import Application from '@/models/application';
 export default {
     name: 'TableComponent',
     methods: {
         openDetailView(entity : BaseEntity) {
-            Application.changeViewToDetailView(entity, DetailTypes.EDIT);
+            Application.changeViewToDetailView(entity);
         }  
     },
     data() {

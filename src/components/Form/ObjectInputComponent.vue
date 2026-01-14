@@ -1,9 +1,9 @@
 <template>
 <div class="TextInput ObjectInput">
-    <label :for="'id-' + tableName" class="label-input">{{ tableName }}</label>
+    <label :for="'id-' + componentName" class="label-input">{{ componentName }}</label>
     <input 
-        :id="'id-' + tableName" 
-        :name="tableName" 
+        :id="'id-' + componentName" 
+        :name="componentName" 
         type="text" 
         class="main-input" 
         placeholder=" "
@@ -37,8 +37,8 @@ export default {
         }
     },
     computed: {
-        tableName(): string | undefined {
-            return (this.modelValue.constructor as typeof BaseEntity).getTableName()
+        componentName(): string | undefined {
+            return (this.modelValue.constructor as typeof BaseEntity).getModuleName()
         }
     },
 }

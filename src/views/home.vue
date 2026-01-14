@@ -5,20 +5,18 @@
 
 <script lang="ts">
 import Application from '@/models/application';
-import { MODULES } from '@/constants/modules';
 import { ViewTypes } from '@/enums/view_type';
-import { InventoryViewModuleInstance } from '@/view_models/inventory_view';
+import { Products } from '@/entities/products';
 
 export default {
     name: 'HomeView',
     methods: {
         showModal() {
-            Application.showModal(InventoryViewModuleInstance, ViewTypes.CUSTOMVIEW, 'inputs_source');
+            Application.showModal(Products, ViewTypes.DEFAULTVIEW);
         }
     },
     data() {
         return {
-            MODULES,
             ViewTypes,
         }
     }

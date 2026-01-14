@@ -1,15 +1,14 @@
 import { Component, ref, Ref } from 'vue';
-import type { Module } from './module';
 import type { Modal } from './modal';
 import { ViewTypes } from '@/enums/view_type';
 import { BaseEntity } from '@/entities/base_entitiy';
-import { DetailTypes } from '@/enums/detail_type';
-import { ViewPropsModel } from './view_props_model';
+import { Products } from '@/entities/products';
 
 class ApplicationClass {
-    activeView: Ref<Module<any> | null>;
+    ModuleList: Ref<(typeof BaseEntity)[]>;
+    activeViewEntity: Ref<typeof BaseEntity | null>;
     activeViewComponent: Ref<Component | null>;
-    activeViewComponentProps: Ref<ViewPropsModel | null>;
+    activeViewComponentProps: Ref<BaseEntity | null>;
     sidebarToggled: Ref<boolean>;
     isScreenLoading: Ref<boolean>;
     isShowingModal: Ref<boolean>;
@@ -17,7 +16,8 @@ class ApplicationClass {
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
-        this.activeView = ref<Module<any> | null>(null) as Ref<Module<any> | null>;
+        this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
+        this.activeViewEntity = ref<typeof BaseEntity | null>(null) as Ref<typeof BaseEntity | null>;
         this.activeViewComponent = ref<Component | null>(null) as Ref<Component | null>;
         this.sidebarToggled = ref<boolean>(true);
         this.isScreenLoading = ref<boolean>(false);
@@ -27,7 +27,7 @@ class ApplicationClass {
             modalOnCloseFunction: null,
             viewType: ViewTypes.LISTVIEW
         }) as Ref<Modal>;
-        this.activeViewComponentProps = ref<ViewPropsModel | null>(null) as Ref<ViewPropsModel | null>;
+        this.activeViewComponentProps = ref<BaseEntity | null>(null) as Ref<BaseEntity | null>;
     }
 
     static getInstance() {
@@ -35,18 +35,15 @@ class ApplicationClass {
         return this.instance;
     }
 
-    changeView(module: Module<any>) {
-        this.activeView.value = module;
-        this.activeViewComponent.value = module.moduleDefaultType;
-        this.activeViewComponentProps.value = null;
+    changeView(entity: typeof BaseEntity) {
+        this.activeViewEntity.value = entity;
+        this.activeViewComponent.value = entity.getModuleDefaultComponent();
     }
-    changeViewToDetailView(entity : BaseEntity, detailType : DetailTypes) {
-        if (this.activeView.value) {
-            this.activeViewComponent.value = this.activeView.value.moduleDetailType;
-            this.activeViewComponentProps.value = {
-                viewEntity: entity,
-                viewType: detailType
-            };
+
+    changeViewToDetailView(entity: BaseEntity) {
+        if (this.activeViewEntity.value) {
+            this.activeViewComponentProps.value = entity;
+            this.activeViewComponent.value = this.activeViewEntity.value.getModuleDetailComponent();
         }
     }
 
@@ -66,8 +63,8 @@ class ApplicationClass {
         this.isScreenLoading.value = false;
     }
 
-    showModal(module: Module<any>, viewType: ViewTypes, customViewId?: string) {
-        this.modal.value.modalView = module;
+    showModal(entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) {
+        this.modal.value.modalView = entity;
         this.modal.value.modalOnCloseFunction = null;
         this.modal.value.viewType = viewType;
         this.modal.value.customViewId = customViewId;
@@ -81,8 +78,8 @@ class ApplicationClass {
         }, 150);
     }
 
-    openModalOnFunction(module: Module<any>, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) {
-        this.modal.value.modalView = module;
+    openModalOnFunction(entity: typeof BaseEntity, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) {
+        this.modal.value.modalView = entity;
         this.modal.value.modalOnCloseFunction = onCloseFunction;
         this.modal.value.viewType = viewType;
         this.modal.value.customViewId = customViewId;
@@ -102,5 +99,7 @@ class ApplicationClass {
 }
 
 const Application = ApplicationClass.getInstance();
+
+Application.ModuleList.value.push(Products);
 export default Application;
 export { Application };

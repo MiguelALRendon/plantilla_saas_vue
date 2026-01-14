@@ -39,10 +39,10 @@ export default {
             return Application.sidebarToggled.value;
         },
         title() {
-            return Application.activeView.value!.moduleName ?? 'Default';
+            return Application.activeViewEntity.value?.getModuleName() ?? 'Default';
         },
         icon() {
-            return Application.activeView.value!.moduleIcon ?? '';
+            return Application.activeViewEntity.value?.getModuleIcon() ?? '';
         }
     },
     data() {

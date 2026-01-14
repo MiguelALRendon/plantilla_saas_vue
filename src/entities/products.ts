@@ -1,12 +1,14 @@
-import { CSSColumnClass } from '@/decorations';
+import { CSSColumnClass, ModuleIcon, ModuleName } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
-import { Column, Mask, Table, DefaultProperty, StringTypeDef, ViewGroup, ViewGroupRowDecorator } from '@/decorations';
+import { Column, Mask, DefaultProperty, StringTypeDef, ViewGroup, ViewGroupRowDecorator } from '@/decorations';
 import { ViewGroupRow } from '@/enums/view_group_row.ts';
+import ICONS from '@/constants/icons.ts';
 
-@Table('Productos')
 @DefaultProperty('name')
+@ModuleName('Products')
+@ModuleIcon(ICONS.PRODUCTS)
 export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
     @Column('ID')
@@ -42,8 +44,4 @@ export class Products extends BaseEntity {
     @Column('Inner Product')
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     product! : Products;
-
-    constructor(data: Record<string, any>) {
-        super(data);
-    }
 }

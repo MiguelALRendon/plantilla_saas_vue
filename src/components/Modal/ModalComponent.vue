@@ -4,9 +4,9 @@
         <div class="modal-head">
             <div class="left-side">
                 <div class="icon">
-                    <img v-if="modalView && modalModule" :src="modalModule.moduleIcon" alt="">
+                    <img v-if="modalView && modalModule" :src="modalModule.getModuleIcon()" alt="">
                 </div>
-                <span class="title" v-if="modalView && modalModule">{{ modalModule.moduleName }}</span>
+                <span class="title" v-if="modalView && modalModule">{{ modalModule.getModuleName() }}</span>
             </div>
 
             <button class="close-button" @click="closeModal"><span :class="GGCLASS">{{ GGICONS.CLOSE }}</span></button>
@@ -27,10 +27,11 @@
 <script lang="ts">
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import ICONS from '@/constants/icons';
+import { BaseEntity } from '@/entities/base_entitiy';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import { Modal } from '@/models/modal';
-import { Module } from '@/models/module';
+import { Component } from 'vue';
 
 export default {
     name: 'ModalComponent',
@@ -50,11 +51,11 @@ export default {
             GGCLASS,
             GGICONS,
             Application,
-            modalModule: null as Module<any> | null,
+            modalModule: null as typeof BaseEntity | null,
         }
     },
     computed: {
-        modalView() {
+        modalView() : Component | null {
             const modal = Application.modal?.value as Modal;
 
             if (!modal || !modal.modalView) return null;
@@ -63,13 +64,13 @@ export default {
 
             switch (modal.viewType as ViewTypes) {
                 case ViewTypes.LISTVIEW:
-                    return modal.modalView.moduleListType;
+                    return modal.modalView.getModuleListComponent();
                 case ViewTypes.DETAILVIEW:
-                    return modal.modalView.moduleDetailType;
+                    return modal.modalView.getModuleDetailComponent();
                 case ViewTypes.DEFAULTVIEW:
-                    return modal.modalView.moduleDefaultType;
+                    return modal.modalView.getModuleDefaultComponent();
                 case ViewTypes.CUSTOMVIEW:
-                    return modal.modalView.moduleFromCustomTypesList(modal.customViewId || '');
+                    return modal.modalView.getModuleCustomComponents()?.get(modal.customViewId!) || null;
                 default:
                     return null;
             }

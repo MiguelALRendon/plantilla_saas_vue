@@ -4,9 +4,14 @@ import './css/constants.css'
 import './css/form.css'
 import App from './App.vue'
 import Application from '@/models/application'
-import { MODULES } from '@/constants/modules'
 
-// Initialize singleton and set default active view
-Application.changeView(MODULES[0]);
+const app = createApp(App)
+app.mount('#app')
 
-createApp(App).mount('#app')
+if (Application.ModuleList && Application.ModuleList.value && Application.ModuleList.value.length > 0) {
+	try {
+		Application.changeView(Application.ModuleList.value[0])
+	} catch (e) {
+		console.log('Failed to set initial module view', e)
+	}
+}

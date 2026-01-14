@@ -57,8 +57,8 @@ export default {
         return {
             StringType,
             BaseEntity,
-            entity: Application.activeViewComponentProps.value?.viewEntity as BaseEntity,
-            entityClass: Application.activeView.value?.moduleModelType as typeof BaseEntity,
+            entity: Application.activeViewComponentProps.value as BaseEntity,
+            entityClass: Application.activeViewEntity.value as typeof BaseEntity,
             detailType: Application.activeViewComponentProps.value?.viewType as DetailTypes,
         };
     },

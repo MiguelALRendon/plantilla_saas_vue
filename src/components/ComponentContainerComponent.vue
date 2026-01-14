@@ -27,9 +27,9 @@ export default {
         };
     },
     created() {
-        const init = Application.activeView.value;
+        const init = Application.activeViewComponent.value;
         if (init) {
-            this.currentComponent = markRaw(init.moduleDefaultType);
+            this.currentComponent = markRaw(init);
         }
 
         watch(Application.activeViewComponent, async (newVal: Component | null) => {

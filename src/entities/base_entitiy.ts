@@ -1,6 +1,5 @@
 import {
     COLUMN_NAME_KEY,
-    TABLE_NAME_KEY,
     MASK_KEY,
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
@@ -20,6 +19,7 @@ import type { Component } from 'vue';
 import type { MaskSides } from "@/enums/mask_sides";
 import type { StringType } from "@/enums/string_type";
 import type { ViewGroupRow } from "@/enums/view_group_row";
+import DefaultListview from "@/views/default_listview.vue";
 
 export abstract class BaseEntity {
     [key: string]: any;
@@ -45,10 +45,6 @@ export abstract class BaseEntity {
     public getCSSClasses(): Record<string, string> {
         const proto = (this.constructor as any).prototype;
         return proto[CSS_COLUMN_CLASS_KEY] || {};
-    }
-
-    public static getTableName(): string | undefined {
-        return (this as any)[TABLE_NAME_KEY];
     }
 
     public static getColumns(): Record<string, string> {
@@ -90,7 +86,7 @@ export abstract class BaseEntity {
     }
 
     public static getModuleListComponent(): Component {
-        return (this as any)[MODULE_LIST_COMPONENT_KEY] || DefaultDetailView;
+        return (this as any)[MODULE_LIST_COMPONENT_KEY] || DefaultListview;
     }
 
     public static getModuleDetailComponent(): Component {
@@ -98,7 +94,7 @@ export abstract class BaseEntity {
     }
 
     public static getModuleDefaultComponent(): Component {
-        return (this as any)[MODULE_DEFAULT_COMPONENT_KEY] || DefaultDetailView;
+        return (this as any)[MODULE_DEFAULT_COMPONENT_KEY] || DefaultListview;
     }
 
     public static getModuleCustomComponents(): Map<string, Component> | null {
