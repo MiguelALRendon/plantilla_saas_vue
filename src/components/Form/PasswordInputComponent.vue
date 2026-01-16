@@ -28,7 +28,8 @@ export default {
         },
         modelValue: {
             type: String,
-            required: true
+            required: true,
+            default: '',
         }
     },
     data() {

@@ -26,7 +26,12 @@
 
                     <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
                     <TextInputComponent 
-                    v-if="typeof entity[prop] === 'string' && entity.getStringType()[prop] !== StringType.TEXT"
+                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXT"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
+                    v-model="entity[prop]" />
+
+                    <TextAreaComponent 
+                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXTAREA"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
                     <!---------------------------------------------->
@@ -50,6 +55,7 @@ import { DetailTypes } from '@/enums/detail_type';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import Application from '@/models/application';
+import TextAreaComponent from '@/components/Form/TextAreaComponent.vue';
 
 export default {
     name: 'DefaultDetailView',
@@ -59,6 +65,7 @@ export default {
         FormRowTwoItemsComponent,
         FormRowThreeItemsComponent,
         TextInputComponent,
+        TextAreaComponent,
         ObjectInputComponent,
         NumberInputComponent
     },

@@ -36,6 +36,10 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     box-sizing: border-box;
     font-size: 1rem;
 }
+textarea {
+    resize: vertical;
+    min-height: 5rem;
+}
 input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
     text-align: center;
     border-radius: 0;

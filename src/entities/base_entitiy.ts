@@ -18,7 +18,7 @@ import {
 import DefaultDetailView from "@/views/default_detailview.vue";
 import type { Component } from 'vue';
 import type { MaskSides } from "@/enums/mask_sides";
-import type { StringType } from "@/enums/string_type";
+import { StringType } from "@/enums/string_type";
 import type { ViewGroupRow } from "@/enums/view_group_row";
 import DefaultListview from "@/views/default_listview.vue";
 
@@ -130,7 +130,15 @@ export abstract class BaseEntity {
 
     public getStringType(): Record<string, StringType> {
         const proto = (this.constructor as any).prototype;
-        return proto[STRING_TYPE_KEY] || {};
+        const stringTypes = proto[STRING_TYPE_KEY] || {};
+        const properties = (this.constructor as typeof BaseEntity).getProperties();
+        const result: Record<string, StringType> = {};
+        
+        for (const key of Object.keys(properties)) {
+            result[key] = stringTypes[key] ?? StringType.TEXT;
+        }
+        
+        return result;
     }
 
     public getViewGroups(): Record<string, string> {

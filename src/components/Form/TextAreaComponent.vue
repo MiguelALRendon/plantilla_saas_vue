@@ -4,20 +4,19 @@
     :for="'id-' + propertyName" 
     class="label-input">{{ propertyName }}</label>
 
-    <input 
+    <textarea 
     :id="'id-' + propertyName" 
     :name="propertyName" 
-    type="text" 
     class="main-input" 
     placeholder=" "
     :value="modelValue"
-    @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+    @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)" />
 </div>
 </template>
 
 <script lang="ts">
 export default {
-    name: 'TextInputComponent',
+    name: 'TextAreaComponent',
     props: {
         propertyName: {
             type: String,
@@ -32,7 +31,7 @@ export default {
     },
     data() {
         return {
-            textInputId: 'text-input-' + this.propertyName,
+            textInputId: 'text-area-' + this.propertyName,
         }
     },
 }
