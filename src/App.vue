@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" :class="Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : ''">
     <SideBarComponent />
     <ComponentContainerComponent />
     <ModalComponent />
@@ -10,6 +10,7 @@
 import ComponentContainerComponent from './components/ComponentContainerComponent.vue';
 import SideBarComponent from './components/SideBarComponent.vue';
 import ModalComponent from './components/Modal/ModalComponent.vue';
+import Application from './models/application';
 </script>
 
 <style scoped>

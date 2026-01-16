@@ -56,6 +56,7 @@ export default {
     padding-bottom: 0.5rem;
     padding-right: 0.5rem;
     box-sizing: border-box;
+    background-color: var(--white);
 }
 .ComponentContainer {
     width: 100%;
@@ -66,8 +67,8 @@ export default {
     padding-inline: 1rem;
     padding-bottom: 2rem;
     position: relative;
-    background-color: #f5f5f5;
-    border-radius: 1rem;
+    background-color: var(--bg-gray);
+    border-radius: var(--border-radius);
     box-sizing: border-box;
 }
 </style>

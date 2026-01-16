@@ -29,8 +29,8 @@ export default {
         font-size: 1.5rem;
         top: 50px;
         z-index: 99999;
-        background-color: white;
-        color: #555;
+        background-color: var(--white);
+        color: var(--gray);
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.3s ease-in-out;

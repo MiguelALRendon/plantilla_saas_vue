@@ -20,13 +20,13 @@ import { BaseEntity } from '@/entities/base_entitiy';
 
 <style scoped>
 .lookup-item-card {
-    border-radius: 1rem;
+    border-radius: var(--border-radius);
     padding: 1rem;
     cursor: pointer;
     background-color: var(--white);
     margin-bottom: .75rem;
     transition: 0.5s ease;
-    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05)
+    box-shadow: var(--shadow-light);
 }
 .lookup-item-card:hover {
     filter: brightness(0.94);

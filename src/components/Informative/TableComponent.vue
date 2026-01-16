@@ -71,10 +71,11 @@ export default {
 table {
     width: 100%;
     height: calc(100vh - 50px - 2rem - 2rem);
-    background-color: white;
-    border-radius: 1rem;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
     display: flex;
     flex-direction: column;
+    box-shadow: var(--shadow-light);
 }
 
 thead {
@@ -121,7 +122,7 @@ tfoot tr {
 td {
     padding-inline: 1rem;
     padding-block: 0.5rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--gray-lighter);
     user-select: none;
     width: 100%;
 }
@@ -133,6 +134,6 @@ tbody tr {
     cursor: pointer;
 }
 tbody tr:hover {
-    background-color: #f5f5f5;
+    background-color: var(--bg-gray);
 }
 </style>

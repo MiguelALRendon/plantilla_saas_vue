@@ -3,9 +3,21 @@
 
     --sidebar-min-width: 60px;
 
+    /* Colores base */
     --white: #ffffff;
     --white-95: #fffffe;
+    
+    /* Grises y neutros */
+    --gray-medium: #4a5568;
+    --gray: #555;
+    --gray-light: #a0a0a0;
+    --gray-lighter: #e0e0e0;
+    --gray-lightest: #f0f0f0;
     --bg-light: #f4f8fe;
+    --bg-gray: #f5f5f5;
+    --border-gray: lightgray;
+    
+    /* Colores de acento */
     --accent-red: #db3955;
     --accent-pink: #f33f8a;
     --accent-rose: #b86094;
@@ -19,6 +31,7 @@
     --success: #8fc9cf;
     --warning: var(--warm-1);
 
+    /* Colores de botones */
     --btn-primary: #d63850;
     --btn-secondary: #8b5fc7;
     --btn-info: #4a9dd9;
@@ -26,8 +39,42 @@
     --btn-warning: #f5a623;
     --btn-accent: #c74d8a;
 
+    /* Gradientes */
     --grad-pink-purple: linear-gradient(135deg, var(--accent-pink) 0%, var(--purple-1) 100%);
     --grad-rose-sky: linear-gradient(135deg, var(--accent-rose) 0%, var(--sky) 100%);
     --grad-red-warm: linear-gradient(135deg, var(--accent-red) 0%, var(--warm-1) 100%);
     --grad-lavender-blue: linear-gradient(135deg, var(--lavender) 0%, var(--sky) 100%);
+    
+    /* Sombras y overlays */
+    --shadow-light: 0 2px 2px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 2px 2px rgba(0, 0, 0, 0.2);
+    --shadow-dark: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-white: 0 2px 2px rgba(255, 255, 255, 0.2);
+    --overlay-dark: rgba(0, 0, 0, 0.5);
+    --overlay-light: rgba(0, 0, 0, 0.05);
+    
+    /* Border radius estándar */
+    --border-radius: 1rem;
+    --border-radius-circle: 100%;
+}
+
+.dark-mode {
+    --white: #1a1a1a !important;
+    --white-95: #1e1e1e !important;
+    
+    --gray-medium: #e0e0e0 !important;
+    --gray: #d0d0d0 !important;
+    --gray-light: #888888 !important;
+    --gray-lighter: #3a3a3a !important;
+    --gray-lightest: #2a2a2a !important;
+    --bg-light: #0f1419 !important;
+    --bg-gray: #1e1e1e !important;
+    --border-gray: #3a3a3a !important;
+    
+    --shadow-light: 0 2px 2px rgba(0, 0, 0, 0.3) !important;
+    --shadow-medium: 0 2px 2px rgba(0, 0, 0, 0.5) !important;
+    --shadow-dark: 0 2px 10px rgba(0, 0, 0, 0.7) !important;
+    --shadow-white: 0 2px 2px rgba(255, 255, 255, 0.1) !important;
+    --overlay-dark: rgba(0, 0, 0, 0.8) !important;
+    --overlay-light: rgba(255, 255, 255, 0.05) ;
 }

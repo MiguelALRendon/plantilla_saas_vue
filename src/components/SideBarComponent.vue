@@ -50,7 +50,7 @@ export default {
     transition: 0.5s ease;
     position: relative;
     z-index: 100;
-    background-color: white;
+    background-color: var(--white);
     overflow: hidden;
 }
 .sidebar span{
@@ -71,7 +71,7 @@ export default {
     max-height: 90px;
     padding: 0;
     overflow: hidden;
-    border-bottom: 1px solid lightgray;
+    border-bottom: 1px solid var(--border-gray);
     transition: 0.5s ease;
 }
 .sidebar.toggled .header {
@@ -94,7 +94,7 @@ export default {
     padding: 1rem;
     overflow: hidden;
     transition: 0.5s ease;
-    border-top: 1px solid lightgray;
+    border-top: 1px solid var(--border-gray);
 }
 .sidebar.toggled .footer {
     height: 100%;

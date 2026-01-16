@@ -95,7 +95,7 @@ export default {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--overlay-dark);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -109,9 +109,9 @@ export default {
 }
 
 .modal-structure {
-    background-color: white;
-    border-radius: 1rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-dark);
     max-width: 60vw;
     max-height: calc(60vh + 55px);
     width: 100%;
@@ -152,8 +152,8 @@ export default {
     padding: 1rem;
     margin-inline: 0.5rem;
     box-sizing: border-box;
-    background-color: #f5f5f5;
-    border-radius: 1rem;
+    background-color: var(--bg-gray);
+    border-radius: var(--border-radius);
 }
 
 .modal-footer {

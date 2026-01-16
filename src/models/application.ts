@@ -3,8 +3,10 @@ import type { Modal } from './modal';
 import { ViewTypes } from '@/enums/view_type';
 import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
+import { AppConfiguration } from './AppConfiguration';
 
 class ApplicationClass {
+    AppConfiguration: Ref<AppConfiguration>;
     ModuleList: Ref<(typeof BaseEntity)[]>;
     activeViewEntity: Ref<typeof BaseEntity | null>;
     activeViewComponent: Ref<Component | null>;
@@ -16,6 +18,12 @@ class ApplicationClass {
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
+        this.AppConfiguration = ref<AppConfiguration>({
+            appName: 'My SaaS Application',
+            appVersion: '1.0.0',
+            apiBaseUrl: 'https://api.my-saas-app.com',
+            isDarkMode: false
+        }) as Ref<AppConfiguration>;
         this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
         this.activeViewEntity = ref<typeof BaseEntity | null>(null) as Ref<typeof BaseEntity | null>;
         this.activeViewComponent = ref<Component | null>(null) as Ref<Component | null>;
@@ -33,6 +41,10 @@ class ApplicationClass {
     static getInstance() {
         if (!this.instance) this.instance = new ApplicationClass();
         return this.instance;
+    }
+
+    bootDarkMode = () => {
+        this.AppConfiguration.value.isDarkMode = !this.AppConfiguration.value.isDarkMode;
     }
 
     changeView = (entity: typeof BaseEntity) => {

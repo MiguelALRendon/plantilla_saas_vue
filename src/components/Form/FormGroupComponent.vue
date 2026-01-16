@@ -45,17 +45,17 @@ export default {
 
 <style scoped>
 .form-group {
-    background-color: white;
-    border-radius: 1rem;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
     margin-block: 1rem;
 }
 
 .form-group-header {
     font-weight: bold;
     font-size: 1.25rem;
-    color: #4a5568;
+    color: var(--gray-medium);
     padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--gray-lighter);
     height: 30px;
     max-height: 30px;
     display: flex;

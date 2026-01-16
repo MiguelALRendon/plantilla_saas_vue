@@ -3,7 +3,7 @@
     <div class="icon">
         <img :src="module.getModuleIcon()" alt="">
     </div>
-    <span>{{module.getModuleName()}}</span>
+    <span class="module-title">{{module.getModuleName()}}</span>
 </div>
 </template>
 
@@ -38,11 +38,11 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-radius: 0.5rem;
+    border-radius: var(--border-radius);
     transition: 0.4s ease;
 }
 .side-bar-item:hover {
-    background-color: #f0f0f0;
+    background-color: var(--gray-lightest);
     cursor: pointer;
 }
 .side-bar-item.active {
@@ -53,7 +53,7 @@ export default {
 }
 
 .side-bar-item.active .icon img, .icon img {
-    filter: drop-shadow(0 2px 2px rgba(255, 255, 255, 0.2));
+    filter: drop-shadow(var(--shadow-white));
 }
 
 .side-bar-item .icon{
@@ -63,5 +63,11 @@ export default {
 .side-bar-item .icon img{
     width: var(--sidebar-min-width);
     height: var(--sidebar-min-width);
+}
+
+.active .module-title {
+    font-weight: 600;
+    color: var(--white);
+    font-size: 1.1rem;
 }
 </style>

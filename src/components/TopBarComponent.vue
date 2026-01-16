@@ -15,7 +15,7 @@
                     <img :src="ICONS.AVATAR" alt="">
                 </div>
             </button>
-            Chango
+            <span>Chango</span>
         </div>
     </div>
 </template>
@@ -69,12 +69,12 @@ export default {
     aspect-ratio: 1 / 1;
     height: 100%;
     border: none;
-    border-radius: 100%;
+    border-radius: var(--border-radius-circle);
     padding: 0 !important;
 }
 .topbar .push-side-nav-button:hover,
 .topbar .profile_button:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--overlay-light);
 }
 .topbar .push-side-nav-button img,
 .topbar .profile_button img {
@@ -113,6 +113,6 @@ export default {
 
 .topbar .topbar-title {
     font-size: 1.25rem;
-    color: #2d3748;
+    color: var(--gray-medium);
 }
 </style>
