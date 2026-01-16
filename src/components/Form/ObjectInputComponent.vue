@@ -7,16 +7,16 @@
         type="text" 
         class="main-input" 
         placeholder=" "
-        :value="modelValue.getDefaultPropertyValue()"
+        :value="modelValue?.getDefaultPropertyValue()"
         readonly="true"
         @input="$emit('update:modelValue', modelValue)" />
-    <button class="right" @click="Application.showModalOnFunction(componentType, setNewValue, ViewTypes.LOOKUPVIEW)"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
+    <button class="right" @click="Application.showModalOnFunction(modelType, setNewValue, ViewTypes.LOOKUPVIEW)"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
 </template>
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity, EmptyEntity } from '@/entities/base_entitiy';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import { PropType } from 'vue';
@@ -26,16 +26,21 @@ export default {
     props: {
         modelValue: {
             type: Object as PropType<BaseEntity>,
-            required: true
+            required: false,
+            default: () => new EmptyEntity({}),
         },
         propertyName: {
             type: String,
             required: true,
             default: '',
         },
+        modelType: {
+            type: Function as unknown as PropType<typeof BaseEntity>,
+            required: true,
+        }
     },
     methods: {
-        setNewValue(newValue: BaseEntity) {
+        setNewValue(newValue: BaseEntity | undefined) {
             this.$emit('update:modelValue', newValue);
         }
     },
@@ -47,11 +52,6 @@ export default {
             ViewTypes,
             BaseEntity,
         }
-    },
-    computed: {
-        componentType(): typeof BaseEntity {
-            return (this.modelValue.constructor as typeof BaseEntity)
-        }
-    },
+    }
 }
 </script>

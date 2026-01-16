@@ -1,5 +1,6 @@
 import {
     PROPERTY_NAME_KEY,
+    PROPERTY_TYPE_KEY,
     MASK_KEY,
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
@@ -23,6 +24,10 @@ import DefaultListview from "@/views/default_listview.vue";
 
 export abstract class BaseEntity {
     [key: string]: any;
+
+    isNull(): boolean {
+        return false;
+    }
     
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
@@ -50,6 +55,20 @@ export abstract class BaseEntity {
     public static getProperties(): Record<string, string> {
         const proto = this.prototype as any;
         return proto[PROPERTY_NAME_KEY] || {};
+    }
+
+    public static getPropertyTypes(): Record<string, any> {
+        const proto = this.prototype as any;
+        return proto[PROPERTY_TYPE_KEY] || {};
+    }
+
+    public static getPropertyType(propertyKey: string): any | undefined {
+        const types = this.getPropertyTypes();
+        return types[propertyKey];
+    }
+
+    public getPropertyType(propertyKey: string): any | undefined {
+        return (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
     }
 
     public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
@@ -122,5 +141,11 @@ export abstract class BaseEntity {
     public getViewGroupRows(): Record<string, ViewGroupRow> {
         const proto = (this.constructor as any).prototype;
         return proto[VIEW_GROUP_ROW_KEY] || {};
+    }
+}
+
+export class EmptyEntity extends BaseEntity {
+    override isNull(): boolean {
+        return true;
     }
 }

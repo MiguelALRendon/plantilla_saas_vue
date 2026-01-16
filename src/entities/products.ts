@@ -11,41 +11,41 @@ import ICONS from '@/constants/icons.ts';
 @ModuleIcon(ICONS.PRODUCTS)
 export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
-    @PropertyName('ID')
+    @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     id!: number;
 
-    @PropertyName('Name')
+    @PropertyName('Name', String)
     @CSSColumnClass('table-length-short')
     name!: string;
 
-    @PropertyName('Price')
+    @PropertyName('Price', Number)
     @Mask('$', MaskSides.START)
     @CSSColumnClass('table-length-small')
     price!: number;
 
     @ViewGroup('Grupo 2')
-    @PropertyName('Description')
+    @PropertyName('Description', String)
     @StringTypeDef(StringType.TEXTAREA)
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     description!: string;
 
-    @PropertyName('Stock')
+    @PropertyName('Stock', Number)
     @Mask(' Pz.', MaskSides.END)
     @CSSColumnClass('table-length-short')
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     stock!: number;
 
-    @PropertyName('Generic Date')
+    @PropertyName('Generic Date', Date)
     @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     genericDate!: Date;
 
-    @PropertyName('Catedral Product')
+    @PropertyName('Catedral Product', Products)
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     Catedral! : Products;
 
-    @PropertyName('Inner Product')
+    @PropertyName('Inner Product', Products)
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     product! : Products;
 }

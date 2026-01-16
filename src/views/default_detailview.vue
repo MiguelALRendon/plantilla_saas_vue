@@ -1,10 +1,6 @@
 <template>
 <h2 class="title">{{ entity.getDefaultPropertyValue() }}</h2>
 
-<ul>
-    <li v-for="propiedad in entityClass.getProperties()">{{ propiedad }}</li>
-</ul>
-
 <div v-for="(group, groupName) in groupedProperties" :key="groupName">
     <FormGroupComponent :title="groupName">
         <template v-for="(chunk, index) in group" :key="index">
@@ -13,17 +9,18 @@
                 :class="chunk.rowType === 'single' ? 'form-row-single' : ''">
                 <div v-for="prop in chunk.properties" :key="prop">
                     <NumberInputComponent 
-                    v-if="typeof entity[prop] === 'number'"
+                    v-if="entityClass.getPropertyType(prop) === Number"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
 
                     <ObjectInputComponent 
-                    v-if="entity[prop] instanceof BaseEntity"
+                    v-if="isBaseEntityType(prop)"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
+                    :modelType="entityClass.getPropertyType(prop)"
                     v-model="entity[prop]" />
 
                     <DateInputComponent
-                    v-if="entity[prop] === 'date' || entity[prop] instanceof Date"
+                    v-if="entityClass.getPropertyType(prop) === Date"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
 
@@ -122,6 +119,10 @@ export default {
                 default:
                     return FormRowTwoItemsComponent;
             }
+        },
+        isBaseEntityType(prop: string): boolean {
+            const propType = this.entityClass.getPropertyType(prop);
+            return propType && propType.prototype instanceof BaseEntity;
         }
     }
 }
