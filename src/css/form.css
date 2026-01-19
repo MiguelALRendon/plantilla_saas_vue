@@ -85,9 +85,12 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 .TextInput:has(.main-input:focus) button, .TextInput:has(button:focus) button {
     background-color: var(--lavender);
-    color: var(--white);
+    color: var(--white) !important;
     border: none !important;
     border: 2px solid var(--lavender);
+}
+.TextInput:has(.main-input:focus) button span, .TextInput:has(button:focus) button span {
+    color: var(--white) !important;
 }
 .TextInput:has(button:focus) .main-input {
     border: 2px solid var(--lavender);
@@ -98,11 +101,14 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border-top: 1px solid var(--sky);
     border-bottom: 1px solid var(--sky);
     font-size: 1.5rem;
-    color: var(--blue-1);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: 0.3s ease;
+    background-color: var(--bg-gray);
+}
+.TextInput button span {
+    color: var(--sky) !important;
 }
 .TextInput.NumberInput button.left { border-radius: var(--border-radius) 0 0 var(--border-radius); border-left: 1px solid var(--sky); }
 .TextInput.NumberInput button.right, 

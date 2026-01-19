@@ -13,7 +13,6 @@ export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
-    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     id!: number;
 
     @PropertyName('Name', String)
@@ -28,24 +27,23 @@ export class Products extends BaseEntity {
     @ViewGroup('Grupo 2')
     @PropertyName('Description', String)
     @StringTypeDef(StringType.TEXTAREA)
-    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     description!: string;
 
     @PropertyName('Stock', Number)
     @Mask(' Pz.', MaskSides.END)
     @CSSColumnClass('table-length-short')
-    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     stock!: number;
 
     @PropertyName('Generic Date', Date)
-    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
     genericDate!: Date;
 
     @PropertyName('Catedral Product', Products)
-    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     Catedral! : Products;
 
     @PropertyName('Inner Product', Products)
     @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
     product! : Products;
+
+    @PropertyName('Is Bolian', Boolean)
+    bolian!: boolean;
 }

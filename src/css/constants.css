@@ -59,7 +59,8 @@
 }
 
 .dark-mode {
-    --white: #1a1a1a !important;
+    --white: #1e1e1e !important;
+    /* --white: #1a1a1a !important; */
     --white-95: #1e1e1e !important;
     
     --gray-medium: #e0e0e0 !important;
@@ -68,7 +69,8 @@
     --gray-lighter: #3a3a3a !important;
     --gray-lightest: #2a2a2a !important;
     --bg-light: #0f1419 !important;
-    --bg-gray: #1e1e1e !important;
+    /* --bg-gray: #1e1e1e !important; */
+    --bg-gray: #1a1a1a !important;
     --border-gray: #3a3a3a !important;
     
     --shadow-light: 0 2px 2px rgba(0, 0, 0, 0.3) !important;
@@ -77,4 +79,8 @@
     --shadow-white: 0 2px 2px rgba(255, 255, 255, 0.1) !important;
     --overlay-dark: rgba(0, 0, 0, 0.8) !important;
     --overlay-light: rgba(255, 255, 255, 0.05) ;
+
+    --sky: #5a8fb0;
+    --blue-1: #556aa0;
+    --lavender: #655a80;
 }
