@@ -1,9 +1,10 @@
-import { Component, ref, Ref } from 'vue';
+import { Component, markRaw, ref, Ref } from 'vue';
 import type { Modal } from './modal';
 import { ViewTypes } from '@/enums/view_type';
 import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
 import { AppConfiguration } from './AppConfiguration';
+import { DropdownMenu } from './dropdown_menu';
 
 class ApplicationClass {
     AppConfiguration: Ref<AppConfiguration>;
@@ -15,6 +16,7 @@ class ApplicationClass {
     isScreenLoading: Ref<boolean>;
     isShowingModal: Ref<boolean>;
     modal: Ref<Modal>;
+    dropdownMenu: Ref<DropdownMenu>;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -36,6 +38,18 @@ class ApplicationClass {
             viewType: ViewTypes.LISTVIEW
         }) as Ref<Modal>;
         this.activeViewComponentProps = ref<BaseEntity | null>(null) as Ref<BaseEntity | null>;
+        this.dropdownMenu = ref<DropdownMenu>({
+            showing: false,
+            title: '',
+            component: null,
+            width: '250px',
+            position_x: '0px',
+            position_y: '0px',
+            canvasWidth: `${window.innerWidth}px`,
+            canvasHeight: `${window.innerHeight}px`,
+            activeElementWidth: '0px',
+            activeElementHeight: '0px'
+        }) as Ref<DropdownMenu>;
     }
 
     static getInstance() {
@@ -43,7 +57,7 @@ class ApplicationClass {
         return this.instance;
     }
 
-    bootDarkMode = () => {
+    toggleDarkMode = () => {
         this.AppConfiguration.value.isDarkMode = !this.AppConfiguration.value.isDarkMode;
     }
 
@@ -107,6 +121,30 @@ class ApplicationClass {
             this.modal.value.modalView = null;
             this.modal.value.modalOnCloseFunction = null;
         }, 150);
+    }
+
+    openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string) => {
+        const rect = position.getBoundingClientRect();
+        this.dropdownMenu.value.position_x = `${rect.left}px`;
+        this.dropdownMenu.value.position_y = `${rect.bottom}px`;
+        this.dropdownMenu.value.activeElementWidth = `${rect.width}px`;
+        this.dropdownMenu.value.activeElementHeight = `${rect.height}px`;
+        this.dropdownMenu.value.title = title;
+        this.dropdownMenu.value.component = markRaw(component);
+        if (width) {
+            this.dropdownMenu.value.width = width;
+        }
+        this.dropdownMenu.value.showing = true;
+
+        console.log(this.dropdownMenu.value);
+    }
+
+    closeDropdownMenu = () => {
+        this.dropdownMenu.value.showing = false;
+        setTimeout(() => {
+            this.dropdownMenu.value.component = null;
+            this.dropdownMenu.value.title = '';
+        }, 500);
     }
 }
 

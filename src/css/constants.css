@@ -52,6 +52,7 @@
     --shadow-white: 0 2px 2px rgba(255, 255, 255, 0.2);
     --overlay-dark: rgba(0, 0, 0, 0.5);
     --overlay-light: rgba(0, 0, 0, 0.05);
+    --focus-dark: rgba(0, 0, 0, 0.1);
     
     /* Border radius estándar */
     --border-radius: 1rem;
@@ -79,6 +80,7 @@
     --shadow-white: 0 2px 2px rgba(255, 255, 255, 0.1) !important;
     --overlay-dark: rgba(0, 0, 0, 0.8) !important;
     --overlay-light: rgba(255, 255, 255, 0.05) ;
+    --focus-dark: rgba(255, 255, 255, 0.1) !important;
 
     --sky: #5a8fb0;
     --blue-1: #556aa0;

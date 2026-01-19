@@ -7,6 +7,7 @@ body, html {
 
 * {
     scrollbar-width: none;
+    transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 button {
@@ -48,6 +49,9 @@ table, span{color: var(--gray-medium);}
     height: 2rem;
     padding-inline: 1rem;
     border-radius: var(--border-radius);
+}
+.button:hover {
+    filter: brightness(0.9);
 }
 .button.fill {
     background-color: var(--button-color);

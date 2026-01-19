@@ -10,7 +10,7 @@
             <span class="topbar-title">{{ title }}</span>
         </div>
         <div class="top-right-side">
-            <button :class="'profile_button' + (toggled_profile ? ' toggled' : '')">
+            <button @click="openDropdown" :class="'profile_button' + (toggled_profile ? ' toggled' : '')" id="dropdown-profile-button">
                 <div class="icon">
                     <img :src="ICONS.AVATAR" alt="">
                 </div>
@@ -23,6 +23,7 @@
 <script lang="ts">
 import ICONS from '@/constants/icons';
 import Application from '@/models/application';
+import listView from '@/views/list.vue';
 
 export default {
     name: 'TopBarComponent',
@@ -32,6 +33,10 @@ export default {
         },
         logout() {
             console.log('Logout clicked');
+        },
+        openDropdown() {
+            var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
+            Application.openDropdownMenu(button, 'Profile', listView);
         }
     },
     computed: {

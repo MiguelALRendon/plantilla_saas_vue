@@ -3,6 +3,7 @@
     <SideBarComponent />
     <ComponentContainerComponent />
     <ModalComponent />
+    <DropdownMenu />
   </div>
 </template>
 
@@ -10,6 +11,7 @@
 import ComponentContainerComponent from './components/ComponentContainerComponent.vue';
 import SideBarComponent from './components/SideBarComponent.vue';
 import ModalComponent from './components/Modal/ModalComponent.vue';
+import DropdownMenu from './components/DropdownMenu.vue';
 import Application from './models/application';
 </script>
 
