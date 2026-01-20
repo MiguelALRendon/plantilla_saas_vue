@@ -10,7 +10,7 @@
             <span class="topbar-title">{{ title }}</span>
         </div>
         <div class="top-right-side">
-            <button @click="openDropdown" :class="'profile_button' + (toggled_profile ? ' toggled' : '')" id="dropdown-profile-button">
+            <button @click.stop="openDropdown" :class="'profile_button' + (toggled_profile ? ' toggled' : '')" id="dropdown-profile-button">
                 <div class="icon">
                     <img :src="ICONS.AVATAR" alt="">
                 </div>

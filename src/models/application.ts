@@ -135,12 +135,12 @@ class ApplicationClass {
             this.dropdownMenu.value.width = width;
         }
         this.dropdownMenu.value.showing = true;
-
-        console.log(this.dropdownMenu.value);
+        console.log('Dropdown menu opened');
     }
 
     closeDropdownMenu = () => {
         this.dropdownMenu.value.showing = false;
+        console.log('Dropdown menu closed');
         setTimeout(() => {
             this.dropdownMenu.value.component = null;
             this.dropdownMenu.value.title = '';

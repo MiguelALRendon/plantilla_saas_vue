@@ -1,5 +1,5 @@
 <template>
-    <div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]" @click.self="Application.closeDropdownMenu()">
+    <div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]">
         <div class="dropdown-menu" id="dropdown-element-in-general" :style="dropdownStyle">
             <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
             <component v-if="dropDownData.component" :is="dropDownData.component"></component>
@@ -12,6 +12,32 @@ import Application from '@/models/application';
 
 export default {
     name: 'DropdownMenu',
+    mounted() {
+        document.addEventListener('click', this.handleClickOutside);
+        window.addEventListener('keydown', this.handleKeydown);
+    },
+    beforeUnmount() {
+        document.removeEventListener('click', this.handleClickOutside);
+        window.removeEventListener('keydown', this.handleKeydown);
+    },
+    methods: {
+        handleClickOutside(event: MouseEvent) {
+            console.log('click');
+            if(this.dropDownData.showing) {
+                const dropdown = document.getElementById('dropdown-element-in-general');
+                if (!dropdown) return;
+
+                if (!dropdown.contains(event.target as Node)) {
+                    Application.closeDropdownMenu();
+                }
+            }
+        },
+        handleKeydown(e: KeyboardEvent) {
+            if (e.key === 'Escape' && this.dropDownData.showing) {
+                Application.closeDropdownMenu();
+            }
+        }
+    },
     data() {
         return {
             Application,
@@ -65,15 +91,14 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--focus-dark);
     z-index: 888;
     display: flex;
     transition: opacity 0.5s ease;
     display: flex;
+    pointer-events: none;
 }
 .dropdown-menu-container.hidden {
     opacity: 0;
-    pointer-events: none;
 }
 .dropdown-menu-container .dropdown-menu {
     background-color: var(--white);
@@ -83,7 +108,7 @@ export default {
     height: fit-content;
     pointer-events: all;
     position: absolute;
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-dark);
 }
 .dropdown-menu-container.hidden .dropdown-menu {
     pointer-events: none;
