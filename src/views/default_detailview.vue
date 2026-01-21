@@ -44,6 +44,17 @@
                     v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.EMAIL"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
+
+                    <ListInputComponent
+                    v-if="entityClass.getPropertyType(prop) instanceof EnumAdapter"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
+                    :property-enum-values="entityClass.getPropertyType(prop)"
+                    v-model="entity[prop]" />
+
+                    <PasswordInputComponent
+                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.PASSWORD"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
+                    v-model="entity[prop]" />
                     <!---------------------------------------------->
                 </div>
             </component>
@@ -60,14 +71,17 @@ import NumberInputComponent from '@/components/Form/NumberInputComponent.vue';
 import TextInputComponent from '@/components/Form/TextInputComponent.vue';
 import ObjectInputComponent from '@/components/Form/ObjectInputComponent.vue';
 import DateInputComponent from '@/components/Form/DateInputComponent.vue';
-import { BaseEntity } from '@/entities/base_entitiy';
-import { DetailTypes } from '@/enums/detail_type';
-import { StringType } from '@/enums/string_type';
-import { ViewGroupRow } from '@/enums/view_group_row';
 import Application from '@/models/application';
 import TextAreaComponent from '@/components/Form/TextAreaComponent.vue';
 import BooleanInputComponent from '@/components/Form/BooleanInputComponent.vue';
 import EmailInputComponent from '@/components/Form/EmailInputComponent.vue';
+import PasswordInputComponent from '@/components/Form/PasswordInputComponent.vue';
+import { BaseEntity } from '@/entities/base_entitiy';
+import { DetailTypes } from '@/enums/detail_type';
+import { StringType } from '@/enums/string_type';
+import { ViewGroupRow } from '@/enums/view_group_row';
+import { EnumAdapter } from '@/models/enum_adapter';
+import ListInputComponent from '@/components/Form/ListInputComponent.vue';
 
 export default {
     name: 'DefaultDetailView',
@@ -82,10 +96,13 @@ export default {
         NumberInputComponent,
         BooleanInputComponent,
         EmailInputComponent,
+        PasswordInputComponent,
+        ListInputComponent,
     },
     data() {
         return {
             StringType,
+            EnumAdapter,
             BaseEntity,
             entity: Application.activeViewComponentProps.value as BaseEntity,
             entityClass: Application.activeViewEntity.value as typeof BaseEntity,

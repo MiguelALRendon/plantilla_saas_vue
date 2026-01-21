@@ -3,7 +3,8 @@
     <div class="form-group-header">
         <span>{{ title }}</span>
         <button class="colapse-group-btn icon" @click="collapseGroup">
-            <img :class="collapsedGroup ? ' collapsed' : ''" :src="ICONS.CHEVRON" alt="">
+            <!-- <img :class="collapsedGroup ? ' collapsed' : ''" :src="ICONS.CHEVRON" alt=""> -->
+             <span :class="GGCLASS + ' ' + (collapsedGroup ? ' collapsed' : '')">{{ GGICONS.ARROW_UP }}</span>
         </button>
     </div>
 
@@ -18,6 +19,7 @@
 </template>
 
 <script lang="ts">
+import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import ICONS from '@/constants/icons';
 
 export default {
@@ -38,6 +40,8 @@ export default {
         return {
             ICONS,
             collapsedGroup: false,
+            GGCLASS,
+            GGICONS,
         }
     }
 }
@@ -84,12 +88,15 @@ export default {
 .colapse-group-btn {
     height: 100%;
 }
-.colapse-group-btn img {
-    transform: rotate(-180deg);
+.colapse-group-btn span {
+    height: fit-content;
+    transform: rotate(180deg);
     height: 100%;
     transition: transform 0.3s ease;
+    font-size: 2rem;
+    width: 2rem;
 }
-.colapse-group-btn img.collapsed {
+.colapse-group-btn span.collapsed {
     transform: rotate(0deg);
 }
 </style>

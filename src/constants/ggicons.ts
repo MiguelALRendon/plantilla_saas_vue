@@ -11,6 +11,7 @@ export const GGICONS = {
   CANCEL: 'cancel',
   CHECK: 'check',
   MAIL: 'mail',
+  ARROW_UP: 'keyboard_control_key',
 }
 
 export default GGICONS

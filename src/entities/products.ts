@@ -41,4 +41,11 @@ export class Products extends BaseEntity {
     @PropertyName('Email', String)
     @StringTypeDef(StringType.EMAIL)
     email!: string;
+
+    @PropertyName('Password', String)
+    @StringTypeDef(StringType.PASSWORD)
+    password!: string;
+
+    @PropertyName('Stringi', StringType)
+    grupo!: StringType;
 }

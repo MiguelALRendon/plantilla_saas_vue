@@ -152,7 +152,7 @@ tbody tr:hover {
 }
 
 .boolean-row {
-    font-size: 2rem;
+    font-size: 1.75rem;
     margin-left: 2rem;
     border-radius: 100%;
 }
