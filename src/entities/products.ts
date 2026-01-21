@@ -2,8 +2,7 @@ import { CSSColumnClass, ModuleIcon, ModuleName } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
-import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ViewGroupRowDecorator } from '@/decorations';
-import { ViewGroupRow } from '@/enums/view_group_row.ts';
+import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup } from '@/decorations';
 import ICONS from '@/constants/icons.ts';
 
 @DefaultProperty('name')
@@ -18,11 +17,6 @@ export class Products extends BaseEntity {
     @PropertyName('Name', String)
     @CSSColumnClass('table-length-short')
     name!: string;
-
-    @PropertyName('Price', Number)
-    @Mask('$', MaskSides.START)
-    @CSSColumnClass('table-length-small')
-    price!: number;
 
     @ViewGroup('Grupo 2')
     @PropertyName('Description', String)
@@ -40,10 +34,11 @@ export class Products extends BaseEntity {
     @PropertyName('Catedral Product', Products)
     Catedral! : Products;
 
-    @PropertyName('Inner Product', Products)
-    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
-    product! : Products;
-
+    @ViewGroup('Grupo 3')
     @PropertyName('Is Bolian', Boolean)
     bolian!: boolean;
+
+    @PropertyName('Email', String)
+    @StringTypeDef(StringType.EMAIL)
+    email!: string;
 }

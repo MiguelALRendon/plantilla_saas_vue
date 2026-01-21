@@ -8,6 +8,9 @@ export const GGICONS = {
   SEARCH: 'search',
   CALENDAR: 'calendar_month',
   CLOSE: 'close',
+  CANCEL: 'cancel',
+  CHECK: 'check',
+  MAIL: 'mail',
 }
 
 export default GGICONS

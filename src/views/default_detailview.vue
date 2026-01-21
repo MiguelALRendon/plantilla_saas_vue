@@ -24,6 +24,11 @@
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
 
+                    <BooleanInputComponent
+                    v-if="entityClass.getPropertyType(prop) === Boolean"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
+                    v-model="entity[prop]" />
+
                     <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
                     <TextInputComponent 
                     v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXT"
@@ -32,6 +37,11 @@
 
                     <TextAreaComponent 
                     v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXTAREA"
+                    :property-name="entityClass.getPropertyNameByKey(prop)"
+                    v-model="entity[prop]" />
+
+                    <EmailInputComponent
+                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.EMAIL"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
                     <!---------------------------------------------->
@@ -56,6 +66,8 @@ import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import Application from '@/models/application';
 import TextAreaComponent from '@/components/Form/TextAreaComponent.vue';
+import BooleanInputComponent from '@/components/Form/BooleanInputComponent.vue';
+import EmailInputComponent from '@/components/Form/EmailInputComponent.vue';
 
 export default {
     name: 'DefaultDetailView',
@@ -67,7 +79,9 @@ export default {
         TextInputComponent,
         TextAreaComponent,
         ObjectInputComponent,
-        NumberInputComponent
+        NumberInputComponent,
+        BooleanInputComponent,
+        EmailInputComponent,
     },
     data() {
         return {

@@ -1,6 +1,6 @@
 <template>
 <div class="TextInput">
-    <label :for="'id-' + propertyName" class="label-input">{{ propertyName }}</label>
+    <label :for="'id-' + propertyName" class="label-input">{{ propertyName }} <span :class="GGCLASS" class="icon">{{ GGICONS.MAIL }}</span></label>
     <input 
         :id="'id-' + propertyName" 
         :name="propertyName" 
@@ -13,6 +13,7 @@
 </template>
 
 <script lang="ts">
+import { GGICONS, GGCLASS } from '@/constants/ggicons';
 export default {
     name: 'EmailInputComponent',
     props: {
@@ -29,6 +30,8 @@ export default {
     },
     data() {
         return {
+            GGICONS,
+            GGCLASS,
             textInputId: 'text-input-' + this.propertyName,
         }
     },

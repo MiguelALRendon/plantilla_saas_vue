@@ -10,8 +10,14 @@
 
     <tbody>
         <tr v-for="item in data" @click="openDetailView(item)">
-            <td v-for="column in item.getKeys()" :class="item.getCSSClasses()[column]">
-                {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
+            <td v-for="column in item.getKeys()" :class="item.getCSSClasses()[column]" class="table-row">
+                <span v-if="Application.activeViewEntity?.getPropertyType(column) !== Boolean">
+                    {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
+                </span>
+
+                <span v-else-if="Application.activeViewEntity?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
+                    {{ item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL }}
+                </span>
             </td>
         </tr>
     </tbody>
@@ -23,6 +29,7 @@
 </template>
 
 <script lang="ts">
+import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
 import { MaskSides } from '@/enums/mask_sides';
@@ -42,15 +49,14 @@ export default {
                     id: i,
                     name: `Producto ${i}`,
                     description: `Descripción del producto asdf fasdfasdfasdf ta sdf sd fasdf   asdfasdfasdf asdfasfafsdf ${i}`,
-                    price: Math.floor(Math.random() * 100) + 1,
                     stock: Math.floor(Math.random() * 50) + 1,
-                    product: new Products({
+                    Catedral: new Products({
                         id: i + 100,
                         name: `Inner Producto ${i}`,
                         description: `Inner Descripción del producto ${i}`,
-                        price: Math.floor(Math.random() * 100) + 1,
                         stock: Math.floor(Math.random() * 50) + 1,
-                    })
+                    }),
+                    bolian: i % 2 === 0,
                 })
             );
         }
@@ -59,7 +65,9 @@ export default {
             Application,
             MaskSides,
             BaseEntity,
-            data
+            data,
+            GGICONS,
+            GGCLASS
         }
     },
 }
@@ -76,6 +84,7 @@ table {
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-light);
+    overflow: auto;
 }
 
 thead {
@@ -99,7 +108,7 @@ tbody {
     display: block;
     width: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     flex: 1;
     scrollbar-gutter: stable;
 }
@@ -135,5 +144,24 @@ tbody tr {
 }
 tbody tr:hover {
     background-color: var(--bg-gray);
+}
+
+.table-row {
+    display: flex;
+    align-items: center;
+}
+
+.boolean-row {
+    font-size: 2rem;
+    margin-left: 2rem;
+    border-radius: 100%;
+}
+
+.boolean-row.row-check {
+    background-color: var(--btn-info);
+    color: var(--white);
+}
+.boolean-row.row-cancel {
+    color: var(--accent-red);
 }
 </style>
