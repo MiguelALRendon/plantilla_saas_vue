@@ -2,14 +2,10 @@
 <div class="form-group">
     <div class="form-group-header">
         <span>{{ title }}</span>
-        <button class="colapse-group-btn icon" @click="collapseGroup">
-            <!-- <img :class="collapsedGroup ? ' collapsed' : ''" :src="ICONS.CHEVRON" alt=""> -->
-             <span :class="GGCLASS + ' ' + (collapsedGroup ? ' collapsed' : '')">{{ GGICONS.ARROW_UP }}</span>
-        </button>
     </div>
 
     <div class="form-group-body">
-        <div :class="'form-group-body-container' + (collapsedGroup ? ' collapsed' : '')">
+        <div class="form-group-body-container">
             <div class="form-group-body-content">
                 <slot></slot>
             </div>
@@ -31,15 +27,9 @@ export default {
             default: '',
         },
     },
-    methods: {
-        collapseGroup() {
-            this.collapsedGroup = !this.collapsedGroup;
-        }
-    },
     data() {
         return {
             ICONS,
-            collapsedGroup: false,
             GGCLASS,
             GGICONS,
         }
@@ -52,6 +42,7 @@ export default {
     background-color: var(--white);
     border-radius: var(--border-radius);
     margin-block: 1rem;
+    box-shadow: var(--shadow-light);
 }
 
 .form-group-header {
@@ -63,7 +54,7 @@ export default {
     height: 30px;
     max-height: 30px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
 }
 
@@ -77,12 +68,9 @@ export default {
     grid-template-rows: 1fr;
     transition: grid-template-rows 0.3s ease;
 }
-.form-group-body-container.collapsed {
-    grid-template-rows: 0fr;
-}
 
 .form-group-body-content {
-    overflow: hidden;
+    overflow: visible;
 }
 
 .colapse-group-btn {
@@ -95,8 +83,5 @@ export default {
     transition: transform 0.3s ease;
     font-size: 2rem;
     width: 2rem;
-}
-.colapse-group-btn span.collapsed {
-    transform: rotate(0deg);
 }
 </style>

@@ -18,6 +18,9 @@ export class Products extends BaseEntity {
     @CSSColumnClass('table-length-short')
     name!: string;
 
+    @PropertyName('Stringi', StringType)
+    grupo!: StringType;
+
     @ViewGroup('Grupo 2')
     @PropertyName('Description', String)
     @StringTypeDef(StringType.TEXTAREA)
@@ -45,7 +48,4 @@ export class Products extends BaseEntity {
     @PropertyName('Password', String)
     @StringTypeDef(StringType.PASSWORD)
     password!: string;
-
-    @PropertyName('Stringi', StringType)
-    grupo!: StringType;
 }

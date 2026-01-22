@@ -38,8 +38,8 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     background-color: var(--bg-gray);
 }
 textarea {
-    resize: vertical;
-    min-height: 5rem;
+    resize: none;
+    min-height: 7rem;
 }
 input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
     text-align: center;
@@ -132,4 +132,8 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     position: absolute;
     opacity: 0;
     pointer-events: none;
+}
+
+.TextInput:has(.main-input:focus) input, .TextInput:has(button:focus) input, .TextInput:has(.main-input:focus) textarea {
+    background-color: var(--white);
 }
