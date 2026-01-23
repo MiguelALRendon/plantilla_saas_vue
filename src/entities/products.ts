@@ -2,7 +2,7 @@ import { CSSColumnClass, ModuleIcon, ModuleName } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
-import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup } from '@/decorations';
+import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ArrayOf } from '@/decorations';
 import ICONS from '@/constants/icons.ts';
 
 @DefaultProperty('name')
@@ -48,4 +48,10 @@ export class Products extends BaseEntity {
     @PropertyName('Password', String)
     @StringTypeDef(StringType.PASSWORD)
     password!: string;
+
+    @PropertyName('List', ArrayOf(Products))
+    listaProductos!: Array<Products>;
+
+    @PropertyName('List2', ArrayOf(Products))
+    listaProductos2!: Array<Products>;
 }

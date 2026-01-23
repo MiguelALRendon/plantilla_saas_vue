@@ -1,14 +1,14 @@
 <template>
-<TableComponent />
+<DetailViewTableComponent />
 </template>
 
 <script lang="ts">
-import TableComponent from '@/components/Informative/TableComponent.vue';
+import DetailViewTableComponent from '@/components/Informative/DetailViewTableComponent.vue';
 
 export default {
     name: 'DefaultListView',
     components: {
-        TableComponent
+        DetailViewTableComponent
     },
 }
 </script>

@@ -22,7 +22,6 @@ export default {
     },
     methods: {
         handleClickOutside(event: MouseEvent) {
-            console.log('click');
             if(this.dropDownData.showing) {
                 const dropdown = document.getElementById('dropdown-element-in-general');
                 if (!dropdown) return;

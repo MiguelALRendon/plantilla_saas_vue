@@ -10,15 +10,17 @@
 
     <tbody>
         <tr v-for="item in data" @click="openDetailView(item)">
-            <td v-for="column in item.getKeys()" :class="item.getCSSClasses()[column]" class="table-row">
-                <span v-if="Application.activeViewEntity?.getPropertyType(column) !== Boolean">
-                    {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
-                </span>
+            <template v-for="column in item.getKeys()">
+                <td :class="item.getCSSClasses()[column]" class="table-row" v-if="Application.activeViewEntity?.getPropertyType(column) !== Array">
+                    <span v-if="Application.activeViewEntity?.getPropertyType(column) !== Boolean">
+                        {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
+                    </span>
 
-                <span v-else-if="Application.activeViewEntity?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
-                    {{ item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL }}
-                </span>
-            </td>
+                    <span v-else-if="Application.activeViewEntity?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
+                        {{ item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL }}
+                    </span>
+                </td>
+            </template>
         </tr>
     </tbody>
 
@@ -35,7 +37,7 @@ import { Products } from '@/entities/products';
 import { MaskSides } from '@/enums/mask_sides';
 import Application from '@/models/application';
 export default {
-    name: 'TableComponent',
+    name: 'DetailViewTableComponent',
     methods: {
         openDetailView(entity : BaseEntity) {
             Application.changeViewToDetailView(entity);
@@ -57,6 +59,44 @@ export default {
                         stock: Math.floor(Math.random() * 50) + 1,
                     }),
                     bolian: i % 2 === 0,
+                    listaProductos: [
+                        new Products({
+                            id: i + 200,
+                            name: `List Producto A ${i}`,
+                            description: `List Descripción del producto A ${i}`,
+                            stock: Math.floor(Math.random() * 50) + 1,
+                        }),
+                        new Products({
+                            id: i + 300,
+                            name: `List Producto B ${i}`,
+                            description: `List Descripción del producto B ${i}`,
+                            stock: Math.floor(Math.random() * 50) + 1,
+                        }),
+                        new Products({
+                            id: i + 400,
+                            name: `List Producto C ${i}`,
+                            description: `List Descripción del producto C ${i}`,
+                            stock: Math.floor(Math.random() * 50) + 1,
+                        }),
+                        new Products({
+                            id: i + 500,
+                            name: `List Producto D ${i}`,
+                            description: `List Descripción del producto D ${i}`,
+                            stock: Math.floor(Math.random() * 50) + 1,
+                        }),
+                        new Products({
+                            id: i + 600,
+                            name: `List Producto E ${i}`,
+                            description: `List Descripción del producto E ${i}`,
+                            stock: Math.floor(Math.random() * 50) + 1,
+                        }),
+                        new Products({
+                            id: i + 700,
+                            name: `List Producto F ${i}`,
+                            description: `List Descripción del producto F ${i}`,
+                            stock: Math.floor(Math.random() * 50) + 1,
+                        }),
+                    ]
                 })
             );
         }

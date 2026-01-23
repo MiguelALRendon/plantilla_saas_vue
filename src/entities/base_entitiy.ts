@@ -1,6 +1,7 @@
 import {
     PROPERTY_NAME_KEY,
     PROPERTY_TYPE_KEY,
+    ARRAY_ELEMENT_TYPE_KEY,
     MASK_KEY,
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
@@ -42,6 +43,20 @@ export abstract class BaseEntity {
         return Object.keys(columns);
     }
 
+    public getArrayKeys(): string[] {
+        const properties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
+        const propertyTypes = (this.constructor as typeof BaseEntity).getPropertyTypes();
+        const arrayKeys: string[] = [];
+        
+        for (const key of Object.keys(properties)) {
+            if (propertyTypes[key] === Array) {
+                arrayKeys.push(key);
+            }
+        }
+        
+        return arrayKeys;
+    }
+
     public getMask(): Record<string, { mask: string; side: MaskSides }> {
         const proto = (this.constructor as any).prototype;
         return proto[MASK_KEY] || {};
@@ -52,9 +67,24 @@ export abstract class BaseEntity {
         return proto[CSS_COLUMN_CLASS_KEY] || {};
     }
 
-    public static getProperties(): Record<string, string> {
+    public static getAllPropertiesNonFilter(): Record<string, string> {
         const proto = this.prototype as any;
         return proto[PROPERTY_NAME_KEY] || {};
+    }
+
+    public static getProperties(): Record<string, string> {
+        const proto = this.prototype as any;
+        const properties = proto[PROPERTY_NAME_KEY] || {};
+        const propertyTypes = this.getPropertyTypes();
+        const filtered: Record<string, string> = {};
+        
+        for (const key of Object.keys(properties)) {
+            if (propertyTypes[key] !== Array) {
+                filtered[key] = properties[key];
+            }
+        }
+        
+        return filtered;
     }
 
     public static getPropertyTypes(): Record<string, any> {
@@ -71,6 +101,28 @@ export abstract class BaseEntity {
         return (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
     }
 
+    public static getArrayPropertyType(propertyKey: string): typeof BaseEntity | undefined {
+        const propertyType = this.getPropertyType(propertyKey);
+        
+        if (propertyType !== Array) {
+            return undefined;
+        }
+        
+        const proto = this.prototype as any;
+        const arrayTypes = proto[ARRAY_ELEMENT_TYPE_KEY] || {};
+        const entityType = arrayTypes[propertyKey];
+        
+        if (entityType && entityType.prototype instanceof BaseEntity) {
+            return entityType;
+        }
+        
+        return undefined;
+    }
+
+    public getArrayPropertyType(propertyKey: string): typeof BaseEntity | undefined {
+        return (this.constructor as typeof BaseEntity).getArrayPropertyType(propertyKey);
+    }
+
     public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
         const columns = this.getProperties();
         const proxy = new Proxy({}, {
@@ -83,7 +135,7 @@ export abstract class BaseEntity {
     }
 
     public static getPropertyNameByKey(propertyKey: string): string | undefined {
-        const columns = this.getProperties();
+        const columns = this.getAllPropertiesNonFilter();
         return columns[propertyKey];
     }
 
