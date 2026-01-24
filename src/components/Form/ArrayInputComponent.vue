@@ -8,8 +8,8 @@
 
         <div class="right-side-space">
             <TextInputComponent v-model="search" :property-name="'Buscar ' + typeValue?.getModuleName()"/>
-            <button class="button primary fill">Eliminar</button>
-            <button class="button success fill" @click="isSelection = !isSelection">Seleccionar</button>
+            <button class="button primary fill" :disabled="selectedItems.length == 0">Eliminar</button>
+            <button class="button success fill" @click="toggleSelection">Seleccionar</button>
             <button class="button secondary fill" @click="openModal">Agregar</button>
         </div>
     </div>
@@ -22,8 +22,14 @@
             </tr>
         </thead>
         <tbody>
-            <tr v-for="item in modelValue">
-                <td class="selection" :class="[{display: isSelection}]">s</td>
+            <tr v-for="item in modelValue" :class="[{selected: selectedItems.includes(item)}]">
+                <td class="selection" :class="[{display: isSelection}]">
+                    <button class="select-btn" 
+                    :class="[{added: selectedItems.includes(item)}]"
+                    @click="selectedItems.includes(item) ? selectedItems.splice(selectedItems.indexOf(item), 1) : selectedItems.push(item)">
+                        <span :class="GGCLASS">{{ selectedItems.includes(item) ? GGICONS.REMOVE : GGICONS.ADD }}</span>
+                    </button>
+                </td>
                 <td v-for="property in item.getKeys()">
                     {{ item[property] }}
                 </td>
@@ -40,6 +46,7 @@ import { PropType } from 'vue';
 import TextInputComponent from './TextInputComponent.vue';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
+import GGICONS, { GGCLASS } from '@/constants/ggicons';
 
 export default {
   name: 'ArrayInputComponent',
@@ -56,6 +63,12 @@ export default {
                 this.$emit('update:modelValue', updatedArray);
             }
         },
+        toggleSelection() {
+            this.isSelection = !this.isSelection;
+            if (!this.isSelection) {
+                this.selectedItems = [];
+            }
+        },
     },
   props: {
     modelValue: {
@@ -70,8 +83,11 @@ export default {
   },
   data() {
     return {
+      GGICONS,
+      GGCLASS,
       search: '',
       isSelection: false,
+      selectedItems: [] as BaseEntity[],
     };
   },
 };
@@ -164,7 +180,6 @@ export default {
     height: 4rem;
     border-bottom: 1px solid var(--bg-gray);
 }
-
 .table tbody tr:hover {
     background-color: var(--bg-gray);
     cursor: pointer;
@@ -188,11 +203,24 @@ export default {
     flex-shrink: 0;
 }
 
+.table tr.selected {
+    background-color: var(--beige) !important;
+}
+
 .selection {
     display: none !important;
 }
+.select-btn span {
+    color: var(--sky);
+    transform: rotate(-180deg);
+    transition: 0.5s ease;
+}
+.select-btn.added span {
+    transform: rotate(0deg);
+    color: var(--accent-red);
+}
 .selection.display {
-    display: table-cell !important;
+    display: flex !important;
     max-width: 3rem;
 }
 </style>

@@ -16,7 +16,7 @@ export default {
         height: 100%;
         padding: .5rem;
         border-radius: 0 0 1rem 1rem;
-        border: 2px solid var(--lavender);
+        border: 2px solid var(--sky);
         border-top: none;
         box-sizing: border-box;
         background-color: var(--bg-gray);

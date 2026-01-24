@@ -67,7 +67,7 @@ export default {
     display: flex;
     flex-direction: row;
     gap: .5rem;
-    border-bottom: 2px solid var(--lavender);
+    border-bottom: 2px solid var(--sky);
   }
 
   .tab-container-row .tab{
@@ -80,7 +80,7 @@ export default {
   }
 
   .tab-container-row .tab.active{
-    border: 2px solid var(--lavender);
+    border: 2px solid var(--sky);
     border-bottom: none;
     background-color: var(--bg-gray);
   }
