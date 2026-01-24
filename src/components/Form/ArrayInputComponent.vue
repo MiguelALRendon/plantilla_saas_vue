@@ -8,9 +8,24 @@
 
         <div class="right-side-space">
             <TextInputComponent v-model="search" :property-name="'Buscar ' + typeValue?.getModuleName()"/>
-            <button class="button primary fill" :disabled="selectedItems.length == 0">Eliminar</button>
-            <button class="button success fill" @click="toggleSelection">Seleccionar</button>
-            <button class="button secondary fill" @click="openModal">Agregar</button>
+            <button class="button primary fill" 
+            :disabled="selectedItems.length == 0"
+            @click="showDeleteModal"
+            >
+                <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
+                Eliminar
+            </button>
+            <button class="button success fill" @click="toggleSelection">
+                <span :class="GGCLASS">{{ isSelection ?
+                    GGICONS.SELECT_CHECKBOX :
+                    GGICONS.SELECT_VOID
+                }}</span>
+                Seleccionar
+            </button>
+            <button class="button secondary fill" @click="openModal">
+                <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+                Agregar
+            </button>
         </div>
     </div>
 
@@ -22,7 +37,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr v-for="item in modelValue" :class="[{selected: selectedItems.includes(item)}]">
+            <tr v-for="item in filteredData" :class="[{selected: selectedItems.includes(item)}]">
                 <td class="selection" :class="[{display: isSelection}]">
                     <button class="select-btn" 
                     :class="[{added: selectedItems.includes(item)}]"
@@ -47,6 +62,7 @@ import TextInputComponent from './TextInputComponent.vue';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
+import { confMenuType } from '@/enums/conf_menu_type';
 
 export default {
   name: 'ArrayInputComponent',
@@ -69,27 +85,55 @@ export default {
                 this.selectedItems = [];
             }
         },
+        showDeleteModal() {
+            Application.openConfirmationMenu(
+                confMenuType.WARNING,
+                'Confirmar eliminación',
+                'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',
+                () => {
+                    const updatedArray = this.modelValue.filter(item => !this.selectedItems.includes(item));
+                    this.$emit('update:modelValue', updatedArray);
+                    this.selectedItems = [];
+                    this.isSelection = false;
+                },
+            );
+        },
     },
-  props: {
-    modelValue: {
-      type: Array<BaseEntity>,
-      required: true,
-      default: () => [],
+    computed: {
+        filteredData() {
+            if (!this.search) {
+                return this.modelValue;
+            }
+            return this.modelValue.filter(item => {
+                const defaultValue = item.getDefaultPropertyValue();
+                if (defaultValue && typeof defaultValue === 'string') {
+                    return defaultValue.toLowerCase().includes(this.search.toLowerCase());
+                }
+                return false;
+            });
+        },
     },
-    typeValue: {
-      type: Function as unknown as PropType<typeof BaseEntity | undefined>,
-      required: true,
+    props: {
+        modelValue: {
+            type: Array<BaseEntity>,
+            required: true,
+            default: () => [],
+        },
+        typeValue: {
+            type: Function as unknown as PropType<typeof BaseEntity | undefined>,
+            required: true,
+        },
     },
-  },
-  data() {
+    data() {
     return {
-      GGICONS,
-      GGCLASS,
-      search: '',
-      isSelection: false,
-      selectedItems: [] as BaseEntity[],
+        Application,
+        GGICONS,
+        GGCLASS,
+        search: '',
+        isSelection: false,
+        selectedItems: [] as BaseEntity[],
     };
-  },
+    },
 };
 </script>
 
@@ -146,7 +190,7 @@ export default {
     box-shadow: var(--shadow-light);
     display: flex;
     flex-direction: column;
-    border-collapse: collapse;
+    border-collapse: collapse !important;
 }
 
 .table thead,
@@ -169,7 +213,6 @@ export default {
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    margin-left: 0.25rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -178,7 +221,7 @@ export default {
 
 .table td{
     height: 4rem;
-    border-bottom: 1px solid var(--bg-gray);
+    border-bottom: 1px solid var(--gray-lighter);
 }
 .table tbody tr:hover {
     background-color: var(--bg-gray);
@@ -187,7 +230,7 @@ export default {
 
 .table thead{
     height: 2.5rem;
-    border-bottom: 1px solid var(--bg-gray);
+    border-bottom: 1px solid var(--gray-lighter);
     flex-shrink: 0;
 }
 
@@ -199,7 +242,7 @@ export default {
 
 .table tfoot{
     height: 2.5rem;
-    border-top: 1px solid var(--bg-gray);
+    border-top: 1px solid var(--gray-lighter);
     flex-shrink: 0;
 }
 

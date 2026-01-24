@@ -30,6 +30,9 @@
     --beige: #f6dec7;
     --success: #8fc9cf;
     --warning: var(--warm-1);
+    --green-main: #4fa3a5;
+    --green-soft: #6fbfa3;
+    --green-deep: #3f8f7d;
 
     /* Colores de botones */
     --btn-primary: #d63850;
@@ -85,4 +88,7 @@
     --blue-1: #556aa0;
     --lavender: #655a80;
     --beige: #4a3a2e;
+    --green-main: #2f6f6e;
+    --green-soft: #3a8f7a;
+    --green-deep: #1f4f46;
 }

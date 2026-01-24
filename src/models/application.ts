@@ -5,6 +5,8 @@ import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
 import { AppConfiguration } from './AppConfiguration';
 import { DropdownMenu } from './dropdown_menu';
+import { confirmationMenu } from './confirmation_menu';
+import { confMenuType } from '@/enums/conf_menu_type';
 
 class ApplicationClass {
     AppConfiguration: Ref<AppConfiguration>;
@@ -15,8 +17,10 @@ class ApplicationClass {
     sidebarToggled: Ref<boolean>;
     isScreenLoading: Ref<boolean>;
     isShowingModal: Ref<boolean>;
+    isShowingConfirmationMenu: Ref<boolean>;
     modal: Ref<Modal>;
     dropdownMenu: Ref<DropdownMenu>;
+    confirmationMenu: Ref<confirmationMenu>;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -32,6 +36,7 @@ class ApplicationClass {
         this.sidebarToggled = ref<boolean>(true);
         this.isScreenLoading = ref<boolean>(false);
         this.isShowingModal = ref<boolean>(false);
+        this.isShowingConfirmationMenu = ref<boolean>(false);
         this.modal = ref<Modal>({
             modalView: null,
             modalOnCloseFunction: null,
@@ -50,6 +55,12 @@ class ApplicationClass {
             activeElementWidth: '0px',
             activeElementHeight: '0px'
         }) as Ref<DropdownMenu>;
+        this.confirmationMenu = ref<confirmationMenu>({
+            type: confMenuType.INFO,
+            title: '',
+            message: '',
+            confirmationAction: () => {}
+        }) as Ref<confirmationMenu>;
     }
 
     static getInstance() {
@@ -135,16 +146,41 @@ class ApplicationClass {
             this.dropdownMenu.value.width = width;
         }
         this.dropdownMenu.value.showing = true;
-        console.log('Dropdown menu opened');
     }
 
     closeDropdownMenu = () => {
         this.dropdownMenu.value.showing = false;
-        console.log('Dropdown menu closed');
         setTimeout(() => {
             this.dropdownMenu.value.component = null;
             this.dropdownMenu.value.title = '';
         }, 500);
+    }
+
+    openConfirmationMenu = (type: confMenuType, title: string, message: string, onAccept: () => void) => {
+        this.confirmationMenu.value = {
+            type,
+            title,
+            message,
+            confirmationAction: onAccept
+        };
+        this.isShowingConfirmationMenu.value = true;
+    }
+
+    closeConfirmationMenu = () => {
+        this.isShowingConfirmationMenu.value = false;
+        setTimeout(() => {
+            this.confirmationMenu.value = {
+                type: confMenuType.INFO,
+                title: '',
+                message: '',
+                confirmationAction: () => {}
+            };
+        }, 500);
+    }
+
+    acceptConfigurationMenu = () => {
+        this.confirmationMenu.value.confirmationAction();
+        this.closeConfirmationMenu();
     }
 }
 

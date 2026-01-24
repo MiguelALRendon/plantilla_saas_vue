@@ -4,6 +4,7 @@
     <ComponentContainerComponent />
     <ModalComponent />
     <DropdownMenu />
+    <ConfirmationDialogComponent />
   </div>
 </template>
 
@@ -12,6 +13,7 @@ import ComponentContainerComponent from './components/ComponentContainerComponen
 import SideBarComponent from './components/SideBarComponent.vue';
 import ModalComponent from './components/Modal/ModalComponent.vue';
 import DropdownMenu from './components/DropdownMenu.vue';
+import ConfirmationDialogComponent from './components/Modal/ConfirmationDialogComponent.vue';
 import Application from './models/application';
 </script>
 
