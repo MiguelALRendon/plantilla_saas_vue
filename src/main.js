@@ -8,6 +8,9 @@ import Application from '@/models/application'
 const app = createApp(App)
 app.mount('#app')
 
+// Set document title from AppConfiguration
+document.title = Application.AppConfiguration.value.appName
+
 if (Application.ModuleList && Application.ModuleList.value && Application.ModuleList.value.length > 0) {
 	try {
 		Application.changeView(Application.ModuleList.value[0])

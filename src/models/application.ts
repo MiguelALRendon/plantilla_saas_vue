@@ -25,9 +25,18 @@ class ApplicationClass {
 
     private constructor() {
         this.AppConfiguration = ref<AppConfiguration>({
-            appName: 'My SaaS Application',
-            appVersion: '1.0.0',
-            apiBaseUrl: 'https://api.my-saas-app.com',
+            appName: import.meta.env.VITE_APP_NAME || 'My SaaS Application',
+            appVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
+            apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'https://api.my-saas-app.com',
+            apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
+            apiRetryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
+            environment: import.meta.env.VITE_ENVIRONMENT || 'development',
+            logLevel: import.meta.env.VITE_LOG_LEVEL || 'info',
+            authTokenKey: import.meta.env.VITE_AUTH_TOKEN_KEY || 'auth_token',
+            authRefreshTokenKey: import.meta.env.VITE_AUTH_REFRESH_TOKEN_KEY || 'refresh_token',
+            sessionTimeout: Number(import.meta.env.VITE_SESSION_TIMEOUT) || 3600000,
+            itemsPerPage: Number(import.meta.env.VITE_ITEMS_PER_PAGE) || 20,
+            maxFileSize: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880,
             isDarkMode: false
         }) as Ref<AppConfiguration>;
         this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
