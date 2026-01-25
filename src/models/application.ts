@@ -9,6 +9,13 @@ import { confirmationMenu } from './confirmation_menu';
 import { confMenuType } from '@/enums/conf_menu_type';
 import mitt, { Emitter } from 'mitt';
 import type { Events } from '@/types/events';
+import {
+    NewButtonComponent,
+    RefreshButtonComponent,
+    SaveButtonComponent,
+    SaveAndNewButtonComponent,
+    SendToDeviceButtonComponent
+} from '@/components/Buttons';
 
 class ApplicationClass {
     AppConfiguration: Ref<AppConfiguration>;
@@ -20,6 +27,7 @@ class ApplicationClass {
     dropdownMenu: Ref<DropdownMenu>;
     confirmationMenu: Ref<confirmationMenu>;
     eventBus: Emitter<Events>;
+    ListButtons: Ref<Component[]>;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -66,6 +74,7 @@ class ApplicationClass {
             message: '',
             confirmationAction: () => {}
         }) as Ref<confirmationMenu>;
+        this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
     }
 
     static getInstance() {
@@ -80,12 +89,27 @@ class ApplicationClass {
     changeView = (entity: typeof BaseEntity) => {
         this.activeViewEntity.value = entity;
         this.activeViewComponent.value = entity.getModuleDefaultComponent();
+        setTimeout(() => {
+            this.ListButtons.value = [
+                markRaw(NewButtonComponent),
+                markRaw(RefreshButtonComponent)
+            ];
+        }, 405);
     }
 
     changeViewToDetailView = (entity: BaseEntity) => {
         if (this.activeViewEntity.value) {
             this.activeViewComponentProps.value = entity;
             this.activeViewComponent.value = this.activeViewEntity.value.getModuleDetailComponent();
+            setTimeout(() => {
+                this.ListButtons.value = [
+                    markRaw(NewButtonComponent),
+                    markRaw(RefreshButtonComponent),
+                    markRaw(SaveButtonComponent),
+                    markRaw(SaveAndNewButtonComponent),
+                    markRaw(SendToDeviceButtonComponent)
+                ];
+            }, 405);
         }
     }
 

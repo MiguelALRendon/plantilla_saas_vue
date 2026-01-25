@@ -19,6 +19,10 @@ export const GGICONS = {
   SELECT_VOID: 'select',
   SELECT_ALL: 'select_all',
   DELETE: 'delete',
+  REFRESH: 'cached',
+  SAVE: 'save',
+  SAVE2: 'save_as',
+  DEVICES: 'devices',
 }
 
 export default GGICONS

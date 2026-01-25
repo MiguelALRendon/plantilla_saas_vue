@@ -2,9 +2,7 @@
     <div class="ViewContainer">
         <TopBarComponent />
         <div class="ComponentContainer">
-            <div class="floating-actions">
-                holi
-            </div>
+            <ActionsComponent />
             <component 
             v-if="currentComponent" :is="currentComponent"
              />
@@ -19,11 +17,12 @@ import LoadingScreenComponent from './LoadingScreenComponent.vue';
 import TopBarComponent from './TopBarComponent.vue';
 import Application from '@/models/application';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
+import ActionsComponent from './ActionsComponent.vue';
 
 export default {
     name: 'ComponentContainerComponent',
     components: {
-        TopBarComponent, LoadingScreenComponent
+        TopBarComponent, LoadingScreenComponent, ActionsComponent
     },
     data() {
         return {
@@ -76,27 +75,5 @@ export default {
     background-color: var(--bg-gray);
     border-radius: var(--border-radius);
     box-sizing: border-box;
-}
-
-.floating-actions {
-    position: sticky;
-    top: 0;
-    right: 0;
-    width: auto;
-    margin-left: auto;
-    z-index: 10;
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: center;
-    background-color: var(--white);
-    padding: .75rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-light);
-    margin-bottom: 1rem;
-    cursor: pointer;
-    overflow: hidden;
-    transition: max-width 0.5s ease;
-    white-space: nowrap;
 }
 </style>

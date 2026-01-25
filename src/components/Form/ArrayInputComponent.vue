@@ -15,7 +15,11 @@
                 <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
                 Eliminar
             </button>
-            <button class="button success fill" @click="toggleSelection">
+            <button 
+            class="button success fill" 
+            @click="toggleSelection"
+            :disabled="modelValue.length == 0"
+            >
                 <span :class="GGCLASS">{{ isSelection ?
                     GGICONS.SELECT_CHECKBOX :
                     GGICONS.SELECT_VOID

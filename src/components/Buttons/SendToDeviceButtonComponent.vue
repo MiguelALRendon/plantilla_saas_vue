@@ -1,7 +1,7 @@
 <template>
-    <button class="button info">
-        <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-        New
+    <button class="button accent">
+        <span :class="GGCLASS">{{ GGICONS.DEVICES }}</span>
+        Send to Device
     </button>
 </template>
 
@@ -18,9 +18,3 @@ export default {
     }
 }
 </script>
-
-<style scoped>
-.button.info span{
-    font-size: 1.1rem;
-}
-</style>
