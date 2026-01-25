@@ -118,7 +118,7 @@ export default {
 
 table {
     width: 100%;
-    height: calc(100vh - 50px - 2rem - 2rem);
+    height: calc(100vh - 50px - 2rem - 2rem - 3.3rem);
     background-color: var(--white);
     border-radius: var(--border-radius);
     display: flex;

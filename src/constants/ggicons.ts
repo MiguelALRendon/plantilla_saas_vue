@@ -12,6 +12,7 @@ export const GGICONS = {
   CHECK: 'check',
   MAIL: 'mail',
   ARROW_UP: 'keyboard_control_key',
+  ARROW_LEFT: 'arrow_left',
   INFO: 'info_i',
   WARNING: 'warning',
   SELECT_CHECKBOX: 'select_check_box',
