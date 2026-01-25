@@ -1,5 +1,5 @@
 <template>
-    <div class="loading-screen" :class="{ active: Application.isScreenLoading }">
+    <div class="loading-screen" :class="{ active: isActive }">
         Loading...
     </div>
 </template>
@@ -11,8 +11,21 @@ export default {
     name: 'LoadingScreenComponent',
     data() {
         return {
-            Application
+            Application,
+            isActive: false
         }
+    },
+    mounted() {
+        Application.eventBus.on('show-loading', () => {
+            this.isActive = true;
+        });
+        Application.eventBus.on('hide-loading', () => {
+            this.isActive = false;
+        });
+    },
+    beforeUnmount() {
+        Application.eventBus.off('show-loading');
+        Application.eventBus.off('hide-loading');
     }
 }
 </script>

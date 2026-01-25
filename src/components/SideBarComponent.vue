@@ -26,15 +26,19 @@ export default {
     components: {
         SideBarItemComponent
     },
-    computed: {
-        toggled() {
-            return (Application as any).sidebarToggled.value;
-        }
-    },
     data() {
         return {
             Application,
+            toggled: true,
         }
+    },
+    mounted() {
+        Application.eventBus.on('toggle-sidebar', (state?: boolean) => {
+            this.toggled = state !== undefined ? state : !this.toggled;
+        });
+    },
+    beforeUnmount() {
+        Application.eventBus.off('toggle-sidebar');
     }
 }
 </script>

@@ -40,9 +40,6 @@ export default {
         }
     },
     computed: {
-        toggled_bar() {
-            return Application.sidebarToggled.value;
-        },
         title() {
             return Application.activeViewEntity.value?.getModuleName() ?? 'Default';
         },
@@ -54,7 +51,16 @@ export default {
         return {
             ICONS,
             toggled_profile : false,
+            toggled_bar: true,
         }
+    },
+    mounted() {
+        Application.eventBus.on('toggle-sidebar', (state?: boolean) => {
+            this.toggled_bar = state !== undefined ? state : !this.toggled_bar;
+        });
+    },
+    beforeUnmount() {
+        Application.eventBus.off('toggle-sidebar');
     }
 }
 </script>

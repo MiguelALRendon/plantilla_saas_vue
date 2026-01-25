@@ -1,5 +1,5 @@
 <template>
-<div :class="['confirmation-dialog-container', { closed: Application.isShowingConfirmationMenu === false }]">
+<div :class="['confirmation-dialog-container', { closed: !isShowing }]">
   <div class="confirmation-dialog-card">
     <div class="confirmation-dialog-header">
       <h2>{{ dialogInfo.title }}</h2>
@@ -56,9 +56,22 @@ export default {
       Application,
       GGCLASS,
       GGICONS,
-      confMenuType
+      confMenuType,
+      isShowing: false
     };
   },
+  mounted() {
+    Application.eventBus.on('show-confirmation', () => {
+      this.isShowing = true;
+    });
+    Application.eventBus.on('hide-confirmation', () => {
+      this.isShowing = false;
+    });
+  },
+  beforeUnmount() {
+    Application.eventBus.off('show-confirmation');
+    Application.eventBus.off('hide-confirmation');
+  }
 };
 </script>
 

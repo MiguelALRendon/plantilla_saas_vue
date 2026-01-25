@@ -1,6 +1,6 @@
 <template>
-<div :class="'modal-background ' + (Application.isShowingModal ? '' : 'closed')">
-    <div :class="'modal-structure ' + (Application.isShowingModal ? '' : 'closed')">
+<div :class="'modal-background ' + (isShowing ? '' : 'closed')">
+    <div :class="'modal-structure ' + (isShowing ? '' : 'closed')">
         <div class="modal-head">
             <div class="left-side">
                 <div class="icon">
@@ -41,7 +41,7 @@ export default {
             Application.closeModal();
         },
         handleKeydown(e: KeyboardEvent) {
-            if (e.key === 'Escape' && Application.isShowingModal) {
+            if (e.key === 'Escape' && this.isShowing) {
                 Application.closeModal();
             }
         }
@@ -53,6 +53,7 @@ export default {
             GGICONS,
             Application,
             modalModule: null as typeof BaseEntity | null,
+            isShowing: false,
         }
     },
     computed: {
@@ -81,9 +82,17 @@ export default {
     },
     mounted() {
         window.addEventListener('keydown', this.handleKeydown);
+        Application.eventBus.on('show-modal', () => {
+            this.isShowing = true;
+        });
+        Application.eventBus.on('hide-modal', () => {
+            this.isShowing = false;
+        });
     },
     beforeUnmount() {
         window.removeEventListener('keydown', this.handleKeydown);
+        Application.eventBus.off('show-modal');
+        Application.eventBus.off('hide-modal');
     },
 }
 </script>

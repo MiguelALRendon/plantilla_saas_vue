@@ -13,6 +13,7 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "mitt": "^3.0.1",
     "vue": "^3.5.25"
   },
   "devDependencies": {

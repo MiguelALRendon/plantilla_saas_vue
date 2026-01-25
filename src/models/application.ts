@@ -7,6 +7,8 @@ import { AppConfiguration } from './AppConfiguration';
 import { DropdownMenu } from './dropdown_menu';
 import { confirmationMenu } from './confirmation_menu';
 import { confMenuType } from '@/enums/conf_menu_type';
+import mitt, { Emitter } from 'mitt';
+import type { Events } from '@/types/events';
 
 class ApplicationClass {
     AppConfiguration: Ref<AppConfiguration>;
@@ -14,13 +16,10 @@ class ApplicationClass {
     activeViewEntity: Ref<typeof BaseEntity | null>;
     activeViewComponent: Ref<Component | null>;
     activeViewComponentProps: Ref<BaseEntity | null>;
-    sidebarToggled: Ref<boolean>;
-    isScreenLoading: Ref<boolean>;
-    isShowingModal: Ref<boolean>;
-    isShowingConfirmationMenu: Ref<boolean>;
     modal: Ref<Modal>;
     dropdownMenu: Ref<DropdownMenu>;
     confirmationMenu: Ref<confirmationMenu>;
+    eventBus: Emitter<Events>;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -42,10 +41,7 @@ class ApplicationClass {
         this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
         this.activeViewEntity = ref<typeof BaseEntity | null>(null) as Ref<typeof BaseEntity | null>;
         this.activeViewComponent = ref<Component | null>(null) as Ref<Component | null>;
-        this.sidebarToggled = ref<boolean>(true);
-        this.isScreenLoading = ref<boolean>(false);
-        this.isShowingModal = ref<boolean>(false);
-        this.isShowingConfirmationMenu = ref<boolean>(false);
+        this.eventBus = mitt<Events>();
         this.modal = ref<Modal>({
             modalView: null,
             modalOnCloseFunction: null,
@@ -94,19 +90,19 @@ class ApplicationClass {
     }
 
     toggleSidebar = () => {
-        this.sidebarToggled.value = !this.sidebarToggled.value;
+        this.eventBus.emit('toggle-sidebar');
     }
 
     setSidebar = (state: boolean) => {
-        this.sidebarToggled.value = state;
+        this.eventBus.emit('toggle-sidebar', state);
     }
 
     showLoadingScreen = () => {
-        this.isScreenLoading.value = true;
+        this.eventBus.emit('show-loading');
     }
 
     hideLoadingScreen = () => {
-        this.isScreenLoading.value = false;
+        this.eventBus.emit('hide-loading');
     }
 
     showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
@@ -114,11 +110,11 @@ class ApplicationClass {
         this.modal.value.modalOnCloseFunction = null;
         this.modal.value.viewType = viewType;
         this.modal.value.customViewId = customViewId;
-        this.isShowingModal.value = true;
+        this.eventBus.emit('show-modal');
     }
 
     closeModal = () => {
-        this.isShowingModal.value = false;
+        this.eventBus.emit('hide-modal');
         setTimeout(() => {
             this.modal.value.modalView = null;
         }, 150);
@@ -129,14 +125,14 @@ class ApplicationClass {
         this.modal.value.modalOnCloseFunction = onCloseFunction;
         this.modal.value.viewType = viewType;
         this.modal.value.customViewId = customViewId;
-        this.isShowingModal.value = true;
+        this.eventBus.emit('show-modal');
     }
 
     closeModalOnFunction = (param : any) => {
         if (this.modal.value.modalOnCloseFunction) {
             this.modal.value.modalOnCloseFunction(param);
         }
-        this.isShowingModal.value = false;
+        this.eventBus.emit('hide-modal');
         setTimeout(() => {
             this.modal.value.modalView = null;
             this.modal.value.modalOnCloseFunction = null;
@@ -172,11 +168,11 @@ class ApplicationClass {
             message,
             confirmationAction: onAccept
         };
-        this.isShowingConfirmationMenu.value = true;
+        this.eventBus.emit('show-confirmation');
     }
 
     closeConfirmationMenu = () => {
-        this.isShowingConfirmationMenu.value = false;
+        this.eventBus.emit('hide-confirmation');
         setTimeout(() => {
             this.confirmationMenu.value = {
                 type: confMenuType.INFO,
@@ -190,6 +186,10 @@ class ApplicationClass {
     acceptConfigurationMenu = () => {
         this.confirmationMenu.value.confirmationAction();
         this.closeConfirmationMenu();
+    }
+
+    ValidateInputs = () => {
+        this.eventBus.emit('validate-inputs');
     }
 }
 
