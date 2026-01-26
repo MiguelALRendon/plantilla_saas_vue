@@ -149,7 +149,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     background-color: var(--white);
 }
 
-.TextInput.disabled input, .TextInput.disabled textarea, .TextInput.disabled button, .TextInput.disabled .label-input {
+.TextInput.disabled input, .TextInput.disabled textarea, .TextInput.disabled button, .TextInput.disabled .label-input, .TextInput.disabled .label-input span {
     border-color: var(--gray-light) !important;
     color: var(--gray-light) !important;
     cursor: not-allowed;
@@ -157,15 +157,21 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput:has(.main-input:not(:placeholder-shown)).disabled .label-input {
     background-color: var(--gray-lighter) !important;
 }
+.TextInput.disabled button span {
+    color: var(--gray-light) !important;
+}
 
 .TextInput.nonvalidated input, .TextInput.nonvalidated textarea, .TextInput.nonvalidated button, .TextInput.nonvalidated .label-input {
     border-color: var(--accent-red) !important;
 }
-.TextInput.nonvalidated button { color: var(--accent-red); }
+.TextInput.nonvalidated button, .TextInput.nonvalidated button span { color: var(--accent-red) !important; }
 .TextInput.nonvalidated .label-input { color: var(--accent-rose) !important; }
 
 .TextInput:has(.main-input:not(:placeholder-shown)).nonvalidated .label-input,
 .TextInput:has(.main-input:focus).nonvalidated .label-input  {
     background-color: var(--accent-red) !important;
     color: var(--white) !important;
+}
+.TextInput.nonvalidated .label-input span {
+    color: var(--accent-rose) !important;
 }

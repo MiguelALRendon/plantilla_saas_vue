@@ -13,42 +13,59 @@ export class Products extends BaseEntity {
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
     @Disabled(true)
+    @Required(true)
     id!: number;
 
     @PropertyName('Name', String)
     @CSSColumnClass('table-length-short')
-    @Required(true, 'El nombre e requerio')
+    @Disabled(true)
+    @Required(true)
     name!: string;
 
     @PropertyName('Stringi', StringType)
+    @Disabled(true)
+    @Required(true)
     grupo!: StringType;
 
     @ViewGroup('Grupo 2')
     @PropertyName('Description', String)
     @StringTypeDef(StringType.TEXTAREA)
+    @Disabled(true)
+    @Required(true)
     description!: string;
 
     @PropertyName('Stock', Number)
     @Mask(' Pz.', MaskSides.END)
     @CSSColumnClass('table-length-short')
+    @Disabled(true)
+    @Required(true)
     stock!: number;
 
     @PropertyName('Generic Date', Date)
+    @Disabled(true)
+    @Required(true)
     genericDate!: Date;
 
     @PropertyName('Catedral Product', Products)
+    @Disabled(true)
+    @Required(true)
     Catedral! : Products;
 
     @ViewGroup('Grupo 3')
     @PropertyName('Is Bolian', Boolean)
+    @Disabled(true)
     bolian!: boolean;
 
     @PropertyName('Email', String)
     @StringTypeDef(StringType.EMAIL)
+    @Disabled(true)
+    @Required(true)
     email!: string;
 
     @PropertyName('Password', String)
     @StringTypeDef(StringType.PASSWORD)
+    @Disabled(true)
+    @Required(true)
     password!: string;
 
     @PropertyName('List', ArrayOf(Products))

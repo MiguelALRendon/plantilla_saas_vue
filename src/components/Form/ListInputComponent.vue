@@ -1,6 +1,6 @@
 <template>
-<div class="ListInput">
-    <button class="list-input-header" @click="openOptions" :id="'id-4-click-on' + propertyName">
+<div class="ListInput" :class="[{disabled: disabled}, {nonvalidated: !isInputValidated}]">
+    <button class="list-input-header" @click="openOptions" :id="'id-4-click-on' + propertyName" :disabled="disabled">
         <div class="list-input-container">
             <div class="label-and-value">
                 <label class="label" :class="[{active: actualOption != ''}]">{{ propertyName }}</label>
@@ -20,20 +20,27 @@
             </div>
         </div>
     </div>
+    
+    <div class="validation-messages">
+        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+    </div>
 </div>
 </template>
 
 <script lang="ts">
 import { EnumAdapter } from '@/models/enum_adapter';
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
+import Application from '@/models/application';
 
 export default {
     name: 'ListInputComponent',
     mounted() {
         document.addEventListener('click', this.handleClickOutside);
+        Application.eventBus.on('validate-inputs', this.saveItem);
     },
     beforeUnmount() {
         document.removeEventListener('click', this.handleClickOutside);
+        Application.eventBus.off('validate-inputs', this.saveItem);
     },
     methods: {
         parseValue(key: string): string {
@@ -60,7 +67,23 @@ export default {
                     this.droped = false;
                 }
             }
-        }
+        },
+        isValidated(): boolean {
+            var validated = true;
+            this.validationMessages = [];
+            if (this.required && this.modelValue === '') {
+                validated = false;
+                this.validationMessages.push(this.requireddMessage || `${this.propertyName} is required.`);
+            }
+            if (!this.validated) {
+                validated = false;
+                this.validationMessages.push(this.validatedMessage || `${this.propertyName} is not valid.`);
+            }
+            return validated;
+        },
+        saveItem() {
+            this.isInputValidated = this.isValidated();
+        },
     },
     props: {
         propertyName: {
@@ -75,6 +98,31 @@ export default {
         modelValue: {
             type: [String, Number],
             required: true,
+            default: '',
+        },
+        required: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        requireddMessage: {
+            type: String,
+            required: false,
+            default: '',
+        },
+        disabled: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        validated: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
+        validatedMessage: {
+            type: String,
+            required: false,
             default: '',
         },
     },
@@ -92,6 +140,8 @@ export default {
             GGICONS,
             droped: false,
             fromBottom: false,
+            isInputValidated: true,
+            validationMessages: [] as string[],
         }
     }
 };
@@ -101,6 +151,13 @@ export default {
 .ListInput {
     width: 100%;
     position: relative;
+}
+
+.validation-messages {
+    color: var(--red);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    padding-left: 0.75rem;
 }
 
 .list-input-container .arrow {
@@ -211,5 +268,15 @@ export default {
 button:focus .list-input-container {
     background-color: var(--white) !important;
     border: 2px solid var(--lavender) !important;
+}
+button:disabled { background-color: transparent !important; }
+
+.ListInput.disabled {
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.ListInput.nonvalidated .list-input-container {
+    border-color: var(--red) !important;
 }
 </style>
