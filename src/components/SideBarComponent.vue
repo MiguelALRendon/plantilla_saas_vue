@@ -33,7 +33,7 @@ export default {
         }
     },
     mounted() {
-        Application.eventBus.on('toggle-sidebar', (state?: boolean) => {
+        Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
             this.toggled = state !== undefined ? state : !this.toggled;
         });
     },

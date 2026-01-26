@@ -93,8 +93,8 @@ export default {
             StringType,
             EnumAdapter,
             BaseEntity,
-            entity: Application.activeViewComponentProps.value as BaseEntity,
-            entityClass: Application.activeViewEntity.value as typeof BaseEntity,
+            entity: Application.View.value.entityObject as BaseEntity,
+            entityClass: Application.View.value.entityClass as typeof BaseEntity,
         };
     },
     computed: {

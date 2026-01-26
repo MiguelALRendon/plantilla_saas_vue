@@ -41,10 +41,10 @@ export default {
     },
     computed: {
         title() {
-            return Application.activeViewEntity.value?.getModuleName() ?? 'Default';
+            return Application.View.value.entityClass?.getModuleName() ?? 'Default';
         },
         icon() {
-            return Application.activeViewEntity.value?.getModuleIcon() ?? '';
+            return Application.View.value.entityClass?.getModuleIcon() ?? '';
         }
     },
     data() {
@@ -55,7 +55,7 @@ export default {
         }
     },
     mounted() {
-        Application.eventBus.on('toggle-sidebar', (state?: boolean) => {
+        Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
             this.toggled_bar = state !== undefined ? state : !this.toggled_bar;
         });
     },

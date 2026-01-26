@@ -22,12 +22,12 @@ export default {
     },
     computed: {
         isActive(): boolean {
-            return Application.activeViewEntity.value?.getModuleName() === (this.module && this.module.getModuleName());
+            return Application.View.value.entityClass?.getModuleName() === (this.module && this.module.getModuleName());
         }
     },
     methods: {
         setNewView() {
-            Application.changeView(this.module as typeof BaseEntity);
+            Application.changeViewToDefaultView(this.module as typeof BaseEntity);
         }
     },
 }

@@ -51,7 +51,4 @@ export class Products extends BaseEntity {
 
     @PropertyName('List', ArrayOf(Products))
     listaProductos!: Array<Products>;
-
-    @PropertyName('List2', ArrayOf(Products))
-    listaProductos2!: Array<Products>;
 }

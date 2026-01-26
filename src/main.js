@@ -13,7 +13,7 @@ document.title = Application.AppConfiguration.value.appName
 
 if (Application.ModuleList && Application.ModuleList.value && Application.ModuleList.value.length > 0) {
 	try {
-		Application.changeView(Application.ModuleList.value[0])
+		Application.changeViewToDefaultView(Application.ModuleList.value[0])
 	} catch (e) {
 		console.log('Failed to set initial module view', e)
 	}

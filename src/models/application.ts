@@ -9,6 +9,7 @@ import { confirmationMenu } from './confirmation_menu';
 import { confMenuType } from '@/enums/conf_menu_type';
 import mitt, { Emitter } from 'mitt';
 import type { Events } from '@/types/events';
+import { View } from './View';
 import {
     NewButtonComponent,
     RefreshButtonComponent,
@@ -19,10 +20,8 @@ import {
 
 class ApplicationClass {
     AppConfiguration: Ref<AppConfiguration>;
+    View: Ref<View>;
     ModuleList: Ref<(typeof BaseEntity)[]>;
-    activeViewEntity: Ref<typeof BaseEntity | null>;
-    activeViewComponent: Ref<Component | null>;
-    activeViewComponentProps: Ref<BaseEntity | null>;
     modal: Ref<Modal>;
     dropdownMenu: Ref<DropdownMenu>;
     confirmationMenu: Ref<confirmationMenu>;
@@ -46,16 +45,19 @@ class ApplicationClass {
             maxFileSize: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880,
             isDarkMode: false
         }) as Ref<AppConfiguration>;
+        this.View = ref<View>({
+            entityClass: null,
+            entityObject: null,
+            component: null,
+            viewType: ViewTypes.DEFAULTVIEW
+        }) as Ref<View>;
         this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
-        this.activeViewEntity = ref<typeof BaseEntity | null>(null) as Ref<typeof BaseEntity | null>;
-        this.activeViewComponent = ref<Component | null>(null) as Ref<Component | null>;
         this.eventBus = mitt<Events>();
         this.modal = ref<Modal>({
             modalView: null,
             modalOnCloseFunction: null,
             viewType: ViewTypes.LISTVIEW
         }) as Ref<Modal>;
-        this.activeViewComponentProps = ref<BaseEntity | null>(null) as Ref<BaseEntity | null>;
         this.dropdownMenu = ref<DropdownMenu>({
             showing: false,
             title: '',
@@ -86,22 +88,44 @@ class ApplicationClass {
         this.AppConfiguration.value.isDarkMode = !this.AppConfiguration.value.isDarkMode;
     }
 
-    changeView = (entity: typeof BaseEntity) => {
-        this.activeViewEntity.value = entity;
-        this.activeViewComponent.value = entity.getModuleDefaultComponent();
+    changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
+        this.View.value.entityClass = entityClass;
+        this.View.value.entityObject = entity;
+        this.View.value.component = component;
+        this.View.value.viewType = viewType;
+    }
+
+    changeViewToDefaultView = (entityClass: typeof BaseEntity) => {
+        this.changeView(entityClass, entityClass.getModuleDefaultComponent(), ViewTypes.DEFAULTVIEW);
         setTimeout(() => {
-            this.ListButtons.value = [
-                markRaw(NewButtonComponent),
-                markRaw(RefreshButtonComponent)
-            ];
+            this.setButtonList();
         }, 405);
     }
 
     changeViewToDetailView = (entity: BaseEntity) => {
-        if (this.activeViewEntity.value) {
-            this.activeViewComponentProps.value = entity;
-            this.activeViewComponent.value = this.activeViewEntity.value.getModuleDetailComponent();
-            setTimeout(() => {
+        var entityClass = entity.constructor as typeof BaseEntity;
+        this.changeView(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
+        setTimeout(() => {
+            this.setButtonList();
+        }, 405);
+    }
+
+    changeViewToListView = (entityClass: typeof BaseEntity) => {
+        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW);
+        setTimeout(() => {
+            this.setButtonList();
+        }, 405);
+    }
+
+    setButtonList() {
+        switch (this.View.value.viewType) {
+            case ViewTypes.LISTVIEW:
+                this.ListButtons.value = [
+                    markRaw(NewButtonComponent),
+                    markRaw(RefreshButtonComponent)
+                ];
+                break;
+            case ViewTypes.DETAILVIEW:
                 this.ListButtons.value = [
                     markRaw(NewButtonComponent),
                     markRaw(RefreshButtonComponent),
@@ -109,7 +133,10 @@ class ApplicationClass {
                     markRaw(SaveAndNewButtonComponent),
                     markRaw(SendToDeviceButtonComponent)
                 ];
-            }, 405);
+                break;
+            default:
+                this.ListButtons.value = [];
+                break;
         }
     }
 

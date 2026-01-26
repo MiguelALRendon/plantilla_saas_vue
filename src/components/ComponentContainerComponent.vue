@@ -32,12 +32,12 @@ export default {
         };
     },
     created() {
-        const init = Application.activeViewComponent.value;
+        const init = Application.View.value.component;
         if (init) {
             this.currentComponent = markRaw(init);
         }
 
-        watch(Application.activeViewComponent, async (newVal: Component | null) => {
+        watch(() => Application.View.value.component, async (newVal: Component | null) => {
             if (newVal) {
                 Application.showLoadingScreen();
                 await new Promise(resolve => setTimeout(resolve, 400));

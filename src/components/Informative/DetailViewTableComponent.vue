@@ -2,7 +2,7 @@
 <table>
     <thead>
         <tr>
-            <td v-for="(item, key) in Application.activeViewEntity?.getProperties()" :class="Application.activeViewEntity?.getCSSClasses()[key]">
+            <td v-for="(item, key) in Application.View.entityClass?.getProperties()" :class="Application.View.entityClass?.getCSSClasses()[key]">
                 {{ item }}
             </td>
         </tr>
@@ -11,12 +11,12 @@
     <tbody>
         <tr v-for="item in data" @click="openDetailView(item)">
             <template v-for="column in item.getKeys()">
-                <td :class="item.getCSSClasses()[column]" class="table-row" v-if="Application.activeViewEntity?.getPropertyType(column) !== Array">
-                    <span v-if="Application.activeViewEntity?.getPropertyType(column) !== Boolean">
+                <td :class="item.getCSSClasses()[column]" class="table-row" v-if="Application.View.entityClass?.getPropertyType(column) !== Array">
+                    <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
                         {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
                     </span>
 
-                    <span v-else-if="Application.activeViewEntity?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
+                    <span v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
                         {{ item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL }}
                     </span>
                 </td>
