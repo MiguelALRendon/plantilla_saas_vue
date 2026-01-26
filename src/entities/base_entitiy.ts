@@ -202,6 +202,10 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         return proto[VIEW_GROUP_ROW_KEY] || {};
     }
+
+    public static createNewInstance<T extends BaseEntity>(this: new (data: Record<string, any>) => T): T {
+        return new this({});
+    }
 }
 
 export class EmptyEntity extends BaseEntity {

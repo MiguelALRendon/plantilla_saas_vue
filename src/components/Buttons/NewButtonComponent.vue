@@ -1,5 +1,5 @@
 <template>
-    <button class="button info">
+    <button class="button info" @click="openNewDetailView">
         <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
         New
     </button>
@@ -7,13 +7,20 @@
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import Application from '@/models/application';
 
 export default {
     name: 'NewButtonComponent',
+    methods: {
+        openNewDetailView() {
+            Application.changeViewToDetailView(Application.View.value.entityClass!.createNewInstance());
+        }
+    },
     data() {
         return {
             GGCLASS,
             GGICONS,
+            Application
         };
     }
 }
