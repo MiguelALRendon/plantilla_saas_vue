@@ -77,7 +77,6 @@ import TabControllerComponent from '@/components/TabControllerComponent.vue';
 import TabComponent from '@/components/TabComponent.vue';
 import Application from '@/models/application';
 import { BaseEntity } from '@/entities/base_entitiy';
-import { DetailTypes } from '@/enums/detail_type';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import { EnumAdapter } from '@/models/enum_adapter';
@@ -96,7 +95,6 @@ export default {
             BaseEntity,
             entity: Application.activeViewComponentProps.value as BaseEntity,
             entityClass: Application.activeViewEntity.value as typeof BaseEntity,
-            detailType: Application.activeViewComponentProps.value?.viewType as DetailTypes,
         };
     },
     computed: {
