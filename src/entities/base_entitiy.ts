@@ -15,7 +15,11 @@ import {
     MODULE_DETAIL_COMPONENT_KEY,
     MODULE_DEFAULT_COMPONENT_KEY,
     MODULE_CUSTOM_COMPONENTS_KEY,
+    REQUIRED_KEY,
+    VALIDATION_KEY,
+    DISABLED_KEY,
 } from "@/decorations";
+import type { RequiredMetadata, ValidationMetadata, DisabledMetadata } from "@/decorations";
 import DefaultDetailView from "@/views/default_detailview.vue";
 import type { Component } from 'vue';
 import type { MaskSides } from "@/enums/mask_sides";
@@ -205,6 +209,62 @@ export abstract class BaseEntity {
 
     public static createNewInstance<T extends BaseEntity>(this: new (data: Record<string, any>) => T): T {
         return new this({});
+    }
+
+    public isRequired(propertyKey: string): boolean {
+        const proto = (this.constructor as any).prototype;
+        const requiredFields: Record<string, RequiredMetadata> = proto[REQUIRED_KEY] || {};
+        const metadata = requiredFields[propertyKey];
+        
+        if (!metadata) {
+            return false;
+        }
+        
+        let value = metadata.validation !== undefined ? metadata.validation : metadata.condition;
+        
+        if (value === undefined) {
+            return false;
+        }
+        
+        return typeof value === 'function' ? value(this) : value;
+    }
+
+    public requiredMessage(propertyKey: string): string | undefined {
+        const proto = (this.constructor as any).prototype;
+        const requiredFields: Record<string, RequiredMetadata> = proto[REQUIRED_KEY] || {};
+        const metadata = requiredFields[propertyKey];
+        return metadata?.message;
+    }
+
+    public isValidation(propertyKey: string): boolean {
+        const proto = (this.constructor as any).prototype;
+        const validationRules: Record<string, ValidationMetadata> = proto[VALIDATION_KEY] || {};
+        const rule = validationRules[propertyKey];
+        
+        if (!rule) {
+            return true;
+        }
+        
+        return typeof rule.condition === 'function' ? rule.condition(this) : rule.condition;
+    }
+
+    public validationMessage(propertyKey: string): string | undefined {
+        const proto = (this.constructor as any).prototype;
+        const validationRules: Record<string, ValidationMetadata> = proto[VALIDATION_KEY] || {};
+        const rule = validationRules[propertyKey];
+        return rule?.message;
+    }
+
+    public isDisabled(propertyKey: string): boolean {
+        const proto = (this.constructor as any).prototype;
+        const disabledFields: Record<string, DisabledMetadata> = proto[DISABLED_KEY] || {};
+        const metadata = disabledFields[propertyKey];
+        
+        if (!metadata) {
+            return false;
+        }
+        
+        return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
     }
 }
 

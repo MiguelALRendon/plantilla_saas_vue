@@ -4,7 +4,7 @@ input[type="number"]::-webkit-outer-spin-button {
     margin: 0;
 }
 input[type="number"] {
-    -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 .TextInput {
@@ -66,6 +66,17 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     display: flex;
     flex-direction: row;
     align-items: end;
+}
+.validation-messages {
+    margin-top: 0.25rem;
+    margin-left: 0.7rem;
+    font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.validation-messages span {
+    color: var(--accent-red);
 }
 .label-input span {
     font-size: 1rem !important;
@@ -136,4 +147,25 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 
 .TextInput:has(.main-input:focus) input, .TextInput:has(button:focus) input, .TextInput:has(.main-input:focus) textarea {
     background-color: var(--white);
+}
+
+.TextInput.disabled input, .TextInput.disabled textarea, .TextInput.disabled button, .TextInput.disabled .label-input {
+    border-color: var(--gray-light) !important;
+    color: var(--gray-light) !important;
+    cursor: not-allowed;
+}
+.TextInput:has(.main-input:not(:placeholder-shown)).disabled .label-input {
+    background-color: var(--gray-lighter) !important;
+}
+
+.TextInput.nonvalidated input, .TextInput.nonvalidated textarea, .TextInput.nonvalidated button, .TextInput.nonvalidated .label-input {
+    border-color: var(--accent-red) !important;
+}
+.TextInput.nonvalidated button { color: var(--accent-red); }
+.TextInput.nonvalidated .label-input { color: var(--accent-rose) !important; }
+
+.TextInput:has(.main-input:not(:placeholder-shown)).nonvalidated .label-input,
+.TextInput:has(.main-input:focus).nonvalidated .label-input  {
+    background-color: var(--accent-red) !important;
+    color: var(--white) !important;
 }

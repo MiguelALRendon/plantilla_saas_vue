@@ -13,3 +13,9 @@ export { MODULE_LIST_COMPONENT_KEY, ModuleListComponent } from './module_list_co
 export { MODULE_DETAIL_COMPONENT_KEY, ModuleDetailComponent } from './module_detail_component_decorator';
 export { MODULE_DEFAULT_COMPONENT_KEY, ModuleDefaultComponent } from './module_default_component_decorator';
 export { MODULE_CUSTOM_COMPONENTS_KEY, ModuleCustomComponents } from './module_custom_components_decorator';
+export { REQUIRED_KEY, Required } from './required_decorator';
+export type { RequiredMetadata } from './required_decorator';
+export { VALIDATION_KEY, Validation } from './validation_decorator';
+export type { ValidationMetadata } from './validation_decorator';
+export { DISABLED_KEY, Disabled } from './disabled_decorator';
+export type { DisabledMetadata } from './disabled_decorator';

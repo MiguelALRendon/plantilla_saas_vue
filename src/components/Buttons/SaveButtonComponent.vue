@@ -1,5 +1,5 @@
 <template>
-    <button class="button secondary">
+    <button class="button secondary" @click="saveItem">
         <span :class="GGCLASS">{{ GGICONS.SAVE }}</span>
         Save
     </button>
@@ -7,9 +7,15 @@
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import Application from '@/models/application';
 
 export default {
     name: 'NewButtonComponent',
+    methods: {
+        saveItem() {
+            Application.eventBus.emit('validate-inputs')
+        }
+    },
     data() {
         return {
             GGCLASS,

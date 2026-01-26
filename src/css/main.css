@@ -76,12 +76,12 @@ table, span{color: var(--gray-medium);}
 .button.success { --button-color: var(--green-main); }
 
 button:disabled, .button[disabled] {
-    background-color: var(--gray-light);
-    border-color: var(--gray-light);
-    color: var(--gray-medium);
+    background-color: var(--gray-lighter);
+    border-color: var(--gray-lighter);
+    color: var(--gray-light);
     cursor: not-allowed;
     filter: none;
 }
 button:disabled span, .button[disabled] span {
-    color: var(--gray-medium) !important;
+    color: var(--gray-light) !important;
 }

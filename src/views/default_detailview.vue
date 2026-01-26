@@ -38,6 +38,11 @@
                     <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
                     <TextInputComponent 
                     v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXT"
+                    :required="entity.isRequired(prop)"
+                    :disabled="entity.isDisabled(prop)"
+                    :validated="entity.isValidation(prop)"
+                    :requiredd-message="entity.requiredMessage(prop)"
+                    :validated-message="entity.validationMessage(prop)"
                     :property-name="entityClass.getPropertyNameByKey(prop)"
                     v-model="entity[prop]" />
 

@@ -1,4 +1,4 @@
-import { CSSColumnClass, ModuleIcon, ModuleName } from '@/decorations';
+import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
@@ -12,10 +12,12 @@ export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
+    @Disabled(true)
     id!: number;
 
     @PropertyName('Name', String)
     @CSSColumnClass('table-length-short')
+    @Required(true, 'El nombre e requerio')
     name!: string;
 
     @PropertyName('Stringi', StringType)
