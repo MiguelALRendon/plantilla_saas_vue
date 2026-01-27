@@ -275,8 +275,27 @@ button:disabled { background-color: transparent !important; }
     pointer-events: none;
     cursor: not-allowed;
 }
+.ListInput.disabled .list-input-container,
+.ListInput.disabled .list-input-container .label,
+.ListInput.disabled .list-input-container span {
+    border-color: var(--gray-light) !important;
+    color: var(--gray-light) !important;
+}
+.ListInput.disabled .list-input-container .label.active {
+    background-color: var(--gray-lighter) !important;
+}
 
 .ListInput.nonvalidated .list-input-container {
-    border-color: var(--red) !important;
+    border-color: var(--accent-red) !important;
+}
+.ListInput.nonvalidated .list-input-container,
+.ListInput.nonvalidated .list-input-container .label,
+.ListInput.nonvalidated .list-input-container span {
+    border-color: var(--accent-red) !important;
+    color: var(--accent-rose) !important;
+}
+.ListInput.nonvalidated .list-input-container .label.active {
+    background-color: var(--accent-red) !important;
+    color: var(--white) !important;
 }
 </style>

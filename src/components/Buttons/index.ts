@@ -4,3 +4,4 @@ export { default as RefreshButtonComponent } from '@/components/Buttons/RefreshB
 export { default as SaveButtonComponent } from '@/components/Buttons/SaveButtonComponent.vue';
 export { default as SaveAndNewButtonComponent } from '@/components/Buttons/SaveAndNewButtonComponent.vue';
 export { default as SendToDeviceButtonComponent } from '@/components/Buttons/SendToDeviceButtonComponent.vue';
+export { default as ValidateButtonComponent } from '@/components/Buttons/ValidateButtonComponent.vue';

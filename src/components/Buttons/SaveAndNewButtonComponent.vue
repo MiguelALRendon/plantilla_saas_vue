@@ -1,5 +1,5 @@
 <template>
-    <button class="button warning">
+    <button class="button accent">
         <span :class="GGCLASS">{{ GGICONS.SAVE2 }}</span>
         Save and New
     </button>
@@ -20,7 +20,7 @@ export default {
 </script>
 
 <style scoped>
-.button.warning span{
+.button.accent span{
     font-size: 1.1rem;
     margin-right: 0.15rem;
 }

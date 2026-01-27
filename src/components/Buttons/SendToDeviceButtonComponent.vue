@@ -1,5 +1,5 @@
 <template>
-    <button class="button accent">
+    <button class="button primary">
         <span :class="GGCLASS">{{ GGICONS.DEVICES }}</span>
         Send to Device
     </button>

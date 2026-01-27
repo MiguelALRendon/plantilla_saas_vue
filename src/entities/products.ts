@@ -12,7 +12,6 @@ export class Products extends BaseEntity {
     @ViewGroup('Grupo 1')
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
-    @Disabled(true)
     @Required(true)
     id!: number;
 
@@ -23,7 +22,7 @@ export class Products extends BaseEntity {
     name!: string;
 
     @PropertyName('Stringi', StringType)
-    @Disabled(true)
+    @Disabled(entity => entity.id == 3)
     @Required(true)
     grupo!: StringType;
 

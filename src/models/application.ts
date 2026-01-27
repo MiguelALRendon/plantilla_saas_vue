@@ -15,7 +15,8 @@ import {
     RefreshButtonComponent,
     SaveButtonComponent,
     SaveAndNewButtonComponent,
-    SendToDeviceButtonComponent
+    SendToDeviceButtonComponent,
+    ValidateButtonComponent
 } from '@/components/Buttons';
 
 class ApplicationClass {
@@ -129,6 +130,7 @@ class ApplicationClass {
                 this.ListButtons.value = [
                     markRaw(NewButtonComponent),
                     markRaw(RefreshButtonComponent),
+                    markRaw(ValidateButtonComponent),
                     markRaw(SaveButtonComponent),
                     markRaw(SaveAndNewButtonComponent),
                     markRaw(SendToDeviceButtonComponent)
