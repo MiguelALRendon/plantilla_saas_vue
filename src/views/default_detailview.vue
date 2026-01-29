@@ -110,7 +110,15 @@
 <FormGroupComponent title="Listas">
     <TabControllerComponent :tabs="getArrayListsTabs()">
         <TabComponent v-for="(tab) in entity.getArrayKeys()">
-            <ArrayInputComponent v-model="entity[tab]" :type-value="entityClass.getArrayPropertyType(tab)"/>
+            <ArrayInputComponent 
+            :required="entity.isRequired(tab)"
+            :disabled="entity.isDisabled(tab)"
+            :validated="entity.isValidation(tab)"
+            :requiredd-message="entity.requiredMessage(tab)"
+            :validated-message="entity.validationMessage(tab)"
+            v-model="entity[tab]" 
+            :type-value="entityClass.getArrayPropertyType(tab)"
+            />
         </TabComponent>
     </TabControllerComponent>
 </FormGroupComponent>

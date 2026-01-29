@@ -1,15 +1,21 @@
 <template>
-<div class="table-container">
+<div class="table-container" :class="[{disabled: disabled}, {nonvalidated: !isInputValidated}]">
     <div class="table-header-row">
         <div class="left-side-space">
             <div class="icon"><img :src="typeValue?.getModuleIcon()" alt=""></div>
             <span class="title">{{ typeValue?.getModuleName() }}</span>
+            <div class="advice" v-if="!isInputValidated">
+                <div class="alert-btn">!</div>
+                <div class="val-list">
+                    <span v-for="message in validationMessages">{{ message }}</span>
+                </div>
+            </div>
         </div>
 
         <div class="right-side-space">
-            <TextInputComponent v-model="search" :property-name="'Buscar ' + typeValue?.getModuleName()"/>
-            <button class="button primary fill" 
-            :disabled="selectedItems.length == 0"
+            <TextInputComponent v-model="search" :property-name="'Buscar ' + typeValue?.getModuleName()" :disabled="disabled"/>
+            <button class="button alert fill" 
+            :disabled="selectedItems.length == 0 || disabled"
             @click="showDeleteModal"
             >
                 <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
@@ -18,7 +24,7 @@
             <button 
             class="button success fill" 
             @click="toggleSelection"
-            :disabled="modelValue.length == 0"
+            :disabled="modelValue.length == 0 || disabled"
             >
                 <span :class="GGCLASS">{{ isSelection ?
                     GGICONS.SELECT_CHECKBOX :
@@ -26,7 +32,7 @@
                 }}</span>
                 Seleccionar
             </button>
-            <button class="button secondary fill" @click="openModal">
+            <button class="button secondary fill" @click="openModal" :disabled="disabled">
                 <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
                 Agregar
             </button>
@@ -73,6 +79,48 @@ export default {
   components: {
     TextInputComponent,
   },
+  props: {
+        modelValue: {
+            type: Array<BaseEntity>,
+            required: true,
+            default: () => [],
+        },
+        typeValue: {
+            type: Function as unknown as PropType<typeof BaseEntity | undefined>,
+            required: true,
+        },
+        required: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        requireddMessage: {
+            type: String,
+            required: false,
+            default: '',
+        },
+        disabled: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        validated: {
+            type: Boolean,
+            required: false,
+            default: true,
+        },
+        validatedMessage: {
+            type: String,
+            required: false,
+            default: '',
+        },
+    },
+    mounted() {
+        Application.eventBus.on('validate-inputs', this.saveItem);
+    },
+    beforeUnmount() {
+        Application.eventBus.off('validate-inputs', this.saveItem);
+    },
     methods: {
         openModal() {
             Application.showModalOnFunction(this.typeValue!, this.addSelectedElement, ViewTypes.LOOKUPVIEW);
@@ -102,6 +150,20 @@ export default {
                 },
             );
         },
+        isValidated(): boolean {
+            this.validationMessages = [];
+            if (this.required && (!this.modelValue || this.modelValue.length === 0)) {
+                this.validationMessages.push(this.requireddMessage || `${this.typeValue?.getModuleName()} is required.`);
+            }
+            if (!this.validated) {
+                this.validationMessages.push(this.validatedMessage || `${this.typeValue?.getModuleName()} is not valid.`);
+            }
+            return this.validationMessages.length === 0;
+        },
+        saveItem() {
+            this.isInputValidated = this.isValidated();
+            console.log(this.isInputValidated);
+        },
     },
     computed: {
         filteredData() {
@@ -117,17 +179,6 @@ export default {
             });
         },
     },
-    props: {
-        modelValue: {
-            type: Array<BaseEntity>,
-            required: true,
-            default: () => [],
-        },
-        typeValue: {
-            type: Function as unknown as PropType<typeof BaseEntity | undefined>,
-            required: true,
-        },
-    },
     data() {
     return {
         Application,
@@ -135,7 +186,9 @@ export default {
         GGCLASS,
         search: '',
         isSelection: false,
+        isInputValidated: true,
         selectedItems: [] as BaseEntity[],
+        validationMessages: [] as string[],
     };
     },
 };
@@ -269,5 +322,36 @@ export default {
 .selection.display {
     display: flex !important;
     max-width: 3rem;
+}
+
+.advice {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+
+}
+.alert-btn {
+    background-color: var(--accent-red);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-weight: bold;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+}
+.val-list{
+    display: flex;
+    flex-direction: column;
+}
+.val-list span{
+    font-size: 0.875rem;
+    color: var(--accent-red);
+    margin-bottom: 0.2rem;
 }
 </style>

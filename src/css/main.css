@@ -74,6 +74,7 @@ table, span{color: var(--gray-medium);}
 .button.warning { --button-color: var(--btn-warning); }
 .button.accent { --button-color: var(--btn-accent); }
 .button.success-green { --button-color: var(--green-main); }
+.button.alert { --button-color: var(--accent-red); }
 
 button:disabled, .button[disabled] {
     background-color: var(--gray-lighter);

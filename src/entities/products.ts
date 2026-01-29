@@ -1,4 +1,4 @@
-import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required } from '@/decorations';
+import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required, Validation } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
@@ -46,7 +46,6 @@ export class Products extends BaseEntity {
     genericDate!: Date;
 
     @PropertyName('Catedral Product', Products)
-    @Disabled(true)
     @Required(true)
     Catedral! : Products;
 
@@ -67,6 +66,8 @@ export class Products extends BaseEntity {
     @Required(true)
     password!: string;
 
+    @Required(true)
+    @Validation((entity) => entity.listaProductos?.length > 3, "La cantidad minima tiene que ser mayor a 3")
     @PropertyName('List', ArrayOf(Products))
     listaProductos!: Array<Products>;
 }

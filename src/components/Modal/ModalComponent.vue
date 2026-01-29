@@ -18,7 +18,7 @@
 
         <div class="modal-footer">
             <button class="button info fill">Aceptar</button>
-            <button class="button primary fill" @click="closeModal">Cerrar</button>
+            <button class="button alert fill" @click="closeModal">Cerrar</button>
         </div>
     </div>
 </div>

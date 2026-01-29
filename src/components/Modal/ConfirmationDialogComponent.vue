@@ -30,7 +30,7 @@
         <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
         Aceptar
       </button>
-      <button class="button primary fill" @click="Application.closeConfirmationMenu()">
+      <button class="button alert fill" @click="Application.closeConfirmationMenu()">
         <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
         Cancelar
       </button>
