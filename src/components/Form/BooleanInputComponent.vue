@@ -1,9 +1,9 @@
 <template>
-<div class="boolean-input-container" :class="[{disabled: disabled}, {nonvalidated: !isInputValidated}]">
-    <button class="BooleanInput" @click="value = !value" :disabled="disabled">
+<div class="boolean-input-container" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
+    <button class="BooleanInput" @click="value = !value" :disabled="metadata.disabled.value">
         <label 
-        :for="'id-' + propertyName" 
-        class="label-input-boolean">{{ propertyName }}: </label>
+        :for="'id-' + metadata.propertyName" 
+        class="label-input-boolean">{{ metadata.propertyName }}: </label>
 
         <div :class="['input-button', { true: modelValue }]">
             <span :class="GGCLASS" class="icon">{{ modelValue ? GGICONS.CHECK : GGICONS.CANCEL }}</span>
@@ -19,45 +19,35 @@
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
+import { useInputMetadata } from '@/composables/useInputMetadata';
+import type { BaseEntity } from '@/entities/base_entitiy';
 
 export default {
     name: 'BooleanInputComponent',
     props: {
-        propertyName: {
+        entityClass: {
+            type: Function as () => typeof BaseEntity,
+            required: true,
+        },
+        entity: {
+            type: Object as () => BaseEntity,
+            required: true,
+        },
+        propertyKey: {
             type: String,
             required: true,
-            default: '',
         },
         modelValue: {
             type: Boolean,
             required: true,
             default: false,
         },
-        required: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        requireddMessage: {
-            type: String,
-            required: false,
-            default: '',
-        },
-        disabled: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        validated: {
-            type: Boolean,
-            required: false,
-            default: true,
-        },
-        validatedMessage: {
-            type: String,
-            required: false,
-            default: '',
-        },
+    },
+    setup(props) {
+        const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+        return {
+            metadata,
+        };
     },
     mounted() {
         Application.eventBus.on('validate-inputs', this.saveItem);
@@ -77,13 +67,13 @@ export default {
         isValidated(): boolean {
             var validated = true;
             this.validationMessages = [];
-            if (this.required && !this.modelValue) {
+            if (this.metadata.required.value && !this.modelValue) {
                 validated = false;
-                this.validationMessages.push(this.requireddMessage || `${this.propertyName} is required.`);
+                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
             }
-            if (!this.validated) {
+            if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.validatedMessage || `${this.propertyName} is not valid.`);
+                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
             }
             return validated;
         },

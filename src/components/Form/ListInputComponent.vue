@@ -1,9 +1,9 @@
 <template>
-<div class="ListInput" :class="[{disabled: disabled}, {nonvalidated: !isInputValidated}]">
-    <button class="list-input-header" @click="openOptions" :id="'id-4-click-on' + propertyName" :disabled="disabled">
+<div class="ListInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
+    <button class="list-input-header" @click="openOptions" :id="'id-4-click-on' + metadata.propertyName" :disabled="metadata.disabled.value">
         <div class="list-input-container">
             <div class="label-and-value">
-                <label class="label" :class="[{active: actualOption != ''}]">{{ propertyName }}</label>
+                <label class="label" :class="[{active: actualOption != ''}]">{{ metadata.propertyName }}</label>
                 <label class="value" :class="[{active: actualOption != ''}]">{{ actualOption }}</label>
             </div>
             <span class="arrow" :class="[GGCLASS, {active: droped}]">{{ GGICONS.ARROW_UP }}</span>
@@ -31,6 +31,8 @@
 import { EnumAdapter } from '@/models/enum_adapter';
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import Application from '@/models/application';
+import { useInputMetadata } from '@/composables/useInputMetadata';
+import type { BaseEntity } from '@/entities/base_entitiy';
 
 export default {
     name: 'ListInputComponent',
@@ -51,7 +53,7 @@ export default {
             .join(' ');
         },
         openOptions() {
-            const rect = document.getElementById('id-4-click-on' + this.propertyName)?.getBoundingClientRect();
+            const rect = document.getElementById('id-4-click-on' + this.metadata.propertyName)?.getBoundingClientRect();
             if (rect) {
                 this.fromBottom = (window.innerHeight - rect.bottom) < 300;
             }
@@ -71,13 +73,13 @@ export default {
         isValidated(): boolean {
             var validated = true;
             this.validationMessages = [];
-            if (this.required && this.modelValue === '') {
+            if (this.metadata.required.value && this.modelValue === '') {
                 validated = false;
-                this.validationMessages.push(this.requireddMessage || `${this.propertyName} is required.`);
+                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
             }
-            if (!this.validated) {
+            if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.validatedMessage || `${this.propertyName} is not valid.`);
+                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
             }
             return validated;
         },
@@ -86,10 +88,17 @@ export default {
         },
     },
     props: {
-        propertyName: {
+        entityClass: {
+            type: Function as () => typeof BaseEntity,
+            required: true,
+        },
+        entity: {
+            type: Object as () => BaseEntity,
+            required: true,
+        },
+        propertyKey: {
             type: String,
             required: true,
-            default: '',
         },
         propertyEnumValues: {
             type: Object as () => EnumAdapter,
@@ -100,31 +109,12 @@ export default {
             required: true,
             default: '',
         },
-        required: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        requireddMessage: {
-            type: String,
-            required: false,
-            default: '',
-        },
-        disabled: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        validated: {
-            type: Boolean,
-            required: false,
-            default: true,
-        },
-        validatedMessage: {
-            type: String,
-            required: false,
-            default: '',
-        },
+    },
+    setup(props) {
+        const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+        return {
+            metadata,
+        };
     },
     computed: {
         actualOption(): String | number {

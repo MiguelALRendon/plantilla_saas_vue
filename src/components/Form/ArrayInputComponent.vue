@@ -13,7 +13,16 @@
         </div>
 
         <div class="right-side-space">
-            <TextInputComponent v-model="search" :property-name="'Buscar ' + typeValue?.getModuleName()" :disabled="disabled"/>
+            <div class="TextInput" style="width: 100%">
+                <label class="label-input">Buscar {{ typeValue?.getModuleName() }}</label>
+                <input 
+                    type="text" 
+                    class="main-input" 
+                    placeholder=" "
+                    v-model="search"
+                    :disabled="disabled"
+                />
+            </div>
             <button class="button alert fill" 
             :disabled="selectedItems.length == 0 || disabled"
             @click="showDeleteModal"
@@ -68,7 +77,6 @@
 <script lang="ts">
 import { BaseEntity } from '@/entities/base_entitiy';
 import { PropType } from 'vue';
-import TextInputComponent from './TextInputComponent.vue';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
@@ -76,9 +84,7 @@ import { confMenuType } from '@/enums/conf_menu_type';
 
 export default {
   name: 'ArrayInputComponent',
-  components: {
-    TextInputComponent,
-  },
+  components: {},
   props: {
         modelValue: {
             type: Array<BaseEntity>,
@@ -162,7 +168,6 @@ export default {
         },
         saveItem() {
             this.isInputValidated = this.isValidated();
-            console.log(this.isInputValidated);
         },
     },
     computed: {
