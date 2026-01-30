@@ -133,6 +133,11 @@ export default {
             let currentGroup = 'default';
             
             for (const prop of keys) {
+                // Filtrar propiedades ocultas
+                if (this.entity.isHideInDetailView(prop)) {
+                    continue;
+                }
+                
                 if (viewGroups[prop]) {
                     currentGroup = viewGroups[prop];
                     if (!groups[currentGroup]) {

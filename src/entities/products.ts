@@ -1,8 +1,8 @@
-import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required, Validation } from '@/decorations';
+import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required, Validation, HideInListView } from '@/decorations';
 import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
-import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ArrayOf } from '@/decorations';
+import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ArrayOf, HideInDetailView } from '@/decorations';
 import ICONS from '@/constants/icons.ts';
 
 @DefaultProperty('name')
@@ -13,12 +13,14 @@ export class Products extends BaseEntity {
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
     @Required(true)
+    @HideInDetailView()
     id!: number;
 
     @PropertyName('Name', String)
     @CSSColumnClass('table-length-short')
     @Disabled(true)
     @Required(true)
+    @HideInListView()
     name!: string;
 
     @PropertyName('Stringi', StringType)

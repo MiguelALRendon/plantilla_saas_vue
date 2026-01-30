@@ -5,6 +5,7 @@ import {
     MASK_KEY,
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
+    PRIMARY_PROPERTY_KEY,
     STRING_TYPE_KEY,
     VIEW_GROUP_KEY,
     VIEW_GROUP_ROW_KEY,
@@ -18,8 +19,13 @@ import {
     REQUIRED_KEY,
     VALIDATION_KEY,
     DISABLED_KEY,
+    API_ENDPOINT_KEY,
+    READONLY_KEY,
+    API_METHODS_KEY,
+    HIDE_IN_DETAIL_VIEW_KEY,
+    HIDE_IN_LIST_VIEW_KEY,
 } from "@/decorations";
-import type { RequiredMetadata, ValidationMetadata, DisabledMetadata } from "@/decorations";
+import type { RequiredMetadata, ValidationMetadata, DisabledMetadata, ReadOnlyMetadata, HttpMethod } from "@/decorations";
 import DefaultDetailView from "@/views/default_detailview.vue";
 import type { Component } from 'vue';
 import type { MaskSides } from "@/enums/mask_sides";
@@ -184,6 +190,18 @@ export abstract class BaseEntity {
         return (this as any)[propertyName];
     }
 
+    public getPrimaryPropertyValue(): any {
+        const propertyName = (this.constructor as any)[PRIMARY_PROPERTY_KEY];
+        if (!propertyName) {
+            return undefined;
+        }
+        return (this as any)[propertyName];
+    }
+
+    public getPrimaryPropertyKey(): string | undefined {
+        return (this.constructor as any)[PRIMARY_PROPERTY_KEY];
+    }
+
     public getStringType(): Record<string, StringType> {
         const proto = (this.constructor as any).prototype;
         const stringTypes = proto[STRING_TYPE_KEY] || {};
@@ -265,6 +283,58 @@ export abstract class BaseEntity {
         }
         
         return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
+    }
+
+    public static getApiEndpoint(): string | undefined {
+        return (this as any)[API_ENDPOINT_KEY];
+    }
+
+    public getApiEndpoint(): string | undefined {
+        return (this.constructor as typeof BaseEntity).getApiEndpoint();
+    }
+
+    public isReadOnly(propertyKey: string): boolean {
+        const proto = (this.constructor as any).prototype;
+        const readOnlyFields: Record<string, ReadOnlyMetadata> = proto[READONLY_KEY] || {};
+        const metadata = readOnlyFields[propertyKey];
+        
+        if (!metadata) {
+            return false;
+        }
+        
+        return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
+    }
+
+    public static getApiMethods(): HttpMethod[] | undefined {
+        return (this as any)[API_METHODS_KEY];
+    }
+
+    public getApiMethods(): HttpMethod[] | undefined {
+        return (this.constructor as typeof BaseEntity).getApiMethods();
+    }
+
+    public static isApiMethodAllowed(method: HttpMethod): boolean {
+        const allowedMethods = this.getApiMethods();
+        if (!allowedMethods) {
+            return true; // Si no se especifica, se permiten todos
+        }
+        return allowedMethods.includes(method);
+    }
+
+    public isApiMethodAllowed(method: HttpMethod): boolean {
+        return (this.constructor as typeof BaseEntity).isApiMethodAllowed(method);
+    }
+
+    public isHideInDetailView(propertyKey: string): boolean {
+        const proto = (this.constructor as any).prototype;
+        const hideFields: Record<string, boolean> = proto[HIDE_IN_DETAIL_VIEW_KEY] || {};
+        return hideFields[propertyKey] === true;
+    }
+
+    public isHideInListView(propertyKey: string): boolean {
+        const proto = (this.constructor as any).prototype;
+        const hideFields: Record<string, boolean> = proto[HIDE_IN_LIST_VIEW_KEY] || {};
+        return hideFields[propertyKey] === true;
     }
 }
 
