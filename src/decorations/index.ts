@@ -27,3 +27,4 @@ export { API_METHODS_KEY, ApiMethods } from './api_methods_decorator';
 export type { HttpMethod } from './api_methods_decorator';
 export { HIDE_IN_DETAIL_VIEW_KEY, HideInDetailView } from './hide_in_detail_view_decorator';
 export { HIDE_IN_LIST_VIEW_KEY, HideInListView } from './hide_in_list_view_decorator';
+export { PERSISTENT_KEY_KEY, PersistentKey } from './persistent_key_decorator';

@@ -24,6 +24,7 @@ import {
     API_METHODS_KEY,
     HIDE_IN_DETAIL_VIEW_KEY,
     HIDE_IN_LIST_VIEW_KEY,
+    PERSISTENT_KEY_KEY,
 } from "@/decorations";
 import type { RequiredMetadata, ValidationMetadata, DisabledMetadata, ReadOnlyMetadata, HttpMethod } from "@/decorations";
 import DefaultDetailView from "@/views/default_detailview.vue";
@@ -335,6 +336,70 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         const hideFields: Record<string, boolean> = proto[HIDE_IN_LIST_VIEW_KEY] || {};
         return hideFields[propertyKey] === true;
+    }
+
+    // Métodos para PersistentKey
+    public static getPersistentKeys(): Record<string, string> {
+        const proto = this.prototype as any;
+        return proto[PERSISTENT_KEY_KEY] || {};
+    }
+
+    public static getPersistentKeyByPropertyKey(propertyKey: string): string | undefined {
+        const persistentKeys = this.getPersistentKeys();
+        return persistentKeys[propertyKey];
+    }
+
+    public static getPropertyKeyByPersistentKey(persistentKey: string): string | undefined {
+        const persistentKeys = this.getPersistentKeys();
+        for (const [key, value] of Object.entries(persistentKeys)) {
+            if (value === persistentKey) {
+                return key;
+            }
+        }
+        return undefined;
+    }
+
+    public static mapToPersistentKeys<T extends BaseEntity>(this: new (...args: any[]) => T, data: Record<string, any>): Record<string, any> {
+        const persistentKeys = (this as any).getPersistentKeys();
+        const mapped: Record<string, any> = {};
+        
+        for (const [propertyKey, value] of Object.entries(data)) {
+            const persistentKey = persistentKeys[propertyKey];
+            mapped[persistentKey || propertyKey] = value;
+        }
+        
+        return mapped;
+    }
+
+    public static mapFromPersistentKeys<T extends BaseEntity>(this: new (...args: any[]) => T, data: Record<string, any>): Record<string, any> {
+        const mapped: Record<string, any> = {};
+        
+        for (const [persistentKey, value] of Object.entries(data)) {
+            const propertyKey = (this as any).getPropertyKeyByPersistentKey(persistentKey);
+            mapped[propertyKey || persistentKey] = value;
+        }
+        
+        return mapped;
+    }
+
+    public getPersistentKeys(): Record<string, string> {
+        return (this.constructor as typeof BaseEntity).getPersistentKeys();
+    }
+
+    public getPersistentKeyByPropertyKey(propertyKey: string): string | undefined {
+        return (this.constructor as typeof BaseEntity).getPersistentKeyByPropertyKey(propertyKey);
+    }
+
+    public getPropertyKeyByPersistentKey(persistentKey: string): string | undefined {
+        return (this.constructor as typeof BaseEntity).getPropertyKeyByPersistentKey(persistentKey);
+    }
+
+    public mapToPersistentKeys(data: Record<string, any>): Record<string, any> {
+        return (this.constructor as any).mapToPersistentKeys(data);
+    }
+
+    public mapFromPersistentKeys(data: Record<string, any>): Record<string, any> {
+        return (this.constructor as any).mapFromPersistentKeys(data);
     }
 }
 
