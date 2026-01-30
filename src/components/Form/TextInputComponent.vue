@@ -29,7 +29,7 @@ export default {
     name: 'TextInputComponent',
     props: {
         entityClass: {
-            type: Function as () => typeof BaseEntity,
+            type: Function as unknown as () => typeof BaseEntity,
             required: true,
         },
         entity: {
@@ -79,7 +79,7 @@ export default {
     },
     data() {
         return {
-            textInputId: 'text-input-' + this.metadata.propertyName,
+            textInputId: 'text-input-' + this.propertyKey,
             isInputValidated: true,
             validationMessages: [] as string[],
         }

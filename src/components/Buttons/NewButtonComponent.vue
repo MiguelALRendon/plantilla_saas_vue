@@ -13,7 +13,7 @@ export default {
     name: 'NewButtonComponent',
     methods: {
         openNewDetailView() {
-            Application.changeViewToDetailView(Application.View.value.entityClass!.createNewInstance());
+            Application.changeViewToDetailView((Application.View.value.entityClass! as any).createNewInstance());
         }
     },
     data() {

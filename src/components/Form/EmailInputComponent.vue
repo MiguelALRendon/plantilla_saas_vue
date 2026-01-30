@@ -27,7 +27,7 @@ export default {
     name: 'EmailInputComponent',
     props: {
         entityClass: {
-            type: Function as () => typeof BaseEntity,
+            type: Function as unknown as () => typeof BaseEntity,
             required: true,
         },
         entity: {
@@ -78,7 +78,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            textInputId: 'text-input-' + this.metadata.propertyName,
+            textInputId: 'text-input-' + this.propertyKey,
             isInputValidated: true,
             validationMessages: [] as string[],
         }

@@ -26,7 +26,7 @@ export default {
     name: 'BooleanInputComponent',
     props: {
         entityClass: {
-            type: Function as () => typeof BaseEntity,
+            type: Function as unknown as () => typeof BaseEntity,
             required: true,
         },
         entity: {

@@ -28,7 +28,7 @@ export default {
     name: 'TextAreaComponent',
     props: {
         entityClass: {
-            type: Function as () => typeof BaseEntity,
+            type: Function as unknown as () => typeof BaseEntity,
             required: true,
         },
         entity: {
@@ -77,7 +77,7 @@ export default {
     },
     data() {
         return {
-            textInputId: 'text-area-' + this.metadata.propertyName,
+            textInputId: 'text-area-' + this.propertyKey,
             isInputValidated: true,
             validationMessages: [] as string[],
         }
