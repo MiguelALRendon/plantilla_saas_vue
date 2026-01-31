@@ -6,6 +6,7 @@ import {
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
     PRIMARY_PROPERTY_KEY,
+    UNIQUE_KEY,
     STRING_TYPE_KEY,
     VIEW_GROUP_KEY,
     VIEW_GROUP_ROW_KEY,
@@ -36,14 +37,32 @@ import DefaultListview from "@/views/default_listview.vue";
 
 export abstract class BaseEntity {
     [key: string]: any;
+    private _isLoading: boolean = false;
+
+    constructor(data: Record<string, any>) {
+        Object.assign(this, data);
+    }
+
+    public setLoading(): void {
+        this._isLoading = true;
+    }
+
+    public loaded(): void {
+        this._isLoading = false;
+    }
+
+    public getLoadingState(): boolean {
+        return this._isLoading;
+    }
+
+    public validateElement(): void {
+        this.onValidated;
+    }
 
     isNull(): boolean {
         return false;
     }
-    
-    constructor(data: Record<string, any>) {
-        Object.assign(this, data);
-    }
+
 
     public toObject(): Record<string, any> {
         return this as Record<string, any>;
@@ -201,6 +220,18 @@ export abstract class BaseEntity {
 
     public getPrimaryPropertyKey(): string | undefined {
         return (this.constructor as any)[PRIMARY_PROPERTY_KEY];
+    }
+
+    public getUniquePropertyValue(): any {
+        const propertyName = (this.constructor as any)[UNIQUE_KEY];
+        if (!propertyName) {
+            return undefined;
+        }
+        return (this as any)[propertyName];
+    }
+
+    public getUniquePropertyKey(): string | undefined {
+        return (this.constructor as any)[UNIQUE_KEY];
     }
 
     public getStringType(): Record<string, StringType> {
@@ -401,6 +432,8 @@ export abstract class BaseEntity {
     public mapFromPersistentKeys(data: Record<string, any>): Record<string, any> {
         return (this.constructor as any).mapFromPersistentKeys(data);
     }
+
+    protected onValidated?() : void;
 }
 
 export class EmptyEntity extends BaseEntity {

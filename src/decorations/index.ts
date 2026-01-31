@@ -4,6 +4,7 @@ export { MASK_KEY, Mask } from './mask_decorator';
 export { CSS_COLUMN_CLASS_KEY, CSSColumnClass } from './css_column_class_decorator';
 export { DEFAULT_PROPERTY_KEY, DefaultProperty } from './default_property_decorator';
 export { PRIMARY_PROPERTY_KEY, PrimaryProperty } from './primary_property_decorator';
+export { UNIQUE_KEY, UniquePropertyKey } from './unique_decorator';
 export { STRING_TYPE_KEY, StringTypeDef } from './string_type_decorator';
 export { VIEW_GROUP_KEY, ViewGroup } from './view_group_decorator';
 export { VIEW_GROUP_ROW_KEY, ViewGroupRowDecorator } from './view_group_row_decorator';

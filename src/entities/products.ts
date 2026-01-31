@@ -1,14 +1,14 @@
 import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required, Validation, HideInListView } from '@/decorations';
-import { BaseEntity } from './base_entitiy.ts';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
 import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ArrayOf, HideInDetailView } from '@/decorations';
 import ICONS from '@/constants/icons.ts';
+import { PersistentEntity } from './persistent_entity.ts';
 
 @DefaultProperty('name')
 @ModuleName('Products')
 @ModuleIcon(ICONS.PRODUCTS)
-export class Products extends BaseEntity {
+export class Products extends PersistentEntity {
     @ViewGroup('Grupo 1')
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
