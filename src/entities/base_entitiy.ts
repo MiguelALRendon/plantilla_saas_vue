@@ -433,7 +433,9 @@ export abstract class BaseEntity {
         return (this.constructor as any).mapFromPersistentKeys(data);
     }
 
-    protected onValidated?() : void;
+    protected onValidated() : void {
+        
+    }
 }
 
 export class EmptyEntity extends BaseEntity {

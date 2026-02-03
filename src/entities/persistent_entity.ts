@@ -17,6 +17,10 @@ export abstract class PersistentEntity extends BaseEntity {
     @Disabled(true)
     public oid! : string;
 
+    public get getSaving(): boolean {
+        return this._isSaving;
+    }
+
     public isNew(): boolean {
         return this.getPrimaryPropertyValue() === undefined || this.getPrimaryPropertyValue() === null;
     }
