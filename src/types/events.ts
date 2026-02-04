@@ -1,5 +1,6 @@
 export type Events = {
     'validate-inputs': void;
+    'validate-entity': void;
     'toggle-sidebar': boolean | void;
     'show-loading': void;
     'hide-loading': void;

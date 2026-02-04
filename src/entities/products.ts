@@ -1,4 +1,4 @@
-import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required, Validation, HideInListView } from '@/decorations';
+import { CSSColumnClass, Disabled, ModuleIcon, ModuleName, Required, Validation, HideInListView, ApiEndpoint, ApiMethods, PrimaryProperty } from '@/decorations';
 import { MaskSides } from '@/enums/mask_sides.ts';
 import { StringType } from '@/enums/string_type.ts';
 import { PropertyName, Mask, DefaultProperty, StringTypeDef, ViewGroup, ArrayOf, HideInDetailView } from '@/decorations';
@@ -6,8 +6,11 @@ import ICONS from '@/constants/icons.ts';
 import { PersistentEntity } from './persistent_entity.ts';
 
 @DefaultProperty('name')
+@PrimaryProperty('id')
 @ModuleName('Products')
 @ModuleIcon(ICONS.PRODUCTS)
+@ApiEndpoint('/api/products')
+@ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])
 export class Products extends PersistentEntity {
     @ViewGroup('Grupo 1')
     @PropertyName('ID', Number)

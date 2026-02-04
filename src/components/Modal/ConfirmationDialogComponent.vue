@@ -22,17 +22,17 @@
           {txtsuccess: dialogInfo.type === confMenuType.SUCCESS},
           {txtwarning: dialogInfo.type === confMenuType.WARNING},
           {txterror: dialogInfo.type === confMenuType.ERROR}
-        ]">El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?</p>
+        ]">{{ dialogInfo.message }}</p>
       </div>
     </div>
     <div class="confirmation-dialog-footer">
-      <button class="button info fill" @click="Application.acceptConfigurationMenu()">
+      <button v-if="dialogInfo.confirmationAction" class="button info fill" @click="Application.acceptConfigurationMenu()">
         <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
-        Aceptar
+        {{ dialogInfo.acceptButtonText || 'Aceptar' }}
       </button>
       <button class="button alert fill" @click="Application.closeConfirmationMenu()">
         <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
-        Cancelar
+        {{ dialogInfo.cancelButtonText || 'Cancelar' }}
       </button>
     </div>
   </div>

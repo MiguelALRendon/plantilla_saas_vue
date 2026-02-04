@@ -34,6 +34,8 @@ import type { MaskSides } from "@/enums/mask_sides";
 import { StringType } from "@/enums/string_type";
 import type { ViewGroupRow } from "@/enums/view_group_row";
 import DefaultListview from "@/views/default_listview.vue";
+import Application from "@/models/application";
+import { confMenuType } from "@/enums/conf_menu_type";
 
 export abstract class BaseEntity {
     [key: string]: any;
@@ -53,10 +55,6 @@ export abstract class BaseEntity {
 
     public getLoadingState(): boolean {
         return this._isLoading;
-    }
-
-    public validateElement(): void {
-        this.onValidated;
     }
 
     isNull(): boolean {
@@ -433,7 +431,42 @@ export abstract class BaseEntity {
         return (this.constructor as any).mapFromPersistentKeys(data);
     }
 
-    protected onValidated() : void {
+    protected validateModuleConfiguration(): boolean {
+        const errors: string[] = [];
+        const entityClass = this.constructor as typeof BaseEntity;
+        
+        if (!entityClass.getModuleName()) {
+            errors.push('El módulo no tiene definido @ModuleName');
+        }
+        
+        if (!entityClass.getModuleIcon()) {
+            errors.push('El módulo no tiene definido @ModuleIcon');
+        }
+        
+        if (!(this.constructor as any)[DEFAULT_PROPERTY_KEY]) {
+            errors.push('El módulo no tiene definido @DefaultProperty');
+        }
+        
+        if (!this.getPrimaryPropertyKey()) {
+            errors.push('El módulo no tiene definido @PrimaryProperty');
+        }
+        
+        if (errors.length > 0) {
+            Application.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error de configuración del módulo',
+                errors.join('\n'),
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            return false;
+        }
+        
+        return true;
+    }
+
+    public onValidated() : void {
         
     }
 }

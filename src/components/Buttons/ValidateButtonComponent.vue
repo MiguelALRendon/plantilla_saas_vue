@@ -13,7 +13,7 @@ export default {
     name: 'ValidateButtonComponent',
     methods: {
         saveItem() {
-            Application.eventBus.emit('validate-inputs')
+            Application.ValidateInputs();
         }
     },
     data() {

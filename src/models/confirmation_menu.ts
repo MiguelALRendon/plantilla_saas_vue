@@ -4,5 +4,7 @@ export interface confirmationMenu {
     type: confMenuType;
     title: string;
     message: string;
-    confirmationAction: () => void;
+    confirmationAction?: () => void;
+    acceptButtonText?: string;
+    cancelButtonText?: string;
 }

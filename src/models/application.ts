@@ -1,4 +1,5 @@
 import { Component, markRaw, ref, Ref } from 'vue';
+import axios, { AxiosInstance } from 'axios';
 import type { Modal } from './modal';
 import { ViewTypes } from '@/enums/view_type';
 import { BaseEntity } from '@/entities/base_entitiy';
@@ -28,6 +29,7 @@ class ApplicationClass {
     confirmationMenu: Ref<confirmationMenu>;
     eventBus: Emitter<Events>;
     ListButtons: Ref<Component[]>;
+    axiosInstance: AxiosInstance;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -78,6 +80,37 @@ class ApplicationClass {
             confirmationAction: () => {}
         }) as Ref<confirmationMenu>;
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
+        
+        this.axiosInstance = axios.create({
+            baseURL: this.AppConfiguration.value.apiBaseUrl,
+            timeout: this.AppConfiguration.value.apiTimeout,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        this.axiosInstance.interceptors.request.use(
+            (config) => {
+                const token = localStorage.getItem(this.AppConfiguration.value.authTokenKey);
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                return config;
+            },
+            (error) => {
+                return Promise.reject(error);
+            }
+        );
+        
+        this.axiosInstance.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response?.status === 401) {
+                    localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
+                }
+                return Promise.reject(error);
+            }
+        );
     }
 
     static getInstance() {
@@ -214,12 +247,14 @@ class ApplicationClass {
         }, 500);
     }
 
-    openConfirmationMenu = (type: confMenuType, title: string, message: string, onAccept: () => void) => {
+    openConfirmationMenu = (type: confMenuType, title: string, message: string, onAccept?: () => void, acceptButtonText: string = 'Aceptar', cancelButtonText: string = 'Cancelar') => {
         this.confirmationMenu.value = {
             type,
             title,
             message,
-            confirmationAction: onAccept
+            confirmationAction: onAccept,
+            acceptButtonText,
+            cancelButtonText
         };
         this.eventBus.emit('show-confirmation');
     }
@@ -237,12 +272,15 @@ class ApplicationClass {
     }
 
     acceptConfigurationMenu = () => {
-        this.confirmationMenu.value.confirmationAction();
+        if(this.confirmationMenu.value.confirmationAction)
+            this.confirmationMenu.value.confirmationAction();
+
         this.closeConfirmationMenu();
     }
 
     ValidateInputs = () => {
         this.eventBus.emit('validate-inputs');
+        this.View.value.entityObject?.onValidated();
     }
 }
 
