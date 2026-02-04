@@ -39,12 +39,12 @@ import Application from '@/models/application';
 export default {
     name: 'DetailViewTableComponent',
     methods: {
-        openDetailView(entity : BaseEntity) {
-            Application.changeViewToDetailView(entity);
+        openDetailView(entity : any) {
+            Application.changeViewToDetailView(entity as BaseEntity);
         }  
     },
     data() {
-        const data : BaseEntity[] = [];
+        const data : Products[] = [];
         for (let i = 1; i <= 50; i++) {
             data.push(
                 new Products({
@@ -105,7 +105,7 @@ export default {
             Application,
             MaskSides,
             BaseEntity,
-            data,
+            data: data as any as Products[],
             GGICONS,
             GGCLASS
         }
@@ -118,7 +118,7 @@ export default {
 
 table {
     width: 100%;
-    height: calc(100vh - 50px - 2rem - 2rem - 3.3rem);
+    height: calc(100vh - 50px - 2rem - 2rem - 4.3rem);
     background-color: var(--white);
     border-radius: var(--border-radius);
     display: flex;

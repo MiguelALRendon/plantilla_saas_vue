@@ -7,6 +7,7 @@ import { Products } from '@/entities/products';
 import { AppConfiguration } from './AppConfiguration';
 import { DropdownMenu } from './dropdown_menu';
 import { confirmationMenu } from './confirmation_menu';
+import { LoadingMenu } from './loading_menu';
 import { confMenuType } from '@/enums/conf_menu_type';
 import mitt, { Emitter } from 'mitt';
 import type { Events } from '@/types/events';
@@ -27,6 +28,7 @@ class ApplicationClass {
     modal: Ref<Modal>;
     dropdownMenu: Ref<DropdownMenu>;
     confirmationMenu: Ref<confirmationMenu>;
+    LoadingMenu: Ref<LoadingMenu>;
     eventBus: Emitter<Events>;
     ListButtons: Ref<Component[]>;
     axiosInstance: AxiosInstance;
@@ -79,6 +81,9 @@ class ApplicationClass {
             message: '',
             confirmationAction: () => {}
         }) as Ref<confirmationMenu>;
+        this.LoadingMenu = ref<LoadingMenu>({
+            showing: false
+        }) as Ref<LoadingMenu>;
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
         
         this.axiosInstance = axios.create({
@@ -122,6 +127,14 @@ class ApplicationClass {
         this.AppConfiguration.value.isDarkMode = !this.AppConfiguration.value.isDarkMode;
     }
 
+    toggleSidebar = () => {
+        this.eventBus.emit('toggle-sidebar');
+    }
+
+    setSidebar = (state: boolean) => {
+        this.eventBus.emit('toggle-sidebar', state);
+    }
+
     changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
         this.View.value.entityClass = entityClass;
         this.View.value.entityObject = entity;
@@ -136,16 +149,16 @@ class ApplicationClass {
         }, 405);
     }
 
-    changeViewToDetailView = (entity: BaseEntity) => {
-        var entityClass = entity.constructor as typeof BaseEntity;
-        this.changeView(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
+    changeViewToListView = (entityClass: typeof BaseEntity) => {
+        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW);
         setTimeout(() => {
             this.setButtonList();
         }, 405);
     }
 
-    changeViewToListView = (entityClass: typeof BaseEntity) => {
-        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW);
+    changeViewToDetailView = <T extends BaseEntity>(entity: T) => {
+        var entityClass = entity.constructor as typeof BaseEntity;
+        this.changeView(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
         setTimeout(() => {
             this.setButtonList();
         }, 405);
@@ -175,20 +188,9 @@ class ApplicationClass {
         }
     }
 
-    toggleSidebar = () => {
-        this.eventBus.emit('toggle-sidebar');
-    }
-
-    setSidebar = (state: boolean) => {
-        this.eventBus.emit('toggle-sidebar', state);
-    }
-
-    showLoadingScreen = () => {
-        this.eventBus.emit('show-loading');
-    }
-
-    hideLoadingScreen = () => {
-        this.eventBus.emit('hide-loading');
+    ValidateInputs = () => {
+        this.eventBus.emit('validate-inputs');
+        this.View.value.entityObject?.onValidated();
     }
 
     showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
@@ -199,19 +201,19 @@ class ApplicationClass {
         this.eventBus.emit('show-modal');
     }
 
-    closeModal = () => {
-        this.eventBus.emit('hide-modal');
-        setTimeout(() => {
-            this.modal.value.modalView = null;
-        }, 150);
-    }
-
     showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) => {
         this.modal.value.modalView = entity;
         this.modal.value.modalOnCloseFunction = onCloseFunction;
         this.modal.value.viewType = viewType;
         this.modal.value.customViewId = customViewId;
         this.eventBus.emit('show-modal');
+    }
+
+    closeModal = () => {
+        this.eventBus.emit('hide-modal');
+        setTimeout(() => {
+            this.modal.value.modalView = null;
+        }, 150);
     }
 
     closeModalOnFunction = (param : any) => {
@@ -259,6 +261,13 @@ class ApplicationClass {
         this.eventBus.emit('show-confirmation');
     }
 
+    acceptConfigurationMenu = () => {
+        if(this.confirmationMenu.value.confirmationAction)
+            this.confirmationMenu.value.confirmationAction();
+
+        this.closeConfirmationMenu();
+    }
+
     closeConfirmationMenu = () => {
         this.eventBus.emit('hide-confirmation');
         setTimeout(() => {
@@ -271,16 +280,12 @@ class ApplicationClass {
         }, 500);
     }
 
-    acceptConfigurationMenu = () => {
-        if(this.confirmationMenu.value.confirmationAction)
-            this.confirmationMenu.value.confirmationAction();
-
-        this.closeConfirmationMenu();
+    showLoadingScreen = () => {
+        this.eventBus.emit('show-loading');
     }
 
-    ValidateInputs = () => {
-        this.eventBus.emit('validate-inputs');
-        this.View.value.entityObject?.onValidated();
+    hideLoadingScreen = () => {
+        this.eventBus.emit('hide-loading');
     }
 }
 

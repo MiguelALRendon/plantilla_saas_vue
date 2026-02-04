@@ -39,7 +39,7 @@ import { confMenuType } from "@/enums/conf_menu_type";
 
 export abstract class BaseEntity {
     [key: string]: any;
-    private _isLoading: boolean = false;
+    protected _isLoading: boolean = false;
 
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
@@ -431,7 +431,7 @@ export abstract class BaseEntity {
         return (this.constructor as any).mapFromPersistentKeys(data);
     }
 
-    protected validateModuleConfiguration(): boolean {
+    public validateModuleConfiguration(): boolean {
         const errors: string[] = [];
         const entityClass = this.constructor as typeof BaseEntity;
         
