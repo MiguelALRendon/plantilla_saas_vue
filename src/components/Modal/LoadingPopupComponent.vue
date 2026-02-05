@@ -1,5 +1,5 @@
 <template>
-<div class="loading-popup-component-container" :class="{ active: Application.LoadingMenu.showing }">
+<div class="loading-popup-component-container" :class="{ active: showing }">
     <div class="loading-popup-component-card">
         <div class="loading-popup-component-spinner">
             <span :class="GGCLASS" class="spin-icon">{{ GGICONS.REFRESH }}</span>
@@ -18,8 +18,22 @@ export default {
         return {
             GGCLASS,
             GGICONS,
-            Application
+            Application,
+            showing: false,
         };
+    },
+    mounted() {
+        Application.eventBus.on('show-loading-menu', () => {
+            console.log('show-loading-menu event received');
+            this.showing = true;
+        });
+        Application.eventBus.on('hide-loading-menu', () => {
+            this.showing = false;
+        });
+    },
+    beforeUnmount() {
+        Application.eventBus.off('show-loading-menu');
+        Application.eventBus.off('hide-loading-menu');
     }
 }
 </script>

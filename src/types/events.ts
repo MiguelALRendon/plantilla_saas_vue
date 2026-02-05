@@ -8,4 +8,6 @@ export type Events = {
     'hide-modal': void;
     'show-confirmation': void;
     'hide-confirmation': void;
+    'show-loading-menu': void;
+    'hide-loading-menu': void;
 };

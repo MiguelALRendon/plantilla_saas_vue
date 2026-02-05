@@ -13,7 +13,10 @@ export default {
     name: 'ValidateButtonComponent',
     methods: {
         saveItem() {
-            Application.ValidateInputs();
+            const entity = Application.View.value.entityObject;
+            if (entity) {
+                entity.validateInputs();
+            }
         }
     },
     data() {

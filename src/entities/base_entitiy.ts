@@ -466,6 +466,17 @@ export abstract class BaseEntity {
         return true;
     }
 
+    public validateInputs(): boolean {
+        Application.View.value.isValid = true;
+        Application.eventBus.emit('validate-inputs');
+        this.onValidated();
+        return Application.View.value.isValid;
+    }
+
+    public isPersistent(): this is import('@/entities/persistent_entity').PersistentEntity {
+        return false;
+    }
+
     public onValidated() : void {
         
     }

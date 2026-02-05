@@ -10,10 +10,17 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 
 export default {
-    name: 'NewButtonComponent',
+    name: 'SaveButtonComponent',
     methods: {
-        saveItem() {
-            Application.eventBus.emit('validate-inputs')
+        async saveItem() {
+            const entity = Application.View.value.entityObject;
+            if (entity && entity.isPersistent()) {
+                const isValid = entity.validateInputs();
+                if (!isValid) {
+                    return;
+                }
+                await entity.save();
+            }
         }
     },
     data() {

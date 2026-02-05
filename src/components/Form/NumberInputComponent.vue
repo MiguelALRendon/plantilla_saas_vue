@@ -87,6 +87,9 @@ export default {
         },
         saveItem() {
             this.isInputValidated = this.isValidated();
+            if (!this.isInputValidated) {
+                Application.View.value.isValid = false;
+            }
         },
     },
     computed: {

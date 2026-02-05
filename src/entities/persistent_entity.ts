@@ -148,6 +148,7 @@ export abstract class PersistentEntity extends BaseEntity {
         
         this._isSaving = true;
         this.beforeSave();
+        Application.showLoadingMenu();
         
         try {
             this.onSaving();
@@ -167,9 +168,11 @@ export abstract class PersistentEntity extends BaseEntity {
             this._originalState = structuredClone(this.toObject());
             this._isSaving = false;
             this.afterSave();
+            Application.hideLoadingMenu();
             return this;
         } catch (error: any) {
             this._isSaving = false;
+            Application.hideLoadingMenu();
             this.saveFailed();
             Application.openConfirmationMenu(
                 confMenuType.ERROR,
@@ -364,5 +367,9 @@ export abstract class PersistentEntity extends BaseEntity {
     }
     protected refreshFailed() : void {
         
+    }
+
+    public override isPersistent(): this is PersistentEntity {
+        return true;
     }
 }

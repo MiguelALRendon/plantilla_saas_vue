@@ -9,4 +9,5 @@ export interface View {
     entityObject: BaseEntity | null;
     component: Component | null;
     viewType: ViewTypes;
+    isValid: boolean;
 }

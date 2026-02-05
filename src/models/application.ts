@@ -7,7 +7,6 @@ import { Products } from '@/entities/products';
 import { AppConfiguration } from './AppConfiguration';
 import { DropdownMenu } from './dropdown_menu';
 import { confirmationMenu } from './confirmation_menu';
-import { LoadingMenu } from './loading_menu';
 import { confMenuType } from '@/enums/conf_menu_type';
 import mitt, { Emitter } from 'mitt';
 import type { Events } from '@/types/events';
@@ -28,7 +27,6 @@ class ApplicationClass {
     modal: Ref<Modal>;
     dropdownMenu: Ref<DropdownMenu>;
     confirmationMenu: Ref<confirmationMenu>;
-    LoadingMenu: Ref<LoadingMenu>;
     eventBus: Emitter<Events>;
     ListButtons: Ref<Component[]>;
     axiosInstance: AxiosInstance;
@@ -54,7 +52,8 @@ class ApplicationClass {
             entityClass: null,
             entityObject: null,
             component: null,
-            viewType: ViewTypes.DEFAULTVIEW
+            viewType: ViewTypes.DEFAULTVIEW,
+            isValid: true
         }) as Ref<View>;
         this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
         this.eventBus = mitt<Events>();
@@ -81,9 +80,6 @@ class ApplicationClass {
             message: '',
             confirmationAction: () => {}
         }) as Ref<confirmationMenu>;
-        this.LoadingMenu = ref<LoadingMenu>({
-            showing: false
-        }) as Ref<LoadingMenu>;
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
         
         this.axiosInstance = axios.create({
@@ -165,6 +161,8 @@ class ApplicationClass {
     }
 
     setButtonList() {
+        const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
+        
         switch (this.View.value.viewType) {
             case ViewTypes.LISTVIEW:
                 this.ListButtons.value = [
@@ -173,24 +171,28 @@ class ApplicationClass {
                 ];
                 break;
             case ViewTypes.DETAILVIEW:
-                this.ListButtons.value = [
-                    markRaw(NewButtonComponent),
-                    markRaw(RefreshButtonComponent),
-                    markRaw(ValidateButtonComponent),
-                    markRaw(SaveButtonComponent),
-                    markRaw(SaveAndNewButtonComponent),
-                    markRaw(SendToDeviceButtonComponent)
-                ];
+                if (isPersistentEntity) {
+                    this.ListButtons.value = [
+                        markRaw(NewButtonComponent),
+                        markRaw(RefreshButtonComponent),
+                        markRaw(ValidateButtonComponent),
+                        markRaw(SaveButtonComponent),
+                        markRaw(SaveAndNewButtonComponent),
+                        markRaw(SendToDeviceButtonComponent)
+                    ];
+                } else {
+                    this.ListButtons.value = [
+                        markRaw(NewButtonComponent),
+                        markRaw(RefreshButtonComponent),
+                        markRaw(ValidateButtonComponent),
+                        markRaw(SendToDeviceButtonComponent)
+                    ];
+                }
                 break;
             default:
                 this.ListButtons.value = [];
                 break;
         }
-    }
-
-    ValidateInputs = () => {
-        this.eventBus.emit('validate-inputs');
-        this.View.value.entityObject?.onValidated();
     }
 
     showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
@@ -286,6 +288,13 @@ class ApplicationClass {
 
     hideLoadingScreen = () => {
         this.eventBus.emit('hide-loading');
+    }
+
+    showLoadingMenu = () => {
+        this.eventBus.emit('show-loading-menu');
+    }
+    hideLoadingMenu = () => {
+        this.eventBus.emit('hide-loading-menu');
     }
 }
 

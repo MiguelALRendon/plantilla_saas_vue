@@ -158,6 +158,6 @@ export default {
   color: var(--warning);
 }
 .txterror, .txterror span {
-  color: var(--error);
+  color: var(--accent-red);
 }
 </style>
