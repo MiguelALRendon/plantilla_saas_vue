@@ -149,6 +149,7 @@ export abstract class PersistentEntity extends BaseEntity {
         this._isSaving = true;
         this.beforeSave();
         Application.showLoadingMenu();
+        await new Promise(resolve => setTimeout(resolve, 400));
         
         try {
             this.onSaving();

@@ -132,6 +132,7 @@ class ApplicationClass {
     }
 
     changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
+        console.log(`Changing view to ${viewType} for entity class ${entity }`);
         this.View.value.entityClass = entityClass;
         this.View.value.entityObject = entity;
         this.View.value.component = component;

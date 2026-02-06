@@ -49,7 +49,15 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1500;
+    z-index: 1100;
+    pointer-events: none;
+    opacity: 0;
+    transition: 0.3s ease;
+}
+
+.loading-popup-component-container.active {
+    pointer-events: all;
+    opacity: 1;
 }
 
 .loading-popup-component-card {
@@ -62,10 +70,15 @@ export default {
     align-items: center;
     width: 400px;
     height: 150px;
+    transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transform: scale(0.01);
+}
+.loading-popup-component-container.active .loading-popup-component-card {
+    transform: scale(1);
 }
 
 .spin-icon {
-    font-size: 70px;
+    font-size: 120px;
     font-weight: bold;
     color: var(--green-soft);
     animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;

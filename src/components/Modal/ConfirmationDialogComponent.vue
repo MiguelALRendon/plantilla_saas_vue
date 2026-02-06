@@ -82,7 +82,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 800;
+  z-index: 1500;
   background-color: var(--overlay-dark);
   display: flex;
   justify-content: center;
@@ -109,8 +109,7 @@ export default {
 }
 
 .confirmation-dialog-container.closed .confirmation-dialog-card {
-  max-width: 0px;
-  max-height: 0px;
+  transform: scale(0.01);
 }
 
 .confirmation-dialog-header {

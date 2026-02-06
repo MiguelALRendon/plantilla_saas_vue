@@ -38,7 +38,6 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-radius: var(--border-radius);
     transition: 0.4s ease;
 }
 .side-bar-item:hover {
@@ -47,9 +46,9 @@ export default {
 }
 .side-bar-item.active {
     background: var(--grad-red-warm);
-    margin: 0.25rem;
     box-sizing: border-box;
     color: white;
+    border-radius: 0;
 }
 
 .side-bar-item.active .icon img, .icon img {
