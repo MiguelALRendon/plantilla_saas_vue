@@ -19,6 +19,8 @@ import {
     SendToDeviceButtonComponent,
     ValidateButtonComponent
 } from '@/components/Buttons';
+import { Toast } from './Toast';
+import { ToastType } from '@/enums/ToastType';
 
 class ApplicationClass {
     AppConfiguration: Ref<AppConfiguration>;
@@ -30,6 +32,7 @@ class ApplicationClass {
     eventBus: Emitter<Events>;
     ListButtons: Ref<Component[]>;
     axiosInstance: AxiosInstance;
+    ToastList: Ref<Toast[]>;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -81,7 +84,7 @@ class ApplicationClass {
             confirmationAction: () => {}
         }) as Ref<confirmationMenu>;
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
-        
+        this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;        
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
             timeout: this.AppConfiguration.value.apiTimeout,
@@ -129,6 +132,10 @@ class ApplicationClass {
 
     setSidebar = (state: boolean) => {
         this.eventBus.emit('toggle-sidebar', state);
+    }
+
+    showToast = (message: string, type: ToastType) => {
+        this.ToastList.value.push(new Toast(message, type));
     }
 
     changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {

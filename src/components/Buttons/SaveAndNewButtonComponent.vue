@@ -15,10 +15,6 @@ export default {
         async saveItem() {
             const entity = Application.View.value.entityObject;
             if (entity && entity.isPersistent()) {
-                const isValid = entity.validateInputs();
-                if (!isValid) {
-                    return;
-                }
                 await entity.save();
                 Application.changeViewToDetailView((Application.View.value.entityClass! as any).createNewInstance());
             }

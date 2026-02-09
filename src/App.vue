@@ -2,6 +2,7 @@
   <div class="app-container" :class="Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : ''">
     <SideBarComponent />
     <ComponentContainerComponent />
+    <ToastContainerComponent />
     <ModalComponent />
     <DropdownMenu />
     <ConfirmationDialogComponent />
@@ -17,6 +18,7 @@ import DropdownMenu from './components/DropdownMenu.vue';
 import ConfirmationDialogComponent from './components/Modal/ConfirmationDialogComponent.vue';
 import LoadingPopupComponent from './components/Modal/LoadingPopupComponent.vue';
 import Application from './models/application';
+import ToastContainerComponent from './components/Informative/ToastContainerComponent.vue';
 </script>
 
 <style scoped>

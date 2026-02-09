@@ -36,6 +36,7 @@ import type { ViewGroupRow } from "@/enums/view_group_row";
 import DefaultListview from "@/views/default_listview.vue";
 import Application from "@/models/application";
 import { confMenuType } from "@/enums/conf_menu_type";
+import { ToastType } from "@/enums/ToastType";
 
 export abstract class BaseEntity {
     [key: string]: any;
@@ -470,6 +471,12 @@ export abstract class BaseEntity {
         Application.View.value.isValid = true;
         Application.eventBus.emit('validate-inputs');
         this.onValidated();
+        if (Application.View.value.isValid) {
+            Application.showToast('Validación exitosa.', ToastType.SUCCESS);
+        }
+        else{
+            Application.showToast('Hay campos por validar.', ToastType.ERROR);
+        }
         return Application.View.value.isValid;
     }
 

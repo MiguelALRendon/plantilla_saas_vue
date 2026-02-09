@@ -3,6 +3,7 @@ import type { HttpMethod } from "@/decorations";
 import { BaseEntity } from "./base_entitiy";
 import Application from "@/models/application";
 import { confMenuType } from "@/enums/conf_menu_type";
+import { ToastType } from "@/enums/ToastType";
 
 @UniquePropertyKey('oid')
 export abstract class PersistentEntity extends BaseEntity {
@@ -145,6 +146,10 @@ export abstract class PersistentEntity extends BaseEntity {
         if (!this.validateApiMethod(this.isNew() ? 'POST' : 'PUT')) {
             return this;
         }
+
+        if (!this.validateInputs()) {
+            return this;
+        }
         
         this._isSaving = true;
         this.beforeSave();
@@ -170,6 +175,7 @@ export abstract class PersistentEntity extends BaseEntity {
             this._isSaving = false;
             this.afterSave();
             Application.hideLoadingMenu();
+            Application.showToast('Guardado con exito.', ToastType.SUCCESS);
             return this;
         } catch (error: any) {
             this._isSaving = false;
