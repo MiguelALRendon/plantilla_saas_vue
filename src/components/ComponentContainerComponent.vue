@@ -39,10 +39,10 @@ export default {
 
         watch(() => Application.View.value.component, async (newVal: Component | null) => {
             if (newVal) {
-                Application.showLoadingScreen();
+                Application.ApplicationUIService.showLoadingScreen();
                 await new Promise(resolve => setTimeout(resolve, 400));
                 this.currentComponent = markRaw(newVal);
-                Application.hideLoadingScreen();
+                Application.ApplicationUIService.hideLoadingScreen();
             }
         });
     }

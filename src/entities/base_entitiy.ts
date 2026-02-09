@@ -453,7 +453,7 @@ export abstract class BaseEntity {
         }
         
         if (errors.length > 0) {
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error de configuración del módulo',
                 errors.join('\n'),
@@ -472,10 +472,10 @@ export abstract class BaseEntity {
         Application.eventBus.emit('validate-inputs');
         this.onValidated();
         if (Application.View.value.isValid) {
-            Application.showToast('Validación exitosa.', ToastType.SUCCESS);
+            Application.ApplicationUIService.showToast('Validación exitosa.', ToastType.SUCCESS);
         }
         else{
-            Application.showToast('Hay campos por validar.', ToastType.ERROR);
+            Application.ApplicationUIService.showToast('Hay campos por validar.', ToastType.ERROR);
         }
         return Application.View.value.isValid;
     }

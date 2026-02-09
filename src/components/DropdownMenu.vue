@@ -27,13 +27,13 @@ export default {
                 if (!dropdown) return;
 
                 if (!dropdown.contains(event.target as Node)) {
-                    Application.closeDropdownMenu();
+                    Application.ApplicationUIService.closeDropdownMenu();
                 }
             }
         },
         handleKeydown(e: KeyboardEvent) {
             if (e.key === 'Escape' && this.dropDownData.showing) {
-                Application.closeDropdownMenu();
+                Application.ApplicationUIService.closeDropdownMenu();
             }
         }
     },

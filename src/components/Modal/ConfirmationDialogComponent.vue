@@ -26,11 +26,11 @@
       </div>
     </div>
     <div class="confirmation-dialog-footer">
-      <button v-if="dialogInfo.confirmationAction" class="button info fill" @click="Application.acceptConfigurationMenu()">
+      <button v-if="dialogInfo.confirmationAction" class="button info fill" @click="Application.ApplicationUIService.acceptConfigurationMenu()">
         <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
         {{ dialogInfo.acceptButtonText || 'Aceptar' }}
       </button>
-      <button class="button alert fill" @click="Application.closeConfirmationMenu()">
+      <button class="button alert fill" @click="Application.ApplicationUIService.closeConfirmationMenu()">
         <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
         {{ dialogInfo.cancelButtonText || 'Cancelar' }}
       </button>

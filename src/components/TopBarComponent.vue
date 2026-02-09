@@ -29,14 +29,14 @@ export default {
     name: 'TopBarComponent',
     methods: {
         toggleSidebar() {
-            Application.toggleSidebar();
+            Application.ApplicationUIService.toggleSidebar();
         },
         logout() {
             console.log('Logout clicked');
         },
         openDropdown() {
             var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
-            Application.openDropdownMenu(button, 'Profile', listView);
+            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
         }
     },
     computed: {

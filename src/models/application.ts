@@ -19,10 +19,11 @@ import {
     SendToDeviceButtonComponent,
     ValidateButtonComponent
 } from '@/components/Buttons';
-import { Toast } from './Toast';
-import { ToastType } from '@/enums/ToastType';
+import type { Toast } from './Toast';
+import { ApplicationUIService } from './application_ui_service';
+import type { ApplicationUIContext } from './application_ui_context';
 
-class ApplicationClass {
+class ApplicationClass implements ApplicationUIContext {
     AppConfiguration: Ref<AppConfiguration>;
     View: Ref<View>;
     ModuleList: Ref<(typeof BaseEntity)[]>;
@@ -33,6 +34,7 @@ class ApplicationClass {
     ListButtons: Ref<Component[]>;
     axiosInstance: AxiosInstance;
     ToastList: Ref<Toast[]>;
+    ApplicationUIService: ApplicationUIService;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -115,27 +117,13 @@ class ApplicationClass {
                 return Promise.reject(error);
             }
         );
+
+        this.ApplicationUIService = new ApplicationUIService(this);
     }
 
     static getInstance() {
         if (!this.instance) this.instance = new ApplicationClass();
         return this.instance;
-    }
-
-    toggleDarkMode = () => {
-        this.AppConfiguration.value.isDarkMode = !this.AppConfiguration.value.isDarkMode;
-    }
-
-    toggleSidebar = () => {
-        this.eventBus.emit('toggle-sidebar');
-    }
-
-    setSidebar = (state: boolean) => {
-        this.eventBus.emit('toggle-sidebar', state);
-    }
-
-    showToast = (message: string, type: ToastType) => {
-        this.ToastList.value.push(new Toast(message, type));
     }
 
     changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
@@ -203,107 +191,6 @@ class ApplicationClass {
         }
     }
 
-    showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
-        this.modal.value.modalView = entity;
-        this.modal.value.modalOnCloseFunction = null;
-        this.modal.value.viewType = viewType;
-        this.modal.value.customViewId = customViewId;
-        this.eventBus.emit('show-modal');
-    }
-
-    showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param : any) => void, viewType: ViewTypes, customViewId?: string) => {
-        this.modal.value.modalView = entity;
-        this.modal.value.modalOnCloseFunction = onCloseFunction;
-        this.modal.value.viewType = viewType;
-        this.modal.value.customViewId = customViewId;
-        this.eventBus.emit('show-modal');
-    }
-
-    closeModal = () => {
-        this.eventBus.emit('hide-modal');
-        setTimeout(() => {
-            this.modal.value.modalView = null;
-        }, 150);
-    }
-
-    closeModalOnFunction = (param : any) => {
-        if (this.modal.value.modalOnCloseFunction) {
-            this.modal.value.modalOnCloseFunction(param);
-        }
-        this.eventBus.emit('hide-modal');
-        setTimeout(() => {
-            this.modal.value.modalView = null;
-            this.modal.value.modalOnCloseFunction = null;
-        }, 150);
-    }
-
-    openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string) => {
-        const rect = position.getBoundingClientRect();
-        this.dropdownMenu.value.position_x = `${rect.left}px`;
-        this.dropdownMenu.value.position_y = `${rect.bottom}px`;
-        this.dropdownMenu.value.activeElementWidth = `${rect.width}px`;
-        this.dropdownMenu.value.activeElementHeight = `${rect.height}px`;
-        this.dropdownMenu.value.title = title;
-        this.dropdownMenu.value.component = markRaw(component);
-        if (width) {
-            this.dropdownMenu.value.width = width;
-        }
-        this.dropdownMenu.value.showing = true;
-    }
-
-    closeDropdownMenu = () => {
-        this.dropdownMenu.value.showing = false;
-        setTimeout(() => {
-            this.dropdownMenu.value.component = null;
-            this.dropdownMenu.value.title = '';
-        }, 500);
-    }
-
-    openConfirmationMenu = (type: confMenuType, title: string, message: string, onAccept?: () => void, acceptButtonText: string = 'Aceptar', cancelButtonText: string = 'Cancelar') => {
-        this.confirmationMenu.value = {
-            type,
-            title,
-            message,
-            confirmationAction: onAccept,
-            acceptButtonText,
-            cancelButtonText
-        };
-        this.eventBus.emit('show-confirmation');
-    }
-
-    acceptConfigurationMenu = () => {
-        if(this.confirmationMenu.value.confirmationAction)
-            this.confirmationMenu.value.confirmationAction();
-
-        this.closeConfirmationMenu();
-    }
-
-    closeConfirmationMenu = () => {
-        this.eventBus.emit('hide-confirmation');
-        setTimeout(() => {
-            this.confirmationMenu.value = {
-                type: confMenuType.INFO,
-                title: '',
-                message: '',
-                confirmationAction: () => {}
-            };
-        }, 500);
-    }
-
-    showLoadingScreen = () => {
-        this.eventBus.emit('show-loading');
-    }
-
-    hideLoadingScreen = () => {
-        this.eventBus.emit('hide-loading');
-    }
-
-    showLoadingMenu = () => {
-        this.eventBus.emit('show-loading-menu');
-    }
-    hideLoadingMenu = () => {
-        this.eventBus.emit('hide-loading-menu');
-    }
 }
 
 const Application = ApplicationClass.getInstance();

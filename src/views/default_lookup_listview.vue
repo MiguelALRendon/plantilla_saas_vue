@@ -20,7 +20,7 @@ import Application from '@/models/application';
         },
         methods: {
             clickedItrem(item: BaseEntity) {
-                Application.closeModalOnFunction(item);
+                Application.ApplicationUIService.closeModalOnFunction(item);
             }
         },
         data() {

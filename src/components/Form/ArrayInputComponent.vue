@@ -129,7 +129,7 @@ export default {
     },
     methods: {
         openModal() {
-            Application.showModalOnFunction(this.typeValue!, this.addSelectedElement, ViewTypes.LOOKUPVIEW);
+            Application.ApplicationUIService.showModalOnFunction(this.typeValue!, this.addSelectedElement, ViewTypes.LOOKUPVIEW);
         },
         addSelectedElement(newElement: BaseEntity | undefined) {
             if (newElement) {
@@ -144,7 +144,7 @@ export default {
             }
         },
         showDeleteModal() {
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
                 'Confirmar eliminación',
                 'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',

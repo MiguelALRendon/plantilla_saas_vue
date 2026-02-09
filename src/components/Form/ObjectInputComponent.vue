@@ -11,7 +11,7 @@
         :disabled="metadata.disabled.value"
         readonly="true"
         @input="$emit('update:modelValue', modelValue)" />
-    <button class="right" @click="Application.showModalOnFunction(modelType, setNewValue, ViewTypes.LOOKUPVIEW)" :disabled="metadata.disabled.value"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
+    <button class="right" @click="Application.ApplicationUIService.showModalOnFunction(modelType, setNewValue, ViewTypes.LOOKUPVIEW)" :disabled="metadata.disabled.value"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
 <div class="validation-messages">
     <span v-for="message in validationMessages" :key="message">{{ message }}</span>

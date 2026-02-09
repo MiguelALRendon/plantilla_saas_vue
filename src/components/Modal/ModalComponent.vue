@@ -38,11 +38,11 @@ export default {
     name: 'ModalComponent',
     methods: {
         closeModal() {
-            Application.closeModal();
+            Application.ApplicationUIService.closeModal();
         },
         handleKeydown(e: KeyboardEvent) {
             if (e.key === 'Escape' && this.isShowing) {
-                Application.closeModal();
+                Application.ApplicationUIService.closeModal();
             }
         }
     },

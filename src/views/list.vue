@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <button class="button" @click="Application.toggleDarkMode()">Cambiar Tema</button>
+        <button class="button" @click="Application.ApplicationUIService.toggleDarkMode()">Cambiar Tema</button>
     </div>
 </template>
 

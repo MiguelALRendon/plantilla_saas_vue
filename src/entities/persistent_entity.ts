@@ -49,7 +49,7 @@ export abstract class PersistentEntity extends BaseEntity {
         }
         
         if (errors.length > 0) {
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error de configuración de persistencia',
                 errors.join('\n'),
@@ -65,7 +65,7 @@ export abstract class PersistentEntity extends BaseEntity {
 
     private validateApiMethod(method: HttpMethod): boolean {
         if (!this.isApiMethodAllowed(method)) {
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Método no permitido',
                 `El método ${method} no está permitido en esta entidad`,
@@ -94,7 +94,7 @@ export abstract class PersistentEntity extends BaseEntity {
         } catch (error: any) {
             const tempInstance = new this({});
             (tempInstance as any).getElementFailed();
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al obtener elemento',
                 error.response?.data?.message || error.message || 'Error desconocido',
@@ -126,7 +126,7 @@ export abstract class PersistentEntity extends BaseEntity {
         } catch (error: any) {
             const tempInstance = new this({});
             (tempInstance as any).getElementListFailed();
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al obtener lista',
                 error.response?.data?.message || error.message || 'Error desconocido',
@@ -153,7 +153,7 @@ export abstract class PersistentEntity extends BaseEntity {
         
         this._isSaving = true;
         this.beforeSave();
-        Application.showLoadingMenu();
+        Application.ApplicationUIService.showLoadingMenu();
         await new Promise(resolve => setTimeout(resolve, 400));
         
         try {
@@ -174,14 +174,14 @@ export abstract class PersistentEntity extends BaseEntity {
             this._originalState = structuredClone(this.toObject());
             this._isSaving = false;
             this.afterSave();
-            Application.hideLoadingMenu();
-            Application.showToast('Guardado con exito.', ToastType.SUCCESS);
+            Application.ApplicationUIService.hideLoadingMenu();
+            Application.ApplicationUIService.showToast('Guardado con exito.', ToastType.SUCCESS);
             return this;
         } catch (error: any) {
             this._isSaving = false;
-            Application.hideLoadingMenu();
+            Application.ApplicationUIService.hideLoadingMenu();
             this.saveFailed();
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al guardar',
                 error.response?.data?.message || error.message || 'Error desconocido',
@@ -203,7 +203,7 @@ export abstract class PersistentEntity extends BaseEntity {
         }
         
         if (this.isNew()) {
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al actualizar',
                 'No se puede actualizar un elemento que no ha sido guardado',
@@ -233,7 +233,7 @@ export abstract class PersistentEntity extends BaseEntity {
         } catch (error: any) {
             this._isSaving = false;
             this.updateFailed();
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al actualizar',
                 error.response?.data?.message || error.message || 'Error desconocido',
@@ -255,7 +255,7 @@ export abstract class PersistentEntity extends BaseEntity {
         }
         
         if (this.isNew()) {
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al eliminar',
                 'No se puede eliminar un elemento que no ha sido guardado',
@@ -277,7 +277,7 @@ export abstract class PersistentEntity extends BaseEntity {
             this.afterDelete();
         } catch (error: any) {
             this.deleteFailed();
-            Application.openConfirmationMenu(
+            Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al eliminar',
                 error.response?.data?.message || error.message || 'Error desconocido',
