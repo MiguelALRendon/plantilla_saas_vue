@@ -41,7 +41,7 @@ textarea {
     resize: none;
     min-height: 7rem;
 }
-input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
+input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"], .TextInput.NumberInput input[type="text"] {
     text-align: center;
     border-radius: 0;
 }
@@ -66,6 +66,18 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     display: flex;
     flex-direction: row;
     align-items: end;
+}
+.help-text {
+    margin-top: 0.25rem;
+    margin-left: 0.7rem;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.help-text span {
+    color: var(--gray-light);
+    font-style: italic;
 }
 .validation-messages {
     margin-top: 0.25rem;
@@ -174,4 +186,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 .TextInput.nonvalidated .label-input span {
     color: var(--accent-rose) !important;
+}
+.TextInput:has(.main-input:focus).nonvalidated .label-input span {
+    color: var(--white) !important;
 }

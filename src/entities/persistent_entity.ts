@@ -147,7 +147,7 @@ export abstract class PersistentEntity extends BaseEntity {
             return this;
         }
 
-        if (!this.validateInputs()) {
+        if (!await this.validateInputs()) {
             return this;
         }
         

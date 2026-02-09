@@ -8,6 +8,7 @@ export interface InputMetadata {
     validated: ComputedRef<boolean>;
     requiredMessage: ComputedRef<string | undefined>;
     validatedMessage: ComputedRef<string | undefined>;
+    helpText: ComputedRef<string | undefined>;
 }
 
 export function useInputMetadata(
@@ -22,6 +23,7 @@ export function useInputMetadata(
     const validated = computed(() => entity.isValidation(propertyKey));
     const requiredMessage = computed(() => entity.requiredMessage(propertyKey));
     const validatedMessage = computed(() => entity.validationMessage(propertyKey));
+    const helpText = computed(() => entity.getHelpText(propertyKey));
 
     return {
         propertyName,
@@ -30,5 +32,6 @@ export function useInputMetadata(
         validated,
         requiredMessage,
         validatedMessage,
+        helpText,
     };
 }

@@ -14,6 +14,10 @@
     :disabled="metadata.disabled.value"
     @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
     
+    <div class="help-text" v-if="metadata.helpText.value">
+        <span>{{ metadata.helpText.value }}</span>
+    </div>
+    
     <div class="validation-messages">
         <span v-for="message in validationMessages" :key="message">{{ message }}</span>
     </div>

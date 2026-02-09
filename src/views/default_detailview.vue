@@ -82,7 +82,7 @@
 
 <FormGroupComponent title="Listas">
     <TabControllerComponent :tabs="getArrayListsTabs()">
-        <TabComponent v-for="(tab) in entity.getArrayKeys()">
+        <TabComponent v-for="(tab) in entity.getArrayKeysOrdered()">
             <ArrayInputComponent 
             :required="entity.isRequired(tab)"
             :disabled="entity.isDisabled(tab)"
@@ -183,7 +183,7 @@ export default {
         },
         getArrayListsTabs(): Array<string> {
             var returnList: Array<string> = [];
-            var listTypes = this.entity.getArrayKeys();
+            var listTypes = this.entity.getArrayKeysOrdered();
             for (let i = 0; i < listTypes.length; i++) {
                 returnList.push(this.entityClass.getPropertyNameByKey(listTypes[i])!);
             }

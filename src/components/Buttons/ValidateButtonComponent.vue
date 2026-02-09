@@ -12,10 +12,10 @@ import Application from '@/models/application';
 export default {
     name: 'ValidateButtonComponent',
     methods: {
-        saveItem() {
+        async saveItem() {
             const entity = Application.View.value.entityObject;
             if (entity) {
-                entity.validateInputs();
+                await entity.validateInputs();
             }
         }
     },

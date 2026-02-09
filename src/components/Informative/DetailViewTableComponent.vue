@@ -13,7 +13,7 @@
             <template v-for="column in item.getKeys()">
                 <td :class="item.getCSSClasses()[column]" class="table-row" v-if="Application.View.entityClass?.getPropertyType(column) !== Array">
                     <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
-                        {{ item.getMask()[column]?.side === MaskSides.START ? item.getMask()[column]?.mask : '' }}{{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.toObject()[column] }}{{ item.getMask()[column]?.side === MaskSides.END ? item.getMask()[column]?.mask : '' }}
+                        {{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.getFormattedValue(column) }}
                     </span>
 
                     <span v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
@@ -34,7 +34,6 @@
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entitiy';
 import { Products } from '@/entities/products';
-import { MaskSides } from '@/enums/mask_sides';
 import Application from '@/models/application';
 export default {
     name: 'DetailViewTableComponent',
@@ -103,7 +102,6 @@ export default {
         
         return {
             Application,
-            MaskSides,
             BaseEntity,
             data: data as any as Products[],
             GGICONS,

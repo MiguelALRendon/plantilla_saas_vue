@@ -2,7 +2,6 @@ import {
     PROPERTY_NAME_KEY,
     PROPERTY_TYPE_KEY,
     ARRAY_ELEMENT_TYPE_KEY,
-    MASK_KEY,
     CSS_COLUMN_CLASS_KEY,
     DEFAULT_PROPERTY_KEY,
     PRIMARY_PROPERTY_KEY,
@@ -26,11 +25,15 @@ import {
     HIDE_IN_DETAIL_VIEW_KEY,
     HIDE_IN_LIST_VIEW_KEY,
     PERSISTENT_KEY_KEY,
+    PROPERTY_INDEX_KEY,
+    ASYNC_VALIDATION_KEY,
+    DISPLAY_FORMAT_KEY,
+    HELP_TEXT_KEY,
+    TAB_ORDER_KEY,
 } from "@/decorations";
-import type { RequiredMetadata, ValidationMetadata, DisabledMetadata, ReadOnlyMetadata, HttpMethod } from "@/decorations";
+import type { RequiredMetadata, ValidationMetadata, DisabledMetadata, ReadOnlyMetadata, HttpMethod, AsyncValidationMetadata, DisplayFormatValue } from "@/decorations";
 import DefaultDetailView from "@/views/default_detailview.vue";
 import type { Component } from 'vue';
-import type { MaskSides } from "@/enums/mask_sides";
 import { StringType } from "@/enums/string_type";
 import type { ViewGroupRow } from "@/enums/view_group_row";
 import DefaultListview from "@/views/default_listview.vue";
@@ -40,7 +43,7 @@ import { ToastType } from "@/enums/ToastType";
 
 export abstract class BaseEntity {
     [key: string]: any;
-    protected _isLoading: boolean = false;
+    public _isLoading: boolean = false;
 
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
@@ -69,7 +72,15 @@ export abstract class BaseEntity {
 
     public getKeys(): string[] {
         const columns = (this.constructor as typeof BaseEntity).getProperties();
-        return Object.keys(columns);
+        const keys = Object.keys(columns);
+        const propertyIndices = this.getPropertyIndices();
+        
+        // Ordenar por PropertyIndex si existe, sino por orden de declaración
+        return keys.sort((a, b) => {
+            const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
+            const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
+            return indexA - indexB;
+        });
     }
 
     public getArrayKeys(): string[] {
@@ -86,9 +97,9 @@ export abstract class BaseEntity {
         return arrayKeys;
     }
 
-    public getMask(): Record<string, { mask: string; side: MaskSides }> {
+    public getPropertyIndices(): Record<string, number> {
         const proto = (this.constructor as any).prototype;
-        return proto[MASK_KEY] || {};
+        return proto[PROPERTY_INDEX_KEY] || {};
     }
 
     public getCSSClasses(): Record<string, string> {
@@ -316,6 +327,75 @@ export abstract class BaseEntity {
         return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
     }
 
+    public async isAsyncValidation(propertyKey: string): Promise<boolean> {
+        const proto = (this.constructor as any).prototype;
+        const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
+        const rule = asyncValidationRules[propertyKey];
+        
+        if (!rule) {
+            return true;
+        }
+        
+        try {
+            return await rule.condition(this);
+        } catch (error) {
+            console.error(`Error in async validation for ${propertyKey}:`, error);
+            return false;
+        }
+    }
+
+    public asyncValidationMessage(propertyKey: string): string | undefined {
+        const proto = (this.constructor as any).prototype;
+        const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
+        const rule = asyncValidationRules[propertyKey];
+        return rule?.message;
+    }
+
+    public getDisplayFormat(propertyKey: string): DisplayFormatValue | undefined {
+        const proto = (this.constructor as any).prototype;
+        const displayFormats: Record<string, DisplayFormatValue> = proto[DISPLAY_FORMAT_KEY] || {};
+        return displayFormats[propertyKey];
+    }
+
+    public getFormattedValue(propertyKey: string): string {
+        const value = (this as any)[propertyKey];
+        const format = this.getDisplayFormat(propertyKey);
+        
+        if (!format) {
+            return value?.toString() ?? '';
+        }
+        
+        if (typeof format === 'function') {
+            return format(value);
+        }
+        
+        // Si es string, reemplazar {value} con el valor actual
+        return format.replace('{value}', value?.toString() ?? '');
+    }
+
+    public getHelpText(propertyKey: string): string | undefined {
+        const proto = (this.constructor as any).prototype;
+        const helpTexts: Record<string, string> = proto[HELP_TEXT_KEY] || {};
+        return helpTexts[propertyKey];
+    }
+
+    public getTabOrders(): Record<string, number> {
+        const proto = (this.constructor as any).prototype;
+        return proto[TAB_ORDER_KEY] || {};
+    }
+
+    public getArrayKeysOrdered(): string[] {
+        const arrayKeys = this.getArrayKeys();
+        const tabOrders = this.getTabOrders();
+        
+        // Ordenar por TabOrder si existe, sino por orden de declaración
+        return arrayKeys.sort((a, b) => {
+            const orderA = tabOrders[a] ?? Number.MAX_SAFE_INTEGER;
+            const orderB = tabOrders[b] ?? Number.MAX_SAFE_INTEGER;
+            return orderA - orderB;
+        });
+    }
+
     public static getApiEndpoint(): string | undefined {
         return (this as any)[API_ENDPOINT_KEY];
     }
@@ -467,9 +547,22 @@ export abstract class BaseEntity {
         return true;
     }
 
-    public validateInputs(): boolean {
+    public async validateInputs(): Promise<boolean> {
         Application.View.value.isValid = true;
         Application.eventBus.emit('validate-inputs');
+        
+        const proto = (this.constructor as any).prototype;
+        const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
+        
+        for (const propertyKey of Object.keys(asyncValidationRules)) {
+            const isValid = await this.isAsyncValidation(propertyKey);
+            if (!isValid) {
+                Application.View.value.isValid = false;
+                const message = this.asyncValidationMessage(propertyKey) || `${propertyKey} tiene una validación asíncrona que falló.`;
+                Application.ApplicationUIService.showToast(message, ToastType.ERROR);
+            }
+        }
+        
         this.onValidated();
         if (Application.View.value.isValid) {
             Application.ApplicationUIService.showToast('Validación exitosa.', ToastType.SUCCESS);

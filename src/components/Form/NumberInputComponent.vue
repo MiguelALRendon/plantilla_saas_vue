@@ -1,21 +1,28 @@
 <template>
 <div class="TextInput NumberInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
     <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
-    <button class="left" @click="value--" :disabled="metadata.disabled.value">
+    <button class="left" @click="decrementValue" :disabled="metadata.disabled.value">
     <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
     </button>
 
     <input
-        type="number"
+        type="text"
         class="main-input"
-        :value="value"
+        :value="displayValue"
         :disabled="metadata.disabled.value"
-        @input="value = Number(($event.target as HTMLInputElement).value)"
+        @keypress="handleKeyPress"
+        @input="handleInput"
+        @focus="handleFocus"
+        @blur="handleBlur"
     />
 
-    <button class="right" @click="value++" :disabled="metadata.disabled.value">
+    <button class="right" @click="incrementValue" :disabled="metadata.disabled.value">
         <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
     </button>
+</div>
+
+<div class="help-text" v-if="metadata.helpText.value">
+    <span>{{ metadata.helpText.value }}</span>
 </div>
 
 <div class="validation-messages">
@@ -69,9 +76,53 @@ export default {
             textInputId: 'text-input-' + this.propertyKey,
             isInputValidated: true,
             validationMessages: [] as string[],
+            isFocused: false,
         }
     },
     methods: {
+        handleKeyPress(event: KeyboardEvent) {
+            const char = event.key;
+            const currentValue = (event.target as HTMLInputElement).value;
+            
+            // Permitir: números, punto decimal, signo menos al inicio
+            const isNumber = /^\d$/.test(char);
+            const isDot = char === '.' && !currentValue.includes('.');
+            const isMinus = char === '-' && currentValue.length === 0;
+            
+            if (!isNumber && !isDot && !isMinus) {
+                event.preventDefault();
+            }
+        },
+        handleInput(event: Event) {
+            const inputValue = (event.target as HTMLInputElement).value;
+            
+            if (inputValue === '' || inputValue === '-') {
+                return;
+            }
+            
+            const numValue = parseFloat(inputValue);
+            
+            if (!isNaN(numValue)) {
+                this.$emit('update:modelValue', numValue);
+            }
+        },
+        handleFocus() {
+            this.isFocused = true;
+        },
+        handleBlur() {
+            this.isFocused = false;
+            if (this.modelValue === null || this.modelValue === undefined || isNaN(this.modelValue)) {
+                this.$emit('update:modelValue', 0);
+            }
+        },
+        incrementValue() {
+            const newValue = (this.modelValue || 0) + 1;
+            this.$emit('update:modelValue', newValue);
+        },
+        decrementValue() {
+            const newValue = (this.modelValue || 0) - 1;
+            this.$emit('update:modelValue', newValue);
+        },
         isValidated(): boolean {
             var validated = true;
             this.validationMessages = [];
@@ -93,14 +144,19 @@ export default {
         },
     },
     computed: {
-    value: {
-        get(): number {
-            return this.modelValue;
-        },
-        set(val: number) {
-            this.$emit('update:modelValue', val);
+        displayValue(): string {
+            if (this.isFocused) {
+                return this.modelValue?.toString() || '';
+            }
+            
+            const format = this.entity.getDisplayFormat(this.propertyKey);
+            
+            if (format) {
+                return this.entity.getFormattedValue(this.propertyKey);
+            }
+            
+            return this.modelValue?.toString() || '0';
         }
     }
-}
 }
 </script>

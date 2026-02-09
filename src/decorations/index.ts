@@ -1,6 +1,5 @@
 export { PROPERTY_NAME_KEY, PROPERTY_TYPE_KEY, ARRAY_ELEMENT_TYPE_KEY, PropertyName, ArrayOf } from './property_name_decorator';
 export type { PropertyType } from './property_name_decorator';
-export { MASK_KEY, Mask } from './mask_decorator';
 export { CSS_COLUMN_CLASS_KEY, CSSColumnClass } from './css_column_class_decorator';
 export { DEFAULT_PROPERTY_KEY, DefaultProperty } from './default_property_decorator';
 export { PRIMARY_PROPERTY_KEY, PrimaryProperty } from './primary_property_decorator';
@@ -29,3 +28,10 @@ export type { HttpMethod } from './api_methods_decorator';
 export { HIDE_IN_DETAIL_VIEW_KEY, HideInDetailView } from './hide_in_detail_view_decorator';
 export { HIDE_IN_LIST_VIEW_KEY, HideInListView } from './hide_in_list_view_decorator';
 export { PERSISTENT_KEY_KEY, PersistentKey } from './persistent_key_decorator';
+export { PROPERTY_INDEX_KEY, PropertyIndex } from './property_index_decorator';
+export { ASYNC_VALIDATION_KEY, AsyncValidation } from './async_validation_decorator';
+export type { AsyncValidationMetadata } from './async_validation_decorator';
+export { DISPLAY_FORMAT_KEY, DisplayFormat } from './display_format_decorator';
+export type { DisplayFormatFunction, DisplayFormatValue } from './display_format_decorator';
+export { HELP_TEXT_KEY, HelpText } from './help_text_decorator';
+export { TAB_ORDER_KEY, TabOrder } from './tab_order_decorator';
