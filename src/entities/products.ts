@@ -71,7 +71,7 @@ export class Products extends PersistentEntity {
     @HelpText('Email de contacto del proveedor')
     @AsyncValidation(async (entity) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        return entity.email?.endsWith('@test.com');
+        return !entity.email?.endsWith('@test.com');
     }, 'El email no puede terminar en @test.com')
     email!: string;
 

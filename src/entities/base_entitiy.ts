@@ -39,7 +39,6 @@ import type { ViewGroupRow } from "@/enums/view_group_row";
 import DefaultListview from "@/views/default_listview.vue";
 import Application from "@/models/application";
 import { confMenuType } from "@/enums/conf_menu_type";
-import { ToastType } from "@/enums/ToastType";
 
 export abstract class BaseEntity {
     [key: string]: any;
@@ -549,27 +548,25 @@ export abstract class BaseEntity {
 
     public async validateInputs(): Promise<boolean> {
         Application.View.value.isValid = true;
+        Application.ApplicationUIService.showLoadingMenu();
+        
+        // Esperar un tick para que el loading se muestre
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Emitir evento para que los inputs validen
         Application.eventBus.emit('validate-inputs');
         
-        const proto = (this.constructor as any).prototype;
-        const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
+        // Esperar a que todas las validaciones asíncronas realmente terminen
+        const keys = this.getKeys();
+        const asyncValidationPromises = keys.map(key => this.isAsyncValidation(key));
+        await Promise.all(asyncValidationPromises);
         
-        for (const propertyKey of Object.keys(asyncValidationRules)) {
-            const isValid = await this.isAsyncValidation(propertyKey);
-            if (!isValid) {
-                Application.View.value.isValid = false;
-                const message = this.asyncValidationMessage(propertyKey) || `${propertyKey} tiene una validación asíncrona que falló.`;
-                Application.ApplicationUIService.showToast(message, ToastType.ERROR);
-            }
-        }
+        // Esperar un momento adicional para que los inputs procesen los resultados
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         this.onValidated();
-        if (Application.View.value.isValid) {
-            Application.ApplicationUIService.showToast('Validación exitosa.', ToastType.SUCCESS);
-        }
-        else{
-            Application.ApplicationUIService.showToast('Hay campos por validar.', ToastType.ERROR);
-        }
+        Application.ApplicationUIService.hideLoadingMenu();
+        
         return Application.View.value.isValid;
     }
 

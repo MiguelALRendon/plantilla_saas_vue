@@ -13,6 +13,11 @@
         @input="$emit('update:modelValue', modelValue)" />
     <button class="right" @click="Application.ApplicationUIService.showModalOnFunction(modelType, setNewValue, ViewTypes.LOOKUPVIEW)" :disabled="metadata.disabled.value"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
+
+<div class="help-text" v-if="metadata.helpText.value">
+    <span>{{ metadata.helpText.value }}</span>
+</div>
+
 <div class="validation-messages">
     <span v-for="message in validationMessages" :key="message">{{ message }}</span>
 </div>
@@ -58,18 +63,19 @@ export default {
         };
     },
     mounted() {
-        Application.eventBus.on('validate-inputs', this.saveItem);
+        Application.eventBus.on('validate-inputs', this.handleValidation);
     },
     beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.saveItem);
+        Application.eventBus.off('validate-inputs', this.handleValidation);
     },
     methods: {
         setNewValue(newValue: BaseEntity | undefined) {
             this.$emit('update:modelValue', newValue);
         },
-        isValidated(): boolean {
+        async isValidated(): Promise<boolean> {
             var validated = true;
             this.validationMessages = [];
+            
             if (this.metadata.required.value && (this.modelValue === null || this.modelValue === undefined || this.modelValue instanceof EmptyEntity)) {
                 validated = false;
                 this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
@@ -78,10 +84,21 @@ export default {
                 validated = false;
                 this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
             }
+            
+            // Validación asíncrona
+            const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
+            if (!isAsyncValid) {
+                validated = false;
+                const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
+                if (asyncMessage) {
+                    this.validationMessages.push(asyncMessage);
+                }
+            }
+            
             return validated;
         },
-        saveItem() {
-            this.isInputValidated = this.isValidated();
+        async handleValidation() {
+            this.isInputValidated = await this.isValidated();
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }

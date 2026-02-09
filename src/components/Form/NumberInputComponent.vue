@@ -64,10 +64,10 @@ export default {
         };
     },
     mounted() {
-        Application.eventBus.on('validate-inputs', this.saveItem);
+        Application.eventBus.on('validate-inputs', this.handleValidation);
     },
     beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.saveItem);
+        Application.eventBus.off('validate-inputs', this.handleValidation);
     },
     data() {
         return {
@@ -123,9 +123,10 @@ export default {
             const newValue = (this.modelValue || 0) - 1;
             this.$emit('update:modelValue', newValue);
         },
-        isValidated(): boolean {
+        async isValidated(): Promise<boolean> {
             var validated = true;
             this.validationMessages = [];
+            
             if (this.metadata.required.value && (this.modelValue === null || this.modelValue === undefined)) {
                 validated = false;
                 this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
@@ -134,10 +135,21 @@ export default {
                 validated = false;
                 this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
             }
+            
+            // Validación asíncrona
+            const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
+            if (!isAsyncValid) {
+                validated = false;
+                const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
+                if (asyncMessage) {
+                    this.validationMessages.push(asyncMessage);
+                }
+            }
+            
             return validated;
         },
-        saveItem() {
-            this.isInputValidated = this.isValidated();
+        async handleValidation() {
+            this.isInputValidated = await this.isValidated();
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }

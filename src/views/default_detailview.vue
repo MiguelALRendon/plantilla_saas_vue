@@ -84,6 +84,8 @@
     <TabControllerComponent :tabs="getArrayListsTabs()">
         <TabComponent v-for="(tab) in entity.getArrayKeysOrdered()">
             <ArrayInputComponent 
+            :entity="entity"
+            :property-key="tab"
             :required="entity.isRequired(tab)"
             :disabled="entity.isDisabled(tab)"
             :validated="entity.isValidation(tab)"

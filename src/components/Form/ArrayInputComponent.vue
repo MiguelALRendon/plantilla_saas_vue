@@ -95,6 +95,14 @@ export default {
             type: Function as unknown as PropType<typeof BaseEntity | undefined>,
             required: true,
         },
+        entity: {
+            type: Object as PropType<BaseEntity>,
+            required: false,
+        },
+        propertyKey: {
+            type: String,
+            required: false,
+        },
         required: {
             type: Boolean,
             required: false,
@@ -122,10 +130,10 @@ export default {
         },
     },
     mounted() {
-        Application.eventBus.on('validate-inputs', this.saveItem);
+        Application.eventBus.on('validate-inputs', this.handleValidation);
     },
     beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.saveItem);
+        Application.eventBus.off('validate-inputs', this.handleValidation);
     },
     methods: {
         openModal() {
@@ -156,18 +164,29 @@ export default {
                 },
             );
         },
-        isValidated(): boolean {
+        async isValidated(): Promise<boolean> {
             this.validationMessages = [];
+            
             if (this.required && (!this.modelValue || this.modelValue.length === 0)) {
                 this.validationMessages.push(this.requireddMessage || `${this.typeValue?.getModuleName()} is required.`);
             }
-            if (!this.validated) {
+            
+            // Validación tradicional (síncrona) usando entity si está disponible
+            if (this.entity && this.propertyKey) {
+                const isValid = this.entity.isValidation(this.propertyKey);
+                if (!isValid) {
+                    const validationMsg = this.entity.validationMessage(this.propertyKey);
+                    this.validationMessages.push(validationMsg || `${this.typeValue?.getModuleName()} is not valid.`);
+                }
+            } else if (!this.validated) {
+                // Fallback a la prop validated si no hay entity/propertyKey
                 this.validationMessages.push(this.validatedMessage || `${this.typeValue?.getModuleName()} is not valid.`);
             }
+            
             return this.validationMessages.length === 0;
         },
-        saveItem() {
-            this.isInputValidated = this.isValidated();
+        async handleValidation() {
+            this.isInputValidated = await this.isValidated();
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
