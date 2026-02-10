@@ -127,7 +127,22 @@ class ApplicationClass implements ApplicationUIContext {
     }
 
     changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
-        console.log(`Changing view to ${viewType} for entity class ${entity }`);
+
+        if(this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
+            this.ApplicationUIService.openConfirmationMenu(
+                confMenuType.WARNING,
+                'Salir sin guardar',
+                'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?',
+                () => {
+                    this.setViewChanges(entityClass, component, viewType, entity);
+                }
+            );
+            return;
+        }
+        this.setViewChanges(entityClass, component, viewType, entity);
+    }
+
+    private setViewChanges = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
         this.View.value.entityClass = entityClass;
         this.View.value.entityObject = entity;
         this.View.value.component = component;

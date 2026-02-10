@@ -30,8 +30,10 @@ import {
     DISPLAY_FORMAT_KEY,
     HELP_TEXT_KEY,
     TAB_ORDER_KEY,
+    PERSISTENT_KEY,
 } from "@/decorations";
 import type { RequiredMetadata, ValidationMetadata, DisabledMetadata, ReadOnlyMetadata, HttpMethod, AsyncValidationMetadata, DisplayFormatValue } from "@/decorations";
+import { ToastType } from "@/enums/ToastType";
 import DefaultDetailView from "@/views/default_detailview.vue";
 import type { Component } from 'vue';
 import { StringType } from "@/enums/string_type";
@@ -42,10 +44,14 @@ import { confMenuType } from "@/enums/conf_menu_type";
 
 export abstract class BaseEntity {
     [key: string]: any;
-    public _isLoading: boolean = false;
+    protected _isLoading: boolean = false;
+    protected _originalState?: Record<string, any>;
+    protected _isSaving?: boolean = false;
+    protected oid?: string;
 
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
+        this._originalState = structuredClone(this.toObject());
     }
 
     public setLoading(): void {
@@ -570,8 +576,366 @@ export abstract class BaseEntity {
         return Application.View.value.isValid;
     }
 
-    public isPersistent(): this is import('@/entities/persistent_entity').PersistentEntity {
-        return false;
+    public isPersistent(): boolean {
+        return !!(this.constructor as any)[PERSISTENT_KEY];
+    }
+
+    public get getSaving(): boolean {
+        return this._isSaving ?? false;
+    }
+
+    public isNew(): boolean {
+        return this.getPrimaryPropertyValue() === undefined || this.getPrimaryPropertyValue() === null;
+    }
+
+    public validatePersistenceConfiguration(): boolean {
+        if (!this.validateModuleConfiguration()) {
+            return false;
+        }
+        
+        const errors: string[] = [];
+        
+        if (!this.getUniquePropertyKey()) {
+            errors.push('La entidad no tiene definido @UniquePropertyKey');
+        }
+        
+        if (!this.getApiEndpoint()) {
+            errors.push('La entidad no tiene definido @ApiEndpoint');
+        }
+        
+        if (!this.getApiMethods()) {
+            errors.push('La entidad no tiene definido @ApiMethods');
+        }
+        
+        if (errors.length > 0) {
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error de configuración de persistencia',
+                errors.join('\\n'),
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            return false;
+        }
+        
+        return true;
+    }
+
+    public validateApiMethod(method: HttpMethod): boolean {
+        if (!this.isApiMethodAllowed(method)) {
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Método no permitido',
+                `El método ${method} no está permitido en esta entidad`,
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            return false;
+        }
+        return true;
+    }
+
+    public static async getElement<T extends BaseEntity>(this: new (data: Record<string, any>) => T, oid: string): Promise<T> {
+        const endpoint = (this as any).getApiEndpoint();
+        
+        if (!endpoint) {
+            throw new Error('ApiEndpoint no definido');
+        }
+        
+        try {
+            const response = await Application.axiosInstance.get(`${endpoint}/${oid}`);
+            const mappedData = (this as any).mapFromPersistentKeys(response.data);
+            const instance = new this(mappedData);
+            (instance as any).afterGetElement();
+            return instance;
+        } catch (error: any) {
+            const tempInstance = new this({});
+            (tempInstance as any).getElementFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al obtener elemento',
+                error.response?.data?.message || error.message || 'Error desconocido',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            throw error;
+        }
+    }
+
+    public static async getElementList<T extends BaseEntity>(this: new (data: Record<string, any>) => T, filter: string = ''): Promise<T[]> {
+        const endpoint = (this as any).getApiEndpoint();
+        
+        if (!endpoint) {
+            throw new Error('ApiEndpoint no definido');
+        }
+        
+        try {
+            const response = await Application.axiosInstance.get(endpoint, { params: { filter } });
+            const instances = response.data.map((item: any) => {
+                const mappedData = (this as any).mapFromPersistentKeys(item);
+                return new this(mappedData);
+            });
+            if (instances.length > 0) {
+                (instances[0] as any).afterGetElementList();
+            }
+            return instances;
+        } catch (error: any) {
+            const tempInstance = new this({});
+            (tempInstance as any).getElementListFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al obtener lista',
+                error.response?.data?.message || error.message || 'Error desconocido',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            throw error;
+        }
+    }
+
+    public async save(): Promise<this> {
+        if (!this.validatePersistenceConfiguration()) {
+            return this;
+        }
+        
+        if (!this.validateApiMethod(this.isNew() ? 'POST' : 'PUT')) {
+            return this;
+        }
+
+        if (!await this.validateInputs()) {
+            return this;
+        }
+        
+        this._isSaving = true;
+        this.beforeSave();
+        Application.ApplicationUIService.showLoadingMenu();
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        try {
+            this.onSaving();
+            const endpoint = this.getApiEndpoint();
+            const dataToSend = this.mapToPersistentKeys(this.toObject());
+            
+            let response;
+            if (this.isNew()) {
+                response = await Application.axiosInstance.post(endpoint!, dataToSend);
+            } else {
+                const uniqueKey = this.getUniquePropertyValue();
+                response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
+            }
+            
+            const mappedData = this.mapFromPersistentKeys(response.data);
+            Object.assign(this, mappedData);
+            this._originalState = structuredClone(this.toObject());
+            this._isSaving = false;
+            this.afterSave();
+            Application.ApplicationUIService.hideLoadingMenu();
+            Application.ApplicationUIService.showToast('Guardado con exito.', ToastType.SUCCESS);
+            return this;
+        } catch (error: any) {
+            this._isSaving = false;
+            Application.ApplicationUIService.hideLoadingMenu();
+            this.saveFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al guardar',
+                error.response?.data?.message || error.message || 'Error desconocido',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            throw error;
+        }
+    }
+ 
+    public async update(): Promise<this> {
+        if (!this.validatePersistenceConfiguration()) {
+            return this;
+        }
+        
+        if (!this.validateApiMethod('PUT')) {
+            return this;
+        }
+        
+        if (this.isNew()) {
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al actualizar',
+                'No se puede actualizar un elemento que no ha sido guardado',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            return this;
+        }
+        
+        this._isSaving = true;
+        this.beforeUpdate();
+        
+        try {
+            this.onUpdating();
+            const endpoint = this.getApiEndpoint();
+            const uniqueKey = this.getUniquePropertyValue();
+            const dataToSend = this.mapToPersistentKeys(this.toObject());
+            
+            const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
+            const mappedData = this.mapFromPersistentKeys(response.data);
+            Object.assign(this, mappedData);
+            this._originalState = structuredClone(this.toObject());
+            this._isSaving = false;
+            this.afterUpdate();
+            return this;
+        } catch (error: any) {
+            this._isSaving = false;
+            this.updateFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al actualizar',
+                error.response?.data?.message || error.message || 'Error desconocido',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            throw error;
+        }
+    }
+
+    public async delete(): Promise<void> {
+        if (!this.validatePersistenceConfiguration()) {
+            return;
+        }
+        
+        if (!this.validateApiMethod('DELETE')) {
+            return;
+        }
+        
+        if (this.isNew()) {
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al eliminar',
+                'No se puede eliminar un elemento que no ha sido guardado',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            return;
+        }
+        
+        this.beforeDelete();
+        
+        try {
+            this.onDeleting();
+            const endpoint = this.getApiEndpoint();
+            const uniqueKey = this.getUniquePropertyValue();
+            
+            await Application.axiosInstance.delete(`${endpoint}/${uniqueKey}`);
+            this.afterDelete();
+        } catch (error: any) {
+            this.deleteFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                'Error al eliminar',
+                error.response?.data?.message || error.message || 'Error desconocido',
+                undefined,
+                'Aceptar',
+                'Cerrar'
+            );
+            throw error;
+        }
+    }
+
+    public async refresh(filter: string = ''): Promise<this[]> {
+        try {
+            const instances = await (this.constructor as any).getElementList(filter);
+            this.afterRefresh();
+            return instances;
+        } catch (error) {
+            this.refreshFailed();
+            throw error;
+        }
+    }
+
+    public onBeforeRouteLeave() : boolean {
+        return true;
+    }
+
+    public getDirtyState(): boolean {
+        var snapshotJson = JSON.stringify(this._originalState);
+        var actualJson = JSON.stringify(this.toObject());
+        console.log('Snapshot:', snapshotJson);
+        console.log('Actual:', actualJson);
+        console.log('Dirty State:', snapshotJson !== actualJson);
+        return snapshotJson !== actualJson;
+    }
+
+    public resetChanges(): void {
+        if (this._originalState) {
+            Object.assign(this, structuredClone(this._originalState));
+        }
+    }
+
+    public beforeSave() : void {
+
+    }
+    public onSaving() : void {
+        
+    }
+    public afterSave() : void {
+        
+    }
+    public saveFailed() : void {
+        
+    }
+
+    public beforeUpdate() : void {
+
+    }
+    public onUpdating() : void {
+        
+    }
+    public afterUpdate() : void {
+        
+    }
+    public updateFailed() : void {
+        
+    }
+
+    public beforeDelete() : void {
+
+    }
+    public onDeleting() : void {
+
+    }
+    public afterDelete() : void {
+
+    }
+    public deleteFailed() : void {
+
+    }
+
+    public afterGetElement() : void {
+
+    }
+    public getElementFailed() : void {
+
+    }
+
+    public afterGetElementList() : void {
+
+    }
+    public getElementListFailed() : void {
+
+    }
+
+    public afterRefresh() : void {
+
+    }
+    public refreshFailed() : void {
+        
     }
 
     public onValidated() : void {
