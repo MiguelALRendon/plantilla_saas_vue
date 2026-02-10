@@ -51,7 +51,7 @@ export abstract class BaseEntity {
 
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
-        this._originalState = structuredClone(this.toObject());
+        this._originalState = structuredClone(this.toPersistentObject());
     }
 
     public setLoading(): void {
@@ -73,6 +73,18 @@ export abstract class BaseEntity {
 
     public toObject(): Record<string, any> {
         return this as Record<string, any>;
+    }
+
+    public toPersistentObject(): Record<string, any> {
+        const result: Record<string, any> = {};
+        const allProperties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
+        const propertyKeys = Object.keys(allProperties);
+        
+        for (const key of propertyKeys) {
+            result[key] = this[key];
+        }
+        
+        return result;
     }
 
     public getKeys(): string[] {
@@ -730,7 +742,7 @@ export abstract class BaseEntity {
             
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
-            this._originalState = structuredClone(this.toObject());
+            this._originalState = structuredClone(this.toPersistentObject());
             this._isSaving = false;
             this.afterSave();
             Application.ApplicationUIService.hideLoadingMenu();
@@ -785,7 +797,7 @@ export abstract class BaseEntity {
             const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
-            this._originalState = structuredClone(this.toObject());
+            this._originalState = structuredClone(this.toPersistentObject());
             this._isSaving = false;
             this.afterUpdate();
             return this;
@@ -865,7 +877,7 @@ export abstract class BaseEntity {
 
     public getDirtyState(): boolean {
         var snapshotJson = JSON.stringify(this._originalState);
-        var actualJson = JSON.stringify(this.toObject());
+        var actualJson = JSON.stringify(this.toPersistentObject());
         console.log('Snapshot:', snapshotJson);
         console.log('Actual:', actualJson);
         console.log('Dirty State:', snapshotJson !== actualJson);
