@@ -10,4 +10,5 @@ export interface View {
     component: Component | null;
     viewType: ViewTypes;
     isValid: boolean;
+    entityOid: string;
 }

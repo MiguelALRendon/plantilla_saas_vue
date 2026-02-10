@@ -6,7 +6,7 @@ import { BaseEntity } from './base_entitiy.ts';
 
 @DefaultProperty('name')
 @PrimaryProperty('id')
-@UniquePropertyKey('oid')
+@UniquePropertyKey('id')
 @ModuleName('Products')
 @ModuleIcon(ICONS.PRODUCTS)
 @ApiEndpoint('/api/products')

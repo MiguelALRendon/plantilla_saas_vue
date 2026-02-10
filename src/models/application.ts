@@ -22,6 +22,7 @@ import {
 import type { Toast } from './Toast';
 import { ApplicationUIService } from './application_ui_service';
 import type { ApplicationUIContext } from './application_ui_context';
+import type { Router } from 'vue-router';
 
 class ApplicationClass implements ApplicationUIContext {
     AppConfiguration: Ref<AppConfiguration>;
@@ -35,6 +36,7 @@ class ApplicationClass implements ApplicationUIContext {
     axiosInstance: AxiosInstance;
     ToastList: Ref<Toast[]>;
     ApplicationUIService: ApplicationUIService;
+    router: Router | null = null;
     private static instance: ApplicationClass | null = null;
 
     private constructor() {
@@ -58,7 +60,8 @@ class ApplicationClass implements ApplicationUIContext {
             entityObject: null,
             component: null,
             viewType: ViewTypes.DEFAULTVIEW,
-            isValid: true
+            isValid: true,
+            entityOid: ''
         }) as Ref<View>;
         this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
         this.eventBus = mitt<Events>();
@@ -147,6 +150,62 @@ class ApplicationClass implements ApplicationUIContext {
         this.View.value.entityObject = entity;
         this.View.value.component = component;
         this.View.value.viewType = viewType;
+        
+        if (entity) {
+            const uniqueValue = entity.getUniquePropertyValue();
+            console.log('[Application] Unique value for entity:', uniqueValue);
+            if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
+                this.View.value.entityOid = 'new';
+            } else {
+                this.View.value.entityOid = String(uniqueValue);
+            }
+        } else {
+            this.View.value.entityOid = '';
+        }
+        
+        this.updateRouterFromView(entityClass, entity);
+    }
+    
+    private updateRouterFromView = (entityClass: typeof BaseEntity, entity: BaseEntity | null = null) => {
+        if (!this.router) return;
+        
+        const moduleName = entityClass.getModuleName() || entityClass.name;
+        const moduleNameLower = moduleName.toLowerCase();
+        
+        // Prevenir navegación si ya estamos en la ruta correcta
+        const currentRoute = this.router.currentRoute.value;
+        
+        if (entity) {
+            // Navegar a detailview con OID o 'new'
+            const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
+            if (currentRoute.path !== targetPath) {
+                this.router.push({ 
+                    name: 'ModuleDetail', 
+                    params: { 
+                        module: moduleNameLower, 
+                        oid: this.View.value.entityOid 
+                    } 
+                }).catch((err: any) => {
+                    // Ignorar errores de navegación duplicada
+                    if (err.name !== 'NavigationDuplicated') {
+                        console.error('[Application] Error al navegar:', err);
+                    }
+                });
+            }
+        } else {
+            // Navegar a listview
+            const targetPath = `/${moduleNameLower}`;
+            if (currentRoute.path !== targetPath) {
+                this.router.push({ 
+                    name: 'ModuleList', 
+                    params: { module: moduleNameLower } 
+                }).catch((err: any) => {
+                    if (err.name !== 'NavigationDuplicated') {
+                        console.error('[Application] Error al navegar:', err);
+                    }
+                });
+            }
+        }
     }
 
     changeViewToDefaultView = (entityClass: typeof BaseEntity) => {
@@ -157,7 +216,7 @@ class ApplicationClass implements ApplicationUIContext {
     }
 
     changeViewToListView = (entityClass: typeof BaseEntity) => {
-        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW);
+        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW, null);
         setTimeout(() => {
             this.setButtonList();
         }, 405);
@@ -204,6 +263,11 @@ class ApplicationClass implements ApplicationUIContext {
                 this.ListButtons.value = [];
                 break;
         }
+    }
+    
+    // M\u00e9todo para inicializar el router
+    initializeRouter(router: Router) {
+        this.router = router;
     }
 
 }

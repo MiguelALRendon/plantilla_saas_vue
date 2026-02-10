@@ -39,6 +39,13 @@ export default {
     name: 'DetailViewTableComponent',
     methods: {
         openDetailView(entity : any) {
+            // Setear entityOid antes de cambiar la vista
+            const uniqueValue = entity.getUniquePropertyValue();
+            if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
+                Application.View.value.entityOid = 'new';
+            } else {
+                Application.View.value.entityOid = String(uniqueValue);
+            }
             Application.changeViewToDetailView(entity as BaseEntity);
         }  
     },
