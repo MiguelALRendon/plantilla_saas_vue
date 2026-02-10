@@ -44,10 +44,10 @@ import { confMenuType } from "@/enums/conf_menu_type";
 
 export abstract class BaseEntity {
     [key: string]: any;
-    protected _isLoading: boolean = false;
-    protected _originalState?: Record<string, any>;
-    protected _isSaving?: boolean = false;
-    protected oid?: string;
+    public _isLoading: boolean = false;
+    public _originalState?: Record<string, any>;
+    public _isSaving?: boolean = false;
+    public oid?: string;
 
     constructor(data: Record<string, any>) {
         Object.assign(this, data);
