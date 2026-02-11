@@ -1,61 +1,91 @@
-# 🎣 Lifecycle Hooks de BaseEntity
+# BaseEntity: Lifecycle Hooks
 
-**Referencias:**
-- `crud-operations.md` - save(), delete()
-- `validation-system.md` - validateInputs()
-- `base-entity-core.md` - Núcleo de BaseEntity
-- `../../02-FLOW-ARCHITECTURE.md` - Flujos completos
+## 1. Propósito
 
----
+Los lifecycle hooks (ganchos del ciclo de vida) son métodos que se ejecutan automáticamente en momentos específicos del ciclo de vida de una entidad durante operaciones CRUD. Permiten ejecutar lógica custom antes y después de operaciones críticas (save, delete, validación) sin modificar los métodos principales. Los hooks disponibles son: beforeSave() que ejecuta pre-validación, afterSave() que ejecuta post-persistencia exitosa, beforeDelete() que ejecuta pre-eliminación, afterDelete() que ejecuta post-eliminación exitosa, y onValidated() que ejecuta post-validación completa. Estos mecanismos permiten implementar patrones como auditoría automática, soft deletes, normalización de datos, cache invalidation, y notificaciones externas de forma declarativa sin alterar la lógica CRUD base.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/entities/base_entitiy.ts` (líneas ~860-920)
+**Responsabilidades cubiertas:**
+- beforeSave(): Hook ejecutado inmediatamente antes de validateInputs() en save()
+- afterSave(): Hook ejecutado después de HTTP request exitoso y actualización de entidad
+- beforeDelete(): Hook ejecutado inmediatamente antes de HTTP DELETE request
+- afterDelete(): Hook ejecutado después de HTTP DELETE request exitoso
+- onValidated(): Hook ejecutado después de completar validaciones síncronas y asíncronas
+- Integración automática en flujo CRUD sin necesidad de invocación explícita
+- Soporte para herencia de hooks mediante super.hookName() en subclases
+- Mecanismo de cancelación de operaciones mediante throw Error en hooks before*
 
----
+**Límites del alcance:**
+- Hooks son síncronos por defecto (no async), excepto implementaciones custom en afterSave
+- No proveen rollback automático si afterSave/afterDelete fallan (operación HTTP ya completada)
+- No implementan retry logic si hook falla (responsabilidad del desarrollador)
+- No ejecutan en operaciones de lectura (getElement, getElementList)
+- No proveen hooks granulares por propiedad (solo nivel entidad completa)
+- onValidated() depende de Application.View.value para isValid, no es independiente
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-Los **lifecycle hooks** (ganchos del ciclo de vida) son métodos que se ejecutan automáticamente en momentos específicos del ciclo de vida de una entidad. Permiten ejecutar lógica custom antes/después de operaciones CRUD sin modificar los métodos principales.
+**beforeSave():** Hook protected ejecutado inmediatamente antes de validateInputs() en save(). Permite normalizar datos, calcular campos derivados, generar defaults, o validar pre-condiciones business logic. Si lanza excepción, aborta save() sin ejecutar validaciones ni HTTP request.
 
----
+**afterSave():** Hook protected ejecutado después de que HTTP request (POST/PUT) sea exitoso y después de actualizar entidad con response.data. Permite invalidar cachés, emitir eventos custom, sincronizar sistemas externos, o ejecutar operaciones en cascada. Solo ejecuta si request HTTP fue exitoso.
 
-## 🔄 Hooks Disponibles
+**beforeDelete():** Hook protected ejecutado inmediatamente antes de HTTP DELETE request. Permite validar condiciones de eliminación (ejemplo: verificar no tiene dependencias), logging/auditing, o cancelar eliminación mediante throw Error. Si lanza excepción, aborta delete() sin hacer request HTTP.
 
-### 1. beforeSave()
+**afterDelete():** Hook protected ejecutado después de que HTTP DELETE request sea exitoso. Permite invalidar cachés, limpiar datos relacionados, emitir eventos, o logging/auditing. Solo ejecuta si request HTTP fue exitoso (status 200-299).
 
-#### Firma
+**onValidated():** Hook public ejecutado después de que todas las validaciones (síncronas y asíncronas) completen, después de esperar 50ms para procesamiento de resultados, y antes de ocultar loading menu. Permite ejecutar lógica post-validación, actualizar UI, o emitir eventos custom de validación completa.
+
+**Protected vs Public:** Hooks beforeSave, afterSave, beforeDelete, afterDelete son protected (solo accesibles desde subclases). onValidated es public (accesible desde cualquier código). Esta distinción protege integridad de flujo CRUD.
+
+**Cancelación mediante throw Error:** Lanzar excepción dentro de beforeSave() o beforeDelete() cancela la operación completa, impidiendo ejecución de validaciones y HTTP request. La excepción se propaga al caller para manejo.
+
+**Post-success execution:** afterSave() y afterDelete() solo ejecutan SI el HTTP request fue exitoso (status 200-299). Si request falla (4xx, 5xx, network error), estos hooks NO ejecutan.
+
+**Herencia de hooks:** Subclases pueden override hooks y llamar super.hookName() para ejecutar lógica del padre antes o después de lógica custom. Orden de ejecución: BaseEntity → ParentClass → CurrentClass.
+
+**Default implementations:** BaseEntity define todos los hooks como métodos vacíos (no-op). Subclases hacen override solo de los hooks que necesitan, sin obligación de implementarlos todos.
+
+## 4. Descripción Técnica
+
+### Firma de Métodos
 
 ```typescript
+// Hooks CRUD
 protected beforeSave(): void
+protected afterSave(): void
+protected beforeDelete(): void
+protected afterDelete(): void
+
+// Hook de validación
+public onValidated(): void
 ```
 
-#### Cuándo se Ejecuta
+Todos los hooks tienen implementación default vacía (no-op) en BaseEntity. Subclases hacen override según necesidad.
 
-Inmediatamente **antes** de ejecutar validaciones y antes de hacer el HTTP request (POST/PUT).
+**Ubicación en código:** src/entities/base_entitiy.ts (líneas 860-920 para hooks CRUD, línea 953 para onValidated)
 
-#### Caso de Uso
+### beforeSave() - Implementación
 
-- Normalizar/limpiar datos antes de validar
-- Calcular campos derivados
-- Generar valores por defecto
-- Logging/auditing
+Ejecutado en primera línea de save() antes de validaciones o HTTP request:
 
-#### Flujo
-
-```
-entity.save() llamado
-        ↓
-beforeSave() ← AQUÍ
-        ↓
-validateInputs()
-        ↓
-HTTP request (POST/PUT)
-        ↓
-afterSave()
+```typescript
+public async save(): Promise<this> {
+    // beforeSave ejecuta AQUÍ
+    this.beforeSave();
+    
+    // Validar
+    if (!await this.validateInputs()) {
+        return this;
+    }
+    
+    // ... HTTP request ...
+}
 ```
 
-#### Ejemplo Básico
+**Ubicación:** Línea ~715
+
+Ejemplo de normalización y defaults:
 
 ```typescript
 export class Product extends BaseEntity {
@@ -81,69 +111,33 @@ const product = new Product({ name: '  laptop  ' });
 await product.save();
 // → beforeSave() ejecuta
 // → name = "LAPTOP", sku = "PROD-1707566400000"
-// → Validaciones
-// → POST /api/products
+// → Validaciones y POST /api/products
 ```
 
-#### Ubicación en save()
+### afterSave() - Implementación
+
+Ejecutado después de HTTP request exitoso y actualización de entidad con response:
 
 ```typescript
 public async save(): Promise<this> {
-    // beforeSave ejecuta AQUÍ ←
-    this.beforeSave();
+    // ...  HTTP request exitoso ...
     
-    // Validar
-    if (!await this.validateInputs()) {
-        return this;
-    }
+    // Actualizar entidad
+    Object.assign(this, response.data);
     
-    // ... HTTP request ...
+    // afterSave ejecuta AQUÍ
+    this.afterSave();
+    
+    // Toast de éxito
+    Application.showToast('Saved successfully', 'success');
+    
+    return this;
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~715)
+**Ubicación:** Línea ~770
 
----
-
-### 2. afterSave()
-
-#### Firma
-
-```typescript
-protected afterSave(): void
-```
-
-#### Cuándo se Ejecuta
-
-Inmediatamente **después** de que el HTTP request sea exitoso y después de actualizar la entidad con la respuesta.
-
-#### Caso de Uso
-
-- Invalidar cachés
-- Emitir eventos custom
-- Actualizar relaciones
-- Logging/auditing
-- Sincronizar con otros sistemas
-
-#### Flujo
-
-```
-entity.save() llamado
-        ↓
-beforeSave()
-        ↓
-validateInputs()
-        ↓
-HTTP request (POST/PUT) exitoso
-        ↓
-Actualizar entity con response.data
-        ↓
-afterSave() ← AQUÍ
-        ↓
-Toast de éxito
-```
-
-#### Ejemplo Básico
+Ejemplo de cache invalidation y eventos:
 
 ```typescript
 export class Product extends BaseEntity {
@@ -164,69 +158,34 @@ export class Product extends BaseEntity {
 // Uso
 const product = new Product({ name: 'Laptop' });
 await product.save();
-// → ... validaciones y HTTP ...
-// → Entity actualizada con respuesta
+// → HTTP POST exitoso
+// → Entity actualizada
 // → afterSave() ejecuta
-// → Console: "Product 42 saved successfully!"
-// → Caché invalidado
-// → Evento emitido
+// → Console log, caché invalidado, evento emitido
 ```
 
-#### Ubicación en save()
+### beforeDelete() - Implementación
+
+Ejecutado inmediatamente antes de HTTP DELETE request:
 
 ```typescript
-public async save(): Promise<this> {
-    // ... beforeSave, validación, request ...
+public async delete(): Promise<boolean> {
+    // beforeDelete ejecuta AQUÍ
+    this.beforeDelete();
     
-    // Actualizar con respuesta
-    Object.assign(this, response.data);
+    // Verificar ID
+    const pkValue = this.getPrimaryPropertyValue();
+    if (!pkValue) {
+        throw new Error('Cannot delete without ID');
+    }
     
-    // afterSave ejecuta AQUÍ ←
-    this.afterSave();
-    
-    // Toast de éxito
-    Application.showToast('Saved successfully', 'success');
-    
-    return this;
+    // ... HTTP DELETE ...
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~770)
+**Ubicación:** Línea ~795
 
----
-
-### 3. beforeDelete()
-
-#### Firma
-
-```typescript
-protected beforeDelete(): void
-```
-
-#### Cuándo se Ejecuta
-
-Inmediatamente **antes** de hacer el HTTP request DELETE.
-
-#### Caso de Uso
-
-- Validar que se puede eliminar (ej: no tiene dependencias)
-- Logging/auditing
-- Confirmar acción con usuario
-- Limpiar datos relacionados
-
-#### Flujo
-
-```
-entity.delete() llamado
-        ↓
-beforeDelete() ← AQUÍ
-        ↓
-HTTP request (DELETE)
-        ↓
-afterDelete()
-```
-
-#### Ejemplo Básico
+Ejemplo de validación de dependencias:
 
 ```typescript
 export class Category extends BaseEntity {
@@ -257,62 +216,27 @@ await category.delete();
 // → Si no tiene productos → DELETE /api/categories/10
 ```
 
-#### Ubicación en delete()
+### afterDelete() - Implementación
+
+Ejecutado después de HTTP DELETE request exitoso:
 
 ```typescript
 public async delete(): Promise<boolean> {
-    // beforeDelete ejecuta AQUÍ ←
-    this.beforeDelete();
+    // ... beforeDelete, HTTP DELETE exitoso ...
     
-    // Verificar ID
-    const pkValue = this.getPrimaryPropertyValue();
-    if (!pkValue) {
-        throw new Error('Cannot delete without ID');
-    }
+    // afterDelete ejecuta AQUÍ
+    this.afterDelete();
     
-    // ... HTTP DELETE ...
+    // Toast de éxito
+    Application.showToast('Deleted successfully', 'success');
+    
+    return true;
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~795)
+**Ubicación:** Línea ~825
 
----
-
-### 4. afterDelete()
-
-#### Firma
-
-```typescript
-protected afterDelete(): void
-```
-
-#### Cuándo se Ejecuta
-
-Inmediatamente **después** de que el HTTP request DELETE sea exitoso.
-
-#### Caso de Uso
-
-- Invalidar cachés
-- Limpiar datos relacionados
-- Emitir eventos
-- Logging/auditing
-- Actualizar UI
-
-#### Flujo
-
-```
-entity.delete() llamado
-        ↓
-beforeDelete()
-        ↓
-HTTP request (DELETE) exitoso
-        ↓
-afterDelete() ← AQUÍ
-        ↓
-Toast de éxito
-```
-
-#### Ejemplo Básico
+Ejemplo de cleanup y eventos:
 
 ```typescript
 export class Product extends BaseEntity {
@@ -334,78 +258,37 @@ export class Product extends BaseEntity {
 const product = await Product.getElement(42);
 await product.delete();
 // → beforeDelete()
-// → DELETE /api/products/42
+// → DELETE /api/products/42 exitoso
 // → afterDelete() ejecuta
-// → Console: "Product Laptop deleted"
-// → Caché invalidado
-// → Evento emitido
+// → Console log, caché invalidado, evento emitido
 ```
 
-#### Ubicación en delete()
+### onValidated() - Implementación
+
+Ejecutado después de completar todas las validaciones:
 
 ```typescript
-public async delete(): Promise<boolean> {
-    // ... beforeDelete, verificaciones ...
+public async validateInputs(): Promise<boolean> {
+    // ... validaciones síncronas ...
     
-    try {
-        // HTTP DELETE
-        await Application.axiosInstance.delete(`${endpoint}/${pkValue}`);
-        
-        // afterDelete ejecuta AQUÍ ←
-        this.afterDelete();
-        
-        // Toast de éxito
-        Application.showToast('Deleted successfully', 'success');
-        
-        return true;
-    } catch (error) {
-        // ...
-    }
+    // Validaciones asíncronas
+    await Promise.all(asyncValidationPromises);
+    
+    // Esperar procesamiento
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // onValidated ejecuta AQUÍ
+    this.onValidated();
+    
+    Application.ApplicationUIService.hideLoadingMenu();
+    
+    return Application.View.value.isValid;
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~825)
+**Ubicación:** Llamada en línea 585, definición en línea 953
 
----
-
-### 5. onValidated()
-
-#### Firma
-
-```typescript
-public onValidated(): void
-```
-
-#### Cuándo se Ejecuta
-
-Inmediatamente **después** de que todas las validaciones (síncronas y asíncronas) completen exitosamente, justo antes de ocultar el menú de carga.
-
-#### Caso de Uso
-
-- Ejecutar lógica post-validación
-- Actualizar UI después de validar
-- Emitir eventos de validación completa
-- Logging/auditing de validaciones
-
-#### Flujo
-
-```
-entity.validateInputs() llamado
-        ↓
-Validaciones síncronas
-        ↓
-Validaciones asíncronas (Promise.all)
-        ↓
-Esperar 50ms para procesar resultados
-        ↓
-onValidated() ← AQUÍ
-        ↓
-Ocultar loading menu
-        ↓
-Retornar isValid
-```
-
-#### Ejemplo Básico
+Ejemplo de eventos post-validación:
 
 ```typescript
 export class Product extends BaseEntity {
@@ -435,41 +318,204 @@ export class Product extends BaseEntity {
 // Uso
 const product = new Product({ name: 'Laptop', sku: 'LAP-001' });
 await product.validateInputs();
-// → Validaciones síncronas (required)
-// → Validaciones asíncronas (checkSkuExists)
+// → Validaciones síncronas y asíncronas
 // → onValidated() ejecuta
-// → Console: "Validation completed!"
-// → Evento emitido
+// → Console log y evento emitido
 ```
 
-#### Ubicación en validateInputs()
+## 5. Flujo de Funcionamiento
 
-```typescript
-public async validateInputs(): Promise<boolean> {
-    // ... validaciones síncronas ...
-    
-    // Validaciones asíncronas
-    await Promise.all(asyncValidationPromises);
-    
-    // Esperar procesamiento de resultados
-    await new Promise(resolve => setTimeout(resolve, 50));
-    
-    // onValidated ejecuta AQUÍ ←
-    this.onValidated();
-    
-    Application.ApplicationUIService.hideLoadingMenu();
-    
-    return Application.View.value.isValid;
-}
+### Flujo de save() con Hooks
+
+```
+Usuario llama entity.save()
+        ↓
+┌───────────────────────────┐
+│   beforeSave()            │  ← Hook 1
+└───────────┬───────────────┘
+            ↓
+┌───────────────────────────┐
+│   validateInputs()        │
+└───────────┬───────────────┘
+            ↓
+     ¿Validación OK?
+         ├─ NO → Retorna entity con errores
+         └─ SÍ ↓
+┌───────────────────────────┐
+│   toDictionary()          │  (Serializar)
+└───────────┬───────────────┘
+            ↓
+┌───────────────────────────┐
+│   HTTP Request (POST/PUT) │
+└───────────┬───────────────┘
+            ↓
+     ¿Request exitoso?
+         ├─ NO → Muestra error, retorna entity
+         └─ SÍ ↓
+┌───────────────────────────┐
+│   Object.assign(response) │  (Actualizar entity)
+└───────────┬───────────────┘
+            ↓
+┌───────────────────────────┐
+│   afterSave()             │  ← Hook 2
+└───────────┬───────────────┘
+            ↓
+┌───────────────────────────┐
+│   Toast de éxito          │
+└───────────┬───────────────┘
+            ↓
+        Retorna entity actualizado
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea 585 - llamada, línea 953 - definición)
+### Flujo de delete() con Hooks
 
----
+```
+Usuario llama entity.delete()
+        ↓
+┌───────────────────────────┐
+│   beforeDelete()          │  ← Hook 1
+└───────────┬───────────────┘
+            ↓
+     ¿Tiene ID?
+         ├─ NO → throw Error
+         └─ SÍ ↓
+┌───────────────────────────┐
+│   HTTP DELETE Request     │
+└───────────┬───────────────┘
+            ↓
+     ¿Request exitoso?
+         ├─ NO → Muestra error, retorna false
+         └─ SÍ ↓
+┌───────────────────────────┐
+│   afterDelete()           │  ← Hook 2
+└───────────┬───────────────┘
+            ↓
+┌───────────────────────────┐
+│   Toast de éxito          │
+└───────────┬───────────────┘
+            ↓
+        Retorna true
+```
 
-## 🧪 Ejemplos Completos
+### Flujo de validateInputs() con onValidated
 
-### 1. Timestamps Automáticos
+```
+validateInputs() llamado
+        ↓
+Validaciones síncronas
+        ↓
+Validaciones asíncronas (Promise.all)
+        ↓
+Esperar 50ms para procesamiento
+        ↓
+┌───────────────────────────┐
+│   onValidated()           │  ← Hook
+└───────────┬───────────────┘
+            ↓
+Application.ApplicationUIService.hideLoadingMenu()
+        ↓
+Retorna isValid
+```
+
+## 6. Reglas Obligatorias
+
+**Regla 1:** beforeSave() DEBE ejecutarse como primera operación en save(), antes de validateInputs() y HTTP request. Este orden no puede alterarse.
+
+**Regla 2:** afterSave() SOLO DEBE ejecutarse si HTTP request fue exitoso (status 200-299) y después de actualizar entidad con response.data.
+
+**Regla 3:** beforeDelete() DEBE ejecutarse antes de HTTP DELETE request. Si lanza excepción, delete() DEBE abortar sin hacer request.
+
+**Regla 4:** afterDelete() SOLO DEBE ejecutarse si HTTP DELETE request fue exitoso. No ejecuta en caso de error HTTP.
+
+**Regla 5:** onValidated() DEBE ejecutarse después de esperar 50ms tras completar Promise.all() de validaciones asíncronas.
+
+**Regla 6:** Excepciones lanzadas en beforeSave() o beforeDelete() DEBEN propagarse al caller y abortar operación completa.
+
+**Regla 7:** Hooks son métodos protected (beforeSave, afterSave, beforeDelete, afterDelete) excepto onValidated que es public. Esta visibilidad no debe alterarse.
+
+**Regla 8:** Default implementations en BaseEntity DEBEN ser métodos vacíos (no-op) para permitir override opcional en subclases.
+
+**Regla 9:** Subclases que hacen override de hooks DEBEN considerar llamar super.hookName() si extienden clase que también override el hook.
+
+**Regla 10:** Hooks NO DEBEN modificar el valor de retorno de métodos CRUD (save retorna this, delete retorna boolean).
+
+## 7. Prohibiciones
+
+**Prohibido:** Llamar save() recursivamente dentro de beforeSave() o afterSave(). Esto genera loop infinito.
+
+**Prohibido:** Llamar delete() recursivamente dentro de beforeDelete() o afterDelete(). Esto genera loop infinito.
+
+**Prohibido:** Declarar hooks como async (async beforeSave(), async beforeDelete()). Los hooks son síncronos por diseño.
+
+**Prohibido:** Modificar el flujo de save()/delete() para omitir ejecución de hooks. Los hooks son parte integral del ciclo de vida.
+
+**Prohibido:** Ejecutar operaciones HTTP largas (> 100ms) en hooks síncronos. Degrada performance y bloquea UI.
+
+**Prohibido:** Hacer override de onValidated() sin considerar Application.View.value.isValid. Este estado es necesario para UI.
+
+**Prohibido:** Ignorar errores lanzados desde beforeSave() o beforeDelete(). Deben manejarse o propagarse al caller.
+
+**Prohibido:** Ejecutar afterSave() o afterDelete() manualmente desde código externo. Solo deben ejecutarse dentro de flujo CRUD.
+
+**Prohibido:** Modificar primaryProperty value en afterSave(). La entidad ya fue persistida y cambiar ID causa inconsistencia.
+
+**Prohibido:** Asumir que afterSave()/afterDelete() siempre ejecutarán. Solo ejecutan si HTTP request fue exitoso.
+
+## 8. Dependencias
+
+**BaseEntity Core:**
+- save(): Método que invoca beforeSave() y afterSave()
+- delete(): Método que invoca beforeDelete() y afterDelete()
+- validateInputs(): Método que invoca onValidated()
+- toDictionary(): Para serialización en save()
+- getPrimaryPropertyValue(): Para verificar ID en delete()
+
+**Application Singleton:**
+- Application.eventBus: Para emitir eventos custom en hooks
+- Application.showToast(): Para mostrar mensajes post-operación
+- Application.ApplicationUIService.hideLoadingMenu(): En onValidated()
+- Application.View.value.isValid: Para verificar resultado de validación
+- Application.axiosInstance: Para HTTP requests en save()/delete()
+
+**Validation System:**
+- validateInputs(): Ejecutado después de beforeSave() en flujo save()
+- validationErrors: Accesible desde hooks para verificar errores de validación
+
+**TypeScript:**
+- Protected visibility: Para hooks CRUD (beforeSave, afterSave, beforeDelete, afterDelete)
+- Public visibility: Para onValidated()
+- Void return type: Todos los hooks retornan void
+
+**Herencia:**
+- super.hookName(): Para llamar implementación de hook en clase padre
+- Override mechanism: Para implementar hooks custom en subclases
+
+## 9. Relaciones
+
+**Relación con CRUD Operations (N:1):**
+Cada operación save() y delete() invoca múltiples hooks (before/after) en secuencia definida. Los hooks dependen de estos métodos para su ejecución pero no pueden existir independientemente.
+
+**Relación con Validation System (1:1):**
+beforeSave() ejecuta ANTES de validateInputs(). onValidated() ejecuta DESPUÉS de validateInputs(). Orden es estrictamente secuencial y no paralelo.
+
+**Relación con EventBus (N:1):**
+Hooks típicamente emiten eventos al Application.eventBus para notificar operaciones completadas. Múltiples hooks pueden emitir a mismo eventBus.
+
+**Relación con Inheritance (1:N):**
+BaseEntity define hooks base vacíos. Múltiples subclases pueden override hooks y llamar super.hookName() para mantener lógica del padre.
+
+**Relación con HTTP Layer (1:1):**
+afterSave() y afterDelete() tienen relación directa con éxito/fallo de HTTP request. Solo ejecutan si request HTTP fue exitoso.
+
+**Relación con UI Services (N:1):**
+Hooks acceden a Application.ApplicationUIService para operaciones UI como hideLoadingMenu(), showToast(), openDialog().
+
+**Relación con Cache Services (N:1):**
+Hooks post-operación (afterSave, afterDelete) típicamente invalidan cachés. Múltiples entidades pueden acceder al mismo cache service.
+
+## 10. Notas de Implementación
+
+### Ejemplo 1: Timestamps Automáticos
 
 ```typescript
 export class BaseAuditEntity extends BaseEntity {
@@ -515,21 +561,11 @@ export class Product extends BaseAuditEntity {
 const product = new Product({ name: 'Laptop' });
 await product.save();
 // → beforeSave() ejecuta
-// → createdAt = ahora
-// → createdBy = "john_doe"
-// → updatedAt = ahora
-// → updatedBy = "john_doe"
-
-product.name = 'Gaming Laptop';
-await product.save();
-// → beforeSave() ejecuta
-// → createdAt = [sin cambios]
-// → createdBy = [sin cambios]
-// → updatedAt = ahora (actualizado)
-// → updatedBy = "john_doe" (actualizado)
+// → createdAt = ahora, createdBy = "john_doe"
+// → updatedAt = ahora, updatedBy = "john_doe"
 ```
 
-### 2. Soft Delete
+### Ejemplo 2: Soft Delete
 
 ```typescript
 export class Product extends BaseEntity {
@@ -598,7 +634,7 @@ await product.hardDelete();
 // → DELETE /api/products/42
 ```
 
-### 3. Validación en beforeSave
+### Ejemplo 3: Validación en beforeSave
 
 ```typescript
 export class Order extends BaseEntity {
@@ -608,6 +644,10 @@ export class Order extends BaseEntity {
     
     @PropertyName('Status', String)
     status!: string;
+    
+    @PropertyName('Total', Number)
+    @ReadOnly(true)
+    total!: number;
     
     protected beforeSave(): void {
         // Validar que tenga items
@@ -623,14 +663,10 @@ export class Order extends BaseEntity {
             this.status = 'draft';
         }
     }
-    
-    @PropertyName('Total', Number)
-    @ReadOnly(true)
-    total!: number;
 }
 ```
 
-### 4. Cascading Save en afterSave
+### Ejemplo 4: Cascading Save en afterSave
 
 ```typescript
 export class Order extends BaseEntity {
@@ -668,7 +704,7 @@ await order.save();
 //   → item2.save() (POST /api/order-items)
 ```
 
-### 5. Cache Invalidation
+### Ejemplo 5: Cache Invalidation
 
 ```typescript
 export class Product extends BaseEntity {
@@ -693,7 +729,7 @@ export class Product extends BaseEntity {
 }
 ```
 
-### 6. Webhooks/External Notifications
+### Ejemplo 6: Webhooks y Notificaciones
 
 ```typescript
 export class Order extends BaseEntity {
@@ -731,7 +767,7 @@ export class Order extends BaseEntity {
 }
 ```
 
-### 7.  Confirmación Antes de Eliminar
+### Ejemplo 7: Confirmación Antes de Eliminar
 
 ```typescript
 export class Product extends BaseEntity {
@@ -758,7 +794,7 @@ await product.delete();
 // → delete() no procede (no hace HTTP request)
 ```
 
-### 8. Logging/Auditing
+### Ejemplo 8: Logging y Auditing
 
 ```typescript
 export class BaseEntity {
@@ -794,24 +830,20 @@ export class BaseEntity {
 }
 ```
 
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. Hooks son Síncronos (excepto afterSave custom)
+### Consideración 1: Hooks son Síncronos
 
 ```typescript
-// ✅ CORRECTO: Síncrono
+// CORRECTO: Síncrono
 protected beforeSave(): void {
     this.name = this.name.toUpperCase();
 }
 
-// ❌ NO USAR async en hook base
+// INCORRECTO: No usar async en hook base
 protected async beforeSave(): Promise<void> {
     await someAsyncOperation();  // ← No se esperará
 }
 
-// ✅ SI necesitas async, llamar desde otro lugar:
+// SOLUCIÓN: Crear método async separado
 protected beforeSave(): void {
     // Lógica síncrona aquí
 }
@@ -826,22 +858,22 @@ await order.customPreSaveLogic();
 await order.save();
 ```
 
-### 2. No Llamar save() dentro de beforeSave()
+### Consideración 2: No Llamar save() dentro de beforeSave()
 
 ```typescript
-// ❌ INCORRECTO: Loop infinito
+// INCORRECTO: Loop infinito
 protected beforeSave(): void {
     this.updatedAt = new Date();
     await this.save();  // ← Loop infinito
 }
 
-// ✅ CORRECTO: Solo modificar propiedades
+// CORRECTO: Solo modificar propiedades
 protected beforeSave(): void {
     this.updatedAt = new Date();
 }
 ```
 
-### 3. Excepciones en Hooks Cancelan Operación
+### Consideración 3: Excepciones Cancelan Operación
 
 ```typescript
 protected beforeSave(): void {
@@ -858,7 +890,7 @@ await product.save();
 // → Error se propaga al caller
 ```
 
-### 4. afterSave/afterDelete Ejecutan Solo Si Éxito
+### Consideración 4: Hooks Solo Ejecutan en Éxito
 
 ```typescript
 protected afterSave(): void {
@@ -870,7 +902,7 @@ await product.save();
 // → Si HTTP request éxito → afterSave() ejecuta
 ```
 
-### 5. Herencia de Hooks
+### Consideración 5: Herencia de Hooks
 
 ```typescript
 class BaseAuditEntity extends BaseEntity {
@@ -889,126 +921,23 @@ class Product extends BaseAuditEntity {
 }
 ```
 
----
+## 11. Referencias Cruzadas
 
-## 🔧 Implementación Interna
+**Documentos relacionados:**
+- crud-operations.md: Implementación de save() y delete() que invocan hooks
+- validation-system.md: validateInputs() ejecutado en flujo save() después de beforeSave()
+- base-entity-core.md: Arquitectura general de BaseEntity y estructura de clase
 
-### Código de los Hooks
+**Archivos fuente:**
+- src/entities/base_entitiy.ts: Implementación completa de todos los hooks
 
-```typescript
-// BaseEntity default implementations (vacías)
-protected beforeSave(): void {
-    // Override en subclases
-}
+**Líneas relevantes en código:**
+- Línea 715: beforeSave() invocado en save()
+- Línea 770: afterSave() invocado en save()
+- Línea 795: beforeDelete() invocado en delete()
+- Línea 825: afterDelete() invocado en delete()
+- Línea 585: onValidated() invocado en validateInputs()
+- Líneas 860-920: Definiciones default de hooks CRUD
+- Línea 953: Definición default de onValidated()
 
-protected afterSave(): void {
-    // Override en subclases
-}
-
-protected beforeDelete(): void {
-    // Override en subclases
-}
-
-protected afterDelete(): void {
-    // Override en subclases
-}
-
-public onValidated(): void {
-    // Override en subclases
-}
-```
-
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~860-920, onValidated en línea 953)
-
----
-
-## 📊 Diagrama de Flujo Completo
-
-### save() con Hooks
-
-```
-Usuario llama entity.save()
-        ↓
-┌───────────────────────────┐
-│   beforeSave()            │  ← Hook 1
-└───────────┬───────────────┘
-            ↓
-┌───────────────────────────┐
-│   validateInputs()        │
-└───────────┬───────────────┘
-            ↓
-     ¿Validación OK?
-         ├─ NO → Retorna entity con errores
-         └─ SÍ ↓
-┌───────────────────────────┐
-│   toDictionary()          │  (Serializar)
-└───────────┬───────────────┘
-            ↓
-┌───────────────────────────┐
-│   HTTP Request            │  (POST/PUT)
-│   (POST/PUT)              │
-└───────────┬───────────────┘
-            ↓
-     ¿Request exitoso?
-         ├─ NO → Muestra error, retorna entity
-         └─ SÍ ↓
-┌───────────────────────────┐
-│   Object.assign(response) │  (Actualizar entity)
-└───────────┬───────────────┘
-            ↓
-┌───────────────────────────┐
-│   afterSave()             │  ← Hook 2
-└───────────┬───────────────┘
-            ↓
-┌───────────────────────────┐
-│   Toast de éxito          │
-└───────────┬───────────────┘
-            ↓
-        Retorna entity actualizado
-```
-
-### delete() con Hooks
-
-```
-Usuario llama entity.delete()
-        ↓
-┌───────────────────────────┐
-│   beforeDelete()          │  ← Hook 1
-└───────────┬───────────────┘
-            ↓
-     ¿Tiene ID?
-         ├─ NO → throw Error
-         └─ SÍ ↓
-┌───────────────────────────┐
-│   HTTP DELETE Request     │
-└───────────┬───────────────┘
-            ↓
-     ¿Request exitoso?
-         ├─ NO → Muestra error, retorna false
-         └─ SÍ ↓
-┌───────────────────────────┐
-│   afterDelete()           │  ← Hook 2
-└───────────┬───────────────┘
-            ↓
-┌───────────────────────────┐
-│   Toast de éxito          │
-└───────────┬───────────────┘
-            ↓
-        Retorna true
-```
-
----
-
-## 📚 Referencias Adicionales
-
-- `crud-operations.md` - Métodos save() y delete()
-- `validation-system.md` - validateInputs()
-- `base-entity-core.md` - Arquitectura de BaseEntity
-- `../../02-FLOW-ARCHITECTURE.md` - Flujos completos del sistema
-- `../../tutorials/05-advanced-patterns.md` - Patrones con hooks
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/entities/base_entitiy.ts`  
-**Líneas relevantes:** 860-920 (Lifecycle hooks)
+**Última actualización:** 11 de Febrero, 2026

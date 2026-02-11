@@ -1,26 +1,26 @@
-# 📜 CONTRATO DE DESARROLLO - Framework SaaS Vue
+# CONTRATO DE DESARROLLO - Framework SaaS Vue
 
-**Versión:** 1.0.0  
+**Versión:** 2.0.0  
 **Fecha de Creación:** 10 de Febrero, 2026  
+**Última Actualización:** 11 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
 
----
+## 1. Propósito
 
-## ⚖️ TÉRMINOS CONTRACTUALES OBLIGATORIOS
+Establecer principios contractuales vinculantes que regulen el desarrollo, modificación, extensión y documentación del Framework SaaS Vue, garantizando la preservación de su arquitectura fundamental y la coherencia de su implementación.
 
-### 1. PRINCIPIO FUNDAMENTAL: RESPETO A LA LÓGICA EXISTENTE
+## 2. Alcance
 
-**ARTÍCULO 1.1 - Prioridad Absoluta**
+Este contrato aplica a:
+- Toda modificación del código fuente del framework
+- Toda extensión de funcionalidad
+- Toda documentación técnica asociada
+- Toda interacción con el sistema por agentes humanos o artificiales
+- Todo proceso de reestructuración documental
 
-Este framework ha sido diseñado con una arquitectura específica y deliberada. **MI LÓGICA** es la base fundamental y debe ser respetada en todo momento.
+## 3. Definiciones Clave
 
-```
-MI LÓGICA > Cualquier otra consideración
-```
-
-**ARTÍCULO 1.2 - Definición de "MI LÓGICA"**
-
-"MI LÓGICA" se refiere a:
+**MI LÓGICA:** Arquitectura fundamental del framework definida como:
 - Arquitectura basada en decoradores TypeScript
 - Sistema de metadatos almacenado en prototipos
 - Generación automática de interfaces desde entidades
@@ -28,167 +28,23 @@ MI LÓGICA > Cualquier otra consideración
 - Sistema de eventos mediante mitt
 - Hooks de ciclo de vida en BaseEntity
 - Componentes reactivos generados dinámicamente
-- Flujo unidireccional: Entidad → Metadatos → UI
+- Flujo unidireccional: Entidad → Decoradores → Metadatos → BaseEntity → Application → UI
 
----
+**Cambio Mayor:** Cualquier modificación que altere arquitectura core, flujo de datos, generación de UI, sistema de estado o persistencia.
 
-## 🚫 PROHIBICIONES ESTRICTAS
+**Cambio Menor:** Extensión que no modifica componentes existentes: decoradores adicionales, componentes personalizados, entidades nuevas, estilos, utilidades.
 
-### 2. MODIFICACIONES SIN AUTORIZACIÓN
+**Documentación Sincronizada:** Estado en el que código y documentación reflejan exactamente la misma realidad técnica.
 
-**ARTÍCULO 2.1 - Solicitud de Permiso Obligatoria**
+## 4. Descripción Técnica
 
-Cualquier modificación que cumpla UNO O MÁS de los siguientes criterios **REQUIERE AUTORIZACIÓN EXPLÍCITA**:
+### 4.1 Naturaleza del Framework
 
-#### ❌ Cambios Mayores que Requieren Permiso:
+Framework Meta-Programático de Generación Automática de Interfaces CRUD construido sobre Vue 3 + TypeScript.
 
-1. **Arquitectura Core**
-   - Modificar el sistema de decoradores
-   - Cambiar la jerarquía de BaseEntity
-   - Alterar el patrón Singleton de Application
-   - Modificar el sistema de eventos (eventBus)
+Principio operativo: Los metadatos definen comportamiento. La UI no se programa manualmente, se declara mediante decoradores.
 
-2. **Flujo de Datos**
-   - Cambiar cómo se almacenan los metadatos
-   - Modificar el flujo de validación
-   - Alterar el ciclo de vida CRUD
-   - Cambiar el sistema de persistencia
-
-3. **Generación de UI**
-   - Modificar cómo se generan los componentes
-   - Cambiar la lógica de selección de inputs
-   - Alterar el sistema de agrupación (ViewGroup)
-   - Modificar el binding de datos
-
-4. **Sistema de Estado**
-   - Cambiar cómo se detectan cambios (getDirtyState)
-   - Modificar el sistema de originalState
-   - Alterar la lógica de resetChanges
-
-5. **API y Persistencia**
-   - Modificar interceptores de Axios
-   - Cambiar el sistema de mapeo de claves
-   - Alterar validaciones de persistencia
-
-#### ✅ Cambios Menores Permitidos sin Autorización:
-
-1. **Extensiones**
-   - Agregar nuevos decoradores que no modifiquen existentes
-   - Crear nuevos componentes personalizados
-   - Agregar nuevas entidades
-   - Agregar hooks adicionales
-
-2. **Estilos y UI**
-   - Modificar CSS
-   - Ajustar layouts
-   - Agregar animaciones
-
-3. **Utilidades**
-   - Agregar funciones helper
-   - Crear nuevos enums
-   - Agregar constantes
-
-**ARTÍCULO 2.2 - Proceso de Solicitud de Permiso**
-
-Para solicitar permiso:
-1. Documentar en detalle el cambio propuesto
-2. Explicar POR QUÉ es necesario
-3. Demostrar que NO existe alternativa dentro de MI LÓGICA
-4. Especificar impacto en el sistema existente
-5. Esperar APROBACIÓN EXPLÍCITA antes de proceder
-
----
-
-## 📝 OBLIGACIÓN DE DOCUMENTACIÓN
-
-### 3. DOCUMENTACIÓN MANDATORIA
-
-**ARTÍCULO 3.1 - Todo Cambio Debe Documentarse**
-
-**SIN EXCEPCIONES**: Cualquier modificación al código debe ir acompañada de documentación actualizada.
-
-#### Tipos de Documentación Requerida:
-
-1. **Cambios a Funcionalidad Existente**
-   - Actualizar el archivo MD correspondiente
-   - Mantener ejemplos actualizados
-   - Actualizar referencias cruzadas
-
-2. **Nueva Funcionalidad**
-   - Crear nuevo archivo MD en la carpeta apropiada
-   - Seguir la estructura de documentación establecida
-   - Agregar referencias cruzadas en archivos relacionados
-   - Actualizar índice principal
-
-3. **Nuevos Decoradores**
-   - Crear archivo en `layers/01-decorators/`
-   - Documentar símbolo de metadatos
-   - Documentar función accesora en BaseEntity
-   - Agregar ejemplo de uso
-   - Especificar referencias
-
-4. **Cambios de Arquitectura**
-   - Actualizar `01-FRAMEWORK-OVERVIEW.md`
-   - Actualizar `02-FLOW-ARCHITECTURE.md`
-   - Documentar migración si aplica
-
-**ARTÍCULO 3.2 - Estructura de Documentación**
-
-Cada archivo MD debe contener:
-
-```markdown
-# Título del Componente/Funcionalidad
-
-**Referencias:** [Lista de archivos MD relacionados]
-
-## Descripción
-[Qué es y para qué sirve]
-
-## Ubicación en el Código
-[Ruta del archivo fuente]
-
-## Uso
-[Ejemplos prácticos]
-
-## API / Métodos
-[Firma y descripción]
-
-## Relaciones
-[Qué otros componentes/decoradores utiliza o llama]
-
-## Notas Importantes
-[Consideraciones especiales]
-```
-
-**ARTÍCULO 3.3 - Sincronización Código-Documentación**
-
-```
-Código sin documentación = Código no válido
-Documentación sin actualizar = Documentación inválida
-```
-
-Todo PR/commit debe incluir:
-- Cambios de código
-- Documentación correspondiente
-- Actualización de referencias
-
----
-
-## 🏗️ LÓGICA PRINCIPAL DEL FRAMEWORK
-
-### 4. DESCRIPCIÓN DEL SISTEMA
-
-**ARTÍCULO 4.1 - Definición del Framework**
-
-Este es un **Framework Meta-Programático de Generación Automática de Interfaces CRUD** construido sobre Vue 3 + TypeScript.
-
-**Filosofía Core:**
-> "Define una vez, funciona en todas partes"
-
-**Principio Fundamental:**
-Los metadatos definen comportamiento. No se programa UI manualmente, se declara mediante decoradores.
-
-**ARTÍCULO 4.2 - Capas del Sistema**
+### 4.2 Arquitectura en Capas
 
 ```
 ┌─────────────────────────────────────────┐
@@ -204,132 +60,392 @@ Los metadatos definen comportamiento. No se programa UI manualmente, se declara 
 └─────────────────────────────────────────┘
 ```
 
-**Flujo de Información:**
-```
-Entidad → Decoradores → Metadatos → BaseEntity → Application → UI
-```
+### 4.3 Garantías del Sistema
 
-**ARTÍCULO 4.3 - Flujo Principal de Operación**
+El framework garantiza:
+- Type Safety completo mediante TypeScript
+- Reactividad nativa vía Vue 3 Composition API
+- Consistencia de UI generada desde metadatos
+- Extensibilidad controlada sin degradación arquitectónica
+- Persistencia sincronizada con backend
+- Validación multi-nivel: required, sincrónica, asincrónica
 
-Ver documento detallado: `02-FLOW-ARCHITECTURE.md`
+### 4.4 Límites del Sistema
 
-Resumen del flujo:
-1. **Definición**: Desarrollador crea entidad con decoradores
-2. **Registro**: Entidad se agrega a `Application.ModuleList`
-3. **Inicialización**: Router y Application se sincronizan
-4. **Navegación**: Usuario selecciona módulo en sidebar
-5. **Generación**: Sistema lee metadatos y genera UI
-6. **Interacción**: Usuario interactúa con formularios generados
-7. **Validación**: Sistema valida según decoradores
-8. **Persistencia**: BaseEntity maneja CRUD con API
-9. **Actualización**: UI reactiva refleja cambios
-
----
-
-## 🔐 GARANTÍAS DEL SISTEMA
-
-### 5. PRINCIPIOS INMUTABLES
-
-**ARTÍCULO 5.1 - Garantías de Funcionamiento**
-
-Este framework garantiza:
-
-1. **Type Safety**: Todo está tipado con TypeScript
-2. **Reactividad**: Vue 3 Composition API + Refs reactivos
-3. **Consistencia**: Misma UI para todas las entidades siguiendo decoradores
-4. **Extensibilidad**: Componentes custom sin romper generación automática
-5. **Persistencia**: Estado sincronizado con backend
-6. **Validación**: Multi-nivel (required, sync, async)
-
-**ARTÍCULO 5.2 - Límites del Sistema**
-
-Este framework NO es:
+El framework NO es:
 - Un ORM completo (solo cliente)
 - Un reemplazo de backend
 - Una solución para lógica de negocio compleja en frontend
-- Un sistema de autenticación (aunque se puede integrar)
+- Un sistema de autenticación
 
----
+## 5. Flujo de Funcionamiento
 
-## 📋 PROCESO DE DESARROLLO
+Flujo principal de operación:
 
-### 6. WORKFLOW OBLIGATORIO
+1. **Definición:** Desarrollador crea entidad con decoradores
+2. **Registro:** Entidad se agrega a Application.ModuleList
+3. **Inicialización:** Router y Application se sincronizan
+4. **Navegación:** Usuario selecciona módulo en sidebar
+5. **Generación:** Sistema lee metadatos y genera UI
+6. **Interacción:** Usuario interactúa con formularios generados
+7. **Validación:** Sistema valida según decoradores
+8. **Persistencia:** BaseEntity maneja CRUD con API
+9. **Actualización:** UI reactiva refleja cambios
 
-**ARTÍCULO 6.1 - Antes de Codificar**
+## 6. Reglas Obligatorias
 
+### 6.1 Prioridad Absoluta de MI LÓGICA
+
+```
+MI LÓGICA > Cualquier otra consideración
+```
+
+MI LÓGICA debe respetarse en todo momento. No puede ser reinterpretada, simplificada ni optimizada sin autorización explícita.
+
+### 6.2 Autorización para Cambios Mayores
+
+Cambios mayores REQUIEREN AUTORIZACIÓN EXPLÍCITA antes de implementación.
+
+Proceso de solicitud obligatorio:
+1. Documentar en detalle el cambio propuesto
+2. Explicar necesidad demostrable
+3. Demostrar ausencia de alternativa dentro de MI LÓGICA
+4. Especificar impacto en sistema existente
+5. Esperar aprobación explícita
+
+### 6.3 Documentación Mandatoria
+
+Cualquier modificación al código DEBE ir acompañada de documentación actualizada. SIN EXCEPCIONES.
+
+Tipos de documentación requerida:
+
+**Cambios a funcionalidad existente:**
+- Actualizar archivo MD correspondiente
+- Mantener ejemplos actualizados
+- Actualizar referencias cruzadas
+
+**Nueva funcionalidad:**
+- Crear archivo MD en carpeta apropiada
+- Seguir estructura establecida
+- Agregar referencias cruzadas
+- Actualizar índice principal
+
+**Nuevos decoradores:**
+- Crear archivo en layers/01-decorators/
+- Documentar símbolo de metadatos
+- Documentar función accesora en BaseEntity
+- Agregar ejemplo de uso
+- Especificar referencias
+
+**Cambios de arquitectura:**
+- Actualizar 01-FRAMEWORK-OVERVIEW.md
+- Actualizar 02-FLOW-ARCHITECTURE.md
+- Documentar migración si aplica
+
+### 6.4 Estructura Documental Obligatoria
+
+Cada archivo MD debe contener:
+
+```
+# Título
+
+1. Propósito
+2. Alcance
+3. Definiciones Clave
+4. Descripción Técnica
+5. Flujo de Funcionamiento
+6. Reglas Obligatorias
+7. Prohibiciones
+8. Dependencias
+9. Relaciones
+10. Notas de Implementación
+11. Referencias Cruzadas
+```
+
+### 6.5 Sincronización Código-Documentación
+
+```
+Código sin documentación = Código no válido
+Documentación sin actualizar = Documentación inválida
+```
+
+### 6.6 Workflow de Desarrollo
+
+**Antes de codificar:**
 1. Leer documentación relevante
-2. Verificar si existe funcionalidad similar
-3. Determinar si el cambio requiere permiso (Artículo 2.1)
+2. Verificar existencia de funcionalidad similar
+3. Determinar si requiere autorización
 4. Planificar documentación necesaria
 
-**ARTÍCULO 6.2 - Durante el Desarrollo**
-
+**Durante el desarrollo:**
 1. Seguir patrones establecidos
 2. No duplicar lógica (DRY)
 3. Mantener type safety
 4. Respetar convenciones de nombres
 5. Usar hooks cuando corresponda
 
-**ARTÍCULO 6.3 - Después de Codificar**
-
+**Después de codificar:**
 1. Actualizar/crear documentación
 2. Actualizar referencias cruzadas
 3. Probar en contexto completo
-4. Verificar no romper funcionalidad existente
+4. Verificar no ruptura de funcionalidad existente
 
----
+## 7. Prohibiciones
 
-## 🔄 MANTENIMIENTO DE CONTRATO
+### 7.1 Prohibiciones Arquitectónicas
 
-### 7. ACTUALIZACIONES AL CONTRATO
+Prohibido sin autorización explícita:
+- Modificar sistema de decoradores
+- Cambiar jerarquía de BaseEntity
+- Alterar patrón Singleton de Application
+- Modificar sistema de eventos (eventBus)
+- Cambiar almacenamiento de metadatos
+- Modificar flujo de validación
+- Alterar ciclo de vida CRUD
+- Cambiar sistema de persistencia
+- Modificar generación de componentes
+- Cambiar lógica de selección de inputs
+- Alterar sistema de agrupación (ViewGroup)
+- Modificar binding de datos
+- Cambiar detección de cambios (getDirtyState)
+- Modificar sistema de originalState
+- Alterar lógica de resetChanges
+- Modificar interceptores de Axios
+- Cambiar sistema de mapeo de claves
+- Alterar validaciones de persistencia
 
-**ARTÍCULO 7.1 - Versionamiento**
+### 7.2 Prohibiciones Documentales
+
+Prohibido absolutamente:
+- Código sin documentación sincronizada
+- Documentación sin actualizar tras cambios
+- Referencias cruzadas rotas o inexistentes
+- Omisión de estructura documental obligatoria
+
+## 8. RÉGIMEN DE REESTRUCTURACIÓN DOCUMENTAL PARA CONSUMO POR IA
+
+### 8.1 Naturaleza de la Reestructuración
+
+Toda reestructuración documental debe ser EXCLUSIVAMENTE estructural y semántica.
+
+Prohibiciones absolutas durante reestructuración:
+- Alterar arquitectura descrita
+- Reinterpretar reglas establecidas
+- Modificar MI LÓGICA
+- Introducir decisiones técnicas nuevas
+- Suavizar prohibiciones existentes
+- Cambiar significado de cláusulas contractuales
+
+### 8.2 Principio de Inmutabilidad Arquitectónica
+
+Se declaran EXPLÍCITAMENTE INMUTABLES:
+- Arquitectura: Entidad → Decoradores → Metadatos → BaseEntity → Application → UI
+- Flujo de datos unidireccional
+- Sistema de capas definido
+- Principios de MI LÓGICA
+
+Jerarquía normativa OBLIGATORIA:
+
+```
+MI LÓGICA
+    ↓
+Contrato Original
+    ↓
+Cláusulas de Reestructuración
+```
+
+Ninguna cláusula de reestructuración puede invalidar MI LÓGICA ni el contrato original.
+
+### 8.3 Principio Anti-Alucinación
+
+Durante cualquier proceso de reestructuración:
+
+Prohibido:
+- Inferir información no escrita explícitamente
+- Completar vacíos con suposiciones
+- Asumir intención no declarada
+- Expandir conceptos más allá de lo documentado
+- Agregar ejemplos no existentes
+- Interpretar ambigüedad con creatividad
+
+Obligatorio:
+- Ante ambigüedad: mejorar redacción preservando significado exacto
+- Ante vacío: mantener vacío o señalarlo explícitamente
+- Ante contradicción: señalarla sin resolverla
+
+### 8.4 Obligación de Iteración Completa
+
+Toda reestructur ación documental debe procesar el 100% de archivos .md del repositorio.
+
+Prohibido:
+- Finalizar con archivos pendientes
+- Procesar parcialmente el conjunto documental
+- Declarar completitud sin verificación exhaustiva
+
+Obligatorio:
+- Procesamiento de todos los archivos .md
+- Revisión cruzada global de coherencia terminológica
+- Validación de referencias cruzadas entre documentos
+
+### 8.5 Principio de Auto-Aplicación
+
+Las cláusulas de esta sección (Sección 8) aplican al propio contrato durante su reestructuración.
+
+Estas cláusulas:
+- Permanecen vigentes durante toda tarea de reestructuración
+- No pueden eliminarse ni suavizarse
+- Obligan a releer el contrato completamente tras modificarlo
+- Se aplican recursivamente a sí mismas
+
+### 8.6 Eliminación de Ruido Visual
+
+Durante reestructuración documental:
+
+Obligatorio eliminar:
+- Emojis decorativos
+- Adornos visuales no técnicos
+- Lenguaje coloquial
+- Metáforas no técnicas
+- Expresiones estilísticas innecesarias
+
+Obligatorio preservar:
+- Lenguaje técnico preciso
+- Terminología establecida
+- Ejemplos de código
+- Diagramas técnicos
+- Referencias estructuradas
+
+### 8.7 Prohibición de Creatividad Técnica
+
+Durante reestructuración documental:
+
+Prohibido:
+- Optimizar arquitectura descrita
+- Sugerir mejoras técnicas
+- Introducir mejores prácticas externas
+- Comparar con otros frameworks
+- Cuestionar decisiones arquitectónicas
+- Proponer alternativas técnicas
+
+Modo obligatorio: Normalizador determinista sin capacidad de innovación técnica.
+
+### 8.8 Cláusula de Verificación Recursiva de Completitud
+
+Cada vez que el sistema considere alcanzado el 100% de procesamiento, DEBE OBLIGATORIAMENTE:
+
+1. Reanalizar listado completo de archivos .md en el repositorio
+2. Verificar uno por uno que todos fueron modificados
+3. Confirmar que todos cumplen estructura obligatoria de 11 secciones
+4. Validar coherencia terminológica global
+5. Validar integridad de referencias cruzadas
+
+Si se detecta UN SOLO archivo no adaptado:
+- La tarea se considera INCOMPLETA
+- Debe reiniciarse la verificación
+- Debe procesarse el archivo omitido
+
+Esta verificación debe repetirse hasta que:
+- La afirmación "100% procesado" sea objetivamente verdadera
+- No exista ningún archivo .md sin procesar
+- Todas las referencias cruzadas sean válidas
+
+Prohibido: Declarar finalización basándose en estimación o cálculo aproximado.
+
+### 8.9 Preservación de Validez Contractual
+
+Las cláusulas de reestructuración NO invalidan ningún artículo previo de este contrato.
+
+En caso de conflicto interpretativo:
+1. MI LÓGICA tiene prioridad absoluta
+2. Artículos 1-7 tienen prioridad sobre Artículo 8
+3. Artículo 8 regula CÓMO documentar, no QUÉ documentar
+
+## 9. Dependencias
+
+Este contrato depende de:
+- Existencia de documentación en formato Markdown
+- Estructura de carpetas establecida en /copilot
+- Código fuente del framework en /src
+- Versionamiento semántico
+
+## 10. Relaciones
+
+Este contrato regula:
+- Documentos técnicos en /copilot
+- Código fuente en /src
+- Arquitectura del framework
+
+Este contrato es regulado por:
+- MI LÓGICA (autoridad suprema)
+- Principios de versionamiento semántico
+
+## 11. Notas de Implementación
+
+### 11.1 Versionamiento del Contrato
 
 Este contrato sigue versionamiento semántico:
-- **Major**: Cambios fundamentales en principios
-- **Minor**: Aclaraciones o nuevas reglas
-- **Patch**: Correcciones tipográficas
+- **Major:** Cambios fundamentales en principios
+- **Minor:** Aclaraciones o nuevas reglas
+- **Patch:** Correcciones tipográficas
 
-Versión actual: **1.0.0**
+Versión actual: **2.0.0**
 
-**ARTÍCULO 7.2 - Modificaciones al Contrato**
+Cambios en versión 2.0.0:
+- Reestructuración bajo formato unificado de 11 secciones
+- Adición de Sección 8: Régimen de Reestructuración Documental
+- Eliminación de elementos decorativos no técnicos
+- Normalización de lenguaje técnico
+
+### 11.2 Modificaciones al Contrato
 
 Modificar este contrato requiere:
 1. Justificación documentada
 2. Revisión de impacto
 3. Actualización de todos los documentos afectados
 4. Comunicación explícita del cambio
+5. Incremento de versión según versionamiento semántico
+
+### 11.3 Aplicabilidad
+
+Al trabajar con este framework, se acepta contractualmente:
+- Respetar MI LÓGICA como principio fundamental
+- Solicitar permiso para cambios mayores
+- Documentar TODO cambio realizado
+- Mantener sincronía código-documentación
+- Seguir los patrones establecidos
+- Priorizar consistencia arquitectónica
+- Aplicar las cláusulas de reestructuración documental cuando corresponda
+
+### 11.4 Interpretación
+
+En caso de conflicto interpretativo entre secciones:
+1. MI LÓGICA tiene autoridad suprema
+2. Propósito y Alcance definen contexto
+3. Definiciones Clave establecen terminología vinculante
+4. Reglas Obligatorias prevalecen sobre interpretaciones
+5. Prohibiciones son absolutas salvo autorización
+
+## 12. Referencias Cruzadas
+
+Documentos vinculados contractualmente:
+- [01-FRAMEWORK-OVERVIEW.md](01-FRAMEWORK-OVERVIEW.md) - Visión general del framework
+- [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) - Arquitectura y flujos del sistema
+- [03-QUICK-START.md](03-QUICK-START.md) - Guía de inicio rápido
+- [README.md](README.md) - Índice principal de documentación
+- layers/01-decorators/ - Especificaciones de decoradores
+- layers/02-base-entity/ - Especificación de BaseEntity
+- layers/03-application/ - Especificación de Application
+- layers/04-components/ - Especificación de componentes
+- layers/05-advanced/ - Funcionalidades avanzadas
+- layers/06-composables/ - Composables del sistema
 
 ---
 
-## ✅ ACEPTACIÓN
+**VALIDEZ CONTRACTUAL**
 
-Al trabajar con este framework, se acepta implícitamente:
+Este contrato mantiene integridad, consistencia y mantenibilidad del framework. Constituye protección de arquitectura deliberada.
 
-- [x] Respetar MI LÓGICA como principio fundamental
-- [x] Solicitar permiso para cambios mayores
-- [x] Documentar TODO cambio realizado
-- [x] Mantener sincronía código-documentación
-- [x] Seguir los patrones establecidos
-- [x] Priorizar consistencia sobre conveniencia personal
-
----
-
-## 📚 DOCUMENTOS RELACIONADOS
-
-Este contrato hace referencia a:
-- `01-FRAMEWORK-OVERVIEW.md` - Visión general del framework
-- `02-FLOW-ARCHITECTURE.md` - Arquitectura y flujos del sistema
-- Todos los documentos en `layers/` - Especificaciones técnicas por capa
-
----
-
-**NOTA FINAL**: Este contrato existe para mantener la integridad, consistencia y mantenibilidad del framework. No es una limitación arbitraria, es la protección de una arquitectura bien pensada.
-
-*"Un framework sin principios es código spaghetti con mejor marketing."*
-
----
-
-**Firma Digital:** Framework SaaS Vue v1.0.0  
+**Versión:** 2.0.0  
 **Fecha de Vigencia:** Desde el 10 de Febrero, 2026  
-**Estado:** ACTIVO
+**Última Actualización:** 11 de Febrero, 2026  
+**Estado:** ACTIVO Y VINCULANTE

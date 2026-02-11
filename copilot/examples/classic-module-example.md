@@ -1,30 +1,38 @@
-# 📦 Ejemplo de Módulo Clásico - Sistema de Inventario
+# Ejemplo de Módulo Clásico - Sistema de Inventario
 
-**Referencias:**
-- `../01-FRAMEWORK-OVERVIEW.md` - Overview del framework
-- `../03-QUICK-START.md` - Quick start
-- `../layers/01-decorators/` - Decoradores
-- `advanced-module-example.md` - Ejemplo avanzado
+## 1. Propósito
 
----
+Este archivo documenta la implementación de un sistema de inventario básico utilizando el framework. Demuestra la creación de tres entidades interrelacionadas (Products, Categories, Suppliers) con funcionalidad CRUD completa, validaciones básicas y relaciones Many-to-One.
 
-## 🎯 Objetivo del Ejemplo
+Complejidad: Básica/Intermedia  
+Decoradores utilizados: 15 de 35+  
+Tiempo de implementación: 45 minutos
 
-Crear un sistema de inventario básico con:
-- ✅ **Products** (Productos)
-- ✅ **Categories** (Categorías)
-- ✅ **Suppliers** (Proveedores)
-- ✅ Relaciones entre entidades
-- ✅ Validaciones básicas
-- ✅ CRUD completo
+## 2. Alcance
 
-**Complejidad:** Básica/Intermedia  
-**Decoradores utilizados:** 15 de 35+  
-**Tiempo de implementación:** 45 minutos
+Este ejemplo implementa:
+- Entidad Category con propiedades básicas y persistencia
+- Entidad Supplier con validaciones de formato (email, teléfono)
+- Entidad Product con relaciones Many-to-One, validaciones cruzadas y hooks de ciclo de vida
+- Configuración completa de módulos en el sistema
+- Generación automática de vistas ListView y DetailView
+- Validaciones síncronas de formato y lógica de negocio
 
----
+## 3. Definiciones Clave
 
-## 🏗️ Arquitectura del Sistema
+**Category**: Entidad que representa categorías de productos. Agrupa productos relacionados bajo una clasificación común.
+
+**Supplier**: Entidad que representa proveedores de productos. Contiene información de contacto y validaciones de formato para email y teléfono.
+
+**Product**: Entidad central que representa productos del inventario. Establece relaciones con Category y Supplier, incluye información de pricing, stock y validaciones cruzadas.
+
+**Many-to-One**: Patrón de relación donde múltiples instancias de una entidad se asocian con una única instancia de otra entidad.
+
+**CRUD**: Create, Read, Update, Delete. Operaciones básicas de persistencia habilitadas automáticamente por el framework.
+
+## 4. Descripción Técnica
+
+### Arquitectura del Sistema
 
 ```
 ┌─────────────┐
@@ -42,11 +50,9 @@ Crear un sistema de inventario básico con:
 └─────────────────┘
 ```
 
----
+### Entidad 1: Category
 
-## 📝 Entidad 1: Category (Categoría)
-
-### Archivo: `src/entities/category.ts`
+Archivo: src/entities/category.ts
 
 ```typescript
 import { BaseEntity } from './base_entitiy';
@@ -109,16 +115,16 @@ export class Category extends BaseEntity {
 }
 ```
 
-### Decoradores Utilizados
+Decoradores utilizados en Category:
 
 | Decorador | Propósito | Efecto |
 |-----------|-----------|--------|
 | `@DefaultProperty` | Propiedad identificadora | Muestra "Electronics" en lugar de "[Object]" |
 | `@PrimaryProperty` | Clave primaria | Identifica registro único |
-| `@UniquePropertyKey` | Clave para URLs | `/categories/1` |
+| `@UniquePropertyKey` | Clave para URLs | /categories/1 |
 | `@ModuleName` | Nombre en sidebar | "Categories" |
-| `@ModuleIcon` | Icono visual | 📁 |
-| `@ApiEndpoint` | URL base de API | `/api/categories` |
+| `@ModuleIcon` | Icono visual | Ícono de carpeta |
+| `@ApiEndpoint` | URL base de API | /api/categories |
 | `@ApiMethods` | Métodos HTTP permitidos | GET, POST, PUT, DELETE |
 | `@Persistent` | Habilita guardado | Permite save/update/delete |
 | `@ViewGroup` | Agrupa campos | Sección "Basic Information" |
@@ -130,11 +136,9 @@ export class Category extends BaseEntity {
 | `@HideInDetailView` | Ocultar en formulario | ID no editable |
 | `@StringTypeDef` | Tipo específico | Textarea en lugar de input |
 
----
+### Entidad 2: Supplier
 
-## 📝 Entidad 2: Supplier (Proveedor)
-
-### Archivo: `src/entities/supplier.ts`
+Archivo: src/entities/supplier.ts
 
 ```typescript
 import { BaseEntity } from './base_entitiy';
@@ -228,7 +232,7 @@ export class Supplier extends BaseEntity {
 }
 ```
 
-### Validaciones Implementadas
+Validaciones implementadas en Supplier:
 
 ```typescript
 // Email: Formato válido
@@ -244,11 +248,9 @@ export class Supplier extends BaseEntity {
 )
 ```
 
----
+### Entidad 3: Product
 
-## 📝 Entidad 3: Product (Producto)
-
-### Archivo: `src/entities/product.ts`
+Archivo: src/entities/product.ts
 
 ```typescript
 import { BaseEntity } from './base_entitiy';
@@ -404,7 +406,7 @@ export class Product extends BaseEntity {
 }
 ```
 
-### Validaciones Cruzadas
+Validaciones cruzadas implementadas en Product:
 
 ```typescript
 // Precio debe ser mayor que costo
@@ -422,11 +424,9 @@ price!: number;
 sku!: string;
 ```
 
----
+### Registro de Módulos
 
-## 🔌 Registrar Módulos
-
-### Archivo: `src/models/application.ts`
+Archivo: src/models/application.ts
 
 ```typescript
 // Al final del archivo, antes de export default
@@ -445,21 +445,96 @@ Application.ModuleList.value.push(
 export default Application;
 ```
 
----
+## 5. Flujo de Funcionamiento
 
-## 🎨 Resultado en UI
+### Paso 1: Crear Categoría
 
-### Sidebar
+```typescript
+const category = new Category({
+    id: 1,
+    name: 'Electronics',
+    description: 'Electronic devices and accessories',
+    active: true
+});
+
+await category.save();
+// POST /api/categories
+```
+
+### Paso 2: Crear Proveedor
+
+```typescript
+const supplier = new Supplier({
+    id: 1,
+    name: 'TechCorp Inc',
+    email: 'sales@techcorp.com',
+    phone: '5551234567',
+    address: '123 Tech Street, Silicon Valley, CA',
+    active: true
+});
+
+await supplier.save();
+// POST /api/suppliers
+```
+
+### Paso 3: Crear Producto
+
+```typescript
+const product = new Product({
+    id: 1,
+    name: 'Laptop Pro 15',
+    sku: 'LAP-123456',
+    description: 'Professional laptop with 15" display',
+    category: category,       // ← Relación
+    supplier: supplier,       // ← Relación
+    cost: 700,
+    price: 999,
+    stock: 45,
+    minStock: 10,
+    active: true
+});
+
+await product.save();
+// POST /api/products
+```
+
+### Paso 4: Validaciones Automáticas
+
+```typescript
+// Falla: Price menor o igual que Cost
+const product = new Product({
+    cost: 999,
+    price: 500  // Menor que cost
+});
+await product.save();
+// Error: "Price must be greater than cost"
+
+// Falla: SKU inválido
+const product2 = new Product({
+    sku: 'invalid'  // No sigue formato ABC-123456
+});
+// Error: "SKU format: ABC-123456"
+
+// Falla: Stock negativo
+const product3 = new Product({
+    stock: -5
+});
+// Error: "Stock cannot be negative"
+```
+
+### Resultado en UI
+
+Sidebar generado:
 
 ```
 ┌─────────────────────┐
-│  📁 Categories      │
-│  🚚 Suppliers       │
-│  📦 Products        │
+│  Categories         │
+│  Suppliers          │
+│  Products           │
 └─────────────────────┘
 ```
 
-### ListView - Products
+ListView para Products:
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -471,7 +546,7 @@ export default Application;
 └────┴─────────────────┴────────────┴───────────┴───────────┘
 ```
 
-### DetailView - Product (Nuevo)
+DetailView para Product:
 
 ```
 ═══════════════════════════════════════════
@@ -526,162 +601,138 @@ Active                   [ ✓ ]
 [Validate]  [Save]  [Save & New]  [New]
 ```
 
----
+## 6. Reglas Obligatorias
 
-## 🔄 Flujo de Trabajo Completo
-
-### 1. Crear Categoría
-
-```typescript
-const category = new Category({
-    id: 1,
-    name: 'Electronics',
-    description: 'Electronic devices and accessories',
-    active: true
-});
-
-await category.save();
-// POST /api/categories
-```
-
-### 2. Crear Proveedor
-
-```typescript
-const supplier = new Supplier({
-    id: 1,
-    name: 'TechCorp Inc',
-    email: 'sales@techcorp.com',
-    phone: '5551234567',
-    address: '123 Tech Street, Silicon Valley, CA',
-    active: true
-});
-
-await supplier.save();
-// POST /api/suppliers
-```
-
-### 3. Crear Producto
-
-```typescript
-const product = new Product({
-    id: 1,
-    name: 'Laptop Pro 15',
-    sku: 'LAP-123456',
-    description: 'Professional laptop with 15" display',
-    category: category,       // ← Relación
-    supplier: supplier,       // ← Relación
-    cost: 700,
-    price: 999,
-    stock: 45,
-    minStock: 10,
-    active: true
-});
-
-await product.save();
-// POST /api/products
-```
-
-### 4. Validaciones Automáticas
-
-```typescript
-// ❌ Falla: Price <= Cost
-const product = new Product({
-    cost: 999,
-    price: 500  // Menor que cost
-});
-await product.save();
-// Error: "Price must be greater than cost"
-
-// ❌ Falla: SKU inválido
-const product2 = new Product({
-    sku: 'invalid'  // No sigue formato ABC-123456
-});
-// Error: "SKU format: ABC-123456"
-
-// ❌ Falla: Stock negativo
-const product3 = new Product({
-    stock: -5
-});
-// Error: "Stock cannot be negative"
-```
-
----
-
-## 📊 Estadísticas del Ejemplo
-
-### Código Escrito
-
-- **Category:** ~50 líneas
-- **Supplier:** ~70 líneas  
-- **Product:** ~140 líneas  
-- **Registro:** ~5 líneas  
-- **Total:** ~265 líneas
-
-### Funcionalidad Generada
-
-- **3 módulos** completos en sidebar
-- **3 listviews** con tablas funcionales
-- **3 detailviews** con formularios completos
-- **15+ inputs** generados automáticamente
-- **8 validaciones** activas
-- **3 endpoints** de API configurados
-- **CRUD completo** para 3 entidades
-- **Relaciones** entre entidades funcionales
-
-### Ratio de Productividad
-
-```
-Código equivalente manual: ~3500 líneas
-Código escrito: 265 líneas
-Ratio: 13:1 (13x más productivo)
-```
-
----
-
-## 🎓 Lecciones Aprendidas
-
-### 1. Orden de Creación
-
-Siempre crea entidades en orden de dependencias:
+Las entidades deben crearse en orden de dependencias:
 ```
 1. Category (sin dependencias)
 2. Supplier (sin dependencias)
 3. Product (depende de Category y Supplier)
 ```
 
-### 2. Validaciones Cruzadas
-
-Usa el objeto `entity` completo:
+Las validaciones cruzadas deben usar el objeto entity completo:
 ```typescript
 @Validation(
-    (entity) => entity.price > entity.cost,  // ← Acceso a otra propiedad
+    (entity) => entity.price > entity.cost,  // Acceso a otra propiedad
     'Price must exceed cost'
 )
 ```
 
-### 3. ViewGroups Mejoran UX
-
-Agrupa campos relacionados:
+Los ViewGroups deben agrupar campos relacionados:
 ```typescript
 @ViewGroup('Pricing')  // Costo y precio juntos
 @ViewGroup('Inventory')  // Stock y min stock juntos
 ```
 
-### 4. HelpText es Esencial
-
-Siempre agrega ayuda contextual:
+Todo campo debe incluir HelpText con ayuda contextual:
 ```typescript
 @HelpText('Format: ABC-123456')
 @HelpText('Reorder point')
 ```
 
----
+Todas las propiedades deben declarar Required explícitamente:
 
-## 🚀 Próximos Pasos
+```typescript
+@Required(true)
+name!: string;
+```
 
-Para convertir esto en un sistema completo:
+Los decoradores @PrimaryProperty, @DefaultProperty y @UniquePropertyKey son obligatorios en toda entidad persistente.
 
-### 1. Agregar Backend
+Las relaciones Many-to-One deben usar el tipo de la entidad relacionada en @PropertyName.
+
+## 7. Prohibiciones
+
+No crear entidades sin decorador @Persistent si requieren persistencia.
+
+No omitir @ApiEndpoint y @ApiMethods en entidades con CRUD.
+
+No usar validaciones síncronas para operaciones que requieren llamadas a API.
+
+No establecer Price menor o igual que Cost en Product:
+
+```typescript
+// Prohibido
+const product = new Product({
+    cost: 999,
+    price: 500  // Violación de la regla de negocio
+});
+```
+
+No usar SKU sin formato ABC-123456:
+
+```typescript
+// Prohibido
+const product = new Product({
+    sku: 'invalid'
+});
+```
+
+No establecer stock negativo en Product.
+
+No registrar módulos antes de su definición completa.
+
+## 8. Dependencias
+
+BaseEntity: Clase base de la que todas las entidades deben heredar (./base_entitiy).
+
+Decorators: Conjunto completo de decoradores del framework (@/decorations).
+
+StringType enum: Define tipos específicos de string como EMAIL, TEXTAREA (@/enums/string_type).
+
+ICONS: Constante que contiene todos los íconos disponibles (@/constants/icons).
+
+Application: Modelo central que contiene ModuleList y servicios del framework (@/models/application).
+
+## 9. Relaciones
+
+Product.category: Relación Many-to-One con Category. Múltiples productos pueden pertenecer a una categoría.
+
+Product.supplier: Relación Many-to-One con Supplier. Múltiples productos pueden tener el mismo proveedor.
+
+Ambas relaciones son requeridas y se representan como propiedades tipadas con la entidad relacionada.
+
+## 10. Notas de Implementación
+
+### Estadísticas del Código
+
+Código escrito:
+- Category: aproximadamente 50 líneas
+- Supplier: aproximadamente 70 líneas
+- Product: aproximadamente 140 líneas
+- Registro: aproximadamente 5 líneas
+- Total: aproximadamente 265 líneas
+
+Funcionalidad generada:
+- 3 módulos completos en sidebar
+- 3 listviews con tablas funcionales
+- 3 detailviews con formularios completos
+- 15+ inputs generados automáticamente
+- 8 validaciones activas
+- 3 endpoints de API configurados
+- CRUD completo para 3 entidades
+- Relaciones entre entidades funcionales
+
+Ratio de productividad:
+```
+Código equivalente manual: aproximadamente 3500 líneas
+Código escrito: 265 líneas
+Ratio: 13:1
+```
+
+### Hook beforeSave en Product
+
+El método beforeSave() calcula el margen de ganancia antes de guardar:
+
+```typescript
+override beforeSave() {
+    console.log('Margin:', ((this.price - this.cost) / this.cost * 100).toFixed(2) + '%');
+}
+```
+
+### Extensión del Sistema
+
+Para agregar backend:
 
 ```typescript
 // Node.js + Express ejemplo
@@ -691,14 +742,14 @@ app.post('/api/products', async (req, res) => {
 });
 ```
 
-### 2. Agregar Más Relaciones
+Para agregar más relaciones:
 
 ```typescript
 @PropertyName('Related Products', ArrayOf(Product))
 relatedProducts!: Array<Product>;
 ```
 
-### 3. Agregar Validación Asíncrona
+Para agregar validación asíncrona:
 
 ```typescript
 @AsyncValidation(
@@ -711,23 +762,25 @@ relatedProducts!: Array<Product>;
 sku!: string;
 ```
 
-### 4. Agregar Vistas Custom
+Para agregar vistas custom:
 
 ```typescript
 @ModuleDefaultComponent(ProductDashboard)
 export class Product extends BaseEntity { ... }
 ```
 
----
+## 11. Referencias Cruzadas
 
-## 📚 Referencias
+../01-FRAMEWORK-OVERVIEW.md: Documentación del overview del framework y conceptos fundamentales.
 
-- `../03-QUICK-START.md` - Tutorial inicial
-- `advanced-module-example.md` - Ejemplo avanzado
-- `../layers/01-decorators/` - Referencia de decoradores
-- `../tutorials/03-relations.md` - Tutorial de relaciones
+../03-QUICK-START.md: Tutorial inicial de configuración y primeros pasos.
 
----
+../layers/01-decorators/: Referencia completa de todos los decoradores disponibles.
 
-**Última actualización:** 10 de Febrero, 2026  
-**Complejidad:** Básica/Intermedia
+advanced-module-example.md: Ejemplo avanzado con decoradores adicionales y patrones complejos.
+
+../tutorials/03-relations.md: Tutorial detallado sobre implementación de relaciones entre entidades.
+
+../tutorials/01-basic-crud.md: Tutorial de operaciones CRUD básicas.
+
+../tutorials/02-validations.md: Tutorial sobre validaciones síncronas y asíncronas.

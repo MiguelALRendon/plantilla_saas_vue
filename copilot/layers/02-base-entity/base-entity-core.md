@@ -1,61 +1,70 @@
-# 🧬 BaseEntity Core - Motor del Sistema
+# BaseEntity Core
 
-**Referencias:**
-- `crud-operations.md` - Operaciones CRUD
-- `validation-system.md` - Sistema de validación
-- `lifecycle-hooks.md` - Hooks de ciclo de vida
-- `metadata-access.md` - Acceso a metadatos
-- `../../01-FRAMEWORK-OVERVIEW.md` - Visión general del framework
+## 1. Propósito
 
----
+BaseEntity es la clase abstracta base del sistema, definida como el único punto de herencia para todas las entidades de negocio. Proporciona infraestructura completa para gestión de estado, operaciones CRUD, validación multi-nivel, acceso a metadatos de decoradores, hooks de ciclo de vida, transformación de claves para persistencia y integración con el sistema Application. Toda entidad del dominio debe heredar de BaseEntity para obtener automáticamente estas capacidades.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/entities/base_entitiy.ts` (líneas 1-962)  
-**Clase:** `export abstract class BaseEntity`
+**Responsabilidades cubiertas:**
+- Gestión de estado interno (tracking de cambios, snapshot de estado original)
+- Operaciones CRUD completas (save, update, delete, getElement, getElementList)
+- Validación de tres niveles (required, sincrónica, asincrónica)
+- Acceso a metadatos de decoradores aplicados a propiedades y clase
+- Hooks de ciclo de vida para todas las operaciones
+- Mapeo bidireccional entre claves de entidad y claves persistentes
+- Integración con singleton Application para navegación y validación UI
+- Conversión entre formatos de objeto (toObject, toPersistentObject)
+- Detección de instancias nuevas versus existentes
 
----
+**Límites del alcance:**
+- No implementa lógica HTTP (delegada a métodos CRUD)
+- No contiene metadatos de decoradores (los lee vía Reflect)
+- No define estructura de propiedades (responsabilidad de subclases)
+- No maneja enrutamiento (usa Application como interfaz)
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-`BaseEntity` es la **clase madre abstracta** de todas las entidades del sistema. Proporciona:
+**BaseEntity:** Clase abstracta que sirve como superclase única para todas las entidades del sistema. Declarada en `src/entities/base_entitiy.ts` (líneas 1-962).
 
-1. **Gestión de estado** - Tracking de cambios, estado original
-2. **CRUD completo** - save(), update(), delete(), getElement(), getElementList()
-3. **Validación multi-nivel** - Required, sync, async validations
-4. **Acceso a metadatos** - Leer decoradores aplicados
-5. **Lifecycle hooks** - beforeSave, afterSave, etc.
-6. **Mapeo de claves** - Transformación entidad ↔ API
-7. **Utilidades de navegación** - Integración con Application
+**Estado Original (_originalState):** Snapshot inmutable del estado de la entidad en el momento de construcción o tras operación exitosa, utilizado para detección de cambios.
 
-**Concepto fundamental:** Cada modelo de negocio hereda de BaseEntity y obtiene automáticamente toda esta funcionalidad.
+**Dirty State:** Condición donde el estado actual de una entidad difiere de su estado original, detectado mediante comparación JSON entre _originalState y estado actual.
 
----
+**Persistent Keys:** Sistema de mapeo que traduce nombres de propiedades TypeScript a nombres esperados por API backend, configurado mediante decorator @PersistentKey.
 
-## 🏗️ Estructura de la Clase
+**Primary Property:** Propiedad marcada con @PrimaryProperty que actúa como identificador único de la entidad.
 
-### Propiedades Internas
+**Default Property:** Propiedad marcada con @DefaultProperty que sirve como representación textual principal de la entidad.
+
+**Unique Property:** Propiedad marcada con @UniquePropertyKey utilizada en construcción de rutas y URLs.
+
+**EmptyEntity:** Clase especial que hereda de BaseEntity y sobrescribe isNull() para retornar true, representando entidades vacías o nulas.
+
+## 4. Descripción Técnica
+
+### 4.1. Estructura de Clase
+
+BaseEntity se declara como clase abstracta exportada con la siguiente configuración:
 
 ```typescript
 export abstract class BaseEntity {
-    [key: string]: any;                    // Index signature para propiedades dinámicas
-    public _isLoading: boolean = false;    // Estado de carga
-    public _originalState?: Record<string, any>;  // Estado original para dirty checking
-    public _isSaving?: boolean = false;    // Estado de guardado
-    public oid?: string;                   // Object ID opcional
+    [key: string]: any;
+    public _isLoading: boolean = false;
+    public _originalState?: Record<string, any>;
+    public _isSaving?: boolean = false;
+    public oid?: string;
 }
 ```
 
-**Explicación:**
-- `[key: string]: any` - Permite propiedades dinámicas en las subclases
-- `_isLoading` - Controla si la entidad está cargando datos
-- `_originalState` - Snapshot del estado inicial para detectar cambios
-- `_isSaving` - Indica si una operación de guardado está en progreso
-- `oid` - Identificador opcional de objeto
+**Propiedades internas:**
+- `[key: string]: any` - Index signature que permite propiedades dinámicas en subclases
+- `_isLoading` - Flag booleano que indica si la entidad está cargando datos
+- `_originalState` - Record opcional que almacena snapshot del estado para dirty checking
+- `_isSaving` - Flag booleano que indica si operación de guardado está en progreso
+- `oid` - String opcional para identificador de objeto
 
----
-
-## 🔧 Constructor
+### 4.2. Constructor
 
 ```typescript
 constructor(data: Record<string, any>) {
@@ -64,111 +73,31 @@ constructor(data: Record<string, any>) {
 }
 ```
 
-**Funcionamiento:**
-1. Recibe un objeto de datos
-2. Asigna todas las propiedades a la instancia
-3. Crea un snapshot del estado inicial en `_originalState`
+El constructor recibe un objeto de datos plano, asigna todas sus propiedades a la instancia mediante Object.assign(), y crea un snapshot estructural profundo (structuredClone) del objeto persistente generado, almacenándolo en _originalState para permitir detección posterior de cambios.
 
-**Uso:**
-```typescript
-const product = new Product({
-    id: 1,
-    name: 'Widget',
-    price: 99.99
-});
-// _originalState = { id: 1, name: 'Widget', price: 99.99 }
-```
+### 4.3. Gestión de Estado
 
----
+**setLoading(): void**  
+Establece _isLoading en true.
 
-## 📊 Gestión de Estado
+**loaded(): void**  
+Establece _isLoading en false.
 
-### setLoading()
+**getLoadingState(): boolean**  
+Retorna el valor actual de _isLoading.
 
-```typescript
-public setLoading(): void
-```
+**isNull(): boolean**  
+Retorna false en BaseEntity. EmptyEntity sobrescribe este método para retornar true.
 
-Marca la entidad como "cargando".
+### 4.4. Conversión de Datos
 
-**Uso:**
-```typescript
-product.setLoading();
-// _isLoading = true
-```
+**toObject(): Record<string, any>**  
+Convierte la entidad completa a objeto JavaScript plano incluyendo todas las propiedades internas.
 
-### loaded()
+**toPersistentObject(): Record<string, any>**  
+Convierte la entidad a objeto conteniendo únicamente propiedades marcadas con @PropertyName, excluyendo propiedades internas como _isLoading.
 
-```typescript
-public loaded(): void
-```
-
-Marca la entidad como "carga completa".
-
-**Uso:**
-```typescript
-product.loaded();
-// _isLoading = false
-```
-
-### getLoadingState()
-
-```typescript
-public getLoadingState(): boolean
-```
-
-Retorna el estado de carga actual.
-
-**Uso:**
-```typescript
-if (product.getLoadingState()) {
-    // Mostrar spinner
-}
-```
-
-### isNull()
-
-```typescript
-isNull(): boolean
-```
-
-Verifica si la entidad es nula. En BaseEntity siempre retorna `false`.  
-La clase `EmptyEntity` sobreescribe esto para retornar `true`.
-
----
-
-## 🔄 Conversión de Datos
-
-### toObject()
-
-```typescript
-public toObject(): Record<string, any>
-```
-
-Convierte la entidad a un objeto plano JavaScript.
-
-**Uso:**
-```typescript
-const obj = product.toObject();
-// { id: 1, name: 'Widget', price: 99.99, _isLoading: false, ... }
-```
-
-### toPersistentObject()
-
-```typescript
-public toPersistentObject(): Record<string, any>
-```
-
-Convierte la entidad a un objeto que contiene **solo las propiedades con @PropertyName** (excluyendo propiedades internas como `_isLoading`).
-
-**Uso:**
-```typescript
-const persistentObj = product.toPersistentObject();
-// { id: 1, name: 'Widget', price: 99.99 }
-// NO incluye: _isLoading, _originalState, etc.
-```
-
-**Implementación:**
+Implementación:
 ```typescript
 public toPersistentObject(): Record<string, any> {
     const result: Record<string, any> = {};
@@ -183,188 +112,50 @@ public toPersistentObject(): Record<string, any> {
 }
 ```
 
----
+### 4.5. Propiedades Especiales
 
-## 🔑 Propiedades Especiales
+**getDefaultPropertyValue(): any**  
+Retorna el valor de la propiedad marcada con @DefaultProperty.
 
-### getDefaultPropertyValue()
+**getPrimaryPropertyValue(): any**  
+Retorna el valor de la propiedad marcada con @PrimaryProperty (clave primaria).
 
-```typescript
-public getDefaultPropertyValue(): any
-```
+**getPrimaryPropertyKey(): string | undefined**  
+Retorna el nombre de la propiedad marcada como primary.
 
-Retorna el valor de la propiedad marcada con `@DefaultProperty`.
+**getUniquePropertyValue(): any**  
+Retorna el valor de la propiedad marcada con @UniquePropertyKey (usada en construcción de URLs).
 
-**Uso:**
-```typescript
-@DefaultProperty('name')
-export class Product extends BaseEntity {
-    name!: string;
-}
-
-product.getDefaultPropertyValue(); // Retorna: 'Widget'
-```
-
-### getPrimaryPropertyValue()
-
-```typescript
-public getPrimaryPropertyValue(): any
-```
-
-Retorna el valor de la propiedad marcada con `@PrimaryProperty` (clave primaria).
-
-**Uso:**
-```typescript
-@PrimaryProperty('id')
-export class Product extends BaseEntity {
-    id!: number;
-}
-
-product.getPrimaryPropertyValue(); // Retorna: 123
-```
-
-### getPrimaryPropertyKey()
-
-```typescript
-public getPrimaryPropertyKey(): string | undefined
-```
-
-Retorna el **nombre** de la propiedad marcada como primary.
-
-**Uso:**
-```typescript
-product.getPrimaryPropertyKey(); // Retorna: 'id'
-```
-
-### getUniquePropertyValue()
-
-```typescript
-public getUniquePropertyValue(): any
-```
-
-Retorna el valor de la propiedad marcada con `@UniquePropertyKey` (usado en URLs).
-
-**Uso:**
-```typescript
-@UniquePropertyKey('id')
-export class Product extends BaseEntity {
-    id!: number;
-}
-
-product.getUniquePropertyValue(); // Retorna: 123
-// Se usa en: router.push('/products/123')
-```
-
-### getUniquePropertyKey()
-
-```typescript
-public getUniquePropertyKey(): string | undefined
-```
-
+**getUniquePropertyKey(): string | undefined**  
 Retorna el nombre de la propiedad única.
 
----
+### 4.6. Sistema de Claves Persistentes
 
-## 🗝️ Sistema de Claves Persistentes
+El sistema @PersistentKey permite mapear nombres de propiedades TypeScript a nomenclaturas diferentes esperadas por API backend.
 
-### Concepto
+**getPersistentKeys(): Record<string, string>**  
+Retorna objeto completo de mapeo con estructura { propertyKey: 'persistentKey' }.
 
-El sistema de `@PersistentKey` permite mapear nombres de propiedades de la entidad a nombres diferentes en la API.
+**getPersistentKeyByPropertyKey(propertyKey: string): string | undefined**  
+Obtiene nombre persistente correspondiente a una propiedad TypeScript.
 
-**Ejemplo:**
-```typescript
-@PersistentKey('product_id', 'id')  // API usa 'product_id', entidad usa 'id'
-export class Product extends BaseEntity {
-    id!: number;
-}
-```
+**getPropertyKeyByPersistentKey(persistentKey: string): string | undefined**  
+Obtiene nombre de propiedad TypeScript desde nombre persistente de API.
 
-### getPersistentKeys()
+**mapToPersistentKeys(data: Record<string, any>): Record<string, any>**  
+Transforma objeto usando nombres TypeScript a nombres persistentes (dirección entidad → API).
 
-```typescript
-public getPersistentKeys(): Record<string, string>
-```
+**mapFromPersistentKeys(data: Record<string, any>): Record<string, any>**  
+Transforma objeto usando nombres persistentes a nombres TypeScript (dirección API → entidad).
 
-Retorna el mapeo completo: `{ propertyKey: 'persistentKey' }`
+Todos estos métodos existen también como métodos estáticos en la clase.
 
-### getPersistentKeyByPropertyKey()
+### 4.7. Detección de Cambios
 
-```typescript
-public getPersistentKeyByPropertyKey(propertyKey: string): string | undefined
-```
+**getDirtyState(): boolean**  
+Detecta cambios sin guardar comparando estado actual con _originalState mediante serialización JSON.
 
-Obtiene el nombre persistente de una propiedad.
-
-**Uso:**
-```typescript
-product.getPersistentKeyByPropertyKey('id'); // 'product_id'
-```
-
-### getPropertyKeyByPersistentKey()
-
-```typescript
-public getPropertyKeyByPersistentKey(persistentKey: string): string | undefined
-```
-
-Obtiene el nombre de propiedad desde el nombre persistente.
-
-**Uso:**
-```typescript
-product.getPropertyKeyByPersistentKey('product_id'); // 'id'
-```
-
-### mapToPersistentKeys()
-
-```typescript
-public mapToPersistentKeys(data: Record<string, any>): Record<string, any>
-```
-
-Transforma un objeto usando nombres de propiedad a nombres persistentes (para enviar a API).
-
-**Uso:**
-```typescript
-const entityData = { id: 123, name: 'Widget' };
-const apiData = product.mapToPersistentKeys(entityData);
-// { product_id: 123, name: 'Widget' }
-```
-
-### mapFromPersistentKeys()
-
-```typescript
-public mapFromPersistentKeys(data: Record<string, any>): Record<string, any>
-```
-
-Transforma un objeto usando nombres persistentes a nombres de propiedad (al recibir de API).
-
-**Uso:**
-```typescript
-const apiData = { product_id: 123, name: 'Widget' };
-const entityData = product.mapFromPersistentKeys(apiData);
-// { id: 123, name: 'Widget' }
-```
-
-### Métodos Estáticos
-
-Las mismas funciones existen como métodos estáticos:
-```typescript
-Product.getPersistentKeys()
-Product.mapToPersistentKeys(data)
-Product.mapFromPersistentKeys(data)
-```
-
----
-
-## 🔍 Detección de Cambios (Dirty State)
-
-### getDirtyState()
-
-```typescript
-public getDirtyState(): boolean
-```
-
-Detecta si la entidad tiene cambios sin guardar comparando el estado actual con `_originalState`.
-
-**Implementación:**
+Implementación:
 ```typescript
 public getDirtyState(): boolean {
     var snapshotJson = JSON.stringify(this._originalState);
@@ -376,57 +167,14 @@ public getDirtyState(): boolean {
 }
 ```
 
-**Uso:**
-```typescript
-product.name = 'Modified Name';
+**resetChanges(): void**  
+Descarta cambios actuales y restaura estado desde _originalState usando structuredClone y Object.assign.
 
-if (product.getDirtyState()) {
-    console.log('Hay cambios sin guardar');
-}
-```
+### 4.8. Verificación de Nueva Instancia
 
-**Cuándo se usa:**
-- Antes de navegar a otra vista (confirmación de salir sin guardar)
-- Para habilitar/deshabilitar botón "Save"
-- Para advertir al usuario
+**isNew(): boolean**  
+Determina si instancia es nueva (sin persistir) verificando si la propiedad primary es undefined o null.
 
-### resetChanges()
-
-```typescript
-public resetChanges(): void
-```
-
-Descarta todos los cambios y restaura el estado original.
-
-**Implementación:**
-```typescript
-public resetChanges(): void {
-    if (this._originalState) {
-        Object.assign(this, structuredClone(this._originalState));
-    }
-}
-```
-
-**Uso:**
-```typescript
-product.name = 'Modified';
-product.resetChanges();
-console.log(product.name); // Vuelve al valor original
-```
-
----
-
-## 🆕 Verificación de Nueva Instancia
-
-### isNew()
-
-```typescript
-public isNew(): boolean
-```
-
-Determina si es una instancia nueva (sin guardar) verificando si la propiedad primaria es `undefined` o `null`.
-
-**Implementación:**
 ```typescript
 public isNew(): boolean {
     return this.getPrimaryPropertyValue() === undefined || 
@@ -434,205 +182,43 @@ public isNew(): boolean {
 }
 ```
 
-**Uso:**
-```typescript
-const newProduct = new Product({});
-newProduct.isNew(); // true
+### 4.9. Validaciones de Configuración
 
-const existingProduct = new Product({ id: 123 });
-existingProduct.isNew(); // false
-```
+**validateModuleConfiguration(): boolean**  
+Valida presencia de decoradores obligatorios: @ModuleName, @ModuleIcon, @DefaultProperty, @PrimaryProperty. Retorna true si configuración es válida, false y muestra diálogo de error si falta algún decorador.
 
-**Impacto:**
-- Determina si `save()` hace POST (nuevo) o PUT (actualizar)
-- Controla qué botones mostrar en UI
+**validatePersistenceConfiguration(): boolean**  
+Extiende validateModuleConfiguration() añadiendo verificación de @UniquePropertyKey, @ApiEndpoint y @ApiMethods.
 
----
+**validateApiMethod(method: HttpMethod): boolean**  
+Verifica si método HTTP específico está permitido según configuración @ApiMethods. Muestra error si método no está autorizado.
 
-## ✅ Validaciones de Configuración
+### 4.10. Persistencia
 
-### validateModuleConfiguration()
+**isPersistent(): boolean**  
+Verifica si la entidad tiene decorador @Persistent() aplicado.
 
-```typescript
-public validateModuleConfiguration(): boolean
-```
+**get getSaving(): boolean**  
+Getter que retorna estado de _isSaving.
 
-Valida que el módulo tenga la configuración básica necesaria:
-- `@ModuleName`
-- `@ModuleIcon`
-- `@DefaultProperty`
-- `@PrimaryProperty`
+### 4.11. Lifecycle Hooks
 
-**Implementación:**
-```typescript
-public validateModuleConfiguration(): boolean {
-    const errors: string[] = [];
-    const entityClass = this.constructor as typeof BaseEntity;
-    
-    if (!entityClass.getModuleName()) {
-        errors.push('El módulo no tiene definido @ModuleName');
-    }
-    
-    if (!entityClass.getModuleIcon()) {
-        errors.push('El módulo no tiene definido @ModuleIcon');
-    }
-    
-    if (!(this.constructor as any)[DEFAULT_PROPERTY_KEY]) {
-        errors.push('El módulo no tiene definido @DefaultProperty');
-    }
-    
-    if (!this.getPrimaryPropertyKey()) {
-        errors.push('El módulo no tiene definido @PrimaryProperty');
-    }
-    
-    if (errors.length > 0) {
-        Application.ApplicationUIService.openConfirmationMenu(
-            confMenuType.ERROR,
-            'Error de configuración del módulo',
-            errors.join('\n')
-        );
-        return false;
-    }
-    
-    return true;
-}
-```
+BaseEntity provee métodos vacíos que subclases pueden sobrescribir:
 
-**Uso:**
-- Se llama automáticamente antes de operaciones CRUD
-- Evita errores en tiempo de ejecución
+**Save hooks:** beforeSave(), onSaving(), afterSave(), saveFailed()  
+**Update hooks:** beforeUpdate(), onUpdating(), afterUpdate(), updateFailed()  
+**Delete hooks:** beforeDelete(), onDeleting(), afterDelete(), deleteFailed()  
+**Get hooks:** afterGetElement(), getElementFailed(), afterGetElementList(), getElementListFailed()  
+**Refresh hooks:** afterRefresh(), refreshFailed()  
+**Validation hooks:** onValidated()
 
-### validatePersistenceConfiguration()
+Documentación detallada en `lifecycle-hooks.md`.
 
-```typescript
-public validatePersistenceConfiguration(): boolean
-```
+### 4.12. Integración con Application
 
-Valida configuración para persistencia:
-- Todas las validaciones de `validateModuleConfiguration()`
-- `@UniquePropertyKey`
-- `@ApiEndpoint`
-- `@ApiMethods`
+**validateInputs(): Promise<boolean>**  
+Valida todos los inputs del formulario actual siguiendo este flujo:
 
-**Uso:**
-- Se llama antes de `save()`, `update()`, `delete()`
-
-### validateApiMethod()
-
-```typescript
-public validateApiMethod(method: HttpMethod): boolean
-```
-
-Verifica si un método HTTP está permitido por `@ApiMethods`.
-
-**Uso:**
-```typescript
-@ApiMethods(['GET', 'POST'])
-export class Product extends BaseEntity {}
-
-product.validateApiMethod('POST'); // true
-product.validateApiMethod('DELETE'); // false → muestra error
-```
-
----
-
-## 🔢 Persistencia
-
-### isPersistent()
-
-```typescript
-public isPersistent(): boolean
-```
-
-Verifica si la entidad tiene el decorador `@Persistent()`.
-
-**Uso:**
-```typescript
-@Persistent()
-export class Product extends BaseEntity {}
-
-product.isPersistent(); // true
-```
-
-### getSaving
-
-```typescript
-public get getSaving(): boolean
-```
-
-Getter que retorna si la entidad está en proceso de guardado.
-
-**Uso:**
-```typescript
-if (product.getSaving) {
-    // Deshabilitar botón Save
-}
-```
-
----
-
-## 🎣 Lifecycle Hooks (Resumen)
-
-BaseEntity proporciona hooks vacíos que las subclases pueden sobreescribir:
-
-### Save Hooks
-```typescript
-public beforeSave(): void {}
-public onSaving(): void {}
-public afterSave(): void {}
-public saveFailed(): void {}
-```
-
-### Update Hooks
-```typescript
-public beforeUpdate(): void {}
-public onUpdating(): void {}
-public afterUpdate(): void {}
-public updateFailed(): void {}
-```
-
-### Delete Hooks
-```typescript
-public beforeDelete(): void {}
-public onDeleting(): void {}
-public afterDelete(): void {}
-public deleteFailed(): void {}
-```
-
-### Get Hooks
-```typescript
-public afterGetElement(): void {}
-public getElementFailed(): void {}
-public afterGetElementList(): void {}
-public getElementListFailed(): void {}
-```
-
-### Refresh Hooks
-```typescript
-public afterRefresh(): void {}
-public refreshFailed(): void {}
-```
-
-### Validation Hooks
-```typescript
-public onValidated(): void {}
-```
-
-**Ver documentación completa en:** `lifecycle-hooks.md`
-
----
-
-## 🌐 Integración con Application
-
-### validateInputs()
-
-```typescript
-public async validateInputs(): Promise<boolean>
-```
-
-Valida todos los inputs del formulario actual.
-
-**Implementación:**
 ```typescript
 public async validateInputs(): Promise<boolean> {
     Application.View.value.isValid = true;
@@ -640,10 +226,8 @@ public async validateInputs(): Promise<boolean> {
     
     await new Promise(resolve => setTimeout(resolve, 50));
     
-    // Emitir evento para que los inputs validen
     Application.eventBus.emit('validate-inputs');
     
-    // Esperar validaciones asíncronas
     const keys = this.getKeys();
     const asyncValidationPromises = keys.map(key => this.isAsyncValidation(key));
     await Promise.all(asyncValidationPromises);
@@ -657,38 +241,14 @@ public async validateInputs(): Promise<boolean> {
 }
 ```
 
-**Funcionamiento:**
-1. Muestra loading
-2. Emite evento `'validate-inputs'` al eventBus
-3. Todos los componentes de input escuchan y ejecutan su validación
-4. Espera validaciones asíncronas
-5. Retorna si todos los campos son válidos
+Proceso: establece View.isValid en true, muestra loading, emite evento 'validate-inputs' al eventBus para que componentes ejecuten validación, espera validaciones asíncronas, ejecuta hook onValidated(), oculta loading, retorna estado de validación.
 
----
+### 4.13. Método Estático de Creación
 
-## 🚀 Método Estático: createNewInstance()
+**static createNewInstance<T extends BaseEntity>(): T**  
+Crea nueva instancia vacía de la entidad. Sintaxis: `Product.createNewInstance()` equivalente a `new Product({})`.
 
-```typescript
-public static createNewInstance<T extends BaseEntity>(
-    this: new (data: Record<string, any>) => T
-): T
-```
-
-Crea una nueva instancia vacía de la entidad.
-
-**Uso:**
-```typescript
-const newProduct = Product.createNewInstance();
-// Equivalente a: new Product({})
-```
-
-**Dónde se usa:**
-- Botón "New" en interfaz
-- Crear registros programáticamente
-
----
-
-## 🛡️ EmptyEntity
+### 4.14. EmptyEntity
 
 ```typescript
 export class EmptyEntity extends BaseEntity {
@@ -698,157 +258,232 @@ export class EmptyEntity extends BaseEntity {
 }
 ```
 
-Clase especial que representa una entidad nula/vacía. Sobreescribe `isNull()` para retornar `true`.
+Clase especial que representa entidad nula o vacía, sobrescribiendo isNull() para retornar true.
 
-**Uso:**
-```typescript
-const emptyEntity = new EmptyEntity({});
-emptyEntity.isNull(); // true
+### 4.15. Métodos de Acceso a Metadatos
+
+Los siguientes métodos proveen acceso a metadatos de decoradores (documentación completa en `metadata-access.md`):
+
+**Propiedades:** getKeys(), getArrayKeys(), getPropertyIndices(), getCSSClasses()  
+**Módulo:** getModuleName(), getModulePermission(), getModuleIcon(), getModuleListComponent(), getModuleDetailComponent(), getModuleDefaultComponent(), getModuleCustomComponents()  
+**Tipos:** getPropertyType(), getArrayPropertyType()  
+**Validaciones:** isRequired(), requiredMessage(), isValidation(), validationMessage(), isAsyncValidation(), asyncValidationMessage(), isDisabled(), isReadOnly()  
+**UI:** getViewGroups(), getViewGroupRows(), getStringType(), getDisplayFormat(), getFormattedValue(), getHelpText(), getTabOrders(), isHideInDetailView(), isHideInListView()  
+**API:** getApiEndpoint(), getApiMethods(), isApiMethodAllowed()
+
+## 5. Flujo de Funcionamiento
+
+### 5.1. Flujo de Instanciación
+
+```
+1. Constructor recibe data: Record<string, any>
+2. Object.assign(this, data) asigna propiedades
+3. toPersistentObject() genera objeto con propiedades @PropertyName
+4. structuredClone() crea copia profunda
+5. Copia se almacena en _originalState
+6. Instancia lista para uso
 ```
 
----
+### 5.2. Flujo de Detección de Cambios
 
-## 📚 Métodos Relacionados con Metadatos
-
-Los siguientes métodos están documentados en detalle en `metadata-access.md`:
-
-### Propiedades
-- `getKeys()` - Obtener todas las propiedades ordenadas
-- `getArrayKeys()` - Obtener propiedades de tipo Array
-- `getPropertyIndices()` - Obtener índices de propiedades
-- `getCSSClasses()` - Obtener clases CSS de columnas
-
-### Módulo
-- `getModuleName()` [static]
-- `getModulePermission()` [static]
-- `getModuleIcon()` [static]
-- `getModuleListComponent()` [static]
-- `getModuleDetailComponent()` [static]
-- `getModuleDefaultComponent()` [static]
-- `getModuleCustomComponents()` [static]
-
-### Tipos
-- `getPropertyType()` - Tipo de una propiedad
-- `getArrayPropertyType()` - Tipo de elementos en array
-
-### Validaciones
-- `isRequired()` - Verificar si campo es requerido
-- `requiredMessage()` - Mensaje de campo requerido
-- `isValidation()` - Ejecutar validación síncrona
-- `validationMessage()` - Mensaje de validación
-- `isAsyncValidation()` - Ejecutar validación asíncrona
-- `asyncValidationMessage()` - Mensaje de validación asíncrona
-- `isDisabled()` - Verificar si campo está deshabilitado
-- `isReadOnly()` - Verificar si campo es solo lectura
-
-### UI
-- `getViewGroups()` - Obtener grupos de vista
-- `getViewGroupRows()` - Obtener filas de grupos
-- `getStringType()` - Obtener tipo de string (EMAIL, PASSWORD, etc.)
-- `getDisplayFormat()` - Obtener formato de display
-- `getFormattedValue()` - Obtener valor formateado
-- `getHelpText()` - Obtener texto de ayuda
-- `getTabOrders()` - Obtener orden de tabs
-- `isHideInDetailView()` - Verificar si ocultar en detalle
-- `isHideInListView()` - Verificar si ocultar en lista
-
-### API
-- `getApiEndpoint()` - Obtener endpoint de API
-- `getApiMethods()` - Obtener métodos HTTP permitidos
-- `isApiMethodAllowed()` - Verificar si método está permitido
-
----
-
-## 🎓 Ejemplos de Uso
-
-### Ejemplo 1: Entidad Completa
-
-```typescript
-@DefaultProperty('name')
-@PrimaryProperty('id')
-@UniquePropertyKey('id')
-@ModuleName('Products')
-@ModuleIcon(ICONS.BOX)
-@ApiEndpoint('/api/products')
-@ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])
-@Persistent()
-export class Product extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('ID', Number)
-    @Required(true)
-    id!: number;
-    
-    @PropertyIndex(2)
-    @PropertyName('Name', String)
-    @Required(true)
-    name!: string;
-    
-    @PropertyIndex(3)
-    @PropertyName('Price', Number)
-    price!: number;
-}
+```
+1. Usuario modifica propiedad de entidad
+2. getDirtyState() ejecuta:
+   a. Serializa _originalState a JSON
+   b. Ejecuta toPersistentObject() en estado actual
+   c. Serializa resultado a JSON
+   d. Compara strings JSON
+3. Retorna true si difieren, false si son idénticos
 ```
 
-### Ejemplo 2: Usar BaseEntity
+### 5.3. Flujo de Validación de Inputs
 
-```typescript
-// Crear instancia
-const product = new Product({ id: 1, name: 'Widget', price: 99.99 });
-
-// Verificar estado
-console.log(product.isNew()); // false
-console.log(product.getPrimaryPropertyValue()); // 1
-console.log(product.getDefaultPropertyValue()); // 'Widget'
-
-// Modificar
-product.price = 149.99;
-
-// Detectar cambios
-console.log(product.getDirtyState()); // true
-
-// Guardar
-await product.save(); // PUT /api/products/1
-
-// Estado se actualiza
-console.log(product.getDirtyState()); // false
+```
+1. validateInputs() llamado (típicamente antes de save)
+2. Application.View.value.isValid = true
+3. Mostrar loading screen
+4. Emitir evento 'validate-inputs' a eventBus
+5. Componentes de input ejecutan validaciones síncronas
+6. Recopilar promises de validaciones asíncronas
+7. await Promise.all() de validaciones asíncronas
+8. Ejecutar hook onValidated()
+9. Ocultar loading screen
+10. Retornar Application.View.value.isValid
 ```
 
-### Ejemplo 3: Lifecycle Hooks
+### 5.4. Flujo de Mapeo de Claves
 
-```typescript
-export class Product extends BaseEntity {
-    override beforeSave(): void {
-        console.log('Preparando para guardar...');
-        // Normalizar datos antes de guardar
-        this.name = this.name.trim().toUpperCase();
-    }
-    
-    override afterSave(): void {
-        console.log('Guardado completado!');
-        // Navegar a lista
-        Application.changeViewToListView(Product);
-    }
-    
-    override saveFailed(): void {
-        console.error('Error al guardar');
-        // Lógica adicional de error
-    }
-}
+**Entidad → API (envío):**
+```
+1. Preparar datos de entidad
+2. mapToPersistentKeys(data) ejecuta:
+   a. Obtener mapeo de claves persistentes
+   b. Para cada propiedad en data:
+      - Si existe mapeo, usar clave persistente
+      - Si no existe mapeo, mantener clave original
+3. Objeto resultante listo para envío HTTP
 ```
 
----
+**API → Entidad (recepción):**
+```
+1. Recibir respuesta de API
+2. mapFromPersistentKeys(data) ejecuta:
+   a. Obtener mapeo inverso
+   b. Para cada clave en data:
+      - Si existe mapeo inverso, usar clave TypeScript
+      - Si no existe mapeo, mantener clave original
+3. Objeto resultante listo para asignación a entidad
+```
 
-## 🔗 Referencias
+## 6. Reglas Obligatorias
 
-- **CRUD Operations:** `crud-operations.md`
-- **Validation System:** `validation-system.md`
-- **Lifecycle Hooks:** `lifecycle-hooks.md`
-- **Metadata Access:** `metadata-access.md`
-- **Decoradores:** `../01-decorators/`
-- **Application:** `../03-application/application-singleton.md`
+1. **Herencia única:** Toda entidad del dominio DEBE heredar directamente de BaseEntity. No se permite herencia de clases intermedias distintas de BaseEntity.
 
----
+2. **Decoradores mínimos:** Toda subclase de BaseEntity DEBE declarar @ModuleName, @ModuleIcon, @DefaultProperty y @PrimaryProperty antes de usar operaciones CRUD.
 
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo
+3. **Persistencia:** Toda entidad que requiera operaciones CRUD DEBE declarar @Persistent(), @UniquePropertyKey, @ApiEndpoint y @ApiMethods.
+
+4. **Constructor:** Subclases que sobrescriban constructor DEBEN llamar super(data) como primera línea.
+
+5. **Hooks vacíos:** Si se sobrescribe un lifecycle hook, la implementación puede omitir la llamada a super.método() ya que la implementación base está vacía.
+
+6. **Preservación de _originalState:** Código externo NO DEBE modificar directamente _originalState. Solo BaseEntity gestiona esta propiedad.
+
+7. **Métodos estáticos:** Métodos estáticos de acceso a metadatos DEBEN usarse con contexto de clase (Product.getModuleName()), no con instancia.
+
+8. **Validación antes de persistencia:** save(), update() y delete() DEBEN ejecutar validatePersistenceConfiguration() antes de realizar operación HTTP.
+
+9. **Formato de datos:** toPersistentObject() DEBE usarse para generar datos enviados a API. toObject() NO DEBE usarse para persistencia.
+
+10. **Detección de instancia nueva:** Lógica que distingue creación de actualización DEBE usar isNew(), no verificar propiedades manualmente.
+
+## 7. Prohibiciones
+
+1. **NO heredar de múltiples clases:** TypeScript no soporta herencia múltiple. BaseEntity NO DEBE ser combinada con otras superclases.
+
+2. **NO modificar propiedades internas:** Propiedades con prefijo _ (_isLoading, _originalState, _isSaving) NO DEBEN ser modificadas fuera de BaseEntity excepto mediante métodos provistos.
+
+3. **NO crear instancias de BaseEntity directamente:** BaseEntity es abstracta. NO DEBE instanciarse directamente (new BaseEntity() es error de compilación).
+
+4. **NO omitir validación de configuración:** Operaciones CRUD NO DEBEN ejecutarse sin primero validar configuración de decoradores.
+
+5. **NO usar JSON.parse en _originalState:** Manipulación de _originalState NO DEBE hacerse directamente. Usar resetChanges() para restaurar estado.
+
+6. **NO sobrescribir métodos de metadatos:** Métodos como getKeys(), getPrimaryPropertyKey(), etc. NO DEBEN ser sobrescritos en subclases. Estos leen metadatos de decoradores.
+
+7. **NO usar toObject() para persistencia:** Método toObject() incluye propiedades internas y NO DEBE usarse para enviar datos a API.
+
+8. **NO confundir Default y Primary:** @DefaultProperty es para display, @PrimaryProperty es identificador. NO son intercambiables.
+
+9. **NO emitir 'validate-inputs' manualmente:** Evento 'validate-inputs' SOLO DEBE emitirse mediante validateInputs(). Emisión manual puede causar inconsistencias.
+
+10. **NO asumir presencia de oid:** Propiedad oid es opcional y NO DEBE asumirse presente sin verificación.
+
+## 8. Dependencias
+
+**Internas:**
+- `Application` (singleton) - Navegación, eventBus, UIService, View state
+- `EmptyEntity` (clase) - Entidad especial para representar null
+- Decorators - Sistema completo de decoradores para metadatos
+- `confMenuType` - Enum para tipos de menús de confirmación
+
+**Externas:**
+- TypeScript Reflect API - Lectura de metadatos de decoradores
+- `structuredClone()` - Clonado profundo de objetos (API nativa)
+- `JSON.stringify()` / `JSON.parse()` - Serialización para comparación
+
+**Archivos:**
+- `src/entities/base_entitiy.ts` - Definición de BaseEntity
+- `src/decorations/` - Todos los decoradores aplicables
+- `src/models/Application.ts` - Singleton Application
+
+## 9. Relaciones
+
+**Superclase de:**
+- Todas las entidades del dominio (Product, User, Order, etc.)
+- EmptyEntity (caso especial)
+
+**Colabora con:**
+- Application - Para navegación entre vistas, validación UI y servicios UI
+- EventBus - Para emisión de eventos de validación
+- Decorators - Para lectura de metadatos de configuración
+
+**Utilizado por:**
+- Componentes de formulario - Para validación y acceso a metadatos
+- Componentes de tabla - Para obtención de datos y configuración de columnas
+- Application - Para operaciones de navegación y gestión de vista actual
+- Router - Para construcción de URLs con unique property
+
+**Extiende funcionalidad de:**
+- Ninguna (es la clase base del sistema)
+
+**Proporciona base para:**
+- Sistema CRUD completo (documentado en `crud-operations.md`)
+- Sistema de validación (documentado en `validation-system.md`)
+- Sistema de hooks (documentado en `lifecycle-hooks.md`)
+- Sistema de metadatos (documentado en `metadata-access.md`)
+
+## 10. Notas de Implementación
+
+**Uso de structuredClone:**  
+structuredClone() es API nativa moderna. Si se requiere compatibilidad con entornos antiguos, considerar polyfill o alternativa como deep cloning manual.
+
+**Performance de getDirtyState:**  
+Método serializa objetos completos a JSON en cada llamada. Para entidades grandes con detección frecuente, considerar estrategia de dirty flags por propiedad.
+
+**Index signature [key: string]: any:**  
+Necesario para permitir propiedades dinámicas pero reduce seguridad de tipos. Subclases deben declarar propiedades explícitamente con tipos específicos.
+
+**Validación asíncrona en validateInputs:**  
+Método espera todas las validaciones asíncronas en paralelo. Si una validación depende de otra, este comportamiento puede causar problemas.
+
+**Hook onValidated:**  
+onValidated() se ejecuta después de todas las validaciones pero NO recibe parámetro indicando si validación fue exitosa. Implementaciones deben consultar Application.View.value.isValid.
+
+**EmptyEntity vs null:**  
+Usar EmptyEntity en lugar de null para representar ausencia de entidad permite usar métodos de BaseEntity sin verificaciones de nullability.
+
+**Logs en getDirtyState:**  
+Método incluye console.log para debugging. En producción considerar remover o condicionar a flag de desarrollo.
+
+**Métodos estáticos y this:**  
+Métodos estáticos usan `this: new (data: Record<string, any>) => T` para tipado correcto al heredar. Sintaxis avanzada de TypeScript.
+
+**mapToPersistentKeys y arrays:**  
+Métodos de mapeo funcionan en nivel superficial. Si entidad contiene arrays de objetos anidados que también requieren mapeo, debe implementarse lógica adicional.
+
+**Timeout de 50ms en validateInputs:**  
+Delays de 50ms permiten que DOM se actualice y eventos se propaguen. Ajustar según comportamiento observado en producción.
+
+## 11. Referencias Cruzadas
+
+**Documentación relacionada:**
+- [crud-operations.md](crud-operations.md) - Implementación de save(), update(), delete(), getElement(), getElementList()
+- [validation-system.md](validation-system.md) - Sistema de validación de tres niveles
+- [lifecycle-hooks.md](lifecycle-hooks.md) - Hooks de ciclo de vida completos
+- [metadata-access.md](metadata-access.md) - Métodos de acceso a metadatos de decoradores
+- [persistence-methods.md](persistence-methods.md) - Métodos relacionados con persistencia
+- [state-and-conversion.md](state-and-conversion.md) - Gestión de estado y conversión de objetos
+- [static-methods.md](static-methods.md) - Métodos estáticos de BaseEntity
+- [additional-metadata.md](additional-metadata.md) - Metadatos adicionales
+
+**Decoradores aplicables:**
+- [../01-decorators/module-name-decorator.md](../01-decorators/module-name-decorator.md) - @ModuleName
+- [../01-decorators/module-icon-decorator.md](../01-decorators/module-icon-decorator.md) - @ModuleIcon
+- [../01-decorators/default-property-decorator.md](../01-decorators/default-property-decorator.md) - @DefaultProperty
+- [../01-decorators/primary-property-decorator.md](../01-decorators/primary-property-decorator.md) - @PrimaryProperty
+- [../01-decorators/persistent-decorator.md](../01-decorators/persistent-decorator.md) - @Persistent
+- [../01-decorators/persistent-key-decorator.md](../01-decorators/persistent-key-decorator.md) - @PersistentKey
+- [../01-decorators/unique-decorator.md](../01-decorators/unique-decorator.md) - @UniquePropertyKey
+- [../01-decorators/api-endpoint-decorator.md](../01-decorators/api-endpoint-decorator.md) - @ApiEndpoint
+- [../01-decorators/api-methods-decorator.md](../01-decorators/api-methods-decorator.md) - @ApiMethods
+- [../01-decorators/property-name-decorator.md](../01-decorators/property-name-decorator.md) - @PropertyName
+
+**Sistemas relacionados:**
+- [../03-application/application-singleton.md](../03-application/application-singleton.md) - Singleton Application
+- [../03-application/event-bus.md](../03-application/event-bus.md) - Sistema de eventos
+- [../../01-FRAMEWORK-OVERVIEW.md](../../01-FRAMEWORK-OVERVIEW.md) - Visión general del framework
+
+**Ejemplos de uso:**
+- [../../examples/classic-module-example.md](../../examples/classic-module-example.md) - Ejemplo de entidad completa
+- [../../examples/advanced-module-example.md](../../examples/advanced-module-example.md) - Uso avanzado

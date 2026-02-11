@@ -1,60 +1,88 @@
-# 🔍 Metadata Access - Acceso a Metadatos del Sistema
+# BaseEntity: Metadata Access System
 
-**Referencias:**
-- `base-entity-core.md` - Documentación core de BaseEntity
-- `../../01-FRAMEWORK-OVERVIEW.md` - Visión general
-- `../../layers/01-decorators/` - Documentación de decoradores
+## 1. Propósito
 
----
+El sistema de acceso a metadatos provee 46 métodos para leer información almacenada por decoradores en prototipos de clases. Constituye la base del sistema meta-programático del framework, permitiendo que componentes UI se auto-configuren leyendo metadatos en tiempo de ejecución. El flujo es: decoradores escriben metadatos en prototype → métodos de acceso leen metadatos → componentes renderizan basándose en esos metadatos. Los métodos se agrupan en 6 categorías: Propiedades (información sobre campos), Tipos (tipos de datos), Módulo (configuración módulo), Validación (reglas validación), UI (configuración interfaz), y API (configuración persistencia). Todos los métodos son inmutables (solo lectura), thread-safe (acceso concurrente seguro), y performantes (lookup O(1) en prototype).
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/entities/base_entitiy.ts`  
-**Métodos:** Distribuidos a lo largo de la clase BaseEntity
+**Responsabilidades cubiertas:**
+- Métodos de Propiedades (10): getAllPropertiesNonFilter, getProperties, getKeys, getArrayKeys, getTabOrders, getArrayKeysOrdered, getFormattedValue, getPropertyIndices, getCSSClasses, getPropertyName/ByKey
+- Métodos de Tipos (5): getPropertyTypes, getPropertyType (static/instance), getArrayPropertyType (static/instance)
+- Métodos de Módulo (7): getModuleName, getModulePermission, getModuleIcon, getModuleListComponent, getModuleDetailComponent, getModuleDefaultComponent, getCustomComponents
+- Métodos de Validación (9): isRequired, requiredMessage, isValidation, validationMessage, isAsyncValidation, asyncValidationMessage, isDisabled, isReadOnly, getHelpText
+- Métodos de UI (10): getViewGroups, getViewGroupRows, getStringType, getDisplayFormat, getFormattedValue, getHelpText, getTabOrders, isHideInDetailView, isHideInListView, getMask
+- Métodos de API (6): getApiEndpoint, getApiMethods, isApiMethodAllowed (static/instance para cada uno)
 
----
+**Límites del alcance:**
+- No modifican metadatos (solo lectura, inmutable después de decoración)
+- No validan consistencia de metadatos (asumen decoradores bien aplicados)
+- No cachean resultados (cada llamada hace lookup fresco en prototype)
+- No proveen fallback defaults (retornan undefined si metadata no existe)
+- No hacen transformación de datos (retornan valores exactos almacenados)
+- No implementan queries complejas (solo acceso directo por propertyKey)
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-Los **métodos de acceso a metadatos** permiten leer la información almacenada por los decoradores en los prototipos de las clases. Esta es la base del sistema meta-programático del framework.
+**Metadata Keys:** Constantes symbol o string usadas como claves en prototype para almacenar metadatos. Ejemplos: PROPERTY_NAME_KEY, PROPERTY_TYPE_KEY, REQUIRED_KEY. Cada decorador escribe en su key específico.
 
-**Concepto fundamental:**  
-> Los decoradores **escriben** metadatos → Los métodos de acceso **leen** metadatos → Los componentes **renderizan** basándose en esos metadatos
+**Prototype Lookup:** Patrón de acceso donde método lee `(this.constructor as any).prototype[METADATA_KEY]` para obtener objeto con metadatos. JavaScript permite agregar propiedades arbitrarias a prototype.
 
----
+**Static vs Instance:** Métodos static reciben propertyKey como parámetro y operan sobre `this.prototype`. Métodos instance usan `this.constructor.prototype` para acceder a metadatos de la clase actual. Ambos retornan los mismos datos.
 
-## 📋 Categorías de Métodos
+**getAllPropertiesNonFilter():** Retorna Record<string, string> con todas las propiedades que tienen @PropertyName, incluyendo arrays. Usado internamente para iteración completa sin filtros.
 
-1. **Propiedades** - Información sobre campos de la entidad
-2. **Tipos** - Tipos de datos de propiedades
-3. **Módulo** - Configuración del módulo
-4. **Validación** - Reglas de validación
-5. **UI** - Configuración de interfaz de usuario
-6. **API** - Configuración de persistencia
+**getProperties():** Retorna Record<string, string> con propiedades @PropertyName excluyendo arrays. Es versión filtrada de getAllPropertiesNonFilter. Usado para renderizar fields no-array.
 
----
+**getKeys():** Retorna string[] con claves de propiedades no-array ordenadas por @PropertyIndex. Orden determinístico para renderizado de formularios. Arrays excluidos porque tienen renderizado separado.
 
-## 1️⃣ MÉTODOS DE PROPIEDADES
+**getArrayKeys():** Retorna string[] con claves de propiedades tipo Array. Sin orden específico. Complementario a getKeys() para obtener propiedades array.
 
-### getAllPropertiesNonFilter() [static]
+**getArrayKeysOrdered():** Retorna string[] con claves array ordenadas por @TabOrder. Usado para renderizar tabs de arrays en orden correcto en DetailView.
+
+**getPropertyTypes():** Retorna Record<string, Constructor> mapeando propertyKey a su Constructor (Number, String, Boolean, Date, Array, EntityClass). Usado para type checking y rendering logic.
+
+**getArrayPropertyType(key):** Para propertyKey de tipo Array, retorna clase BaseEntity del elemento (ejemplo: Tag para tags: Tag[]). Retorna undefined si no es array o no tiene @ArrayOf.
+
+**getViewGroups():** Retorna Record<string, string> mapeando propertyKey a nombre de grupo visual. Usado por FormGroupComponent para agrupar campos relacionados en UI.
+
+**getDisplayFormat(key):** Retorna string template (ejemplo: `${value} USD`) o función formatter para propiedad. Usado por getFormattedValue() para formatear valores en UI.
+
+**isApiMethodAllowed(method):** Valida si método HTTP (GET, POST, PUT, DELETE) está permitido en @ApiMethods de la entidad. Retorna boolean. Usado en save/update/delete para validar antes de request.
+
+## 4. Descripción Técnica
+
+### Arquitectura de Prototype Metadata Storage
+
+Todos los decoradores escriben metadatos en el prototype de la clase usando claves específicas. Los métodos de acceso implementan lookup pattern consistente:
+
+```typescript
+// Pattern básico para todos los métodos
+public static getMetadata(): Record<string, any> {
+    const proto = this.prototype as any;
+    return proto[METADATA_KEY] || {};  // Retorna {} si no existe
+}
+```
+
+Este patrón garantiza:
+- O(1) lookup performance (acceso directo a property)
+- Thread-safety (solo lectura, prototype inmutable)
+- Herencia correcta (JavaScript prototype chain)
+
+### Categoría 1: Métodos de Propiedades
+
+#### getAllPropertiesNonFilter() - Static
 
 ```typescript
 public static getAllPropertiesNonFilter(): Record<string, string>
 ```
 
-Retorna **todas** las propiedades que tienen `@PropertyName`, incluyendo arrays.
+Retorna todas las propiedades con @PropertyName, incluyendo arrays.
 
-**Retorna:**
-```typescript
-{
-    'id': 'ID',
-    'name': 'Product Name',
-    'tags': 'Tags',  // Array también incluido
-    'price': 'Price'
-}
-```
+**Ubicación:** Línea 127
 
-**Ubicación en código:** Línea 127
+**Implementación:**
+
 ```typescript
 public static getAllPropertiesNonFilter(): Record<string, string> {
     const proto = this.prototype as any;
@@ -62,25 +90,28 @@ public static getAllPropertiesNonFilter(): Record<string, string> {
 }
 ```
 
-### getProperties() [static]
-
-```typescript
-public static getProperties(): Record<string, string>
-```
-
-Retorna propiedades que tienen `@PropertyName` **excluyendo arrays**.
-
 **Retorna:**
 ```typescript
 {
     'id': 'ID',
     'name': 'Product Name',
+    'tags': 'Tags',  // Array INCLUIDO
     'price': 'Price'
-    // 'tags' NO incluido (es Array)
 }
 ```
 
-**Ubicación en código:** Línea 132
+#### getProperties() - Static
+
+```typescript
+public static getProperties(): Record<string, string>
+```
+
+Retorna propiedades con @PropertyName excluyendo arrays.
+
+**Ubicación:** Línea 132
+
+**Implementación:**
+
 ```typescript
 public static getProperties(): Record<string, string> {
     const proto = this.prototype as any;
@@ -98,423 +129,129 @@ public static getProperties(): Record<string, string> {
 }
 ```
 
-**Por qué se filtran arrays:**  
-Los arrays se renderizan de forma especial en la UI (en tabs o secciones expandibles), no como campos normales.
-
-### getKeys()
-
-```typescript
-public getKeys(): string[] 
-```
-
-Retorna los **nombres de propiedad** (keys) ordenados por `@PropertyIndex`.
-
 **Retorna:**
 ```typescript
-['id', 'name', 'price', 'description']  // Ordenado por PropertyIndex
-```
-
-**Ubicación en código:** Línea 90
-```typescript
-public getKeys(): string[] {
-    const columns = (this.constructor as typeof BaseEntity).getProperties();
-    const keys = Object.keys(columns);
-    const propertyIndices = this.getPropertyIndices();
-    
-    // Ordenar por PropertyIndex si existe, sino por orden de declaración
-    return keys.sort((a, b) => {
-        const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
-        const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
-        return indexA - indexB;
-    });
+{
+    'id': 'ID',
+    'name': 'Product Name',
+    'price': 'Price'
+    // 'tags' EXCLUIDO (es Array)
 }
 ```
 
-**Uso típico:**
-```typescript
-// En un componente de formulario
-const keys = entity.getKeys();
-keys.forEach(key => {
-    // Renderizar input para cada propiedad en orden
-});
-```
-
-### getArrayKeys()
+#### getKeys() - Instance
 
 ```typescript
-public getArrayKeys(): string[]
+public getKeys(): string[]
 ```
 
-Retorna solo las propiedades de tipo `Array`.
+Retorna array de propertyKeys no-array ordenadas por @PropertyIndex.
 
-**Retorna:**
-```typescript
-['tags', 'images', 'variants']  // Solo arrays
-```
-
-**Ubicación en código:** Línea 103
-```typescript
-public getArrayKeys(): string[] {
-    const properties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
-    const propertyTypes = (this.constructor as typeof BaseEntity).getPropertyTypes();
-    const arrayKeys: string[] = [];
-    
-    for (const key of Object.keys(properties)) {
-        if (propertyTypes[key] === Array) {
-            arrayKeys.push(key);
-        }
-    }
-    
-    return arrayKeys;
-}
-```
-
-**Ejemplo de uso:**
-
-```typescript
-@ModuleName('Products')
-export class Product extends BaseEntity {
-    @PropertyName('Name', String)
-    name!: string;
-    
-    @PropertyName('Price', Number)
-    price!: number;
-    
-    @PropertyName('Tags', Array)
-    tags!: string[];
-    
-    @PropertyName('Images', Array)
-    images!: string[];
-}
-
-const product = new Product({ name: 'Widget', price: 100 });
-const arrayKeys = product.getArrayKeys();
-
-console.log(arrayKeys); // ['tags', 'images']
-```
-
-**Uso típico en componentes:**
-
-```vue
-<template>
-    <div v-for="arrayKey in entity.getArrayKeys()" :key="arrayKey">
-        <h3>{{ entity.constructor.getPropertyNameByKey(arrayKey) }}</h3>
-        <ArrayInputComponent 
-            :entity="entity"
-            :property-key="arrayKey"
-            v-model="entity[arrayKey]" 
-        />
-    </div>
-</template>
-```
-
----
-
-### getTabOrders()
-
-```typescript
-public getTabOrders(): Record<string, number>
-```
-
-**Propósito:** Obtiene el orden de tabs definido por el decorador `@TabOrder`.
-
-**Retorna:** Objeto con mapeo `propertyKey -> order`
-
-**Ubicación en código:** Línea 399
+**Ubicación:** Línea 147
 
 **Implementación:**
 
 ```typescript
-public getTabOrders(): Record<string, number> {
-    const proto = (this.constructor as any).prototype;
-    return proto[TAB_ORDER_KEY] || {};
+public getKeys(): string[] {
+    const properties = (this.constructor as typeof BaseEntity).getProperties();
+    const indices = this.getPropertyIndices();
+    
+    const keys = Object.keys(properties);
+    
+    // Ordenar por PropertyIndex
+    return keys.sort((a, b) => {
+        const indexA = indices[a] ?? Number.MAX_SAFE_INTEGER;
+        const indexB = indices[b] ?? Number.MAX_SAFE_INTEGER;
+        return indexA - indexB;
+    });
 }
 ```
 
 **Ejemplo:**
 
 ```typescript
-@ModuleName('Orders')
-export class Order extends BaseEntity {
-    @PropertyName('Items', Array)
-    @TabOrder(1)
-    items!: OrderItem[];
-    
-    @PropertyName('Payments', Array)
-    @TabOrder(3)
-    payments!: Payment[];
-    
-    @PropertyName('Shipments', Array)
-    @TabOrder(2)
-    shipments!: Shipment[];
-}
-
-const order = new Order({});
-const tabOrders = order.getTabOrders();
-
-console.log(tabOrders);
-// {
-//   'items': 1,
-//   'payments': 3,
-//   'shipments': 2
-// }
-```
-
-**Uso con getArrayKeysOrdered():**
-
-Este método es interno y se usa principalmente en `getArrayKeysOrdered()` para ordenar correctamente las propiedades array.
-
----
-
-### getArrayKeysOrdered()
-
-```typescript
-public getArrayKeysOrdered(): string[]
-```
-
-**Propósito:** Retorna propiedades de tipo Array ordenadas por `@TabOrder`.
-
-**Retorna:** Array de keys ordenado por TabOrder
-
-**Ubicación en código:** Línea 404
-
-**Implementación:**
-
-```typescript
-public getArrayKeysOrdered(): string[] {
-    const arrayKeys = this.getArrayKeys();
-    const tabOrders = this.getTabOrders();
-    
-    // Ordenar por TabOrder si existe, sino por orden de declaración
-    return arrayKeys.sort((a, b) => {
-        const orderA = tabOrders[a] ?? Number.MAX_SAFE_INTEGER;
-        const orderB = tabOrders[b] ?? Number.MAX_SAFE_INTEGER;
-        return orderA - orderB;
-    });
-}
-```
-
-**Ejemplo completo:**
-
-```typescript
-@ModuleName('Products')
 export class Product extends BaseEntity {
-    @PropertyName('Basic Info', String)
+    @PropertyIndex(2)
+    @PropertyName('Name', String)
     name!: string;
     
-    @PropertyName('Images', Array)
-    @TabOrder(2)  // ← Segundo tab
-    images!: string[];
+    @PropertyIndex(1)
+    @PropertyName('ID', Number)
+    id!: number;
     
-    @PropertyName('Variants', Array)
-    @TabOrder(3)  // ← Tercer tab
-    variants!: ProductVariant[];
-    
-    @PropertyName('Reviews', Array)
-    @TabOrder(1)  // ← Primer tab
-    reviews!: Review[];
+    @PropertyIndex(3)
+    @PropertyName('Price', Number)
+    price!: number;
 }
 
-const product = new Product({ name: 'Widget' });
-
-// Sin orden
-console.log(product.getArrayKeys());
-// ['images', 'variants', 'reviews'] (orden de declaración)
-
-// Con orden
-console.log(product.getArrayKeysOrdered());
-// ['reviews', 'images', 'variants'] (ordenado por TabOrder)
+const product = new Product({});
+console.log(product.getKeys());
+// ['id', 'name', 'price'] (ordenado por PropertyIndex)
 ```
 
-**Uso en default_detailview.vue:**
+**Uso en vistas:**
 
 ```vue
-<!-- Línea 84 en src/views/default_detailview.vue -->
-<FormGroupComponent title="Listas">
-    <TabControllerComponent :tabs="getArrayListsTabs()">
-        <TabComponent v-for="(tab) in entity.getArrayKeysOrdered()">
-            <ArrayInputComponent 
-                :entity="entity"
-                :property-key="tab"
-                v-model="entity[tab]" 
-                :type-value="entityClass.getArrayPropertyType(tab)"
-            />
-        </TabComponent>
-    </TabControllerComponent>
-</FormGroupComponent>
+<template>
+    <!-- Renderizar todos los campos en orden -->
+    <div v-for="key in entity.getKeys()" :key="key">
+        <DynamicInputComponent
+            :entity="entity"
+            :property-key="key"
+            v-model="entity[key]"
+        />
+    </div>
+</template>
 ```
 
-**Comparación de métodos:**
-
-| Método | Retorna | Ordenado | Uso |
-|--------|---------|----------|-----|
-| `getKeys()` | Props no-array | Sí (`@PropertyIndex`) | Renderizar fields normales |
-| `getArrayKeys()` | Props array | No | Obtener lista de arrays |
-| `getArrayKeysOrdered()` | Props array | Sí (`@TabOrder`) | Renderizar tabs de arrays |
-
-**Ejemplo sin @TabOrder:**
-
-Si no se define `@TabOrder`, se mantiene el orden de declaración:
+#### getArrayKeys() - Instance
 
 ```typescript
-export class Product extends BaseEntity {
-    @PropertyName('Tags', Array)
-    tags!: string[];
-    
-    @PropertyName('Images', Array)
-    images!: string[];
-}
-
-// Sin TabOrder:
-product.getArrayKeysOrdered(); // ['tags', 'images'] (orden original)
+public getArrayKeys(): string[]
 ```
 
----
+Retorna array de propertyKeys que son tipo Array. Sin orden específico.
 
-### getFormattedValue()
+**Ubicación:** Línea 159
 
-```typescript
-public getFormattedValue(propertyKey: string): string
-```
-
-**Propósito:** Obtiene el valor de una propiedad formateado según `@DisplayFormat`.
-
-**Parámetros:**
-- `propertyKey: string` - Clave de la propiedad
-
-**Retorna:** Valor formateado como string
-
-**Ubicación en código:** Línea 377
-
-**Implementación:**
+**Ejemplo:**
 
 ```typescript
-public getFormattedValue(propertyKey: string): string {
-    const value = (this as any)[propertyKey];
-    const format = this.getDisplayFormat(propertyKey);
-    
-    if (!format) {
-        return value?.toString() ?? '';
-    }
-    
-    if (typeof format === 'function') {
-        return format(value);
-    }
-    
-    // Si es string, reemplazar {value} con el valor actual
-    return format.replace('{value}', value?.toString() ?? '');
-}
-```
-
-**Ejemplo con formato de string:**
-
-```typescript
-@ModuleName('Products')
 export class Product extends BaseEntity {
     @PropertyName('Name', String)
     name!: string;
     
-    @PropertyName('Price', Number)
-    @DisplayFormat('${value} USD')
-    price!: number;
+    @PropertyName('Tags', Array)
+    @ArrayOf(Tag)
+    tags!: Tag[];
     
-    @PropertyName('Discount', Number)
-    @DisplayFormat('{value}%')
-    discount!: number;
+    @PropertyName('Images', Array)
+   @ArrayOf(String)
+    images!: string[];
 }
 
-const product = new Product({ 
-    name: 'Widget', 
-    price: 100,
-    discount: 15
-});
-
-console.log(product.getFormattedValue('price'));    // '$100 USD'
-console.log(product.getFormattedValue('discount')); // '15%'
-console.log(product.getFormattedValue('name'));     // 'Widget' (sin formato)
+const product = new Product({});
+console.log(product.getArrayKeys());
+// ['tags', 'images']
 ```
 
-**Ejemplo con formato de función:**
-
-```typescript
-@ModuleName('Orders')
-export class Order extends BaseEntity {
-    @PropertyName('Total', Number)
-    @DisplayFormat((value: number) => {
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN'
-        }).format(value);
-    })
-    total!: number;
-    
-    @PropertyName('Created At', Date)
-    @DisplayFormat((value: Date) => {
-        return value ? value.toLocaleDateString('es-MX') : 'N/A';
-    })
-    createdAt!: Date;
-}
-
-const order = new Order({ 
-    total: 1500.50,
-    createdAt: new Date('2026-02-11')
-});
-
-console.log(order.getFormattedValue('total'));
-// '$1,500.50 MXN'
-
-console.log(order.getFormattedValue('createdAt'));
-// '11/02/2026'
-```
-
-**Uso en tablas:**
-
-```vue
-<template>
-    <table>
-        <tr v-for="entity in entities" :key="entity.id">
-            <td v-for="key in entity.getKeys()" :key="key">
-                {{ entity.getFormattedValue(key) }}
-            </td>
-        </tr>
-    </table>
-</template>
-```
-
-**Comportamiento sin @DisplayFormat:**
-
-Si la propiedad NO tiene `@DisplayFormat`, retorna el valor con `.toString()`:
-
-```typescript
-product.price = 100;
-console.log(product.getFormattedValue('price')); // '100'
-
-product.price = undefined;
-console.log(product.getFormattedValue('price')); // ''
-```
-
----
-
-### getArrayKeysOrdered()
+#### getArrayKeysOrdered() - Instance
 
 ```typescript
 public getArrayKeysOrdered(): string[]
 ```
 
-Retorna propiedades de tipo Array ordenadas por `@TabOrder`.
+Retorna propertyKeys de tipo Array ordenadas por @TabOrder.
 
-**Retorna:**
-```typescript
-['images', 'tags', 'variants']  // Ordenado por TabOrder
-```
+**Ubicación:** Línea 404
 
-**Ubicación en código:** Línea 416
+**Implementación:**
+
 ```typescript
 public getArrayKeysOrdered(): string[] {
     const arrayKeys = this.getArrayKeys();
     const tabOrders = this.getTabOrders();
     
-    // Ordenar por TabOrder si existe, sino por orden de declaración
     return arrayKeys.sort((a, b) => {
         const orderA = tabOrders[a] ?? Number.MAX_SAFE_INTEGER;
         const orderB = tabOrders[b] ?? Number.MAX_SAFE_INTEGER;
@@ -523,120 +260,138 @@ public getArrayKeysOrdered(): string[] {
 }
 ```
 
-**Uso típico:**
+**Ejemplo:**
+
 ```typescript
-// Renderizar tabs en orden específico
-const arrayKeys = entity.getArrayKeysOrdered();
-arrayKeys.forEach((key, index) => {
-    // Crear tab para cada array
-});
+export class Product extends BaseEntity {
+    @PropertyName('Images', Array)
+    @TabOrder(2)
+    images!: string[];
+    
+    @PropertyName('Reviews', Array)
+    @TabOrder(1)
+    reviews!: Review[];
+    
+    @PropertyName('Variants', Array)
+    @TabOrder(3)
+    variants!: ProductVariant[];
+}
+
+const product = new Product({});
+console.log(product.getArrayKeysOrdered());
+// ['reviews', 'images', 'variants'] (ordenado por TabOrder)
 ```
 
-### getPropertyIndices()
+**Uso en DetailView:**
+
+```vue
+<template>
+    <TabControllerComponent :tabs="getArrayListsTabs()">
+        <TabComponent v-for="tab in entity.getArrayKeysOrdered()">
+            <ArrayInputComponent 
+                :entity="entity"
+                :property-key="tab"
+                v-model="entity[tab]" 
+            />
+        </TabComponent>
+    </TabControllerComponent>
+</template>
+```
+
+#### getPropertyIndices() - Instance
 
 ```typescript
 public getPropertyIndices(): Record<string, number>
 ```
 
-Retorna el mapeo de propiedades a su `@PropertyIndex`.
+Retorna mapeo propertyKey → @PropertyIndex.
+
+**Ubicación:** Línea 385
 
 **Retorna:**
 ```typescript
 {
     'id': 1,
     'name': 2,
-    'price': 3,
-    'description': 4
+    'price': 3
 }
 ```
 
-**Ubicación en código:** Línea 117
-
-### getCSSClasses()
+#### getCSSClasses() - Instance
 
 ```typescript
 public getCSSClasses(): Record<string, string>
 ```
 
-Retorna las clases CSS definidas con `@CSSColumnClass`.
+Retorna mapeo propertyKey → clase CSS definida en @CssColumnClass.
 
-**Retorna:**
+**Ubicación:** Línea 393
+
+**Ejemplo:**
+
 ```typescript
-{
-    'id': 'table-length-small',
-    'name': 'table-length-medium',
-    'description': 'table-length-large'
+@CssColumnClass('col-md-6')
+name!: string;
+
+@CssColumnClass('col-md-3')
+price!: number;
+
+entity.getCSSClasses();
+// { name: 'col-md-6', price: 'col-md-3' }
+```
+
+#### getPropertyName() - Static
+
+```typescript
+public static getPropertyName(): string | undefined
+```
+
+Retorna el property name del campo marcado con @DefaultProperty.
+
+**Ubicación:** Línea 216
+
+**Ejemplo:**
+
+```typescript
+@DefaultProperty('name')
+export class Product extends BaseEntity {
+    @PropertyName('Name', String)
+    name!: string;
 }
+
+Product.getPropertyName(); // 'name'
 ```
 
-**Ubicación en código:** Línea 122  
-**Método estático:** Línea 199
+#### getPropertyNameByKey() - Static
 
-**Uso típico:**
 ```typescript
-// En componente de tabla
-<td :class="entity.getCSSClasses()[key]">
-    {{ entity[key] }}
-</td>
+public static getPropertyNameByKey(key: string): string
 ```
 
-### getPropertyName() [static]
+Retorna el nombre legible (display name) de una propiedad por su key.
+
+**Ubicación:** Línea 220
+
+**Ejemplo:**
 
 ```typescript
-public static getPropertyName<T extends BaseEntity>(
-    selector: (entity: T) => any
-): string | undefined
-```
+@PropertyName('Product Name', String)
+name!: string;
 
-Obtiene el nombre display de una propiedad usando un selector tipado (type-safe).
-
-**Uso:**
-```typescript
-// Forma type-safe de obtener nombre de propiedad
-const displayName = Product.getPropertyName((p) => p.name);
-// Retorna: 'Product Name'
-```
-
-**Ubicación en código:** Línea 185
-```typescript
-public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
-    const columns = this.getProperties();
-    const proxy = new Proxy({}, {
-        get(prop) {
-            return prop;
-        }
-    });
-    const propertyName = selector(proxy as T) as string;
-    return columns[propertyName];
-}
-```
-
-### getPropertyNameByKey() [static]
-
-```typescript
-public static getPropertyNameByKey(propertyKey: string): string | undefined
-```
-
-Obtiene el nombre display de una propiedad por su key.
-
-**Uso:**
-```typescript
 Product.getPropertyNameByKey('name'); // 'Product Name'
 ```
 
-**Ubicación en código:** Línea 194
+### Categoría 2: Métodos de Tipos
 
----
-
-## 2️⃣ MÉTODOS DE TIPOS
-
-### getPropertyTypes() [static]
+#### getPropertyTypes() - Static
 
 ```typescript
-public static getPropertyTypes(): Record<string, any>
+public static getPropertyTypes(): Record<string, Constructor>
 ```
 
-Retorna el mapeo de propiedades a sus tipos.
+Retorna mapeo propertyKey → Constructor (Number, String, Boolean, Date, Array, EntityClass).
+
+**Ubicación:** Línea 184
 
 **Retorna:**
 ```typescript
@@ -644,109 +399,85 @@ Retorna el mapeo de propiedades a sus tipos.
     'id': Number,
     'name': String,
     'price': Number,
-    'active': Boolean,
     'createdAt': Date,
-    'tags': Array
+    'tags': Array,
+    'category': Category  // EntityClass
 }
 ```
 
-**Ubicación en código:** Línea 147
-
-### getPropertyType() [static]
+#### getPropertyType() - Static
 
 ```typescript
-public static getPropertyType(propertyKey: string): any | undefined
+public static getPropertyType(propertyKey: string): Constructor | undefined
 ```
 
-Obtiene el tipo de una propiedad específica.
+Retorna el Constructor de una propiedad específica.
 
-**Uso:**
+**Ubicación:** Línea 188
+
+**Ejemplo:**
+
 ```typescript
 Product.getPropertyType('price'); // Number
-Product.getPropertyType('name');  // String
+Product.getPropertyType('name'); // String
+Product.getPropertyType('tags'); // Array
 ```
 
-**Ubicación en código:** Línea 152
-
-### getPropertyType() [instance]
+#### getPropertyType() - Instance
 
 ```typescript
-public getPropertyType(propertyKey: string): any | undefined
+public getPropertyType(propertyKey: string): Constructor | undefined
 ```
 
-Versión de instancia del método.
+Versión de instancia. Delega a versión static.
 
-**Uso:**
-```typescript
-product.getPropertyType('price'); // Number
-```
+**Ubicación:** Línea 192
 
-**Ubicación en código:** Línea 157
-
-### getArrayPropertyType() [static]
+#### getArrayPropertyType() - Static
 
 ```typescript
 public static getArrayPropertyType(propertyKey: string): typeof BaseEntity | undefined
 ```
 
-Obtiene el tipo de elementos dentro de un array (debe ser BaseEntity).
+Para propiedad tipo Array, retorna la clase del elemento (definida en @ArrayOf).
 
-**Retorna:** La clase del elemento o `undefined` si no es array o no es BaseEntity.
+**Ubicación:** Línea 161
 
-**Uso:**
+**Ejemplo:**
+
 ```typescript
 @PropertyName('Tags', Array)
-@ArrayOf(Tag)  // Tag extends BaseEntity
+@ArrayOf(Tag)
 tags!: Tag[];
 
 Product.getArrayPropertyType('tags'); // Tag (la clase)
 Product.getArrayPropertyType('name'); // undefined (no es array)
 ```
 
-**Ubicación en código:** Línea 161
-```typescript
-public static getArrayPropertyType(propertyKey: string): typeof BaseEntity | undefined {
-    const propertyType = this.getPropertyType(propertyKey);
-    
-    if (propertyType !== Array) {
-        return undefined;
-    }
-    
-    const proto = this.prototype as any;
-    const arrayTypes = proto[ARRAY_ELEMENT_TYPE_KEY] || {};
-    const entityType = arrayTypes[propertyKey];
-    
-    if (entityType && entityType.prototype instanceof BaseEntity) {
-        return entityType;
-    }
-    
-    return undefined;
-}
-```
-
-### getArrayPropertyType() [instance]
+#### getArrayPropertyType() - Instance
 
 ```typescript
 public getArrayPropertyType(propertyKey: string): typeof BaseEntity | undefined
 ```
 
-Versión de instancia del método.
+Versión de instancia.
 
-**Ubicación en código:** Línea 179
+**Ubicación:** Línea 179
 
----
+### Categoría 3: Métodos de Módulo
 
-## 3️⃣ MÉTODOS DE MÓDULO
-
-### getModuleName() [static]
+#### getModuleName() - Static
 
 ```typescript
 public static getModuleName(): string | undefined
 ```
 
-Retorna el nombre del módulo definido en `@ModuleName`.
+Retorna nombre del módulo definido en @ModuleName.
 
-**Uso:**
+**Ubicación:** Línea 204
+
+**Ejemplo:**
+
 ```typescript
 @ModuleName('Products')
 export class Product extends BaseEntity {}
@@ -754,17 +485,18 @@ export class Product extends BaseEntity {}
 Product.getModuleName(); // 'Products'
 ```
 
-**Ubicación en código:** Línea 204
-
-### getModulePermission() [static]
+#### getModulePermission() - Static
 
 ```typescript
 public static getModulePermission(): string | undefined
 ```
 
-Retorna el permiso requerido definido en `@ModulePermission`.
+Retorna permiso requerido definido en @ModulePermission.
 
-**Uso:**
+**Ubicación:** Línea 208
+
+**Ejemplo:**
+
 ```typescript
 @ModulePermission('admin.products')
 export class Product extends BaseEntity {}
@@ -772,17 +504,18 @@ export class Product extends BaseEntity {}
 Product.getModulePermission(); // 'admin.products'
 ```
 
-**Ubicación en código:** Línea 208
-
-### getModuleIcon() [static]
+#### getModuleIcon() - Static
 
 ```typescript
 public static getModuleIcon(): string | undefined
 ```
 
-Retorna el icono del módulo definido en `@ModuleIcon`.
+Retorna icono del módulo definido en @ModuleIcon.
 
-**Uso:**
+**Ubicación:** Línea 212
+
+**Ejemplo:**
+
 ```typescript
 @ModuleIcon(ICONS.BOX)
 export class Product extends BaseEntity {}
@@ -790,320 +523,206 @@ export class Product extends BaseEntity {}
 Product.getModuleIcon(); // 'mdi-box'
 ```
 
-**Ubicación en código:** Línea 212
-
-### getModuleListComponent() [static]
+#### getModuleListComponent() - Static
 
 ```typescript
 public static getModuleListComponent(): Component
 ```
 
-Retorna el componente custom para vista de lista o `DefaultListview` por defecto.
+Retorna componente Vue custom para vista de lista (definido en @ModuleListComponent) o default_listview si no existe.
 
-**Retorna:** Vue Component
+**Ubicación:** Línea 224
 
-**Ubicación en código:** Línea 216
-```typescript
-public static getModuleListComponent(): Component {
-    return (this as any)[MODULE_LIST_COMPONENT_KEY] || DefaultListview;
-}
-```
-
-### getModuleDetailComponent() [static]
+#### getModuleDetailComponent() - Static
 
 ```typescript
 public static getModuleDetailComponent(): Component
 ```
 
-Retorna el componente custom para vista de detalle o `DefaultDetailView` por defecto.
+Retorna componente Vue custom para vista de detalle (definido en @ModuleDetailComponent) o default_detailview si no existe.
 
-**Ubicación en código:** Línea 220
+**Ubicación:** Línea 232
 
-### getModuleDefaultComponent() [static]
+#### getModuleDefaultComponent() - Static
 
 ```typescript
 public static getModuleDefaultComponent(): Component
 ```
 
-Retorna el componente default cuando se navega al módulo, o `DefaultListview` por defecto.
+Retorna componente Vue definido en @ModuleDefaultComponent para determinar si vista inicial es List o Detail.
 
-**Ubicación en código:** Línea 224
+**Ubicación:** Línea 240
 
-### getModuleCustomComponents() [static]
+#### getCustomComponents() - Static
 
 ```typescript
-public static getModuleCustomComponents(): Map<string, Component> | null
+public static getCustomComponents(): Record<string, Component>
 ```
 
-Retorna el mapa de componentes custom definidos con `@ModuleCustomComponents`.
+Retorna mapeo de componentes custom definidos en @ModuleCustomComponents.
 
-**Retorna:**
+**Ubicación:** Línea 248
+
+**Ejemplo:**
+
 ```typescript
-Map {
-    'dashboard' => DashboardComponent,
-    'analytics' => AnalyticsComponent
-} 
-// o null si no hay custom components
+@ModuleCustomComponents({
+    'reports': ReportsView,
+    'analytics': AnalyticsView
+})
+export class Product extends BaseEntity {}
+
+Product.getCustomComponents();
+// { reports: ReportsView, analytics: AnalyticsView }
 ```
 
-**Ubicación en código:** Línea 228
+### Categoría 4: Métodos de Validación
 
----
-
-## 4️⃣ MÉTODOS DE VALIDACIÓN
-
-### isRequired()
+#### isRequired() - Instance
 
 ```typescript
 public isRequired(propertyKey: string): boolean
 ```
 
-Verifica si una propiedad es requerida según `@Required`.
+Retorna true si propiedad tiene @Required(true).
 
-**Implementación con soporte de funciones:**
-```typescript
-public isRequired(propertyKey: string): boolean {
-    const proto = (this.constructor as any).prototype;
-    const requiredFields: Record<string, RequiredMetadata> = proto[REQUIRED_KEY] || {};
-    const metadata = requiredFields[propertyKey];
-    
-    if (!metadata) {
-        return false;
-    }
-    
-    let value = metadata.validation !== undefined ? metadata.validation : metadata.condition;
-    
-    if (value === undefined) {
-        return false;
-    }
-    
-    return typeof value === 'function' ? value(this) : value;
-}
-```
+**Ubicación:** Línea 275
 
-**Uso:**
+**Ejemplo:**
+
 ```typescript
 @Required(true)
 name!: string;
 
 entity.isRequired('name'); // true
-
-// Required condicional
-@Required((entity) => entity.type === 'PRODUCT')
-description!: string;
-
-entity.type = 'PRODUCT';
-entity.isRequired('description'); // true
-
-entity.type = 'SERVICE';
-entity.isRequired('description'); // false
 ```
 
-**Ubicación en código:** Línea 286
-
-### requiredMessage()
+#### requiredMessage() - Instance
 
 ```typescript
-public requiredMessage(propertyKey: string): string | undefined
+public requiredMessage(propertyKey: string): string
 ```
 
-Retorna el mensaje de error para campo requerido.
+Retorna mensaje de error para campo requerido.
 
-**Uso:**
+**Ubicación:** Línea 285
+
+**Ejemplo:**
+
 ```typescript
-@Required(true, 'El nombre es obligatorio')
-name!: string;
-
-entity.requiredMessage('name'); // 'El nombre es obligatorio'
+entity.requiredMessage('name'); // "Name is required"
 ```
 
-**Ubicación en código:** Línea 304
-
-### isValidation()
+#### isValidation() - Instance
 
 ```typescript
 public isValidation(propertyKey: string): boolean
 ```
 
-Ejecuta la validación síncrona definida en `@Validation`.
+Ejecuta función de validación síncrona definida en @Validation.
 
-**Retorna:** `true` si válido, `false` si inválido.
+**Ubicación:** Línea 360
 
-**Uso:**
-```typescript
-@Validation((entity) => entity.price > 0, 'Price must be positive')
-price!: number;
-
-entity.price = 10;
-entity.isValidation('price'); // true
-
-entity.price = -5;
-entity.isValidation('price'); // false
-```
-
-**Ubicación en código:** Línea 312
-```typescript
-public isValidation(propertyKey: string): boolean {
-    const proto = (this.constructor as any).prototype;
-    const validationRules: Record<string, ValidationMetadata> = proto[VALIDATION_KEY] || {};
-    const rule = validationRules[propertyKey];
-    
-    if (!rule) {
-        return true;  // Si no hay regla, es válido
-    }
-    
-    return typeof rule.condition === 'function' ? rule.condition(this) : rule.condition;
-}
-```
-
-### validationMessage()
+#### validationMessage() - Instance
 
 ```typescript
-public validationMessage(propertyKey: string): string | undefined
+public validationMessage(propertyKey: string): string
 ```
 
-Retorna el mensaje de error de validación.
+Retorna mensaje de error de validación síncrona.
 
-**Ubicación en código:** Línea 324
+**Ubicación:** Línea 375
 
-### isAsyncValidation()
+#### isAsyncValidation() - Instance
 
 ```typescript
-public async isAsyncValidation(propertyKey: string): Promise<boolean>
+public isAsyncValidation(propertyKey: string): Promise<boolean>
 ```
 
-Ejecuta la validación asíncrona definida en `@AsyncValidation`.
+Ejecuta función de validación asíncrona definida en @AsyncValidation.
 
-**Retorna:** Promise que resuelve a `true` si válido, `false` si inválido.
+**Ubicación:** Línea 395
 
-**Uso:**
-```typescript
-@AsyncValidation(
-    async (entity) => {
-        const response = await checkEmailUnique(entity.email);
-        return response.isUnique;
-    },
-    'Email already exists'
-)
-email!: string;
-
-await entity.isAsyncValidation('email'); // true o false
-```
-
-**Ubicación en código:** Línea 330
-```typescript
-public async isAsyncValidation(propertyKey: string): Promise<boolean> {
-    const proto = (this.constructor as any).prototype;
-    const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
-    const rule = asyncValidationRules[propertyKey];
-    
-    if (!rule) {
-        return true;
-    }
-    
-    try {
-        return await rule.condition(this);
-    } catch (error) {
-        console.error(`Error in async validation for ${propertyKey}:`, error);
-        return false;
-    }
-}
-```
-
-### asyncValidationMessage()
+#### asyncValidationMessage() - Instance
 
 ```typescript
-public asyncValidationMessage(propertyKey: string): string | undefined
+public asyncValidationMessage(propertyKey: string): string
 ```
 
-Retorna el mensaje de error de validación asíncrona.
+Retorna mensaje de error de validación asíncrona.
 
-**Ubicación en código:** Línea 346
+**Ubicación:** Línea 410
 
-### isDisabled()
+#### isDisabled() - Instance
 
 ```typescript
 public isDisabled(propertyKey: string): boolean
 ```
 
-Verifica si una propiedad está deshabilitada según `@Disabled`.
+Retorna true si propiedad tiene @Disabled(true).
 
-**Uso:**
-```typescript
-@Disabled((entity) => entity.isLocked)
-name!: string;
+**Ubicación:** Línea 289
 
-entity.isLocked = true;
-entity.isDisabled('name'); // true
-```
-
-**Ubicación en código:** Línea 333
-```typescript
-public isDisabled(propertyKey: string): boolean {
-    const proto = (this.constructor as any).prototype;
-    const disabledFields: Record<string, DisabledMetadata> = proto[DISABLED_KEY] || {};
-    const metadata = disabledFields[propertyKey];
-    
-    if (!metadata) {
-        return false;
-    }
-    
-    return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
-}
-```
-
-### isReadOnly()
+#### isReadOnly() - Instance
 
 ```typescript
 public isReadOnly(propertyKey: string): boolean
 ```
 
-Verifica si una propiedad es de solo lectura según `@ReadOnly`.
+Retorna true si propiedad tiene @ReadOnly(true).
 
-**Ubicación en código:** Línea 438
+**Ubicación:** Línea 297
 
----
+#### getHelpText() - Instance
 
-## 5️⃣ MÉTODOS DE UI
+```typescript
+public getHelpText(propertyKey: string): string | undefined
+```
 
-### getViewGroups()
+Retorna texto de ayuda definido en @HelpText.
+
+**Ubicación:** Línea 345
+
+**Ejemplo:**
+
+```typescript
+@HelpText('Enter product name (max 100 chars)')
+name!: string;
+
+entity.getHelpText('name');
+// 'Enter product name (max 100 chars)'
+```
+
+### Categoría 5: Métodos de UI
+
+#### getViewGroups() - Instance
 
 ```typescript
 public getViewGroups(): Record<string, string>
 ```
 
-Retorna el mapeo de propiedades a grupos de vista (`@ViewGroup`).
+Retorna mapeo propertyKey → nombre de grupo visual (definido en @ViewGroup).
+
+**Ubicación:** Línea 273
 
 **Retorna:**
 ```typescript
 {
-    'name': 'Basic Information',
-    'price': 'Basic Information',
-    'description': 'Details',
-    'stock': 'Inventory'
+    'name': 'Basic Info',
+    'price': 'Basic Info',
+    'description': 'Details'
 }
 ```
 
-**Ubicación en código:** Línea 276
-
-**Uso típico:**
-```typescript
-const groups = entity.getViewGroups();
-const uniqueGroups = [...new Set(Object.values(groups))];
-// ['Basic Information', 'Details', 'Inventory']
-
-uniqueGroups.forEach(groupName => {
-    // Renderizar sección para cada grupo
-});
-```
-
-### getViewGroupRows()
+#### getViewGroupRows() - Instance
 
 ```typescript
 public getViewGroupRows(): Record<string, ViewGroupRow>
 ```
 
-Retorna el mapeo de propiedades a su configuración de fila (`@ViewGroupRowDecorator`).
+Retorna mapeo propertyKey → configuración de fila (definido en @ViewGroupRowDecorator).
+
+**Ubicación:** Línea 281
 
 **Retorna:**
 ```typescript
@@ -1114,15 +733,15 @@ Retorna el mapeo de propiedades a su configuración de fila (`@ViewGroupRowDecor
 }
 ```
 
-**Ubicación en código:** Línea 281
-
-### getStringType()
+#### getStringType() - Instance
 
 ```typescript
 public getStringType(): Record<string, StringType>
 ```
 
-Retorna el tipo de string para cada propiedad string (`@StringTypeDef`).
+Retorna mapeo propertyKey → StringType para propiedades string (definido en @StringTypeDef).
+
+**Ubicación:** Línea 261
 
 **Retorna:**
 ```typescript
@@ -1134,66 +753,37 @@ Retorna el tipo de string para cada propiedad string (`@StringTypeDef`).
 }
 ```
 
-**Ubicación en código:** Línea 261
-```typescript
-public getStringType(): Record<string, StringType> {
-    const proto = (this.constructor as any).prototype;
-    const stringTypes = proto[STRING_TYPE_KEY] || {};
-    const properties = (this.constructor as typeof BaseEntity).getProperties();
-    const result: Record<string, StringType> = {};
-    
-    for (const key of Object.keys(properties)) {
-        result[key] = stringTypes[key] ?? StringType.TEXT;  // Default: TEXT
-    }
-    
-    return result;
-}
-```
-
-### getDisplayFormat()
+#### getDisplayFormat() - Instance
 
 ```typescript
 public getDisplayFormat(propertyKey: string): DisplayFormatValue | undefined
 ```
 
-Retorna el formato de display definido en `@DisplayFormat`.
+Retorna formato de display definido en @DisplayFormat (string template o función formatter).
 
-**Retorna:** String template o función formatter.
+**Ubicación:** Línea 352
 
-**Uso:**
+**Ejemplo:**
+
 ```typescript
 @DisplayFormat('${value} USD')
 price!: number;
 
 entity.getDisplayFormat('price'); // '${value} USD'
-
-// O con función
-@DisplayFormat((value) => `$${value.toFixed(2)}`)
-price!: number;
-
-entity.getDisplayFormat('price'); // función
 ```
 
-**Ubicación en código:** Línea 352
-
-### getFormattedValue()
+#### getFormattedValue() - Instance
 
 ```typescript
 public getFormattedValue(propertyKey: string): string
 ```
 
-Retorna el valor de una propiedad aplicando su `@DisplayFormat`.
+Retorna valor de propiedad aplicando su @DisplayFormat.
 
-**Uso:**
-```typescript
-@DisplayFormat('${value} USD')
-price!: number;
+**Ubicación:** Línea 377
 
-entity.price = 99.99;
-entity.getFormattedValue('price'); // '99.99 USD'
-```
+**Implementación:**
 
-**Ubicación en código:** Línea 357
 ```typescript
 public getFormattedValue(propertyKey: string): string {
     const value = (this as any)[propertyKey];
@@ -1204,84 +794,96 @@ public getFormattedValue(propertyKey: string): string {
     }
     
     if (typeof format === 'function') {
-        return format(value);
+        return format(value, this);
     }
     
-    // Si es string, reemplazar {value} con el valor actual
-    return format.replace('{value}', value?.toString() ?? '');
+    // String template: '${value} USD'
+    return format.replace('${value}', value?.toString() ?? '');
 }
 ```
 
-### getHelpText()
+**Ejemplo:**
 
 ```typescript
-public getHelpText(propertyKey: string): string | undefined
+@DisplayFormat('${value} USD')
+price!: number;
+
+entity.price = 99.99;
+entity.getFormattedValue('price'); // '99.99 USD'
 ```
 
-Retorna el texto de ayuda definido en `@HelpText`.
+#### getMask() - Instance
 
-**Uso:**
 ```typescript
-@HelpText('Enter the product display name')
-name!: string;
-
-entity.getHelpText('name'); // 'Enter the product display name'
+public getMask(propertyKey: string): string | undefined
 ```
 
-**Ubicación en código:** Línea 375
+Retorna máscara de input definida en @Mask.
 
-### getTabOrders()
+**Ubicación:** Línea 340
+
+**Ejemplo:**
+
+```typescript
+@Mask('(###) ###-####')
+phone!: string;
+
+entity.getMask('phone'); // '(###) ###-####'
+```
+
+#### getTabOrders() - Instance
 
 ```typescript
 public getTabOrders(): Record<string, number>
 ```
 
-Retorna el orden de tabs definido en `@TabOrder`.
+Retorna mapeo propertyKey → orden de tab (definido en @TabOrder).
+
+**Ubicación:** Línea 399
 
 **Retorna:**
 ```typescript
 {
-    'images': 1,
-    'tags': 2,
-    'variants': 3
+    'items': 1,
+    'payments': 3,
+    'shipments': 2
 }
 ```
 
-**Ubicación en código:** Línea 380
-
-### isHideInDetailView()
+#### isHideInDetailView() - Instance
 
 ```typescript
 public isHideInDetailView(propertyKey: string): boolean
 ```
 
-Verifica si una propiedad debe ocultarse en vista de detalle (`@HideInDetailView`).
+Retorna true si propiedad tiene @HideInDetailView().
 
-**Ubicación en código:** Línea 453
+**Ubicación:** Línea 305
 
-### isHideInListView()
+#### isHideInListView() - Instance
 
 ```typescript
 public isHideInListView(propertyKey: string): boolean
 ```
 
-Verifica si una propiedad debe ocultarse en vista de lista (`@HideInListView`).
+Retorna true si propiedad tiene @HideInListView().
 
-**Ubicación en código:** Línea 458
+**Ubicación:** Línea 313
 
----
+### Categoría 6: Métodos de API
 
-## 6️⃣ MÉTODOS DE API
-
-### getApiEndpoint() [static]
+#### getApiEndpoint() - Static
 
 ```typescript
 public static getApiEndpoint(): string | undefined
 ```
 
-Retorna el endpoint de API definido en `@ApiEndpoint`.
+Retorna endpoint API definido en @ApiEndpoint.
 
-**Uso:**
+**Ubicación:** Línea 256
+
+**Ejemplo:**
+
 ```typescript
 @ApiEndpoint('/api/products')
 export class Product extends BaseEntity {}
@@ -1289,141 +891,279 @@ export class Product extends BaseEntity {}
 Product.getApiEndpoint(); // '/api/products'
 ```
 
-**Ubicación en código:** Línea 430
-
-### getApiEndpoint() [instance]
+#### getApiEndpoint() - Instance
 
 ```typescript
 public getApiEndpoint(): string | undefined
 ```
 
-Versión de instancia del método.
+Versión de instancia.
 
-**Ubicación en código:** Línea 434
+**Ubicación:** Línea 257
 
-### getApiMethods() [static]
+#### getApiMethods() - Static
 
 ```typescript
 public static getApiMethods(): HttpMethod[] | undefined
 ```
 
-Retorna los métodos HTTP permitidos definidos en `@ApiMethods`.
+Retorna array de métodos HTTP permitidos definidos en @ApiMethods.
 
-**Retorna:**
+**Ubicación:** Línea 252
+
+**Ejemplo:**
+
 ```typescript
-['GET', 'POST', 'PUT', 'DELETE']
+@ApiMethods(['GET', 'POST', 'PUT'])
+export class Product extends BaseEntity {}
+
+Product.getApiMethods(); // ['GET', 'POST', 'PUT']
 ```
 
-**Ubicación en código:** Línea 448
-
-### getApiMethods() [instance]
+#### getApiMethods() - Instance
 
 ```typescript
 public getApiMethods(): HttpMethod[] | undefined
 ```
 
-Versión de instancia del método.
+Versión de instancia.
 
-**Ubicación en código:** Línea 452
+**Ubicación:** Línea 253
 
-### isApiMethodAllowed() [static]
+#### isApiMethodAllowed() - Static
 
 ```typescript
 public static isApiMethodAllowed(method: HttpMethod): boolean
 ```
 
-Verifica si un método HTTP específico está permitido.
+Valida si método HTTP específico está permitido en @ApiMethods.
 
-**Uso:**
+**Ubicación:** Línea 254
+
+**Ejemplo:**
+
 ```typescript
 @ApiMethods(['GET', 'POST'])
 export class Product extends BaseEntity {}
 
-Product.isApiMethodAllowed('GET');    // true
+Product.isApiMethodAllowed('POST'); // true
 Product.isApiMethodAllowed('DELETE'); // false
 ```
 
-**Ubicación en código:** Línea 456
-```typescript
-public static isApiMethodAllowed(method: HttpMethod): boolean {
-    const allowedMethods = this.getApiMethods();
-    if (!allowedMethods) {
-        return true; // Si no se especifica, se permiten todos
-    }
-    return allowedMethods.includes(method);
-}
-```
-
-### isApiMethodAllowed() [instance]
+#### isApiMethodAllowed() - Instance
 
 ```typescript
 public isApiMethodAllowed(method: HttpMethod): boolean
 ```
 
-Versión de instancia del método.
+Versión de instancia.
 
-**Ubicación en código:** Línea 464
+**Ubicación:** Línea 255
 
----
+## 5. Flujo de Funcionamiento
 
-## 📊 Resumen de Métodos por Categoría
+### Flujo de Lectura de Metadatos
 
-### Propiedades (10 métodos)
-- getAllPropertiesNonFilter()
-- getProperties()
-- getKeys()
-- getArrayKeys()
-- getArrayKeysOrdered()
-- getPropertyIndices()
-- getCSSClasses()
-- getPropertyName()
-- getPropertyNameByKey()
+```
+Decorador aplica en clase
+        ↓
+Escribe metadata en prototype[METADATA_KEY]
+        ↓
+Método de acceso invocado
+        ↓
+Lee prototype[METADATA_KEY]
+        ↓
+Retorna valor o undefined
+```
 
-### Tipos (5 métodos)
-- getPropertyTypes()
-- getPropertyType() [static + instance]
-- getArrayPropertyType() [static + instance]
+### Flujo de Renderizado de Formulario
 
-### Módulo (7 métodos)
-- getModuleName()
-- getModulePermission()
-- getModuleIcon()
-- getModuleListComponent()
-- getModuleDetailComponent()
-- getModuleDefaultComponent()
-- getModuleCustomComponents()
+```
+Component necesita renderizar entidad
+        ↓
+Llama entity.getKeys()
+        ↓
+getKeys() lee PROPERTY_NAME_KEY y PROPERTY_INDEX_KEY
+        ↓
+Ordena keys por PropertyIndex
+        ↓
+Retorna array ordenado
+        ↓
+Component itera sobre keys
+        ↓
+Para cada key, llama getPropertyType(key)
+        ↓
+Selecciona input component apropiado
+        ↓
+Renderiza field con metadata de validación/UI
+```
 
-### Validación (8 métodos)
-- isRequired()
-- requiredMessage()
-- isValidation()
-- validationMessage()
-- isAsyncValidation()
-- asyncValidationMessage()
-- isDisabled()
-- isReadOnly()
+### Flujo de Validación de API Method
 
-### UI (10 métodos)
-- getViewGroups()
-- getViewGroupRows()
-- getStringType()
-- getDisplayFormat()
-- getFormattedValue()
-- getHelpText()
-- getTabOrders()
-- isHideInDetailView()
-- isHideInListView()
+```
+Usuario llama entity.save()
+        ↓
+save() determina método HTTP (POST o PUT)
+        ↓
+save() llama validateApiMethod(method)
+        ↓
+validateApiMethod() llama isApiMethodAllowed(method)
+        ↓
+isApiMethodAllowed() lee API_METHODS_KEY
+        ↓
+Verifica si method está en array
+        ↓
+Retorna true/false
+        ↓
+Si false, save() aborta con error
+```
 
-### API (6 métodos)
-- getApiEndpoint() [static + instance]
-- getApiMethods() [static + instance]
-- isApiMethodAllowed() [static + instance]
+### Flujo de Formateo de Valor
 
-**Total: 46 métodos de acceso a metadatos**
+```
+Component necesita mostrar valor formateado
+        ↓
+Llama entity.getFormattedValue('price')
+        ↓
+getFormattedValue() llama getDisplayFormat('price')
+        ↓
+getDisplayFormat() lee DISPLAY_FORMAT_KEY
+        ↓
+Si es función, ejecuta format(value, entity)
+        ↓
+Si es string template, reemplaza ${value}
+        ↓
+Retorna string formateado
+        ↓
+Component muestra en UI
+```
 
----
+## 6. Reglas Obligatorias
 
-## 🎓 Ejemplo Completo de Uso
+**Regla 1:** Métodos de acceso DEBEN ser read-only. NUNCA modificar metadata retornada ni prototype.
+
+**Regla 2:** Métodos DEBEN retornar undefined (no null) si metadata no existe. Null significa valor explícitamente definido como null.
+
+**Regla 3:** Métodos static DEBEN operar sobre this.prototype. Métodos instance DEBEN operar sobre this.constructor.prototype. No mezclar.
+
+**Regla 4:** getProperties() DEBE excluir arrays. getAllPropertiesNonFilter() DEBE incluir arrays. Esta distinción es arquitectural.
+
+**Regla 5:** getKeys() DEBE retornar array ordenado por @PropertyIndex. Orden no definido si PropertyIndex falta para algunas propiedades.
+
+**Regla 6:** getArrayKeysOrdered() DEBE retornar array ordenado por @TabOrder. Sin TabOrder, mantener orden de declaración.
+
+**Regla 7:** getPropertyType() DEBE retornar Constructor exacto, no string ni nombre. Retornar Number, no "Number".
+
+**Regla 8:** getArrayPropertyType() DEBE retornar clase BaseEntity del elemento, no Array constructor. Para tags: Tag[], retornar Tag, no Array.
+
+**Regla 9:** isApiMethodAllowed() DEBE validar contra @ApiMethods antes de permitir HTTP request. No asumir todos los métodos permitidos.
+
+**Regla 10:** getFormattedValue() DEBE aplicar @DisplayFormat si existe. NO aplicar formato default si DisplayFormat no definido.
+
+**Regla 11:** Métodos que retornan Record<string, T> DEBEN retornar {} (objeto vacío) si no hay metadata, no undefined.
+
+**Regla 12:** Métodos que retornan array DEBEN retornar [] (array vacío) si no hay metadata, no undefined.
+
+## 7. Prohibiciones
+
+**Prohibido:** Modificar valores retornados por métodos de acceso. Son read-only.
+
+**Prohibido:** Escribir en prototype desde métodos de acceso. Solo decoradores escriben metadata.
+
+**Prohibido:** Cachear resultados de métodos de acceso. Cada llamada debe hacer lookup fresco en prototype.
+
+**Prohibido:** Hacer fallback a valores default si metadata no existe (excepto casos explícitos como getStringType que retorna StringType.TEXT).
+
+**Prohibido:** Lanzar excepciones si metadata no existe. Retornar undefined o valor vacío apropiado.
+
+**Prohibido:** Hacer transformación o procesamiento de datos más allá de lectura simple. Métodos son getters puros.
+
+**Prohibido:** Llamar métodos static desde instancia usando this.constructor sin type casting correcto.
+
+**Prohibido:** Asumir que todos los decoradores están aplicados. Siempre verificar undefined antes de usar valor.
+
+**Prohibido:** Usar getProperties() cuando necesitas arrays. Usar getAllPropertiesNonFilter() o combinar getProperties() + getArrayKeys().
+
+**Prohibido:** Usar getKeys() para arrays. Usar getArrayKeys() o getArrayKeysOrdered().
+
+**Prohibido:** Comparar tipo con string. Usar === con Constructor: `type === Number`, no `type === 'Number'`.
+
+**Prohibido:** Hacer override de métodos de acceso en subclases sin llamar super. Rompería flujo de lectura de metadata.
+
+## 8. Dependencias
+
+**Metadata Keys (Constants):**
+- PROPERTY_NAME_KEY: Para nombres de propiedades
+- PROPERTY_TYPE_KEY: Para tipos de propiedades
+- PROPERTY_INDEX_KEY: Para orden de propiedades
+- ARRAY_ELEMENT_TYPE_KEY: Para tipos de elementos array
+- TAB_ORDER_KEY: Para orden de tabs
+- VIEW_GROUP_KEY: Para grupos visuales
+- VIEW_GROUP_ROW_KEY: Para configuración de filas
+- STRING_TYPE_KEY: Para tipos de string
+- DISPLAY_FORMAT_KEY: Para formatos de display
+- HELP_TEXT_KEY: Para textos de ayuda
+- MASK_KEY: Para máscaras de input
+- REQUIRED_KEY: Para campos requeridos
+- VALIDATION_KEY: Para validaciones síncronas
+- ASYNC_VALIDATION_KEY: Para validaciones asíncronas
+- DISABLED_KEY: Para campos deshabilitados
+- READONLY_KEY: Para campos read-only
+- HIDE_IN_DETAIL_VIEW_KEY: Para ocultar en DetailView
+- HIDE_IN_LIST_VIEW_KEY: Para ocultar en ListView
+- CSS_COLUMN_CLASS_KEY: Para clases CSS
+- API_ENDPOINT_KEY: Para endpoint API
+- API_METHODS_KEY: Para métodos HTTP permitidos
+- MODULE_NAME_KEY: Para nombre de módulo
+- MODULE_ICON_KEY: Para icono de módulo
+- MODULE_PERMISSION_KEY: Para permisos de módulo
+- DEFAULT_PROPERTY_KEY: Para propiedad default
+- MODULE_LIST_COMPONENT_KEY: Para componente de lista custom
+- MODULE_DETAIL_COMPONENT_KEY: Para componente de detalle custom
+- MODULE_DEFAULT_COMPONENT_KEY: Para componente default
+- MODULE_CUSTOM_COMPONENTS_KEY: Para componentes custom adicionales
+
+**TypeScript:**
+- Record<K, V>: Para mapeos key-value
+- Constructor: Type alias para new(...args: any[]) => any
+- typeof BaseEntity: Para referencias a clases entity
+- Component: Type de Vue para componentes
+
+**JavaScript Prototype Chain:**
+- this.prototype: Acceso a prototype en métodos static
+- this.constructor.prototype: Acceso a prototype en métodos instance
+- Prototype lookup automático por JavaScript runtime
+
+**Decoradores:**
+- Todos los decoradores del sistema que escriben metadata
+- Cada decorador documenta qué metadata key usa
+
+## 9. Relaciones
+
+**Relación con Decoradores (N:1):**
+Múltiples decoradores escriben metadata → Cada método de acceso lee metadata de decorador específico. Relación de lectura unidireccional.
+
+**Relación con Components (1:N):**
+Métodos de acceso son consumidos por múltiples componentes UI (FormGroupComponent, DynamicInputComponent, TabControllerComponent, etc) para auto-configuración.
+
+**Relación con CRUD Operations (N:1):**
+save/update/delete usan métodos de validación (isApiMethodAllowed, validatePersistenceConfiguration) antes de ejecutar HTTP requests.
+
+**Relación con Validation System (N:1):**
+validateInputs() usa métodos isRequired, isValidation, isAsyncValidation para ejecutar validaciones configuradas por decoradores.
+
+**Relación con Views (1:N):**
+default_listview y default_detailview usan extensivamente métodos de acceso para renderizar automáticamente entidades sin código custom.
+
+**Relación con Application Singleton (N:1):**
+Application.router usa getModuleName, getModuleIcon para construir rutas y menús dinámicamente.
+
+**Relación con BaseEntity Core (1:1):**
+Métodos de acceso son parte integral de BaseEntity, no pueden funcionar independientemente. Dependen de prototype configurado por decoradores.
+
+## 10. Notas de Implementación
+
+### Ejemplo Completo de Uso
 
 ```typescript
 @ModuleName('Products')
@@ -1457,42 +1197,188 @@ export class Product extends BaseEntity {
     tags!: Tag[];
 }
 
-// Usar métodos de acceso
-const product = new Product({ id: 1, name: 'Widget', price: 99.99 });
+// Crear instancia
+const product = new Product({ 
+    id: 1, 
+    name: 'Widget', 
+    price: 99.99,
+    tags: [new Tag({ name: 'electronics' })]
+});
 
-// Propiedades
-console.log(product.getKeys()); // ['id', 'name', 'price']
-console.log(product.getArrayKeys()); // ['tags']
+// === MÉTODOS DE PROPIEDADES ===
+console.log(product.getKeys());
+// ['id', 'name', 'price'] (ordenado por PropertyIndex)
 
-// Módulo
+console.log(product.getArrayKeys());
+// ['tags']
+
+console.log(product.getArrayKeysOrdered());
+// ['tags'] (si hubiera múltiples, ordenados por TabOrder)
+
+console.log(Product.getAllPropertiesNonFilter());
+// { id: 'ID', name: 'Name', price: 'Price', tags: 'Tags' }
+
+console.log(Product.getProperties());
+// { id: 'ID', name: 'Name', price: 'Price' } (sin tags)
+
+// === MÉTODOS DE TIPOS ===
+console.log(product.getPropertyType('price')); // Number
+console.log(product.getPropertyType('name')); // String
+console.log(product.getArrayPropertyType('tags')); // Tag (la clase)
+
+console.log(Product.getPropertyTypes());
+// { id: Number, name: String, price: Number, tags: Array }
+
+// === MÉTODOS DE MÓDULO ===
 console.log(Product.getModuleName()); // 'Products'
+console.log(Product.getModuleIcon()); // icono configurado
 console.log(Product.getApiEndpoint()); // '/api/products'
+console.log(Product.getApiMethods()); // ['GET', 'POST', 'PUT']
 
-// Validación
+// === MÉTODOS DE VALIDACIÓN ===
 console.log(product.isRequired('name')); // true
+console.log(product.isRequired('price')); // false
 console.log(product.getHelpText('name')); // 'Enter product name'
 
-// UI
-console.log(product.getViewGroups()); // { name: 'Basic Info', price: 'Basic Info' }
+// === MÉTODOS DE UI ===
+console.log(product.getViewGroups());
+// { name: 'Basic Info', price: 'Basic Info' }
+
 console.log(product.getFormattedValue('price')); // '$99.99'
 console.log(product.isHideInDetailView('id')); // true
+console.log(product.isHideInListView('id')); // false
 
-// Tipos
-console.log(product.getPropertyType('price')); // Number
-console.log(product.getArrayPropertyType('tags')); // Tag
+// === MÉTODOS DE API ===
+console.log(Product.isApiMethodAllowed('POST')); // true
+console.log(Product.isApiMethodAllowed('DELETE')); // false
 ```
 
----
+### Patrón de Uso en Components
 
-## 🔗 Referencias
+```vue
+<template>
+    <FormGroupComponent 
+        v-for="(group, groupName) in groupedFields" 
+        :key="groupName"
+        :title="groupName"
+    >
+        <DynamicInputComponent
+            v-for="key in group"
+            :key="key"
+            :entity="entity"
+            :property-key="key"
+            :property-name="entity.constructor.getPropertyNameByKey(key)"
+            :property-type="entity.getPropertyType(key)"
+            :required="entity.isRequired(key)"
+            :disabled="entity.isDisabled(key)"
+            :readonly="entity.isReadOnly(key)"
+            :help-text="entity.getHelpText(key)"
+            :mask="entity.getMask(key)"
+            :css-class="entity.getCSSClasses()[key]"
+            v-model="entity[key]"
+        />
+    </FormGroupComponent>
+</template>
 
-- **BaseEntity Core:** `base-entity-core.md`
-- **Decoradores:** `../../layers/01-decorators/`
-- **CRUD Operations:** `crud-operations.md`
-- **Validation System:** `validation-system.md`
+<script setup>
+import { computed } from 'vue';
 
----
+const props = defineProps(['entity']);
 
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo
+const groupedFields = computed(() => {
+    const keys = props.entity.getKeys();
+    const groups = props.entity.getViewGroups();
+    const result = {};
+    
+    for (const key of keys) {
+        const groupName = groups[key] || 'Default';
+        if (!result[groupName]) {
+            result[groupName] = [];
+        }
+        result[groupName].push(key);
+    }
+    
+    return result;
+});
+</script>
+```
+
+### Performance Considerations
+
+```typescript
+// ❌ MALO: Llamar en loop
+for (let i = 0; i < 1000; i++) {
+    const keys = entity.getKeys(); // 1000 prototype lookups
+}
+
+// ✅ BUENO: Cachear fuera de loop
+const keys = entity.getKeys(); // 1 prototype lookup
+for (let i = 0; i < 1000; i++) {
+    // Usar keys
+}
+
+// ❌ MALO: Múltiples llamadas en computed
+const computed = computed(() => {
+    const keys = entity.getKeys();
+    const types = entity.getPropertyTypes();
+    const groups = entity.getViewGroups();
+    // ...
+});
+
+// ✅ BUENO: Una sola llamada en computed, destructure
+const computed = computed(() => {
+    const { keys, types, groups } = {
+        keys: entity.getKeys(),
+        types: entity.getPropertyTypes(),
+        groups: entity.getViewGroups()
+    };
+    // ...
+});
+```
+
+### Patrón de Herencia
+
+```typescript
+class BaseAuditEntity extends BaseEntity {
+    @PropertyName('Created At', Date)
+    @ReadOnly(true)
+    createdAt!: Date;
+}
+
+class Product extends BaseAuditEntity {
+    @PropertyName('Name', String)
+    name!: string;
+}
+
+// Herencia funciona automáticamente
+const product = new Product({});
+console.log(product.getKeys());
+// ['createdAt', 'name'] (incluye campo de BaseAuditEntity)
+
+console.log(product.isReadOnly('createdAt')); // true (heredado)
+```
+
+## 11. Referencias Cruzadas
+
+**Documentos relacionados:**
+- base-entity-core.md: Núcleo de BaseEntity con arquitectura general
+- crud-operations.md: Uso de métodos API (getApiEndpoint, isApiMethodAllowed)
+- validation-system.md: Uso de métodos de validación (isRequired, isValidation, etc)
+- ../01-decorators/: Documentación de cada decorador que escribe metadata
+- ../../02-FLOW-ARCHITECTURE.md: Flujos donde se usan métodos de acceso
+- ../../04-components/DefaultViews.md: Componentes que consumen metadata
+
+**Archivos fuente:**
+- src/entities/base_entitiy.ts: Implementación de todos los métodos de acceso
+- src/views/default_listview.vue: Uso de getKeys, getPropertyTypes para renderizado
+- src/views/default_detailview.vue: Uso de getArrayKeysOrdered, getViewGroups para tabs
+- src/components/Form/DynamicInputComponent.vue: Uso de getPropertyType para selección de input
+
+**Líneas relevantes en código:**
+- Línea 127-220: Métodos de Propiedades
+- Línea 184-192: Métodos de Tipos
+- Línea 204-248: Métodos de Módulo
+- Línea 275-410: Métodos de Validación y UI
+- Línea 252-257: Métodos de API
+
+**Última actualización:** 11 de Febrero, 2026

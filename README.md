@@ -1,38 +1,136 @@
-# saas_vue
+# Framework SaaS Vue - Configuración de Proyecto
 
-This template should help get you started developing with Vue 3 in Vite.
+## 1. Propósito
 
-## Recommended IDE Setup
+Proporcionar instrucciones de configuración, instalación y ejecución del Framework SaaS Vue construido sobre Vue 3 y Vite.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 2. Alcance
 
-## Recommended Browser Setup
+Este documento cubre:
+- Instalación de dependencias del proyecto
+- Configuración del entorno de desarrollo
+- Herramientas recomendadas para desarrollo
+- Comandos de compilación y ejecución
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+## 3. Definiciones Clave
 
-## Customize configuration
+**Vue 3:** Framework progresivo de JavaScript para construcción de interfaces de usuario.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+**Vite:** Herramienta de construcción y servidor de desarrollo para aplicaciones web modernas.
 
-## Project Setup
+**Framework SaaS Vue:** Framework meta-programático de generación automática de interfaces CRUD basado en decoradores TypeScript.
 
+## 4. Descripción Técnica
+
+El proyecto utiliza:
+- Vue 3 como framework de presentación
+- Vite como herramienta de construcción
+- TypeScript para tipado estático
+- Sistema de metadatos mediante decoradores
+
+## 5. Flujo de Funcionamiento
+
+Flujo de desarrollo:
+1. Instalación de dependencias mediante npm
+2. Ejecución de servidor de desarrollo con hot-reload
+3. Desarrollo de entidades y decoradores
+4. Compilación para producción
+
+## 6. Reglas Obligatorias
+
+### 6.1 Entorno de Desarrollo Obligatorio
+
+IDE requerido: Visual Studio Code
+
+Extensiones obligatorias:
+- Vue (Official) - Soporte para Vue 3 y TypeScript
+- Vetur debe estar deshabilitado para evitar conflictos
+
+### 6.2 Herramientas de Navegador Requeridas
+
+Navegadores Chromium (Chrome, Edge, Brave):
+- Vue.js devtools instalado
+- Custom Object Formatter habilitado en DevTools
+
+Firefox:
+- Vue.js devtools para Firefox instalado
+- Custom Object Formatter habilitado en DevTools
+
+### 6.3 Comandos de Proyecto
+
+Instalación de dependencias:
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
-
+Ejecución en modo desarrollo:
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
-
+Construcción para producción:
 ```sh
 npm run build
 ```
+
+## 7. Prohibiciones
+
+Prohibido:
+- Usar Vetur como extensión de VS Code (conflicto con Vue Official)
+- Ejecutar proyecto sin DevTools de Vue instaladas
+- Omitir instalación de dependencias antes de ejecutar
+
+## 8. Dependencias
+
+Dependencias externas:
+- Node.js y npm
+- Visual Studio Code
+- Navegador web moderno (Chromium o Firefox)
+
+Dependencias de proyecto:
+- Definidas en package.json
+- Instaladas mediante npm install
+
+## 9. Relaciones
+
+Este documento se relaciona con:
+- [copilot/00-CONTRACT.md](copilot/00-CONTRACT.md) - Contrato de desarrollo
+- [copilot/03-QUICK-START.md](copilot/03-QUICK-START.md) - Guía de inicio rápido
+- [copilot/README.md](copilot/README.md) - Índice de documentación
+- package.json - Configuración de dependencias
+- vite.config.js - Configuración de Vite
+
+## 10. Notas de Implementación
+
+### 10.1 Configuración de Vite
+
+Configuración personalizable mediante Vite Configuration Reference:
+https://vite.dev/config/
+
+### 10.2 Enlaces de Herramientas
+
+Vue.js DevTools - Chromium:
+https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd
+
+Custom Object Formatter - Chrome:
+http://bit.ly/object-formatters
+
+Vue.js DevTools - Firefox:
+https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/
+
+Custom Object Formatter - Firefox:
+https://fxdx.dev/firefox-devtools-custom-object-formatters/
+
+### 10.3 Extensión VS Code
+
+Vue Official Extension:
+https://marketplace.visualstudio.com/items?itemName=Vue.volar
+
+## 11. Referencias Cruzadas
+
+Documentación del framework:
+- [copilot/00-CONTRACT.md](copilot/00-CONTRACT.md) - Principios contractuales
+- [copilot/01-FRAMEWORK-OVERVIEW.md](copilot/01-FRAMEWORK-OVERVIEW.md) - Visión general
+- [copilot/02-FLOW-ARCHITECTURE.md](copilot/02-FLOW-ARCHITECTURE.md) - Arquitectura
+- [copilot/03-QUICK-START.md](copilot/03-QUICK-START.md) - Inicio rápido
+- [copilot/README.md](copilot/README.md) - Índice completo de documentación

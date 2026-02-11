@@ -1,500 +1,197 @@
-# ⚙️ BaseEntity: CRUD Operations
+# BaseEntity: CRUD Operations
 
-**Referencias:**
-- `base-entity-core.md` - Núcleo de BaseEntity
-- `validation-system.md` - Sistema de validación
-- `lifecycle-hooks.md` - Hooks del ciclo de vida
-- `../01-decorators/api-endpoint-decorator.md` - ApiEndpoint
-- `../01-decorators/persistent-decorator.md` - Persistent
+## 1. Propósito
 
----
+BaseEntity implementa el patrón Active Record proporcionando métodos CRUD completos para interacción automática con backend REST. Toda entidad que hereda BaseEntity obtiene capacidades de persistencia sin necesidad de implementar lógica HTTP, permitiendo operaciones de creación (POST), lectura (GET), actualización (PUT) y eliminación (DELETE) mediante métodos de instancia y estáticos. El sistema integra validación automática pre-persistencia, hooks de ciclo de vida, serialización inteligente de objetos y manejo estandarizado de respuestas.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/entities/base_entitiy.ts`
+**Responsabilidades cubiertas:**
+- Método save() que discrimina automáticamente entre POST (crear) y PUT (actualizar)
+- Método update() como alias de save() con soporte para actualización parcial
+- Método delete() para eliminación de registros
+- Método estático getElementList() para obtención de colecciones con filtros opcionales
+- Método estático getElement() para obtención de registro individual por ID
+- Serialización vía toDictionary() con manejo de relaciones y tipos complejos
+- Deserialización vía fromDictionary() con transformación de tipos
+- Validación automática pre-guardado (required, sync, async)
+- Emisión de eventos al eventBus tras operaciones exitosas
+- Manejo de errores HTTP con feedback mediante toast
 
----
+**Límites del alcance:**
+- No implementa lógica de autenticación (delegada a Application.axiosInstance)
+- No maneja paginación a nivel de entidad (responsabilidad del backend)
+- No implementa caché (puede añadirse en capa de aplicación)
+- No gestiona transacciones multi-registro (cada operación es atómica)
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-BaseEntity proporciona **métodos CRUD completos** (Create, Read, Update, Delete) para interactuar con el backend de forma automática. Cada entidad que extiende BaseEntity hereda estos métodos sin necesidad de implementación adicional.
+**Active Record Pattern:** Patrón de diseño donde objetos de dominio encapsulan tanto datos como comportamiento de persistencia. La entidad misma sabe cómo guardarse, actualizarse y eliminarse.
 
-**Patrón:** Active Record Pattern  
-**Protocolo:** REST API (GET, POST, PUT, DELETE)
+**toDictionary():** Método de serialización que convierte instancia BaseEntity a objeto plano Record<string, any>, manejando relaciones (extrae solo IDs), arrays (serializa recursivamente) y tipos primitivos.
 
----
+**fromDictionary():** Método estático de deserialización que construye instancia BaseEntity desde objeto plano, aplicando transformaciones de tipo (ISO strings a Date, etc.).
 
-## 📚 Métodos CRUD
+**Primary Key Value:** Valor de la propiedad marcada con @PrimaryProperty, utilizado para discriminar between creación (null/undefined) y actualización (valor presente).
 
-### 1. save() - Crear o Actualizar
+**Endpoint:** URL base configurada mediante @ApiEndpoint desde la cual se construyen URLs de operaciones CRUD.
 
-#### Firma
+**Application.axiosInstance:** Instancia Axios central del singleton Application, configurada con interceptores de autenticación y headers globales.
 
-```typescript
-public async save(): Promise<this>
-```
+**EventBus emission:** Sistema de eventos reactivo que notifica operaciones CRUD exitosas ('saved', 'deleted', 'list-fetched', 'element-fetched') para permitir reactividad cross-componente.
 
-#### Descripción
+## 4. Descripción Técnica
 
-Guarda la entidad en el backend. Automáticamente determina si es una **creación** (POST) o **actualización** (PUT) basándose en si el ID existe.
+### 4.1. Método save()
 
-#### Comportamiento
-
-```typescript
-// Si NO tiene ID → POST (crear)
-const product = new Product({ name: 'Laptop', price: 1299 });
-await product.save();
-// → POST /api/products
-// Body: { name: "Laptop", price: 1299 }
-// Response: { id: 42, name: "Laptop", price: 1299, ... }
-
-// Si tiene ID → PUT (actualizar)
-product.price = 1199;
-await product.save();
-// → PUT /api/products/42
-// Body: { id: 42, name: "Laptop", price: 1199 }
-// Response: { id: 42, name: "Laptop", price: 1199, ... }
-```
-
-#### Flujo Completo
-
-```
-1. Usuario llama entity.save()
-        ↓
-2. Ejecuta beforeSave() hook
-        ↓
-3. Valida campos requeridos
-        ↓
-4. Valida reglas de validación (sync)
-        ↓
-5. Valida reglas async
-        ↓
-6. Si hay errores → Muestra toast y retorna entity sin guardar
-        ↓
-7. Serializa entity con toDictionary()
-        ↓
-8. Determina método HTTP:
-   - Si NO tiene PK → POST
-   - Si tiene PK → PUT
-        ↓
-9. Construye URL:
-   - POST: {endpoint}
-   - PUT: {endpoint}/{id}
-        ↓
-10. Hace request con Application.axiosInstance
-        ↓
-11. Actualiza entity con response.data
-        ↓
-12. Ejecuta afterSave() hook
-        ↓
-13. Muestra toast de éxito
-        ↓
-14. Emite evento 'saved' en Application.eventBus
-        ↓
-15. Retorna entity actualizado
-```
-
-#### Código Interno (Simplificado)
-
-```typescript
-public async save(): Promise<this> {
-    // Hook pre-save
-    this.beforeSave();
-    
-    // Validar
-    if (!await this.validateInputs()) {
-        Application.showToast('Validation errors', 'error');
-        return this;
-    }
-    
-    // Verificar persistencia
-    if (!this.isPersistent()) {
-        throw new Error('Entity is not persistent');
-    }
-    
-    // Obtener endpoint
-    const endpoint = (this.constructor as typeof BaseEntity).getApiEndpoint();
-    
-    // Determinar si es creación o actualización
-    const pkValue = this.getPrimaryPropertyValue();
-    const isNew = !pkValue;
-    
-    // Serializar
-    const data = this.toDictionary();
-    
-    try {
-        let response;
-        
-        if (isNew) {
-            // POST - Crear
-            response = await Application.axiosInstance.post(endpoint, data);
-        } else {
-            // PUT - Actualizar
-            response = await Application.axiosInstance.put(
-                `${endpoint}/${pkValue}`,
-                data
-            );
-        }
-        
-        // Actualizar entity con respuesta
-        Object.assign(this, response.data);
-        
-        // Hook post-save
-        this.afterSave();
-        
-        // Toast de éxito
-        Application.showToast(
-            `${this.getModuleNameSingular()} saved successfully`,
-            'success'
-        );
-        
-        // Emitir evento
-        Application.eventBus.emit('saved', {
-            entityClass: this.constructor,
-            entity: this
-        });
-        
-        return this;
-        
-    } catch (error: any) {
-        Application.showToast(
-            error.response?.data?.message || 'Save failed',
-            'error'
-        );
-        throw error;
-    }
-}
-```
+**Firma:** `public async save(): Promise<this>`
 
 **Ubicación:** `src/entities/base_entitiy.ts` (línea ~710)
 
----
-
-### 2. update() - Actualizar
-
-#### Firma
-
+**Algoritmo de discriminación:**
 ```typescript
-public async update(data?: Partial<this>): Promise<this>
+const pkValue = this.getPrimaryPropertyValue();
+const isNew = !pkValue;
+
+if (isNew) {
+    response = await Application.axiosInstance.post(endpoint, data);
+} else {
+    response = await Application.axiosInstance.put(`${endpoint}/${pkValue}`, data);
+}
 ```
 
-#### Descripción
+**Flujo de ejecución:**
+1. Ejecuta hook beforeSave()
+2. Llama validateInputs() que ejecuta validaciones required, sync y async
+3. Si validación falla: muestra toast, retorna instancia sin cambios
+4. Verifica isPersistent() - lanza error si entity no tiene @Persistent()
+5. Obtiene endpoint vía getApiEndpoint()
+6. Serializa instancia con toDictionary()
+7. Discrimina entre POST (isNew = true) o PUT (isNew = false)
+8. Construye URL: POST usa `${endpoint}`, PUT usa `${endpoint}/${pkValue}`
+9. Ejecuta request HTTP con Application.axiosInstance
+10. Actualiza this con Object.assign(this, response.data)
+11. Ejecuta hook afterSave()
+12. Muestra toast de éxito
+13. Emite evento 'saved' con { entityClass, entity } al eventBus
+14. Retorna this actualizado
 
-Alias de `save()` pero específicamente para actualizaciones. Opcionalmente acepta un objeto con campos a actualizar.
-
-#### Uso
-
+**Manejo de errores:**
 ```typescript
-// Opción 1: Modificar propiedades y luego update
-const product = await Product.getElement(42);
-product.price = 999;
-await product.update();
-
-// Opción 2: Pasar datos directamente
-await product.update({ price: 999, stock: 50 });
-
-// Ambos ejecutan: PUT /api/products/42
+catch (error: any) {
+    Application.showToast(error.response?.data?.message || 'Save failed', 'error');
+    throw error;
+}
 ```
 
-#### Código Interno
+### 4.2. Método update()
 
+**Firma:** `public async update(data?: Partial<this>): Promise<this>`
+
+**Ubicación:** `src/entities/base_entitiy.ts` (línea ~780)
+
+**Implementación:**
 ```typescript
 public async update(data?: Partial<this>): Promise<this> {
     if (data) {
         Object.assign(this, data);
     }
-    
-    return this.save();  // Delega a save()
+    return this.save();
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~780)
+Método de conveniencia que opcionalmente merge datos parciales antes de delegar a save(). Permite actualización fluida: `await product.update({ price: 999 })`.
 
----
+### 4.3. Método delete()
 
-### 3. delete() - Eliminar
-
-#### Firma
-
-```typescript
-public async delete(): Promise<boolean>
-```
-
-#### Descripción
-
-Elimina la entidad del backend.
-
-#### Uso
-
-```typescript
-const product = await Product.getElement(42);
-const deleted = await product.delete();
-
-// → DELETE /api/products/42
-
-if (deleted) {
-    console.log('Product deleted successfully');
-}
-```
-
-#### Flujo
-
-```
-1. Usuario llama entity.delete()
-        ↓
-2. Ejecuta beforeDelete() hook
-        ↓
-3. Verifica que tiene ID (PK)
-        ↓
-4. Obtiene endpoint
-        ↓
-5. Hace DELETE request:
-   DELETE {endpoint}/{id}
-        ↓
-6. Si éxito:
-   a. Ejecuta afterDelete() hook
-   b. Muestra toast de éxito
-   c. Emite evento 'deleted'
-   d. Retorna true
-        ↓
-7. Si error:
-   a. Muestra toast de error
-   b. Retorna false
-```
-
-#### Código Interno
-
-```typescript
-public async delete(): Promise<boolean> {
-    // Hook pre-delete
-    this.beforeDelete();
-    
-    // Verificar ID
-    const pkValue = this.getPrimaryPropertyValue();
-    if (!pkValue) {
-        throw new Error('Cannot delete entity without ID');
-    }
-    
-    // Verificar persistencia
-    if (!this.isPersistent()) {
-        throw new Error('Entity is not persistent');
-    }
-    
-    // Obtener endpoint
-    const endpoint = (this.constructor as typeof BaseEntity).getApiEndpoint();
-    
-    try {
-        await Application.axiosInstance.delete(`${endpoint}/${pkValue}`);
-        
-        // Hook post-delete
-        this.afterDelete();
-        
-        // Toast de éxito
-        Application.showToast(
-            `${this.getModuleNameSingular()} deleted successfully`,
-            'success'
-        );
-        
-        // Emitir evento
-        Application.eventBus.emit('deleted', {
-            entityClass: this.constructor,
-            entity: this
-        });
-        
-        return true;
-        
-    } catch (error: any) {
-        Application.showToast(
-            error.response?.data?.message || 'Delete failed',
-            'error'
-        );
-        return false;
-    }
-}
-```
+**Firma:** `public async delete(): Promise<boolean>`
 
 **Ubicación:** `src/entities/base_entitiy.ts` (línea ~790)
 
----
+**Flujo de ejecución:**
+1. Ejecuta hook beforeDelete()
+2. Obtiene pkValue con getPrimaryPropertyValue()
+3. Si pkValue es null/undefined: lanza error "Cannot delete entity without ID"
+4. Verifica isPersistent() - lanza error si no es persistente
+5. Obtiene endpoint vía getApiEndpoint()
+6. Ejecuta DELETE request: `Application.axiosInstance.delete(\`${endpoint}/${pkValue}\`)`
+7. Si éxito:
+   - Ejecuta hook afterDelete()
+   - Muestra toast de éxito
+   - Emite evento 'deleted' con { entityClass, entity }
+   - Retorna true
+8. Si error:
+   - Muestra toast con mensaje de error
+   - Retorna false
 
-### 4. getElementList() - Obtener Lista (Estático)
+**Diferencia con save/update:** Retorna boolean en lugar de this, ya que entidad eliminada no debe seguir usándose.
 
-#### Firma
+### 4.4. Método getElementList()
 
-```typescript
-public static async getElementList<T extends BaseEntity>(
-    this: new () => T,
-    filters?: Record<string, any>
-): Promise<T[]>
-```
-
-#### Descripción
-
-Obtiene lista de todos los registros de la entidad desde el backend.
-
-#### Uso
-
-```typescript
-// Obtener todos los productos
-const products = await Product.getElementList();
-// → GET /api/products
-// Response: [{ id: 1, name: 'Laptop', ... }, { id: 2, ... }]
-
-// Con filtros (query params)
-const activeProducts = await Product.getElementList({ active: true });
-// → GET /api/products?active=true
-
-// Con paginación
-const page2 = await Product.getElementList({ page: 2, limit: 20 });
-// → GET /api/products?page=2&limit=20
-```
-
-#### Código Interno
-
-```typescript
-public static async getElementList<T extends BaseEntity>(
-    this: new () => T,
-    filters?: Record<string, any>
-): Promise<T[]> {
-    // Obtener endpoint
-    const endpoint = this.getApiEndpoint();
-    
-    try {
-        const response = await Application.axiosInstance.get(endpoint, {
-            params: filters
-        });
-        
-        // Convertir cada objeto en instancia de la entidad
-        const entities = response.data.map((data: any) => {
-            const entity = new this();
-            Object.assign(entity, data);
-            return entity;
-        });
-        
-        // Emitir evento
-        Application.eventBus.emit('list-fetched', {
-            entityClass: this,
-            entities: entities
-        });
-        
-        return entities;
-        
-    } catch (error: any) {
-        Application.showToast(
-            error.response?.data?.message || 'Failed to fetch list',
-            'error'
-        );
-        return [];
-    }
-}
-```
+**Firma:** `public static async getElementList<T extends BaseEntity>(this: new () => T, filters?: Record<string, any>): Promise<T[]>`
 
 **Ubicación:** `src/entities/base_entitiy.ts` (línea ~615)
 
----
+**Comportamiento:**
+- Método estático que ejecuta GET al endpoint base
+- Parámetro filters se convierte en query params: `{ active: true }` → `?active=true`
+- Response esperado: array de objetos planos
+- Cada objeto se transforma en instancia de la entidad: `new this()` + `Object.assign()`
+- Emite evento 'list-fetched' con array completo
+- Retorna array vacío si hay error (no lanza excepción)
 
-### 5. getElement() - Obtener Por ID (Estático)
-
-#### Firma
-
+**Uso típico:**
 ```typescript
-public static async getElement<T extends BaseEntity>(
-    this: new () => T,
-    id: any
-): Promise<T | null>
+const products = await Product.getElementList();
+const filtered = await Product.getElementList({ category: 'electronics', active: true });
 ```
 
-#### Descripción
+### 4.5. Método getElement()
 
-Obtiene un registro específico por su ID desde el backend.
-
-#### Uso
-
-```typescript
-// Obtener producto con ID 42
-const product = await Product.getElement(42);
-// → GET /api/products/42
-
-if (product) {
-    console.log(product.name);  // "Laptop"
-} else {
-    console.log('Product not found');
-}
-```
-
-#### Código Interno
-
-```typescript
-public static async getElement<T extends BaseEntity>(
-    this: new () => T,
-    id: any
-): Promise<T | null> {
-    // Obtener endpoint
-    const endpoint = this.getApiEndpoint();
-    
-    try {
-        const response = await Application.axiosInstance.get(`${endpoint}/${id}`);
-        
-        // Crear instancia y asignar datos
-        const entity = new this();
-        Object.assign(entity, response.data);
-        
-        // Emitir evento
-        Application.eventBus.emit('element-fetched', {
-            entityClass: this,
-            entity: entity
-        });
-        
-        return entity;
-        
-    } catch (error: any) {
-        if (error.response?.status === 404) {
-            Application.showToast('Record not found', 'warning');
-        } else {
-            Application.showToast(
-                error.response?.data?.message || 'Failed to fetch record',
-                'error'
-            );
-        }
-        return null;
-    }
-}
-```
+**Firma:** `public static async getElement<T extends BaseEntity>(this: new () => T, id: any): Promise<T | null>`
 
 **Ubicación:** `src/entities/base_entitiy.ts` (línea ~650)
 
----
+**Comportamiento:**
+- Método estático que ejecuta GET a `${endpoint}/${id}`
+- Response esperado: objeto plano con datos de entidad
+- Crea instancia con `new this()` + `Object.assign()`
+- Emite evento 'element-fetched' con instancia
+- Retorna null si error 404 (registro no encontrado)
+- Retorna null para otros errores también (no lanza excepción)
 
-## 🔄 Métodos Auxiliares
+**Manejo especial de 404:**
+```typescript
+if (error.response?.status === 404) {
+    Application.showToast('Record not found', 'warning');
+} else {
+    Application.showToast(error.response?.data?.message || 'Failed to fetch record', 'error');
+}
+return null;
+```
 
-### toDictionary() - Serialización
+### 4.6. Método toDictionary()
 
+**Ubicación:** `src/entities/base_entitiy.ts` (línea ~520)
+
+**Algoritmo de serialización:**
 ```typescript
 public toDictionary(): Record<string, any> {
     const dict: Record<string, any> = {};
-    
-    // Obtener todas las propiedades
     const properties = this.getProperties();
     
     properties.forEach(key => {
         const value = (this as any)[key];
         
-        // Serializar según tipo
         if (value instanceof BaseEntity) {
-            // Relación: solo enviar ID
-            dict[key] = value.getPrimaryPropertyValue();
+            dict[key] = value.getPrimaryPropertyValue();  // Solo ID
         } else if (Array.isArray(value)) {
-            // Array: serializar cada elemento
             dict[key] = value.map(item => 
-                item instanceof BaseEntity 
-                    ? item.toDictionary() 
-                    : item
+                item instanceof BaseEntity ? item.toDictionary() : item
             );
         } else if (value instanceof Date) {
-            // Fecha: ISO string
             dict[key] = value.toISOString();
         } else {
-            // Valor primitivo
             dict[key] = value;
         }
     });
@@ -503,10 +200,15 @@ public toDictionary(): Record<string, any> {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~520)
+**Reglas de transformación:**
+- **BaseEntity:** Extrae solo primary key value (evita serializar objeto completo)
+- **Array:** Mapea cada elemento; si es BaseEntity llama recursivamente toDictionary()
+- **Date:** Convierte a ISO 8601 string
+- **Primitivos:** Se copian directamente
 
-### fromDictionary() - Deserialización
+### 4.7. Método fromDictionary()
 
+**Método estático de construcción:**
 ```typescript
 public static fromDictionary<T extends BaseEntity>(
     this: new () => T,
@@ -515,8 +217,6 @@ public static fromDictionary<T extends BaseEntity>(
     const entity = new this();
     
     Object.entries(data).forEach(([key, value]) => {
-        // Aquí podrías agregar lógica de transformación
-        // Por ejemplo, convertir strings ISO a Date
         if (entity.getPropertyType(key) === Date && typeof value === 'string') {
             (entity as any)[key] = new Date(value);
         } else {
@@ -528,271 +228,297 @@ public static fromDictionary<T extends BaseEntity>(
 }
 ```
 
----
+**Transformación inversa:** Convierte strings ISO a objetos Date cuando el tipo de propiedad lo indica.
 
-## 🧪 Ejemplos de Uso Completos
+## 5. Flujo de Funcionamiento
 
-### 1. CRUD Básico
+### 5.1. Flujo Completo de save()
 
-```typescript
-// CREATE
-const product = new Product({
-    name: 'Gaming Laptop',
-    price: 1599,
-    stock: 10
-});
-await product.save();
-console.log(product.id);  // 42 (generado por backend)
-
-// READ
-const products = await Product.getElementList();
-console.log(products.length);  // 5
-
-const oneProduct = await Product.getElement(42);
-console.log(oneProduct.name);  // "Gaming Laptop"
-
-// UPDATE
-oneProduct.price = 1499;
-await oneProduct.save();
-
-// DELETE
-await oneProduct.delete();
+```
+Usuario: entity.save()
+  ↓
+1. beforeSave() hook ejecuta
+  ↓
+2. validateInputs() ejecuta:
+   - Verificar required
+   - Ejecutar validaciones síncronas
+   - await validaciones asíncronas
+  ↓
+3. ¿Validación exitosa?
+   NO → Mostrar toast error → Retornar this sin cambios
+   SÍ → Continuar
+  ↓
+4. ¿isPersistent() = true?
+   NO → Lanzar Error
+   SÍ → Continuar
+  ↓
+5. endpoint = getApiEndpoint()
+  ↓
+6. data = toDictionary()
+  ↓
+7. pkValue = getPrimaryPropertyValue()
+  ↓
+8. ¿pkValue exists?
+   NO → POST a endpoint
+   SÍ → PUT a endpoint/pkValue
+  ↓
+9.  Request HTTP ejecuta
+  ↓
+10. Response recibida
+  ↓
+11. Object.assign(this, response.data)
+  ↓
+12. afterSave() hook ejecuta
+  ↓
+13. Toast de éxito muestra
+  ↓
+14. eventBus.emit('saved', { entityClass, entity })
+  ↓
+15. return this
 ```
 
-### 2. Con Validaciones
+### 5.2. Flujo de delete()
 
-```typescript
-const product = new Product({ name: '' });  // Nombre vacío
-
-await product.save();
-// → Validación falla
-// → Toast: "Validation errors"
-// → No hace request al backend
-// → Retorna product sin cambios
+```
+Usuario: entity.delete()
+  ↓
+1. beforeDelete() hook ejecuta
+  ↓
+2. pkValue = getPrimaryPropertyValue()
+  ↓
+3. ¿pkValue exists?
+   NO → Lanzar Error
+   SÍ → Continuar
+  ↓
+4. ¿isPersistent() = true?
+   NO → Lanzar Error
+   SÍ → Continuar
+  ↓
+5. endpoint = getApiEndpoint()
+  ↓
+6. DELETE a endpoint/pkValue ejecuta
+  ↓
+7. ¿Éxito?
+   SÍ → afterDelete() hook → Toast éxito → Emit 'deleted' → return true
+   NO → Toast error → return false
 ```
 
-### 3. Con Relaciones
+### 5.3. Flujo de getElementList()
 
-```typescript
-// Crear orden con items
-const order = new Order({
-    customer: await Customer.getElement(10),
-    items: [
-        new OrderItem({ product: await Product.getElement(1), quantity: 2 }),
-        new OrderItem({ product: await Product.getElement(3), quantity: 1 })
-    ]
-});
-
-await order.save();
-// → POST /api/orders
-// Body: {
-//   customer: 10,  ← Solo ID
-//   items: [
-//     { product: 1, quantity: 2 },
-//     { product: 3, quantity: 1 }
-//   ]
-// }
+```
+Usuario: Product.getElementList(filters)
+  ↓
+1. endpoint = getApiEndpoint()
+  ↓
+2. GET a endpoint con params=filters ejecuta
+  ↓
+3. Response: array de objetos
+  ↓
+4. Mapear cada objeto:
+   entity = new Product()
+   Object.assign(entity, objeto)
+  ↓
+5. Array de instancias creado
+  ↓
+6. eventBus.emit('list-fetched', { entityClass, entities })
+  ↓
+7. return array de instancias
 ```
 
-### 4. Con Hooks
+### 5.4. Flujo de Serialización (toDictionary)
 
+```
+Usuario: entity.toDictionary()
+  ↓
+1. dict = {}
+  ↓
+2. properties = getProperties()
+  ↓
+3. Para cada propiedad:
+   valor = this[propiedad]
+   ↓
+   ¿Es BaseEntity?
+     SÍ → dict[propiedad] = valor.getPrimaryPropertyValue()
+   ¿Es Array?
+     SÍ → dict[propiedad] = valor.map(...)
+   ¿Es Date?
+     SÍ → dict[propiedad] = valor.toISOString()
+   Otro?
+     → dict[propiedad] = valor
+  ↓
+4. return dict
+```
+
+## 6. Reglas Obligatorias
+
+1. **Validación pre-guardado:** save() DEBE ejecutar validateInputs() antes de realizar request HTTP. Esta validación NO DEBE omitirse.
+
+2. **Persistencia obligatoria:** Entidades que usen save(), update() o delete() DEBEN tener decorator @Persistent(). Código DEBE lanzar error si isPersistent() retorna false.
+
+3. **Response completa:** Backend DEBE retornar objeto completo tras POST/PUT incluyendo ID y campos autogenerados. Frontend actualiza instancia con Object.assign(this, response.data).
+
+4. **Endpoint configuration:** Entidad persistente DEBE declarar @ApiEndpoint('ruta'). getApiEndpoint() DEBE retornar string no-nulo.
+
+5. **Primary key requirement:** delete() DEBE verificar que getPrimaryPropertyValue() no sea null/undefined antes de ejecutar request.
+
+6. **Hook execution order:** Hooks DEBEN ejecutarse en orden: before* → operación → after*. No alterar orden.
+
+7. **Event emission:** Operaciones exitosas DEBEN emitir eventos al eventBus: 'saved', 'deleted', 'list-fetched', 'element-fetched'.
+
+8. **Error handling:** Operaciones CRUD DEBEN capturar excepciones, mostrar toast de error y manejar gracefully (retornar valor por defecto o lanzar error según método).
+
+9. **Instance methods vs static:** save(), update(), delete() son métodos de instancia. getElementList(), getElement(), fromDictionary() son métodos estáticos. NO intercambiar.
+
+10. **toDictionary for persistence:** Datos enviados a API DEBEN usar toDictionary(), no toObject(). toDictionary() excluye propiedades internas y serializa correctamente relaciones.
+
+## 7. Prohibiciones
+
+1. **NO llamar save() dentro de beforeSave():** Genera loop infinito. beforeSave() solo debe modificar propiedades, NO ejecutar persistencia.
+
+2. **NO modificar response.data:** Object.assign(this, response.data) debe recibir datos sin mutación previa. Backend debe enviar estructura correcta.
+
+3. **NO usar toObject() para persistencia:** toObject() incluye propiedades internas (_isLoading, _originalState) que NO deben enviarse a API.
+
+4. **NO asumir éxito sin verificar:** getElement() y getElementList() pueden retornar null o array vacío. SIEMPRE verificar resultado antes de usar.
+
+5. **NO omitir manejo de errores:** Código que llama métodos CRUD NO DEBE asumir éxito. Usar try/catch o verificar retorno.
+
+6. **NO crear instancias manualmente en getElement/getElementList:** Usar constructores de clase (`new this()`) para garantizar correcta inicialización.
+
+7. **NO mutar entity durante toDictionary():** Método DEBE ser operación read-only que retorna nuevo objeto, sin efectos secundarios.
+
+8. **NO ignorar hooks vacíos:** Si subclase NO necesita hook, simplemente omitir sobrescritura. NO llamar super.hook() ya que implementación base está vacía.
+
+9. **NO usar delete() para soft delete sin override:** Si se requiere soft delete, sobrescribir delete() en subclase y preservar hardDelete() llamando super.delete().
+
+10. **NO enviar entity completa en relaciones:** toDictionary() DEBE extraer solo IDs para relaciones BaseEntity. Enviar objeto completo causa payload innecesariamente grande.
+
+## 8. Dependencias
+
+**Internas:**
+- Application.axiosInstance - Cliente HTTP central con interceptores de autenticación
+- Application.ApplicationUIService.showToast() - Sistema de notificaciones toast
+- Application.eventBus - Sistema de eventos reactivo
+- Métodos de BaseEntity:
+  - validateInputs() - Validación completa pre-guardado
+  - isPersistent() - Verificación de @Persistent decorator
+  - getPrimaryPropertyValue() - Obtención de valor de clave primaria
+  - getApiEndpoint() - Obtención de endpoint configurado
+  - getProperties() - Lista de propiedades a serializar
+  - Lifecycle hooks: beforeSave(), afterSave(), beforeDelete(), afterDelete(), etc.
+
+**Externas:**
+- Axios library - Requests HTTP (GET, POST, PUT, DELETE)
+- JavaScript Promise API - Operaciones asíncronas
+- JSON serialization - Comparaciones y transporte de datos
+
+**Decorators requeridos:**
+- @Persistent() - Habilita persistencia en entidad
+- @ApiEndpoint(url) - Configura URL base de API
+- @PrimaryProperty(key) - Define clave primaria
+- @ApiMethods(array) - [Opcional] Restringe métodos HTTP permitidos
+
+## 9. Relaciones
+
+**Consume:**
+- BaseEntity core methods (getPropertyType, getPrimaryPropertyValue, etc.)
+- Validation system (validateInputs, validaciones required/sync/async)
+- Lifecycle hooks system (before*, after*, *Failed hooks)
+
+**Utilizado por:**
+- Componentes de formulario - Ejecutan save() y update() desde UI
+- Componentes de tabla/lista - Ejecutan getElementList() para poblar datos
+- Componentes de detalle - Ejecutan getElement() para cargar registro específico
+- Botones de acción - Ejecutan delete() para eliminación
+
+**Integra con:**
+- Application.axiosInstance - Ejecución de requests HTTP
+- Application.eventBus - Emisión de eventos tras operaciones
+- Application. ApplicationUIService - Feedback visual mediante toasts
+
+**Extiende funcionalidad de:**
+- Active Record pattern - Implementación completa del patrón
+- REST API client - Mapeo automático de operaciones a verbos HTTP
+
+## 10. Notas de Implementación
+
+**POST vs PUT discrimination:**  
+save() usa isNew() internamente (verifica si getPrimaryPropertyValue() es null/undefined). Si backend usa UUIDs generados en cliente, registros nuevos tendrán ID antes de save(), rompiendo discriminación. Considerar usar flag _isNew o sobrescribir isNew().
+
+**Batch operations:**  
+Métodos actuales son individuales. Para operaciones batch (crear/actualizar/eliminar múltiples), usar Promise.all():
 ```typescript
-export class Product extends BaseEntity {
-    beforeSave() {
-        // Normalizar nombre
-        this.name = this.name.trim().toUpperCase();
-        
-        // Generar SKU si no existe
-        if (!this.sku) {
-            this.sku = `PROD-${Date.now()}`;
-        }
-    }
-    
-    afterSave() {
-        console.log(`Product ${this.id} saved!`);
-        
-        // Invalidar caché
-        CacheService.invalidate('products');
+await Promise.all(entities.map(e => e.save()));
+```
+Considerar implementar métodos estáticos saveBatch(), deleteBatch() para APIs que soporten batch endpoints.
+
+**Pagination:**  
+getElementList() no implementa paginación a nivel de BaseEntity. Implementar en Application o wrapper service:
+```typescript
+class ProductService {
+    static async getPage(page: number, pageSize: number) {
+        return Product.getElementList({ page, pageSize });
     }
 }
-
-const product = new Product({ name: '  laptop  ' });
-await product.save();
-// → beforeSave() ejecuta → name = "LAPTOP", sku = "PROD-1707566400000"
-// → save() ejecuta
-// → afterSave() ejecuta → log + invalidate cache
 ```
 
-### 5. Manejo de Errores
+**Cache invalidation:**  
+Sistema no incluye caché. Si se implementa caché de lectura, invalidar en hooks afterSave() y afterDelete().
 
+**Optimistic updates:**  
+Sistema es pesimista (espera confirmación del servidor). Para UI optimista, actualizar inmediatamente y revertir si falla:
 ```typescript
+const originalValue = entity.price;
+entity.price = newPrice;
 try {
-    const product = new Product({ name: 'Test' });
-    await product.save();
-} catch (error: any) {
-    if (error.response?.status === 422) {
-        // Validation error del backend
-        console.error('Backend validation failed:', error.response.data.errors);
-    } else if (error.response?.status === 500) {
-        // Server error
-        console.error('Server error');
-    } else {
-        // Network error
-        console.error('Network error');
-    }
+    await entity.save();
+} catch {
+    entity.price = originalValue;
 }
 ```
 
-### 6. Actualización Parcial
+**Relaciones anidadas:**  
+toDictionary() solo maneja un nivel de profundidad para relaciones. Arrays de BaseEntity se serializan recursivamente, pero objetos anidados complejos pueden requerir lógica custom.
 
+**HTTP status codes:**  
+Sistema asume convenciones REST estándar: 200/201 para éxito, 404 para not found, 422 para validation, 500 para server error. Ajustar si backend usa códigos diferentes.
+
+**UUID as primary key:**  
+Si se usan UUIDs generados en cliente, sobrescribir isNew() para usar flag interno en lugar de verificar nullability de PK.
+
+**Soft delete implementation:**  
+Para soft delete (marcar registro como deleted en lugar de eliminarlo), sobrescribir delete():
 ```typescript
-const product = await Product.getElement(42);
-
-// Solo actualizar stock
-await product.update({ stock: 25 });
-// → PUT /api/products/42
-// Body: { id: 42, stock: 25, ... (todos los campos) }
-```
-
-### 7. Soft Delete (Custom)
-
-```typescript
-export class Product extends BaseEntity {
-    @PropertyName('Deleted At', Date)
-    @ReadOnly(true)
-    deletedAt?: Date;
-    
-    // Override delete para soft delete
-    async delete(): Promise<boolean> {
-        this.deletedAt = new Date();
-        await this.save();
-        return true;
-    }
-    
-    // Método para hard delete
-    async hardDelete(): Promise<boolean> {
-        return super.delete();  // Llama al delete original
-    }
-}
-
-await product.delete();       // Soft delete (marca deletedAt)
-await product.hardDelete();   // Hard delete (elimina registro)
-```
-
-### 8. Batch Operations
-
-```typescript
-// Crear múltiples
-const products = [
-    new Product({ name: 'Product 1', price: 10 }),
-    new Product({ name: 'Product 2', price: 20 }),
-    new Product({ name: 'Product 3', price: 30 })
-];
-
-await Promise.all(products.map(p => p.save()));
-// → 3 requests POST en paralelo
-
-// Eliminar múltiples
-const toDelete = await Product.getElementList({ discontinued: true });
-await Promise.all(toDelete.map(p => p.delete()));
-// → N requests DELETE en paralelo
-```
-
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. Siempre Validar Antes de Guardar
-
-`save()` valida automáticamente, pero puedes validar manualmente:
-
-```typescript
-const product = new Product({ name: '' });
-
-if (await product.validateInputs()) {
-    await product.save();
-} else {
-    console.log('Fix validation errors first');
+async delete(): Promise<boolean> {
+    this.deletedAt = new Date();
+    await this.save();
+    return true;
 }
 ```
+Preservar hardDelete() que llama super.delete() para eliminación física.
 
-### 2. getElementList() Retorna Instancias
+**Transaction support:**  
+Sistema no soporta transacciones. Operaciones múltiples no son atómicas. Para transacciones, implementar endpoint batch en backend o usar servicio de coordinación en frontend.
 
-```typescript
-const products = await Product.getElementList();
+## 11. Referencias Cruzadas
 
-// Cada elemento es una instancia de Product
-products[0] instanceof Product;  // true
+**Documentación relacionada:**
+- [base-entity-core.md](base-entity-core.md) - Arquitectura y métodos core de BaseEntity
+- [validation-system.md](validation-system.md) - Sistema de validación pre-guardado
+- [lifecycle-hooks.md](lifecycle-hooks.md) - before*, after*, *Failed hooks
+- [metadata-access.md](metadata-access.md) - Acceso a metadatos de decoradores
+- [persistence-methods.md](persistence-methods.md) - Métodos adicionales de persistencia
+- [state-and-conversion.md](state-and-conversion.md) - Gestión de estado y conversión
 
-// Tiene todos los métodos
-await products[0].save();
-products[0].getPropertyName('name');  // "Product Name"
-```
+**Decorators requeridos:**
+- [../01-decorators/persistent-decorator.md](../01-decorators/persistent-decorator.md) - @Persistent
+- [../01-decorators/api-endpoint-decorator.md](../01-decorators/api-endpoint-decorator.md) - @ApiEndpoint
+- [../01-decorators/api-methods-decorator.md](../01-decorators/api-methods-decorator.md) - @ApiMethods
+- [../01-decorators/primary-property-decorator.md](../01-decorators/primary-property-decorator.md) - @PrimaryProperty
 
-### 3. Manejo de IDs Compuestos
+**Sistemas relacionados:**
+- [../03-application/application-singleton.md](../03-application/application-singleton.md) - Application singleton
+- [../03-application/event-bus.md](../03-application/event-bus.md) - Sistema de eventos
 
-Si tu entidad usa clave primaria compuesta:
-
-```typescript
-@Persistent(true, ['customerId', 'productId'])
-export class CustomerProduct extends BaseEntity {
-    @PropertyName('Customer ID', Number)
-    customerId!: number;
-    
-    @PropertyName('Product ID', Number)
-    productId!: number;
-    
-    // Override getPrimaryPropertyValue()
-    getPrimaryPropertyValue(): any {
-        return `${this.customerId}-${this.productId}`;
-    }
-}
-
-// save() construirá URL:
-// PUT /api/customer-products/10-42
-```
-
-### 4. Response del Backend Debe Coincidir
-
-El backend debe retornar el objeto completo después de create/update:
-
-```typescript
-// POST /api/products
-// Request: { name: "Laptop", price: 1299 }
-
-// Response: { id: 42, name: "Laptop", price: 1299, createdAt: "..." }
-//           ↑ Incluir ID y campos autogenerados
-```
-
-### 5. No Llamar save() dentro de beforeSave()
-
-```typescript
-// ❌ INCORRECTO: Loop infinito
-beforeSave() {
-    this.updatedAt = new Date();
-    await this.save();  // ← Loop infinito
-}
-
-// ✅ CORRECTO: Solo modificar propiedades
-beforeSave() {
-    this.updatedAt = new Date();
-}
-```
-
----
-
-## 📚 Referencias Adicionales
-
-- `base-entity-core.md` - Núcleo y arquitectura
-- `validation-system.md` - Sistema de validación
-- `lifecycle-hooks.md` - beforeSave, afterSave, etc.
-- `metadata-access.md` - Métodos de acceso a metadatos
-- `../01-decorators/api-endpoint-decorator.md` - Configurar endpoint
-- `../01-decorators/persistent-decorator.md` - Habilitar persistencia
-- `../../tutorials/01-basic-crud.md` - Tutorial CRUD básico
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/entities/base_entitiy.ts`  
-**Líneas relevantes:** 615-850 (CRUD operations)
+**Tutoriales:**
+- [../../tutorials/01-basic-crud.md](../../tutorials/01-basic-crud.md) - Tutorial CRUD básico completo

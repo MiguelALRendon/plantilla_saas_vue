@@ -1,37 +1,58 @@
-# 🎯 Framework Overview - SaaS Vue Meta-Programming Framework
+# Framework Overview - SaaS Vue Meta-Programming Framework
 
-**Referencias:**
-- `00-CONTRACT.md` - Contrato de desarrollo
-- `02-FLOW-ARCHITECTURE.md` - Arquitectura de flujos
-- `03-QUICK-START.md` - Inicio rápido
-- `layers/02-base-entity/base-entity-core.md` - BaseEntity
-- `layers/03-application/application-singleton.md` - Application
+## 1. Propósito
 
----
+El SaaS Vue Meta-Programming Framework es un sistema de generación automática de interfaces CRUD completas basado en decoradores TypeScript y Vue 3. El objetivo principal es eliminar el código repetitivo mediante la declaración de metadatos que permiten al sistema generar automáticamente formularios, tablas, validaciones y operaciones CRUD sin necesidad de implementación manual.
 
-## 📘 ¿Qué es este Framework?
+El concepto central del framework establece que al declarar las entidades, el framework genera automáticamente todo lo demás. El principio fundamental es definir una vez y que funcione en todas partes, evitando la escritura manual de formularios, tablas y validaciones mediante la declaración de metadatos mediante decoradores.
 
-**SaaS Vue Meta-Programming Framework** es un sistema de generación automática de interfaces CRUD completas basado en decoradores TypeScript y Vue 3.
+## 2. Alcance
 
-### Concepto Central
+Este documento proporciona una visión general completa del framework, incluyendo:
 
-```
-Declaras tus Entidades → El Framework Genera Todo lo Demás
-```
+- Arquitectura de 5 capas del sistema
+- Flujo completo de trabajo desde la definición hasta la interacción del usuario
+- Ventajas fundamentales del enfoque basado en metadatos
+- Componentes principales del framework: BaseEntity, Application, Decoradores y Componentes UI
+- Sistema de metadatos y su funcionamiento interno
+- Integración con API y operaciones automáticas
+- Sistema de vistas y navegación
+- Sistema de eventos mediante Event Bus
+- Sistema de validación en tres niveles
+- Ciclo de vida de entidades y hooks disponibles
+- Estructura del proyecto
+- Curva de aprendizaje y casos de uso
+- Métricas de productividad
 
-### Filosofía
+## 3. Definiciones Clave
 
-> **"Define una vez, funciona en todas partes"**
+**Meta-Programming**: Programación mediante metadatos declarativos que generan código funcional automáticamente.
 
-No escribes formularios, tablas ni validaciones manualmente. Declaras metadatos mediante decoradores y el sistema genera automáticamente toda la interfaz de usuario.
+**BaseEntity**: Clase base abstracta que proporciona toda la lógica CRUD, validación, gestión de estado y acceso a metadatos. Toda entidad del sistema debe heredar de esta clase.
 
----
+**Application**: Singleton global que gestiona el estado de la aplicación, vistas actuales, navegación entre módulos, integración con Router y servicios de UI.
 
-## 🏗️ Arquitectura en 5 Capas
+**Decoradores**: Funciones TypeScript que almacenan metadatos en el prototipo de las clases, definiendo comportamiento, validaciones y configuración de UI.
 
-### **Capa 1: Entidades (Declaración)**
+**ViewTypes**: Enumeración que define los tipos de vista disponibles: LISTVIEW (tabla de registros), DETAILVIEW (formulario de edición), DEFAULTVIEW (vista por defecto del módulo).
 
-Define tus modelos de datos como clases TypeScript:
+**Persistent**: Decorador que habilita la persistencia de una entidad en el backend mediante API REST.
+
+**PropertyType**: Tipo TypeScript que define el tipo de dato de una propiedad: Number, String, Date, Boolean, BaseEntity, Array.
+
+**Metadatos**: Información declarativa almacenada mediante decoradores que describe propiedades, validaciones, configuración de UI y comportamiento de las entidades.
+
+**Event Bus**: Sistema de comunicación entre componentes basado en mitt que permite emitir y escuchar eventos globales.
+
+**Dirty State**: Estado que indica si una entidad tiene cambios sin guardar comparando el estado actual con el estado original.
+
+## 4. Descripción Técnica
+
+### Arquitectura en 5 Capas
+
+#### Capa 1: Entidades (Declaración)
+
+Define los modelos de datos como clases TypeScript:
 
 ```typescript
 export class Product extends BaseEntity {
@@ -41,7 +62,7 @@ export class Product extends BaseEntity {
 }
 ```
 
-### **Capa 2: Decoradores (Metadatos)**
+#### Capa 2: Decoradores (Metadatos)
 
 Enriquece con metadatos declarativos:
 
@@ -60,7 +81,7 @@ export class Product extends BaseEntity {
 }
 ```
 
-### **Capa 3: BaseEntity (Motor)**
+#### Capa 3: BaseEntity (Motor)
 
 Proporciona toda la lógica CRUD:
 
@@ -72,7 +93,7 @@ await Product.getElementList();  // GET lista
 await Product.getElement(id);    // GET individual
 ```
 
-### **Capa 4: Application (Orquestador)**
+#### Capa 4: Application (Orquestador)
 
 Singleton global que gestiona:
 - Estado de vistas actuales
@@ -86,7 +107,7 @@ Application.changeViewToDetailView(product);
 Application.ApplicationUIService.showToast('Success!', ToastType.SUCCESS);
 ```
 
-### **Capa 5: UI Components (Generados)**
+#### Capa 5: UI Components (Generados)
 
 Componentes Vue generados dinámicamente:
 
@@ -97,143 +118,13 @@ Componentes Vue generados dinámicamente:
 <DateInputComponent v-if="type === Date" />
 ```
 
----
+### Componentes Principales
 
-## 🔄 Flujo Completo de Trabajo
-
-### 1️⃣ Definición
-
-```typescript
-@ModuleName('Customers')
-@ApiEndpoint('/api/customers')
-@Persistent()
-export class Customer extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('Email', String)
-    @StringTypeDef(StringType.EMAIL)
-    @Required(true)
-    @AsyncValidation(async (entity) => {
-        return await checkEmailUnique(entity.email);
-    }, 'Email already exists')
-    email!: string;
-}
-```
-
-### 2️⃣ Registro
-
-```typescript
-// En application.ts
-Application.ModuleList.value.push(Customer);
-```
-
-### 3️⃣ Navegación Automática
-
-- Sidebar muestra módulo "Customers"
-- Click → Navega a `/customers`
-- Router carga vista de lista
-
-### 4️⃣ Generación de UI
-
-Sistema lee metadatos:
-- `@PropertyName` → Label del input
-- `@StringTypeDef(EMAIL)` → Input tipo email
-- `@Required` → Validación + asterisco rojo
-- `@AsyncValidation` → Validación contra servidor
-- `@HelpText` → Texto de ayuda
-
-Genera automáticamente:
-```vue
-<EmailInputComponent 
-    :entity="customer"
-    property-key="email"
-    :required="true"
-    :help-text="'Enter customer email'"
-    @async-validation="validateEmailUnique" />
-```
-
-### 5️⃣ Interacción del Usuario
-
-```
-Usuario escribe email → Validación en tiempo real
-Usuario click "Save" → BaseEntity.save()
-  ↓
-  Valida todos los campos
-  ↓
-  Ejecuta validaciones asíncronas
-  ↓
-  POST /api/customers
-  ↓
-  Actualiza estado interno
-  ↓
-  Muestra toast de éxito
-  ↓
-  Navega a lista actualizada
-```
-
----
-
-## 🎯 Ventajas Fundamentales
-
-### ✅ Zero Boilerplate
-
-**Sin Framework:**
-```typescript
-// 1. Crear formulario HTML
-// 2. Crear validaciones
-// 3. Manejar submit
-// 4. Llamar API
-// 5. Manejar errores
-// 6. Actualizar UI
-// Total: ~200 líneas de código
-```
-
-**Con Framework:**
-```typescript
-@PropertyName('Name', String)
-@Required(true)
-name!: string;
-// Total: 3 líneas de código
-// Resultado: Formulario completo funcional
-```
-
-### ✅ Type Safety Total
-
-- TypeScript end-to-end
-- Decoradores tipados
-- Inferencia de tipos automática
-- Errores en tiempo de compilación
-
-### ✅ Consistencia Garantizada
-
-- Todas las entidades siguen el mismo patrón
-- UI consistente en toda la aplicación
-- Validaciones uniformes
-- Mensajes de error estandarizados
-
-### ✅ DRY (Don't Repeat Yourself)
-
-- Defines una propiedad una vez
-- Funciona en: lista, detalle, formularios, validaciones, API
-
-### ✅ Extensible sin Romper
-
-```typescript
-// Puedes usar componentes custom
-@ModuleDetailComponent(CustomProductForm)
-
-// O dejar que se genere automáticamente
-// (sin decorador)
-```
-
----
-
-## 🧩 Componentes Principales
-
-### **BaseEntity** (src/entities/base_entitiy.ts)
+#### BaseEntity (src/entities/base_entitiy.ts)
 
 Clase base abstracta. Toda entidad debe heredar de ella.
 
-**Proporciona:**
+Proporciona:
 - Métodos CRUD (save, update, delete, getElementList, getElement)
 - Sistema de validación (validateInputs, isRequired, isValidation)
 - Gestión de estado (getDirtyState, resetChanges, isNew)
@@ -241,26 +132,26 @@ Clase base abstracta. Toda entidad debe heredar de ella.
 - Acceso a metadatos (getProperties, getPropertyType, etc.)
 - Sistema de persistencia (mapeo de claves API)
 
-### **Application** (src/models/application.ts)
+#### Application (src/models/application.ts)
 
-Singleton global (único en toda la app).
+Singleton global (único en toda la aplicación).
 
-**Gestiona:**
-- `View`: Vista actual (entityClass, entityObject, component, viewType)
-- `ModuleList`: Lista de entidades registradas (módulos)
-- `AppConfiguration`: Configuración global de la app
-- `modal`, `dropdownMenu`, `confirmationMenu`: UI global
-- `eventBus`: Comunicación entre componentes
-- `axiosInstance`: Cliente HTTP configurado
-- `ToastList`: Notificaciones toast
-- `ListButtons`: Botones de acción contextuales
-- `router`: Vue Router integrado
+Gestiona:
+- View: Vista actual (entityClass, entityObject, component, viewType)
+- ModuleList: Lista de entidades registradas (módulos)
+- AppConfiguration: Configuración global de la aplicación
+- modal, dropdownMenu, confirmationMenu: UI global
+- eventBus: Comunicación entre componentes
+- axiosInstance: Cliente HTTP configurado
+- ToastList: Notificaciones toast
+- ListButtons: Botones de acción contextuales
+- router: Vue Router integrado
 
-### **Decoradores** (src/decorations/*.ts)
+#### Decoradores (src/decorations)
 
 Sistema de 35+ decoradores para metadatos:
 
-**Categorías:**
+Categorías:
 - **Propiedad**: Define nombre, tipo, orden
 - **Validación**: Required, Validation, AsyncValidation
 - **UI**: ViewGroup, HelpText, HideInListView/DetailView
@@ -269,7 +160,7 @@ Sistema de 35+ decoradores para metadatos:
 - **API**: ApiEndpoint, ApiMethods, Persistent
 - **Componentes**: ModuleListComponent, ModuleDetailComponent
 
-### **Componentes UI** (src/components/)
+#### Componentes UI (src/components)
 
 **Formularios** (Form/):
 - TextInputComponent
@@ -305,11 +196,7 @@ Sistema de 35+ decoradores para metadatos:
 - TopBarComponent
 - ComponentContainerComponent
 
----
-
-## 🔍 Sistema de Metadatos
-
-### ¿Cómo Funciona?
+### Sistema de Metadatos
 
 Los decoradores almacenan información en el prototipo de la clase:
 
@@ -322,7 +209,7 @@ proto[PROPERTY_NAME_KEY]['email'] = 'Email';
 proto[PROPERTY_TYPE_KEY]['email'] = String;
 ```
 
-### Recuperación de Metadatos
+Recuperación de Metadatos:
 
 ```typescript
 // En BaseEntity
@@ -339,7 +226,7 @@ Product.getProperties(); // { id: 'ID', name: 'Name', price: 'Price' }
 Product.getPropertyType('price'); // Number
 ```
 
-### Metadatos por Instancia
+Metadatos por Instancia:
 
 ```typescript
 product.isRequired('name'); // true/false
@@ -347,11 +234,9 @@ product.isDisabled('price'); // true/false según condición
 product.getFormattedValue('stock'); // Aplica @DisplayFormat
 ```
 
----
+### Integración con API
 
-## 🌐 Integración con API
-
-### Configuración
+Configuración:
 
 ```typescript
 @ApiEndpoint('/api/products')
@@ -360,7 +245,7 @@ product.getFormattedValue('stock'); // Aplica @DisplayFormat
 @PersistentKey('product_id', 'id') // Server key → Client key
 ```
 
-### Operaciones Automáticas
+Operaciones Automáticas:
 
 ```typescript
 // GET /api/products
@@ -381,7 +266,7 @@ await product.save(); // Detecta que no es nuevo, hace PUT
 await product.delete();
 ```
 
-### Interceptores Axios
+Interceptores Axios:
 
 ```typescript
 // Request interceptor
@@ -393,11 +278,9 @@ await product.delete();
 - Manejo de errores centralizado
 ```
 
----
+### Sistema de Vistas
 
-## 🎨 Sistema de Vistas
-
-### ViewTypes
+ViewTypes:
 
 ```typescript
 enum ViewTypes {
@@ -407,7 +290,7 @@ enum ViewTypes {
 }
 ```
 
-### Navegación entre Vistas
+Navegación entre Vistas:
 
 ```typescript
 // Lista de productos
@@ -420,7 +303,7 @@ Application.changeViewToDetailView(product);
 Application.changeViewToDefaultView(Product);
 ```
 
-### Cambio de Vista con Confirmación
+Cambio de Vista con Confirmación:
 
 ```typescript
 // Si hay cambios sin guardar:
@@ -429,11 +312,9 @@ Application.changeViewToListView(Product);
 // → Muestra: "¿Salir sin guardar?"
 ```
 
----
+### Sistema de Eventos
 
-## 🎭 Sistema de Eventos
-
-### Event Bus Global
+Event Bus Global:
 
 ```typescript
 // Emitir eventos
@@ -448,22 +329,19 @@ Application.eventBus.on('validate-inputs', handleValidation);
 Application.eventBus.off('validate-inputs', handleValidation);
 ```
 
-### Eventos Disponibles
+Eventos Disponibles:
+- validate-inputs: Dispara validación de todos los inputs
+- show-modal / hide-modal: Control de modales
+- show-confirmation / hide-confirmation: Menús de confirmación
+- show-loading / hide-loading: Loading screens
+- show-loading-menu / hide-loading-menu: Loading popups
+- toggle-sidebar: Toggle del sidebar
 
-- `validate-inputs`: Dispara validación de todos los inputs
-- `show-modal` / `hide-modal`: Control de modales
-- `show-confirmation` / `hide-confirmation`: Menús de confirmación
-- `show-loading` / `hide-loading`: Loading screens
-- `show-loading-menu` / `hide-loading-menu`: Loading popups
-- `toggle-sidebar`: Toggle del sidebar
+### Sistema de Validación
 
----
+#### Tres Niveles
 
-## 🔐 Sistema de Validación
-
-### Tres Niveles
-
-#### 1. Validación Required
+**Validación Required**:
 ```typescript
 @Required(true)
 name!: string;
@@ -471,7 +349,7 @@ name!: string;
 // Valida: valor no vacío
 ```
 
-#### 2. Validación Síncrona
+**Validación Síncrona**:
 ```typescript
 @Validation((entity) => entity.stock > 0, 'Stock must be positive')
 stock!: number;
@@ -479,7 +357,7 @@ stock!: number;
 // Valida: condición custom instantánea
 ```
 
-#### 3. Validación Asíncrona
+**Validación Asíncrona**:
 ```typescript
 @AsyncValidation(async (entity) => {
     const response = await checkAvailability(entity.sku);
@@ -490,7 +368,7 @@ sku!: string;
 // Valida: llamada a API/servidor
 ```
 
-### Validación Condicional
+#### Validación Condicional
 
 ```typescript
 @Required(entity => entity.type === 'physical')
@@ -499,11 +377,9 @@ weight?: number;
 // Required solo si type es 'physical'
 ```
 
----
+### Ciclo de Vida de Entidades
 
-## 🚀 Ciclo de Vida de Entidades
-
-### Hooks Disponibles
+Hooks Disponibles:
 
 ```typescript
 class Product extends BaseEntity {
@@ -540,7 +416,7 @@ class Product extends BaseEntity {
 }
 ```
 
-### Ejemplo de Uso
+Ejemplo de Uso:
 
 ```typescript
 class Order extends BaseEntity {
@@ -564,17 +440,283 @@ class Order extends BaseEntity {
 }
 ```
 
----
+## 5. Flujo de Funcionamiento
 
-## 📦 Estructura del Proyecto
+### Definición
+
+```typescript
+@ModuleName('Customers')
+@ApiEndpoint('/api/customers')
+@Persistent()
+export class Customer extends BaseEntity {
+    @PropertyIndex(1)
+    @PropertyName('Email', String)
+    @StringTypeDef(StringType.EMAIL)
+    @Required(true)
+    @AsyncValidation(async (entity) => {
+        return await checkEmailUnique(entity.email);
+    }, 'Email already exists')
+    email!: string;
+}
+```
+
+### Registro
+
+```typescript
+// En application.ts
+Application.ModuleList.value.push(Customer);
+```
+
+### Navegación Automática
+
+- Sidebar muestra módulo "Customers"
+- Click navega a /customers
+- Router carga vista de lista
+
+### Generación de UI
+
+Sistema lee metadatos:
+- @PropertyName → Label del input
+- @StringTypeDef(EMAIL) → Input tipo email
+- @Required → Validación + asterisco rojo
+- @AsyncValidation → Validación contra servidor
+- @HelpText → Texto de ayuda
+
+Genera automáticamente:
+
+```vue
+<EmailInputComponent 
+    :entity="customer"
+    property-key="email"
+    :required="true"
+    :help-text="'Enter customer email'"
+    @async-validation="validateEmailUnique" />
+```
+
+### Interacción del Usuario
+
+```
+Usuario escribe email → Validación en tiempo real
+Usuario click "Save" → BaseEntity.save()
+  ↓
+  Valida todos los campos
+  ↓
+  Ejecuta validaciones asíncronas
+  ↓
+  POST /api/customers
+  ↓
+  Actualiza estado interno
+  ↓
+  Muestra toast de éxito
+  ↓
+  Navega a lista actualizada
+```
+
+## 6. Reglas Obligatorias
+
+- Toda entidad DEBE heredar de BaseEntity
+- Las propiedades de entidad DEBEN usar el operador definite assignment (!)
+- El decorador @ModuleName es OBLIGATORIO para que el módulo aparezca en el sistema
+- El decorador @Persistent() es OBLIGATORIO para habilitar operaciones CRUD con API
+- El decorador @ApiEndpoint es OBLIGATORIO para entidades persistentes
+- El decorador @PropertyName es OBLIGATORIO para que una propiedad sea visible en la interfaz
+- Los decoradores @PrimaryProperty y @UniquePropertyKey son OBLIGATORIOS para operaciones de actualización y eliminación
+- DEBE registrarse la entidad en Application.ModuleList.value
+- Los hooks de ciclo de vida DEBEN usar override cuando se implementan
+- La validación mediante validateInputs() DEBE ejecutarse antes de cualquier operación de guardar
+- Los decoradores de clase DEBEN colocarse antes de la declaración de la clase
+- Los decoradores de propiedad DEBEN colocarse antes de la declaración de la propiedad
+- El orden de PropertyIndex DEBE ser consecutivo para garantizar el orden correcto de renderizado
+
+## 7. Prohibiciones
+
+- NO crear entidades que no hereden de BaseEntity
+- NO modificar directamente _originalState de una entidad
+- NO llamar a métodos CRUD sin configurar @Persistent() 
+- NO usar decoradores de validación sin @PropertyName
+- NO modificar metadatos en tiempo de ejecución
+- NO llamar manualmente a axios sin usar Application.axiosInstance
+- NO renderizar componentes de formulario sin pasar entity y propertyKey
+- NO guardar entidad sin ejecutar validateInputs()
+- NO mezclar lógica de negocio en componentes UI
+- NO acceder directamente a proto[SYMBOL_KEY], usar métodos públicos de BaseEntity
+- NO crear múltiples instancias de Application
+- NO navegar con router.push sin usar los métodos de Application
+- NO emitir eventos personalizados sin documentarlos
+- NO eliminar listeners de EventBus sin haberlos registrado previamente
+
+## 8. Dependencias
+
+### Dependencias Externas
+
+- Vue 3: Framework de UI reactivo
+- TypeScript: Sistema de tipos y decoradores
+- Vite: Herramienta de build
+- Vue Router: Sistema de navegación
+- Axios: Cliente HTTP
+- mitt: Event Bus minimalista
+
+### Dependencias Internas
+
+- BaseEntity depende de Application para acceso a axiosInstance y UI services
+- Application depende de Vue Router para navegación
+- Componentes UI dependen de Application.View para obtener el entityClass y entityObject actuales
+- Decoradores dependen de TypeScript experimentalDecorators
+- Todas las entidades dependen de BaseEntity
+- Sistema de validación depende de EventBus de Application
+- Persistencia depende de axios configurado en Application
+
+## 9. Relaciones
+
+### BaseEntity ↔ Application
+
+- BaseEntity usa Application.axiosInstance para operaciones HTTP
+- BaseEntity usa Application.ApplicationUIService para mostrar toasts, confirmaciones y loading
+- BaseEntity usa Application.eventBus para emitir eventos de validación
+- Application.View contiene referencia a entityClass (BaseEntity) y entityObject (instancia)
+
+### Decoradores → BaseEntity
+
+- Decoradores almacenan metadatos en el prototipo
+- BaseEntity proporciona métodos estáticos para leer metadatos (getProperties, getPropertyType, etc.)
+- BaseEntity proporciona métodos de instancia para evaluar metadatos (isRequired, isDisabled, etc.)
+
+### Application ↔ Vue Router
+
+- Application.initializeRouter vincula el router
+- Application.changeView ejecuta router.push
+- Router guards sincronizan Application.View con la URL
+
+### Componentes UI → Application.View
+
+- Componentes leen Application.View.value.entityClass para obtener metadatos
+- Componentes leen Application.View.value.entityObject para vincular datos
+- Componentes escuchan Application.eventBus para responder a eventos globales
+
+### Entidades → Módulos
+
+- Cada entidad representa un módulo en el sistema
+- Module List en Application contiene referencias a todas las entidades registradas
+- SideBar renderiza items basándose en ModuleList
+
+## 10. Notas de Implementación
+
+### Curva de Aprendizaje
+
+**Nivel 1 - Básico (30 minutos)**:
+- Entender concepto de decoradores
+- Crear entidad simple
+- CRUD básico
+
+**Nivel 2 - Intermedio (2 horas)**:
+- Validaciones
+- Relaciones entre entidades
+- Personalizar UI con decoradores
+
+**Nivel 3 - Avanzado (1 día)**:
+- Componentes custom
+- Hooks de ciclo de vida
+- Validaciones asíncronas complejas
+
+**Nivel 4 - Experto (1 semana)**:
+- Crear decoradores propios
+- Extender BaseEntity
+- Arquitectura completa de aplicación
+
+### Casos de Uso Ideales
+
+**Perfecto Para**:
+- Aplicaciones CRUD intensivas
+- Sistemas de administración
+- Backoffice de SaaS
+- CRM, ERP internos
+- Dashboards de gestión
+- Aplicaciones con muchas entidades similares
+
+**No Ideal Para**:
+- Landing pages
+- Sitios de contenido estático
+- Aplicaciones con UI muy custom sin patrones
+- Juegos
+- Aplicaciones de tiempo real extremo
+
+### Métricas de Productividad
+
+**Desarrollo tradicional**:
+- Entidad con 5 campos CRUD completo: aproximadamente 4 horas
+- Agregar validación a 10 campos: aproximadamente 2 horas
+- Cambiar tipo de input: Modificar múltiples archivos
+
+**Con este framework**:
+- Entidad con 5 campos CRUD completo: aproximadamente 15 minutos
+- Agregar validación a 10 campos: aproximadamente 10 líneas de código
+- Cambiar tipo de input: Modificar 1 decorador
+
+**ROI (Return on Investment)**:
+```
+Inversión inicial: 2-3 días aprendiendo framework
+Retorno: 60-70% reducción en tiempo de desarrollo CRUD
+Break-even: aproximadamente 5 entidades creadas
+```
+
+### Ventajas Fundamentales
+
+**Zero Boilerplate**:
+
+Sin Framework:
+```typescript
+// 1. Crear formulario HTML
+// 2. Crear validaciones
+// 3. Manejar submit
+// 4. Llamar API
+// 5. Manejar errores
+// 6. Actualizar UI
+// Total: aproximadamente 200 líneas de código
+```
+
+Con Framework:
+```typescript
+@PropertyName('Name', String)
+@Required(true)
+name!: string;
+// Total: 3 líneas de código
+// Resultado: Formulario completo funcional
+```
+
+**Type Safety Total**:
+- TypeScript end-to-end
+- Decoradores tipados
+- Inferencia de tipos automática
+- Errores en tiempo de compilación
+
+**Consistencia Garantizada**:
+- Todas las entidades siguen el mismo patrón
+- UI consistente en toda la aplicación
+- Validaciones uniformes
+- Mensajes de error estandarizados
+
+**DRY (Don't Repeat Yourself)**:
+- Defines una propiedad una vez
+- Funciona en: lista, detalle, formularios, validaciones, API
+
+**Extensible sin Romper**:
+```typescript
+// Puedes usar componentes custom
+@ModuleDetailComponent(CustomProductForm)
+
+// O dejar que se genere automáticamente
+// (sin decorador)
+```
+
+### Estructura del Proyecto
 
 ```
 plantilla_saas_vue/
 ├── src/
-│   ├── entities/          # Tus modelos de datos
+│   ├── entities/          # Modelos de datos
 │   │   ├── base_entitiy.ts
 │   │   ├── products.ts
-│   │   └── managers/      # (Futuro) Lógica backend
+│   │   └── managers/      # Lógica backend (futuro)
 │   │
 │   ├── decorations/       # Sistema de decoradores
 │   │   ├── index.ts
@@ -605,7 +747,7 @@ plantilla_saas_vue/
 │   ├── css/              # Estilos globales
 │   └── constants/        # Constantes (iconos, etc)
 │
-└── copilot/              # 📚 ESTA DOCUMENTACIÓN
+└── copilot/              # Documentación
     ├── 00-CONTRACT.md
     ├── 01-FRAMEWORK-OVERVIEW.md
     ├── 02-FLOW-ARCHITECTURE.md
@@ -614,98 +756,36 @@ plantilla_saas_vue/
     └── examples/
 ```
 
----
+## 11. Referencias Cruzadas
 
-## 🎓 Curva de Aprendizaje
+### Documentos del Framework
 
-### Nivel 1: Básico (30 minutos)
-- Entender concepto de decoradores
-- Crear entidad simple
-- CRUD básico
+- 00-CONTRACT.md: Contrato obligatorio de desarrollo
+- 02-FLOW-ARCHITECTURE.md: Arquitectura detallada de flujos
+- 03-QUICK-START.md: Tutorial de inicio rápido
 
-### Nivel 2: Intermedio (2 horas)
-- Validaciones
-- Relaciones entre entidades
-- Personalizar UI con decoradores
+### Documentación por Capas
 
-### Nivel 3: Avanzado (1 día)
-- Componentes custom
-- Hooks de ciclo de vida
-- Validaciones asíncronas complejas
+- layers/01-decorators/: Documentación de cada decorador
+- layers/02-base-entity/base-entity-core.md: Especificación de BaseEntity
+- layers/03-application/application-singleton.md: Especificación de Application
+- layers/03-application/router-integration.md: Integración con Vue Router
+- layers/04-components/: Componentes UI
+- layers/05-advanced/: Patrones avanzados
+- layers/06-composables/: Composables de Vue
 
-### Nivel 4: Experto (1 semana)
-- Crear decoradores propios
-- Extender BaseEntity
-- Arquitectura completa de aplicación
+### Tutoriales
 
----
+- tutorials/01-basic-crud.md: Tutorial CRUD paso a paso
+- tutorials/02-validations.md: Sistema de validaciones
+- tutorials/03-relations.md: Relaciones entre entidades
 
-## 🔮 Casos de Uso Ideales
+### Ejemplos
 
-### ✅ Perfecto Para:
-- Aplicaciones CRUD intensivas
-- Sistemas de administración
-- Backoffice de SaaS
-- CRM, ERP internos
-- Dashboards de gestión
-- Aplicaciones con muchas entidades similares
-
-### ⚠️ No Ideal Para:
-- Landing pages
-- Sitios de contenido estático
-- Aplicaciones con UI muy custom sin patrones
-- Juegos
-- Aplicaciones de tiempo real extremo
+- examples/classic-module-example.md: Ejemplo de módulo clásico
+- examples/advanced-module-example.md: Ejemplo de módulo avanzado
 
 ---
 
-## 📊 Métricas de Productividad
-
-### Comparativa
-
-**Desarrollo tradicional:**
-- Entidad con 5 campos CRUD completo: ~4 horas
-- Agregar validación a 10 campos: ~2 horas
-- Cambiar tipo de input: Modificar múltiples archivos
-
-**Con este framework:**
-- Entidad con 5 campos CRUD completo: ~15 minutos
-- Agregar validación a 10 campos: ~10 líneas de código
-- Cambiar tipo de input: Modificar 1 decorador
-
-### ROI (Return on Investment)
-
-```
-Inversión inicial: 2-3 días aprendiendo framework
-Retorno: 60-70% reducción en tiempo de desarrollo CRUD
-Break-even: ~5 entidades creadas
-```
-
----
-
-## 🎯 Próximos Pasos
-
-1. **Leer**: `02-FLOW-ARCHITECTURE.md` para entender flujos
-2. **Seguir**: `03-QUICK-START.md` para crear tu primera entidad
-3. **Explorar**: `tutorials/` para aprender patrones
-4. **Profundizar**: `layers/` para detalles técnicos
-
----
-
-## 📚 Referencias Completas
-
-- `00-CONTRACT.md` - Contrato obligatorio de desarrollo
-- `02-FLOW-ARCHITECTURE.md` - Arquitectura detallada
-- `03-QUICK-START.md` - Tutorial de inicio rápido
-- `layers/01-decorators/` - Documentación de cada decorador
-- `layers/02-base-entity/` - Especificación de BaseEntity
-- `layers/03-application/` - Especificación de Application
-- `layers/04-components/` - Componentes UI
-- `layers/05-advanced/` - Patrones avanzados
-- `tutorials/` - Guías paso a paso
-- `examples/` - Ejemplos completos de módulos
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
+**Última actualización:** 11 de Febrero, 2026  
 **Versión del Framework:** 1.0.0

@@ -1,47 +1,79 @@
-# 🔑 BaseEntity - Métodos de Persistencia
+# BaseEntity: Persistence Methods System
 
-**Referencias:**
-- `base-entity-core.md` - Conceptos básicos de BaseEntity
-- `crud-operations.md` - Operaciones CRUD
-- `../../01-decorators/persistent-key-decorator.md` - Decorador @PersistentKey
-- `../../03-application/application-singleton.md` - Comunicación con API
+## 1. Propósito
 
----
+El sistema de métodos de persistencia gestiona la conversión bidireccional entre claves de propiedades internas (camelCase, nombres de entidad) y claves persistentes (snake_case, nombres de API) definidas por el decorador @PersistentKey. Permite que la entidad use nombres internos consistentes con convenciones JavaScript (firstName, productName) mientras la API usa convenciones diferentes (first_name, product_name) sin requerir transformación manual en cada operación CRUD. El sistema provee 5 métodos static bidirectionales (getPersistentKeys, getPersistentKeyByPropertyKey, getPropertyKeyByPersistentKey, mapToPersistentKeys, mapFromPersistentKeys) y sus equivalentes de instancia. Además incluye métodos de validación de estado: isPersistent() que verifica si entidad tiene @Persistent decorator, e isNew() que determina si entidad es nueva (sin ID) o existente (con ID del servidor). La conversión automática ocurre en save/update (interno → persistente) y getElement/getElementList (persistente → interno).
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/entities/base_entitiy.ts` (líneas 512-548)  
-**Clase:** `export abstract class BaseEntity`
+**Responsabilidades cubiertas:**
+- getPersistentKeys(): Retorna Record<string, string> mapeando propertyKey → persistentKey para todas las propiedades con @PersistentKey
+- getPersistentKeyByPropertyKey(key): Convierte propertyKey interna a persistentKey para envío a API
+- getPropertyKeyByPersistentKey(persistentKey): Convierte persistentKey de API a propertyKey interna (operación inversa)
+- mapToPersistentKeys(data): Convierte objeto completo de formato interno a formato persistente (para POST/PUT)
+- mapFromPersistentKeys(data): Convierte objeto de API (formato persistente) a formato interno (para construcción de instancia)
+- isPersistent(): Valida si entidad tiene @Persistent decorator y puede hacer operaciones CRUD con servidor
+- isNew(): Determina si entidad es nueva (sin PrimaryProperty value) o existente (con ID asignado por servidor)
+- Integración automática en save(): mapToPersistentKeys antes de HTTP request
+- Integración automática en getElement/getElementList: mapFromPersistentKeys después de HTTP response
 
----
+**Límites del alcance:**
+- No implementa validación de tipos durante conversión (asume datos bien formados)
+- No hace transformación profunda de objetos nested (solo nivel top del objeto)
+- No cachea resultados de getPersistentKeys (lee prototype fresh cada vez)
+- No hace validación de consistencia entre @PersistentKey y nombres reales de API
+- No provee rollback si conversión falla parcialmente (conversión es atómica)
+- isPersistent() solo verifica decorator, no valida que @ApiEndpoint esté configurado
+- isNew() solo verifica @PrimaryProperty, no valida si ID es válido en servidor
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-Los **métodos de persistencia** gestionan la conversión entre las claves de propiedades internas (camelCase) y las claves persistentes (snake_case, nombres de API, etc.) definidas por el decorador `@PersistentKey`.
+**@PersistentKey decorator:** Decorador aplicado a propiedades para definir nombre alternativo usado en persistencia/API. Escribe en PERSISTENT_KEY metadata en prototype. Ejemplo: `@PersistentKey('first_name')` para propiedad firstName.
 
-**Concepto fundamental:**  
-> Tu entidad usa nombres internos (`firstName`, `productName`) pero la API espera otros nombres (`first_name`, `product_name`). Estos métodos transforman automáticamente entre ambos formatos.
+**Internal Property Key:** Nombre de propiedad usado internamente en código JavaScript/TypeScript. Típicamente camelCase (firstName, lastName, productName). Usado para acceso directo: entity.firstName.
 
----
+**Persistent Key:** Nombre de propiedad usado en API/persistencia. Típicamente snake_case o convención específica del backend (first_name, last_name, product_name). Definido en @PersistentKey decorator.
 
-## 🔧 Métodos Estáticos
+**getPersistentKeys():** Método static que retorna Record<string, string> con mapeo completo propertyKey → persistentKey leyendo PERSISTENT_KEY_KEY del prototype. Usado internamente por otros métodos de conversión.
 
-### getPersistentKeys()
+**mapToPersistentKeys(data):** Convierte objeto completo de formato interno a persistente iterando sobre entries y aplicando getPersistentKeyByPropertyKey. Si propiedad NO tiene @PersistentKey, mantiene nombre original. Usado en save/update antes de HTTP request.
+
+**mapFromPersistentKeys(data):** Convierte objeto de API (formato persistente) a formato interno iterando sobre entries y aplicando getPropertyKeyByPersistentKey. Si persistentKey no existe en metadata, mantiene nombre original. Usado en getElement/getElementList después de HTTP response.
+
+**isPersistent():** Método que verifica si entidad tiene @Persistent decorator aplicado. Retorna boolean. Si false, entidad es solo local (no hace HTTP requests). Si true, entidad puede ejecutar operaciones CRUD con servidor. Usado en Application.setButtonList() para determinar qué botones mostrar en UI.
+
+**isNew():** Método que verifica si valor de @PrimaryProperty es undefined/null. Retorna true si nueva (sin ID), false si existente (con ID). Usado en save() para determinar POST (nueva) vs PUT (actualización). Critical para determinar endpoint HTTP correcto.
+
+**Bidirectional Conversion:** Sistema simétrico donde mapToPersistentKeys y mapFromPersistentKeys son operaciones inversas. Para cualquier objeto válido: mapFromPersistentKeys(mapToPersistentKeys(obj)) === obj (idempotencia).
+
+**Fallback to Original Name:** Si propiedad NO tiene @PersistentKey definido, métodos de conversión usan nombre original sin modificar. Permite mixing de propiedades con y sin @PersistentKey en misma entidad.
+
+## 4. Descripción Técnica
+
+### Métodos Static
+
+#### getPersistentKeys() - Static
 
 ```typescript
 public static getPersistentKeys(): Record<string, string>
 ```
 
-**Propósito:** Obtiene el mapa completo de claves persistentes definidas por `@PersistentKey()`.
-
-**Retorna:** Objeto donde las keys son nombres de propiedad y los valores son nombres persistentes.
+Retorna mapeo completo propertyKey → persistentKey leyendo PERSISTENT_KEY_KEY del prototype.
 
 **Ubicación:** Línea 512
+
+**Implementación:**
+
+```typescript
+public static getPersistentKeys(): Record<string, string> {
+    const proto = this.prototype as any;
+    return proto[PERSISTENT_KEY_KEY] || {};
+}
+```
 
 **Ejemplo:**
 
 ```typescript
-@ModuleName('User', 'Users')
 export class User extends BaseEntity {
     @PropertyName('First Name', String)
     @PersistentKey('first_name')
@@ -58,7 +90,6 @@ export class User extends BaseEntity {
 
 const persistentKeys = User.getPersistentKeys();
 console.log(persistentKeys);
-// Salida:
 // {
 //   firstName: 'first_name',
 //   lastName: 'last_name',
@@ -66,27 +97,19 @@ console.log(persistentKeys);
 // }
 ```
 
----
-
-### getPersistentKeyByPropertyKey()
+#### getPersistentKeyByPropertyKey() - Static
 
 ```typescript
 public static getPersistentKeyByPropertyKey(propertyKey: string): string | undefined
 ```
 
-**Propósito:** Convierte una clave de propiedad interna a su clave persistente.
-
-**Parámetros:**
-- `propertyKey: string` - Nombre de la propiedad interna
-
-**Retorna:** Nombre persistente o `undefined` si no tiene @PersistentKey
+Convierte propertyKey interna a persistentKey para envío a API.
 
 **Ubicación:** Línea 516
 
 **Ejemplo:**
 
 ```typescript
-// Usando la clase User del ejemplo anterior
 const persistentKey = User.getPersistentKeyByPropertyKey('firstName');
 console.log(persistentKey); // 'first_name'
 
@@ -98,22 +121,29 @@ const undefinedKey = User.getPersistentKeyByPropertyKey('someProperty');
 console.log(undefinedKey); // undefined
 ```
 
----
-
-### getPropertyKeyByPersistentKey()
+#### getPropertyKeyByPersistentKey() - Static
 
 ```typescript
 public static getPropertyKeyByPersistentKey(persistentKey: string): string | undefined
 ```
 
-**Propósito:** Convierte una clave persistente a su nombre de propiedad interno (operación inversa).
-
-**Parámetros:**
-- `persistentKey: string` - Nombre persistente (de la API)
-
-**Retorna:** Nombre de propiedad interno o `undefined` si no existe
+Convierte persistentKey de API a propertyKey interna (operación inversa).
 
 **Ubicación:** Línea 520
+
+**Implementación:**
+
+```typescript
+public static getPropertyKeyByPersistentKey(persistentKey: string): string | undefined {
+    const persistentKeys = this.getPersistentKeys();
+    for (const [key, value] of Object.entries(persistentKeys)) {
+        if (value === persistentKey) {
+            return key;
+        }
+    }
+    return undefined;
+}
+```
 
 **Ejemplo:**
 
@@ -131,23 +161,7 @@ const unknownProp = User.getPropertyKeyByPersistentKey('unknown_field');
 console.log(unknownProp); // undefined
 ```
 
-**Implementación interna:**
-
-```typescript
-public static getPropertyKeyByPersistentKey(persistentKey: string): string | undefined {
-    const persistentKeys = this.getPersistentKeys();
-    for (const [key, value] of Object.entries(persistentKeys)) {
-        if (value === persistentKey) {
-            return key;
-        }
-    }
-    return undefined;
-}
-```
-
----
-
-### mapToPersistentKeys()
+#### mapToPersistentKeys() - Static
 
 ```typescript
 public static mapToPersistentKeys<T extends BaseEntity>(
@@ -156,14 +170,28 @@ public static mapToPersistentKeys<T extends BaseEntity>(
 ): Record<string, any>
 ```
 
-**Propósito:** Convierte un objeto completo de formato interno a formato persistente (para enviar a API).
-
-**Parámetros:**
-- `data: Record<string, any>` - Objeto con claves internas
-
-**Retorna:** Objeto con claves persistentes
+Convierte objeto completo de formato interno a formato persistente para envío a API.
 
 **Ubicación:** Línea 524
+
+**Implementación:**
+
+```typescript
+public static mapToPersistentKeys<T extends BaseEntity>(
+    this: new (...args: any[]) => T, 
+    data: Record<string, any>
+): Record<string, any> {
+    const persistentKeys = (this as any).getPersistentKeys();
+    const mapped: Record<string, any> = {};
+    
+    for (const [propertyKey, value] of Object.entries(data)) {
+        const persistentKey = persistentKeys[propertyKey];
+        mapped[persistentKey || propertyKey] = value;  // Fallback to original
+    }
+    
+    return mapped;
+}
+```
 
 **Ejemplo:**
 
@@ -179,7 +207,6 @@ const userData = {
 // Convertir a formato API
 const apiData = User.mapToPersistentKeys(userData);
 console.log(apiData);
-// Salida:
 // {
 //   first_name: 'John',
 //   last_name: 'Doe',
@@ -188,7 +215,7 @@ console.log(apiData);
 // }
 ```
 
-**Uso real en save():**
+**Uso en save():**
 
 ```typescript
 // En BaseEntity.save() - Línea 747
@@ -196,30 +223,7 @@ const dataToSend = this.mapToPersistentKeys(this.toObject());
 const response = await Application.axiosInstance.post(endpoint!, dataToSend);
 ```
 
-**Implementación interna:**
-
-```typescript
-public static mapToPersistentKeys<T extends BaseEntity>(
-    this: new (...args: any[]) => T, 
-    data: Record<string, any>
-): Record<string, any> {
-    const persistentKeys = (this as any).getPersistentKeys();
-    const mapped: Record<string, any> = {};
-    
-    for (const [propertyKey, value] of Object.entries(data)) {
-        const persistentKey = persistentKeys[propertyKey];
-        mapped[persistentKey || propertyKey] = value;
-    }
-    
-    return mapped;
-}
-```
-
-**Nota:** Si una propiedad NO tiene `@PersistentKey`, se mantiene con su nombre original.
-
----
-
-### mapFromPersistentKeys()
+#### mapFromPersistentKeys() - Static
 
 ```typescript
 public static mapFromPersistentKeys<T extends BaseEntity>(
@@ -228,14 +232,27 @@ public static mapFromPersistentKeys<T extends BaseEntity>(
 ): Record<string, any>
 ```
 
-**Propósito:** Convierte un objeto de formato persistente (de API) a formato interno.
-
-**Parámetros:**
-- `data: Record<string, any>` - Objeto con claves persistentes (respuesta API)
-
-**Retorna:** Objeto con claves internas
+Convierte objeto de formato persistente (de API) a formato interno.
 
 **Ubicación:** Línea 532
+
+**Implementación:**
+
+```typescript
+public static mapFromPersistentKeys<T extends BaseEntity>(
+    this: new (...args: any[]) => T, 
+    data: Record<string, any>
+): Record<string, any> {
+    const mapped: Record<string, any> = {};
+    
+    for (const [persistentKey, value] of Object.entries(data)) {
+        const propertyKey = (this as any).getPropertyKeyByPersistentKey(persistentKey);
+        mapped[propertyKey || persistentKey] = value;  // Fallback to original
+    }
+    
+    return mapped;
+}
+```
 
 **Ejemplo:**
 
@@ -251,7 +268,6 @@ const apiResponse = {
 // Convertir a formato interno
 const internalData = User.mapFromPersistentKeys(apiResponse);
 console.log(internalData);
-// Salida:
 // {
 //   firstName: 'Jane',
 //   lastName: 'Smith',
@@ -264,7 +280,7 @@ const user = new User(internalData);
 console.log(user.firstName); // 'Jane'
 ```
 
-**Uso real en getElement():**
+**Uso en getElement():**
 
 ```typescript
 // En BaseEntity.getElement() - Línea 671
@@ -273,37 +289,15 @@ const mappedData = (this as any).mapFromPersistentKeys(response.data);
 const instance = new this(mappedData);
 ```
 
-**Implementación interna:**
+### Métodos de Instancia
 
-```typescript
-public static mapFromPersistentKeys<T extends BaseEntity>(
-    this: new (...args: any[]) => T, 
-    data: Record<string, any>
-): Record<string, any> {
-    const mapped: Record<string, any> = {};
-    
-    for (const [persistentKey, value] of Object.entries(data)) {
-        const propertyKey = (this as any).getPropertyKeyByPersistentKey(persistentKey);
-        mapped[propertyKey || persistentKey] = value;
-    }
-    
-    return mapped;
-}
-```
+Todos los métodos anteriores tienen versiones de instancia que delegan a versiones static:
 
----
-
-## 🔧 Métodos de Instancia
-
-Los siguientes métodos son versiones de instancia que delegan a los métodos estáticos:
-
-### getPersistentKeys() (instancia)
+#### getPersistentKeys() - Instance
 
 ```typescript
 public getPersistentKeys(): Record<string, string>
 ```
-
-**Propósito:** Obtiene las claves persistentes desde una instancia.
 
 **Ubicación:** Línea 540
 
@@ -315,9 +309,7 @@ const keys = user.getPersistentKeys();
 // Equivalente a: User.getPersistentKeys()
 ```
 
----
-
-### getPersistentKeyByPropertyKey() (instancia)
+#### getPersistentKeyByPropertyKey() - Instance
 
 ```typescript
 public getPersistentKeyByPropertyKey(propertyKey: string): string | undefined
@@ -325,17 +317,7 @@ public getPersistentKeyByPropertyKey(propertyKey: string): string | undefined
 
 **Ubicación:** Línea 544
 
-**Ejemplo:**
-
-```typescript
-const user = new User({ firstName: 'John' });
-const persistentKey = user.getPersistentKeyByPropertyKey('firstName');
-console.log(persistentKey); // 'first_name'
-```
-
----
-
-### getPropertyKeyByPersistentKey() (instancia)
+#### getPropertyKeyByPersistentKey() - Instance
 
 ```typescript
 public getPropertyKeyByPersistentKey(persistentKey: string): string | undefined
@@ -343,131 +325,31 @@ public getPropertyKeyByPersistentKey(persistentKey: string): string | undefined
 
 **Ubicación:** Línea 548
 
-**Ejemplo:**
-
-```typescript
-const user = new User({});
-const propertyKey = user.getPropertyKeyByPersistentKey('first_name');
-console.log(propertyKey); // 'firstName'
-```
-
----
-
-### mapToPersistentKeys() (instancia)
+#### mapToPersistentKeys() - Instance
 
 ```typescript
 public mapToPersistentKeys(data: Record<string, any>): Record<string, any>
 ```
 
-**Propósito:** Convierte un objeto a claves persistentes usando la clase de la instancia.
-
 **Ubicación:** Línea 552
 
-**Ejemplo:**
-
-```typescript
-const user = new User({ firstName: 'John', lastName: 'Doe' });
-
-const internalData = { firstName: 'Jane', age: 30 };
-const apiData = user.mapToPersistentKeys(internalData);
-
-console.log(apiData);
-// { first_name: 'Jane', age: 30 }
-```
-
----
-
-### mapFromPersistentKeys() (instancia)
+#### mapFromPersistentKeys() - Instance
 
 ```typescript
 public mapFromPersistentKeys(data: Record<string, any>): Record<string, any>
 ```
 
-**Propósito:** Convierte un objeto de API a claves internas usando la clase de la instancia.
-
 **Ubicación:** Línea 556
 
-**Ejemplo:**
+### Métodos de Validación de Estado
 
-```typescript
-const user = new User({});
-
-const apiData = { first_name: 'Bob', email_address: 'bob@example.com' };
-const internalData = user.mapFromPersistentKeys(apiData);
-
-console.log(internalData);
-// { firstName: 'Bob', email: 'bob@example.com' }
-```
-
----
-
-## 🎯 Flujo Completo: Entidad → API → Entidad
-
-### 1. Enviar a API (save/update)
-
-```typescript
-// Paso 1: Entidad con datos internos
-const user = new User({
-    firstName: 'Alice',
-    lastName: 'Johnson',
-    email: 'alice@example.com'
-});
-
-// Paso 2: Convertir a objeto plano
-const internalObject = user.toObject();
-// { firstName: 'Alice', lastName: 'Johnson', email: 'alice@example.com' }
-
-// Paso 3: Mapear a claves persistentes
-const apiPayload = user.mapToPersistentKeys(internalObject);
-// { first_name: 'Alice', last_name: 'Johnson', email_address: 'alice@example.com' }
-
-// Paso 4: Enviar a API
-await Application.axiosInstance.post('/api/users', apiPayload);
-```
-
-**Esto ocurre automáticamente en `save()` y `update()`.**
-
----
-
-### 2. Recibir de API (getElement/getElementList)
-
-```typescript
-// Paso 1: Respuesta de la API
-const apiResponse = {
-    id: 1,
-    first_name: 'Bob',
-    last_name: 'Smith',
-    email_address: 'bob@example.com',
-    created_at: '2024-01-01'
-};
-
-// Paso 2: Mapear a claves internas
-const internalData = User.mapFromPersistentKeys(apiResponse);
-// { id: 1, firstName: 'Bob', lastName: 'Smith', email: 'bob@example.com', created_at: '2024-01-01' }
-
-// Paso 3: Crear instancia
-const user = new User(internalData);
-
-// Paso 4: Usar con nombres internos
-console.log(user.firstName); // 'Bob'
-console.log(user.email);     // 'bob@example.com'
-```
-
-**Esto ocurre automáticamente en `getElement()` y `getElementList()`.**
-
----
-
-## 🔍 Validación de Persistencia
-
-### isPersistent()
+#### isPersistent() - Instance
 
 ```typescript
 public isPersistent(): boolean
 ```
 
-**Propósito:** Verifica si la entidad tiene el decorador `@Persistent()`.
-
-**Retorna:** `true` si la entidad puede persistirse en BD, `false` si es solo local.
+Verifica si entidad tiene @Persistent decorator aplicado.
 
 **Ubicación:** Línea 591
 
@@ -509,17 +391,13 @@ setButtonList() {
 }
 ```
 
----
-
-### isNew()
+#### isNew() - Instance
 
 ```typescript
 public isNew(): boolean
 ```
 
-**Propósito:** Verifica si la entidad es nueva (no tiene ID asignado por la API).
-
-**Retorna:** `true` si no tiene valor en la propiedad marcada con `@PrimaryProperty`
+Verifica si entidad es nueva (no tiene ID asignado por API).
 
 **Ubicación:** Línea 599
 
@@ -557,9 +435,213 @@ if (this.isNew()) {
 }
 ```
 
----
+## 5. Flujo de Funcionamiento
 
-## 📋 Ejemplo Completo: CRUD con Persistencia
+### Flujo de Envío a API (save/update)
+
+```
+Usuario llama entity.save()
+        ↓
+save() llama this.toObject()
+        ↓
+Obtiene objeto plano con keys internas
+{ firstName: 'Alice', lastName: 'Johnson' }
+        ↓
+save() llama mapToPersistentKeys(object)
+        ↓
+Para cada key en object:
+    - Lee persistentKeys[key]
+    - Si existe, usa persistentKey
+    - Si no existe, usa key original
+        ↓
+Retorna objeto con keys persistentes
+{ first_name: 'Alice', last_name: 'Johnson' }
+        ↓
+save() ejecuta HTTP request (POST/PUT)
+        ↓
+Envía objeto con persistent keys al servidor
+```
+
+### Flujo de Recepción desde API (getElement/getElementList)
+
+```
+Usuario llama Entity.getElement(id)
+        ↓
+getElement() ejecuta HTTP GET
+        ↓
+Recibe response.data con persistent keys
+{ product_id: 1, product_name: 'Widget', unit_price: 99.99 }
+        ↓
+getElement() llama mapFromPersistentKeys(response.data)
+        ↓
+Para cada persistentKey en response:
+    - Busca propertyKey correspondiente
+    - Si existe, usa propertyKey interna
+    - Si no existe, usa persistentKey original
+        ↓
+Retorna objeto con keys internas
+{ id: 1, name: 'Widget', price: 99.99 }
+        ↓
+getElement() crea instancia new Entity(mappedData)
+        ↓
+Usuario accede con nombres internos
+entity.name // 'Widget'
+```
+
+### Flujo de Determinación POST vs PUT
+
+```
+Usuario llama entity.save()
+        ↓
+save() llama this.isNew()
+        ↓
+isNew() obtiene PrimaryProperty key
+        ↓
+isNew() verifica valor de this[primaryKey]
+        ↓
+¿Valor es undefined o null?
+    ├─ SÍ → isNew() retorna true
+    │        ↓
+    │     save() ejecuta POST
+    │     Endpoint: /api/entities
+    │
+    └─ NO → isNew() retorna false
+             ↓
+          save() ejecuta PUT
+          Endpoint: /api/entities/:id
+```
+
+### Flujo de Validación de Persistencia en UI
+
+```
+Application carga entidad en View
+        ↓
+Application.setButtonList() ejecuta
+        ↓
+Obtiene entityObject del View.value
+        ↓
+Llama entityObject.isPersistent()
+        ↓
+isPersistent() lee PERSISTENT_KEY decorator
+        ↓
+¿Entidad está marcada @Persistent?
+    ├─ SÍ → Mostrar botones CRUD completos
+    │        (Save, Update, Delete, Refresh)
+    │
+    └─ NO → Mostrar solo botones navegación
+             (Refresh, Close)
+```
+
+## 6. Reglas Obligatorias
+
+**Regla 1:** mapToPersistentKeys() DEBE aplicarse antes de todo HTTP request (POST/PUT) en save/update. No enviar objeto con keys internas directamente a API.
+
+**Regla 2:** mapFromPersistentKeys() DEBE aplicarse después de todo HTTP response en getElement/getElementList antes de construir instancia.
+
+**Regla 3:** Si propiedad NO tiene @PersistentKey, métodos de conversión DEBEN usar nombre original sin modificar (fallback behavior).
+
+**Regla 4:** isNew() DEBE verificar @PrimaryProperty para determinar si entidad es nueva. No usar otra propiedad arbitraria.
+
+**Regla 5:** save() DEBE usar isNew() para decidir entre POST y PUT. POST para entidades nuevas (isNew() === true), PUT para existentes.
+
+**Regla 6:** isPersistent() DEBE verificar @Persistent decorator. Si false, no ejecutar operaciones HTTP CRUD (solo local).
+
+**Regla 7:** getPropertyKeyByPersistentKey() DEBE retornar undefined si persistentKey no existe en metadata. No lanzar excepción.
+
+**Regla 8:** mapToPersistentKeys() y mapFromPersistentKeys() DEBEN ser operaciones simétricas. Para objeto válido: mapFromPersistentKeys(mapToPersistentKeys(obj)) debe igualar obj.
+
+**Regla 9:** Métodos de instancia DEBEN delegar a versiones static usando this.constructor. No duplicar lógica.
+
+**Regla 10:** getPersistentKeys() DEBE retornar objeto vacío {} si no hay @PersistentKey definidos, no undefined.
+
+**Regla 11:** Conversión DEBE ser shallow (nivel top). No hacer transformación recursiva de objetos nested sin implementación explícita.
+
+**Regla 12:** Nombres de propiedades privadas (prefijo _) NO deben incluirse en conversión (filtradas por toObject()).
+
+## 7. Prohibiciones
+
+**Prohibido:** Enviar objeto con keys internas directamente a API sin mapToPersistentKeys(). Causará incompatibilidad con backend.
+
+**Prohibido:** Construir instancia con response.data sin mapFromPersistentKeys(). Propiedades tendrán nombres incorrectos.
+
+**Prohibido:** Modificar objeto retornado por getPersistentKeys(). Es referencia a prototype metadata, modificación afectaría todas las instancias.
+
+**Prohibido:** Usar isNew() en entidades sin @PrimaryProperty decorator. Causará comportamiento undefined.
+
+**Prohibido:** Ejecutar save/update en entidades con isPersistent() === False. No tienen configuración para persistencia.
+
+**Prohibido:** Asumir que todos los campos tienen @PersistentKey. Siempre verificar undefined y aplicar fallback a nombre original.
+
+**Prohibido:** Hacer conversión manual de keys en código de aplicación. Usar métodos de persistencia provistos por framework.
+
+**Prohibido:** Cachear resultado de getPersistentKeys() en variables static. Debe leer prototype fresh cada vez.
+
+**Prohibido:** Override isNew() sin verificar @PrimaryProperty. Rompe contrato con save().
+
+**Prohibido:** Usar mapToPersistentKeys() para propósitos distintos a preparación de payload API. No es serializer genérico.
+
+**Prohibido:** Aplicar mapFromPersistentKeys() dos veces sobre mismo objeto. Causará pérdida de datos si keys colisionan.
+
+**Prohibido:** Definir @PersistentKey con valores que colisionen entre sí (dos propiedades con mismo persistentKey). Causará ambigüedad en mapFromPersistentKeys().
+
+## 8. Dependencias
+
+**Decoradores:**
+- @PersistentKey: Define nombre persistente para propiedad
+- @Persistent: Marca entidad como persistible en servidor
+- @PrimaryProperty: Define propiedad ID usada por isNew()
+
+**Metadata Keys:**
+- PERSISTENT_KEY_KEY: Symbol para almacenar mapeo persistentKey en prototype
+- PERSISTENT_KEY: Symbol para flag @Persistent decorator
+- PRIMARY_PROPERTY_KEY: Symbol para identificar propiedad primary
+
+**BaseEntity Core:**
+- toObject(): Convierte entity a objeto plano antes de mapToPersistentKeys()
+- getPrimaryPropertyKey(): Obtiene key de @PrimaryProperty para isNew()
+- getPrimaryPropertyValue(): Obtiene valor de @PrimaryProperty para isNew()
+
+**CRUD Operations:**
+- save(): Usa mapToPersistentKeys() antes de POST/PUT
+- update(): Usa mapToPersistentKeys() antes de PUT
+- getElement(): Usa mapFromPersistentKeys() después de GET
+- getElementList(): Usa mapFromPersistentKeys() después de GET
+
+**Application Singleton:**
+- Application.axiosInstance: Para ejecutar HTTP requests con datos convertidos
+- Application.setButtonList(): Usa isPersistent() para configurar botones UI
+
+**HTTP Methods:**
+- POST: Para entidades nuevas (isNew() === true)
+- PUT: Para entidades existentes (isNew() === false)
+- GET: Para obtener datos que requieren mapFromPersistentKeys()
+
+## 9. Relaciones
+
+**Relación con @PersistentKey Decorator (N:1):**
+Múltiples propiedades pueden tener @PersistentKey → Todos son leídos por getPersistentKeys() en un solo mapeo.
+
+**Relación con CRUD Operations (1:N):**
+Métodos de persistencia son usados por múltiples operaciones CRUD (save, update, getElement, getElementList, delete).
+
+**Relación con Application.setButtonList() (N:1):**
+isPersistent() determina qué botones mostrar en UI. Múltiples views consultan este método.
+
+**Relación con BaseEntity.toObject() (1:1):**
+mapToPersistentKeys() siempre recibe output de toObject() en flujo save(). Relación secuencial obligatoria.
+
+**Relación con HTTP Layer (1:N):**
+Datos convertidos son usados en múltiples tipos de HTTP requests (POST, PUT, GET).
+
+**Relación con Validation System (1:1):**
+isNew() determina si validatePersistenceConfiguration() debe ejecutarse antes de save().
+
+**Relación con Constructor (N:1):**
+mapFromPersistentKeys() provee datos que son pasados a constructor de BaseEntity para crear instancias.
+
+## 10. Notas de Implementación
+
+### Ejemplo Completo: CRUD con Persistencia
 
 ```typescript
 // ========================================
@@ -652,75 +734,125 @@ await product.delete();
 // 1. DELETE /api/products/1
 ```
 
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. @PersistentKey es Opcional
-
-Si NO usas `@PersistentKey`, los nombres de propiedades se envían tal cual a la API:
-
-```typescript
-export class User extends BaseEntity {
-    @PropertyName('Name', String)
-    name!: string;  // Se enviará como "name" (sin @PersistentKey)
-}
-
-const user = new User({ name: 'Alice' });
-await user.save();
-// POST /api/users
-// Body: { name: 'Alice' }
-```
-
-### 2. Conversión Automática en CRUD
-
-**NO necesitas llamar manualmente a `mapToPersistentKeys()` o `mapFromPersistentKeys()`.**
-
-Los métodos CRUD (`save()`, `update()`, `getElement()`, `getElementList()`) los usan automáticamente.
-
-### 3. Propiedades Sin @PersistentKey
-
-Si una propiedad no tiene `@PersistentKey`, se mantiene con su nombre original:
+### Mixing Propiedades Con y Sin @PersistentKey
 
 ```typescript
 export class User extends BaseEntity {
     @PersistentKey('first_name')
-    firstName!: string;
+    firstName!: string;  // Convertirá a first_name
     
-    age!: number;  // Sin @PersistentKey
+    age!: number;  // Sin @PersistentKey, se mantiene como 'age'
+    
+    @PersistentKey('email_addr')
+    email!: string;  // Convertirá a email_addr
 }
 
-const data = { firstName: 'John', age: 30 };
+const data = { firstName: 'John', age: 30, email: 'john@example.com' };
 const mapped = User.mapToPersistentKeys(data);
-// { first_name: 'John', age: 30 }  ← 'age' se mantiene igual
+console.log(mapped);
+// { first_name: 'John', age: 30, email_addr: 'john@example.com' }
+//   ↑ convertido    ↑ original    ↑ convertido
 ```
 
-### 4. Casos con Propiedades Privadas
-
-Las propiedades que empiezan con `_` no se incluyen en `toObject()`:
+### Consideración: Propiedades Privadas
 
 ```typescript
 export class User extends BaseEntity {
+    @PersistentKey('user_name')
     name!: string;
-    _isLoading: boolean = false;  // Propiedad privada
+    
+    _isLoading: boolean = false;  // Prop privada (prefijo _)
+    _tempData: any = null;
 }
 
 const user = new User({ name: 'Alice' });
+user._isLoading = true;
+
+// toObject() filtra propiedades privadas
 const obj = user.toObject();
-// { name: 'Alice' }  ← _isLoading NO se incluye
+console.log(obj);
+// { name: 'Alice' }  // _isLoading y _tempData NO incluidos
+
+// Por lo tanto mapToPersistentKeys tampoco las incluye
+const apiData = user.mapToPersistentKeys(obj);
+console.log(apiData);
+// { user_name: 'Alice' }
 ```
 
----
+### Consideración: @PersistentKey Opcional
 
-## 🔗 Referencias
+```typescript
+// Si NO usas @PersistentKey, nombres se envían tal cual
+export class SimpleUser extends BaseEntity {
+    @PropertyName('Name', String)
+    name!: string;  // NO @PersistentKey
+    
+    @PropertyName('Email', String)
+    email!: string;  // NO @PersistentKey
+}
 
-- **@PersistentKey Decorator:** `../../01-decorators/persistent-key-decorator.md`
-- **@Persistent Decorator:** `../../01-decorators/persistent-decorator.md`
-- **CRUD Operations:** `crud-operations.md`
-- **API Integration:** `../../03-application/application-singleton.md`
+const user = new SimpleUser({ name: 'Alice', email: 'alice@example.com' });
+await user.save();
 
----
+// Enviará:
+// POST /api/users
+// Body: { name: 'Alice', email: 'alice@example.com' }
+// (sin conversión)
+```
 
-**Última actualización:** 11 de Febrero, 2026  
-**Archivo fuente:** `src/entities/base_entitiy.ts` (líneas 512-600)  
-**Estado:** ✅ Completo
+### Pattern: Debugging Conversión
+
+```typescript
+const user = new User({
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john@example.com'
+});
+
+// Ver mapeo definido
+console.log('Persistent Keys:', User.getPersistentKeys());
+// { firstName: 'first_name', lastName: 'last_name', email: 'email_address' }
+
+// Ver conversión específica
+console.log('firstName maps to:', User.getPersistentKeyByPropertyKey('firstName'));
+// 'first_name'
+
+// Ver objeto que se enviará
+const internalData = user.toObject();
+console.log('Internal:', internalData);
+// { firstName: 'John', lastName: 'Doe', email: 'john@example.com' }
+
+const apiData = User.mapToPersistentKeys(internalData);
+console.log('API:', apiData);
+// { first_name: 'John', last_name: 'Doe', email_address: 'john@example.com' }
+
+// Verificar simetría
+const backToInternal = User.mapFromPersistentKeys(aData);
+console.log('Back to Internal:', backToInternal);
+// { firstName: 'John', lastName: 'Doe', email: 'john@example.com' }
+// (debe ser idéntico a internalData)
+```
+
+## 11. Referencias Cruzadas
+
+**Documentos relacionados:**
+- ../01-decorators/persistent-key-decorator.md: Definición de @PersistentKey decorator
+- ../01-decorators/persistent-decorator.md: Definición de @Persistent decorator
+- crud-operations.md: Uso de métodos de persistencia en save/update/getElement/getElementList
+- state-and-conversion.md: toObject() usado antes de mapToPersistentKeys()
+- base-entity-core.md: Arquitectura general de BaseEntity
+
+**Archivos fuente:**
+- src/entities/base_entitiy.ts: Implementación de métodos de persistencia (líneas 512-600)
+- src/decorations/persistent_key_decorator.ts: Decorador @PersistentKey
+- src/decorations/persistent_decorator.ts: Decorador @Persistent  
+- src/application/application.ts: Uso de isPersistent() en setButtonList() (línea 221)
+
+**Líneas relevantes en código:**
+- Línea 512-556: Métodos de conversión static e instance
+- Línea 591: isPersistent() implementation
+- Línea 599: isNew() implementation
+- Línea 747: Uso de mapToPersistentKeys() en save()
+- Línea 671: Uso de mapFromPersistentKeys() en getElement()
+
+**Última actualización:** 11 de Febrero, 2026

@@ -1,22 +1,33 @@
-# 📝 PropertyName Decorator
+# PropertyName Decorator
 
-**Referencias:**
-- `../02-base-entity/base-entity-core.md` - BaseEntity
-- `../02-base-entity/metadata-access.md` - Acceso a metadatos
-- `property-index-decorator.md` - Orden de propiedades
-- `../../01-FRAMEWORK-OVERVIEW.md` - Overview del framework
+## 1. Propósito
 
----
+Definir el nombre visual y el tipo de una propiedad de entidad. Es el decorador fundamental y obligatorio para que una propiedad sea reconocida por el sistema de metadatos.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/property_name_decorator.ts`
+Este decorador aplica a:
+- Propiedades de clases que heredan de BaseEntity
+- Tipos primitivos: String, Number, Date, Boolean
+- Tipos complejos: Enumeraciones, entidades relacionadas, arrays tipados
+- Generación automática de componentes UI
+- Sistema de acceso a metadatos en tiempo de ejecución
 
----
+## 3. Definiciones Clave
 
-## 🎯 Propósito
+**PropertyType:** Tipo definible para una propiedad. Puede ser String, Number, Date, Boolean, clase de entidad que herede BaseEntity, EnumAdapter o ArrayTypeWrapper.
 
-Define el **nombre visual** y el **tipo** de una propiedad de entidad. Es el decorador más fundamental y **obligatorio** para que una propiedad sea reconocida por el sistema.
+**PROPERTY_NAME_KEY:** Símbolo utilizado para almacenar mapa de nombres visuales de propiedades en el prototipo de clase.
+
+**PROPERTY_TYPE_KEY:** Símbolo utilizado para almacenar mapa de tipos de propiedades en el prototipo de clase.
+
+**ARRAY_ELEMENT_TYPE_KEY:** Símbolo utilizado para almacenar tipo de elementos en propiedades de tipo array.
+
+**ArrayTypeWrapper:** Clase contenedora que encapsula el tipo de elementos de un array.
+
+**EnumAdapter:** Adaptador para enumeraciones que permite su uso como PropertyType.
+
+Ubicación en código: src/decorations/property_name_decorator.ts
 
 ---
 

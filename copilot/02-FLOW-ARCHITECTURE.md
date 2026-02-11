@@ -1,17 +1,47 @@
-# 🔄 Flow Architecture - Arquitectura de Flujos del Sistema
+# Flow Architecture - Arquitectura de Flujos del Sistema
 
-**Referencias:**
-- `00-CONTRACT.md` - Contrato de desarrollo
-- `01-FRAMEWORK-OVERVIEW.md` - Visión general
-- `layers/02-base-entity/base-entity-core.md` - BaseEntity
-- `layers/03-application/application-singleton.md` - Application
-- `layers/03-application/router-integration.md` - Vue Router
+## 1. Propósito
 
----
+Este documento define la arquitectura de flujos del SaaS Vue Meta-Programming Framework, describiendo cómo interactúan las diferentes capas del sistema, cómo se procesan las entidades desde su definición hasta su renderizado en la interfaz de usuario, y cómo se ejecutan las operaciones CRUD completas. El objetivo es proporcionar una comprensión detallada de los flujos de ejecución, las secuencias de llamadas entre componentes y las transformaciones de datos a través de las capas del sistema.
 
-## 📐 Arquitectura General del Sistema
+## 2. Alcance
 
-### Diagrama de Capas
+Este documento cubre:
+
+- Arquitectura general del sistema con diagrama de capas
+- Flujo principal desde entidades hasta UI
+- Fase de inicialización de la aplicación
+- Flujo completo de navegación cuando el usuario selecciona un módulo
+- Flujo de visualización en ListView (tabla de registros)
+- Flujo de edición en DetailView (formularios)
+- Flujo de validación multi-nivel
+- Flujo de persistencia y guardado en API
+- Flujo de detección de cambios (dirty state)
+- Flujo de componentes personalizados
+- Flujo de intercepción HTTP
+- Flujo de eventos mediante EventBus
+
+## 3. Definiciones Clave
+
+**Flujo de Ejecución**: Secuencia ordenada de llamadas y transformaciones que ocurren en el sistema para completar una operación.
+
+**Capa**: Nivel de abstracción en la arquitectura que agrupa componentes con responsabilidades similares.
+
+**Orquestador**: Componente central (Application) que coordina la interacción entre diferentes partes del sistema.
+
+**Interceptor**: Función que se ejecuta antes (request) o después (response) de una llamada HTTP para modificar o procesar los datos.
+
+**Guard**: Función de Vue Router que se ejecuta antes de la navegación para validar o modificar la ruta.
+
+**Snapshot**: Copia del estado original de una entidad usada para detección de cambios.
+
+**Metadata Reader**: Sistema que lee los decoradores almacenados en el prototipo para generar UI.
+
+## 4. Descripción Técnica
+
+### Arquitectura General del Sistema
+
+#### Diagrama de Capas
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -73,11 +103,11 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
----
+## 5. Flujo de Funcionamiento
 
-## 🌊 Flujo Principal: De Entidad a UI
+### Flujo Principal: De Entidad a UI
 
-### Fase 1: Inicialización de la Aplicación
+#### Fase 1: Inicialización de la Aplicación
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -112,7 +142,8 @@
 └─────────────────────────────────────────────────────┘
 ```
 
-**Código:**
+Código:
+
 ```typescript
 // main.js
 import Application from '@/models/application'
@@ -133,11 +164,9 @@ if (Application.ModuleList.value.length > 0) {
 }
 ```
 
----
+### Flujo de Navegación: Usuario Selecciona Módulo
 
-## 🎯 Flujo de Navegación: Usuario Selecciona Módulo
-
-### Flujo Completo
+#### Flujo Completo
 
 ```
 Usuario click en Sidebar Item "Products"
@@ -169,7 +198,8 @@ Usuario click en Sidebar Item "Products"
             └─→ next() → Renderiza componente
 ```
 
-**Código en SideBarItemComponent:**
+Código en SideBarItemComponent:
+
 ```typescript
 methods: {
     handleClick() {
@@ -178,7 +208,8 @@ methods: {
 }
 ```
 
-**Código en Application:**
+Código en Application:
+
 ```typescript
 changeView = (entityClass, component, viewType, entity = null) => {
     // PASO 1: Verificar cambios sin guardar
@@ -213,11 +244,9 @@ private setViewChanges = (entityClass, component, viewType, entity) => {
 }
 ```
 
----
+### Flujo de Visualización: ListView (Tabla)
 
-## 📋 Flujo de Visualización: ListView (Tabla)
-
-### Secuencia de Renderizado
+#### Secuencia de Renderizado
 
 ```
 1. Router activa ruta /products
@@ -255,7 +284,8 @@ private setViewChanges = (entityClass, component, viewType, entity) => {
                                         </tbody>
 ```
 
-**Código en DetailViewTableComponent:**
+Código en DetailViewTableComponent:
+
 ```vue
 <template>
   <table>
@@ -297,11 +327,9 @@ export default {
 </script>
 ```
 
----
+### Flujo de Edición: DetailView (Formulario)
 
-## 📝 Flujo de Edición: DetailView (Formulario)
-
-### Usuario Crea Nuevo Registro
+#### Usuario Crea Nuevo Registro
 
 ```
 1. Usuario click en botón "New"
@@ -363,7 +391,7 @@ export default {
                     - v-model="entity[key]"
 ```
 
-### Usuario Edita Registro Existente
+#### Usuario Edita Registro Existente
 
 ```
 1. Usuario click en fila de tabla
@@ -384,11 +412,9 @@ export default {
                 entity._originalState = { name: 'Widget', price: 99.99 }
 ```
 
----
+### Flujo de Validación: Multi-Nivel
 
-## ✅ Flujo de Validación: Multi-Nivel
-
-### Validación en Tiempo Real (Por Input)
+#### Validación en Tiempo Real (Por Input)
 
 ```
 Usuario escribe en input
@@ -425,7 +451,8 @@ Usuario escribe en input
                 └─→ Si false: validationMessages.push(asyncMessage)
 ```
 
-**Código en TextInputComponent:**
+Código en TextInputComponent:
+
 ```typescript
 methods: {
     async isValidated(): Promise<boolean> {
@@ -460,7 +487,7 @@ methods: {
 }
 ```
 
-### Validación Global (Botón "Validate" o "Save")
+#### Validación Global (Botón "Validate" o "Save")
 
 ```
 Usuario click "Save"
@@ -497,11 +524,9 @@ Usuario click "Save"
     │       └─→ (Ver flujo de guardado abajo)
 ```
 
----
+### Flujo de Persistencia: Guardado en API
 
-## 💾 Flujo de Persistencia: Guardado en API
-
-### save() - Operación Completa
+#### save() - Operación Completa
 
 ```
 await entity.save()
@@ -559,7 +584,8 @@ await entity.save()
         └─→ Application.ApplicationUIService.openConfirmationMenu(ERROR, ...)
 ```
 
-**Código:**
+Código:
+
 ```typescript
 public async save(): Promise<this> {
     // Validaciones
@@ -612,11 +638,9 @@ public async save(): Promise<this> {
 }
 ```
 
----
+### Flujo de Estado: Detección de Cambios
 
-## 🔄 Flujo de Estado: Detección de Cambios
-
-### getDirtyState() - ¿Hay cambios sin guardar?
+#### getDirtyState() - Detección de Cambios Sin Guardar
 
 ```
 Usuario modifica campo
@@ -652,11 +676,9 @@ Usuario intenta salir
                     └─→ Cambios se descartan, vuelve a estado original
 ```
 
----
+### Flujo de Componentes Personalizados
 
-## 🎨 Flujo de Componentes Personalizados
-
-### Uso de @ModuleDefaultComponent
+#### Uso de @ModuleDefaultComponent
 
 ```
 @ModuleDefaultComponent(CustomDashboard)
@@ -682,11 +704,9 @@ Usuario selecciona "Products" en sidebar
                         (en lugar del DefaultListview generado)
 ```
 
----
+### Flujo de Intercepción HTTP
 
-## 🌐 Flujo de Intercepción HTTP
-
-### Request Interceptor
+#### Request Interceptor
 
 ```
 entity.save() llama axios.post('/api/products', data)
@@ -703,7 +723,7 @@ entity.save() llama axios.post('/api/products', data)
     └─→ Request se envía con header Authorization
 ```
 
-### Response Interceptor
+#### Response Interceptor
 
 ```
 Servidor responde
@@ -720,11 +740,9 @@ Servidor responde
     └─→ Response llega a entity.save()
 ```
 
----
+### Flujo de Eventos (EventBus)
 
-## 🔔 Flujo de Eventos (EventBus)
-
-### Emisión y Escucha
+#### Emisión y Escucha
 
 ```
 Componente A emite evento
@@ -743,7 +761,7 @@ Componente A emite evento
             └─→ ... todos los inputs ejecutan su validación
 ```
 
-### Limpieza de Listeners
+#### Limpieza de Listeners
 
 ```
 Componente se desmonta
@@ -755,19 +773,148 @@ Componente se desmonta
             └─→ Evita memory leaks
 ```
 
+## 6. Reglas Obligatorias
+
+- La inicialización de Application DEBE ocurrir antes de montar la aplicación Vue
+- El router DEBE vincularse con Application usando initializeRouterWithApplication
+- Las entidades DEBEN registrarse en Application.ModuleList antes de ser accesibles
+- La navegación entre vistas DEBE realizarse mediante los métodos de Application (changeViewToListView, changeViewToDetailView, changeViewToDefaultView)
+- Los cambios sin guardar DEBEN verificarse antes de cambiar de vista
+- La validación de inputs DEBE ejecutarse mediante EventBus emit('validate-inputs')
+- Los interceptores HTTP DEBEN configurarse en Application.axiosInstance
+- Los listeners de EventBus DEBEN limpiarse en beforeUnmount de los componentes
+- El estado de la entidad DEBE actualizarse después de operaciones CRUD exitosas
+- Los hooks de ciclo de vida DEBEN respetar el orden de ejecución (before → on → after)
+
+## 7. Prohibiciones
+
+- NO navegar directamente con router.push, usar métodos de Application
+- NO crear instancias de axios fuera de Application.axiosInstance
+- NO modificar Application.View directamente, usar métodos de cambio de vista
+- NO emitir eventos de validación sin esperar respuestas
+- NO ejecutar operaciones CRUD sin validaciones previas
+- NO modificar _originalState manualmente
+- NO renderizar componentes de formulario sin entidad vinculada
+- NO registrar listeners de EventBus sin limpiarlos posteriormente
+- NO mezclar flujos síncronos y asíncronos de validación
+- NO proceder con guardado si validateInputs retorna false
+
+## 8. Dependencias
+
+### Flujo de Inicialización depende de:
+- Vue 3 createApp
+- Vue Router
+- Application singleton
+- Entidades registradas
+
+### Flujo de Navegación depende de:
+- Application.changeView methods
+- Vue Router
+- Router guards
+- ComponentContainerComponent
+
+### Flujo de Renderizado depende de:
+- Application.View ref
+- Metadatos de decoradores
+- BaseEntity métodos de lectura de metadatos
+- Componentes UI generados
+
+### Flujo de Validación depende de:
+- EventBus (mitt)
+- Decoradores de validación
+- BaseEntity.validateInputs
+- Application.View.isValid
+
+### Flujo de Persistencia depende de:
+- Application.axiosInstance
+- Decoradores de API
+- BaseEntity CRUD methods
+- Interceptores HTTP
+
+## 9. Relaciones
+
+### Flujos Secuenciales
+
+Inicialización → Registro → Navegación → Renderizado → Interacción → Validación → Persistencia
+
+### Flujos Concurrentes
+
+- Renderizado de múltiples inputs ocurre en paralelo
+- Validaciones de múltiples inputs se ejecutan simultáneamente mediante EventBus
+- Interceptores HTTP se ejecutan independientemente de la lógica de negocio
+
+### Flujos Condicionales
+
+- El flujo de confirmación solo se activa si hay dirty state
+- La validación asíncrona solo se ejecuta si existe el decorador @AsyncValidation
+- Los hooks de ciclo de vida solo se ejecutan si están implementados en la entidad
+
+### Flujos Cíclicos
+
+- Usuario modifica → Validación → Error → Usuario corrige → Validación → Éxito
+- Navegación → Verificación dirty state → Confirmación → Cancelación → Permanece en vista actual
+
+## 10. Notas de Implementación
+
+### Consideraciones de Performance
+
+- Los metadatos se leen del prototipo solo una vez por renderizado de componente
+- El EventBus usa debounce interno de 100ms para validaciones globales
+- Los interceptores HTTP son singleton y se reutilizan en todas las peticiones
+- El dirty state usa JSON.stringify para comparación, lo cual puede ser costoso en entidades grandes
+
+### Debugging de Flujos
+
+Para depurar problemas en flujos:
+
+1. **Flujo de Navegación**: Verificar Application.View.value en consola después de cada cambio
+2. **Flujo de Validación**: Escuchar evento 'validate-inputs' manualmente en consola
+3. **Flujo de Persistencia**: Revisar Network tab del navegador para peticiones HTTP
+4. **Flujo de Estado**: Comparar entity vs entity._originalState en consola
+
+### Optimizaciones Implementadas
+
+- Router guards verifican cambios antes de ejecutar navegación completa
+- Validación en tiempo real usa throttle de 300ms
+- Los componentes UI usan computed properties para metadatos
+- El sistema de eventos usa mitt (3kb) en lugar de alternativas más pesadas
+
+### Patrones de Extensión
+
+Para extender los flujos del sistema:
+
+- **Agregar paso en flujo de persistencia**: Implementar hooks beforeSave/afterSave en la entidad
+- **Interceptar navegación**: Agregar lógica en router guards
+- **Modificar generación de UI**: Usar @ModuleDetailComponent con componente custom
+- **Agregar validación custom**: Implementar @Validation o @AsyncValidation
+
+## 11. Referencias Cruzadas
+
+### Documentos Relacionados
+
+- 00-CONTRACT.md: Contrato obligatorio de desarrollo
+- 01-FRAMEWORK-OVERVIEW.md: Visión general del framework
+- 03-QUICK-START.md: Tutorial de inicio rápido
+
+### Documentación de Componentes
+
+- layers/02-base-entity/base-entity-core.md: Métodos de BaseEntity usados en flujos
+- layers/03-application/application-singleton.md: Application y servicios
+- layers/03-application/router-integration.md: Integración con Vue Router
+- layers/04-components/: Componentes UI involucrados en flujos
+
+### Tutoriales
+
+- tutorials/01-basic-crud.md: Tutorial CRUD que implementa estos flujos
+- tutorials/02-validations.md: Sistema de validaciones en detalle
+- tutorials/03-relations.md: Flujos de relaciones entre entidades
+
+### Ejemplos
+
+- examples/classic-module-example.md: Ejemplo completo que demuestra todos los flujos
+- examples/advanced-module-example.md: Flujos avanzados y personalizaciones
+
 ---
 
-## 📚 Referencias
-
-- `00-CONTRACT.md` - Contrato obligatorio
-- `01-FRAMEWORK-OVERVIEW.md` - Visión general
-- `layers/02-base-entity/` - Métodos de BaseEntity
-- `layers/03-application/` - Application y servicios
-- `layers/04-components/` - Componentes UI
-- `tutorials/01-basic-crud.md` - Tutorial CRUD
-- `examples/classic-module-example.md` - Ejemplo completo
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
+**Última actualización:** 11 de Febrero, 2026  
 **Versión:** 1.0.0

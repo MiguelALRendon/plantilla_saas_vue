@@ -1,121 +1,79 @@
-# 📏 CssColumnClass Decorator
+# CssColumnClass Decorator
 
-**Referencias:**
-- `property-index-decorator.md` - PropertyIndex controla orden, CssColumnClass controla ancho
-- `view-group-decorator.md` - ViewGroup organiza, CssColumnClass ajusta layout
-- `view-group-row-decorator.md` - ViewGroupRow + CssColumnClass para layouts precisos
-- `../../02-base-entity/base-entity-core.md` - getCssColumnClass() accessor
+## 1. Propósito
 
----
+Asigna clases CSS de columna a una propiedad para controlar su ancho en layouts de grid o columnas. Este decorador permite implementar sistemas de grids responsivos como Bootstrap, Tailwind CSS o CSS Grid personalizado, proporcionando control preciso sobre el ancho de los campos en formularios.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/css_column_class_decorator.ts`
+- **Aplicación**: Decorador de propiedad
+- **Nivel**: Entidad (BaseEntity)
+- **Impacto**: Clase CSS aplicada al contenedor del input en UI
+- **Default**: Sin decorador, retorna 'col-md-12' (full width)
 
----
+## 3. Definiciones Clave
 
-## 🎯 Propósito
-
-El decorador `@CssColumnClass()` asigna **clases CSS de columna** a una propiedad para controlar su ancho en layouts de grid/columnas, típicamente usando sistemas como Bootstrap, Tailwind, o custom CSS Grid.
-
-**Beneficios:**
-- Control preciso de layout en formularios
-- Layouts responsivos con grid systems
-- Columnas de diferentes anchos
-- Multi-column forms sin CSS manual
-
----
-
-## 📝 Sintaxis
-
+### Symbol de Metadatos
 ```typescript
-@CssColumnClass(className: string)
-propertyName: Type;
+export const CSS_COLUMN_CLASS_METADATA = Symbol('cssColumnClass');
 ```
 
-### Parámetros
+### Firma
+```typescript
+function CssColumnClass(className: string): PropertyDecorator
+```
 
-| Parámetro | Tipo | Requerido | Descripción |
-|-----------|------|-----------|-------------|
-| `className` | `string` | Sí | Clase(s) CSS para la columna (ej: 'col-md-6', 'w-1/2') |
+### Almacenamiento
 
----
+### Almacenamiento
+```typescript
+// En el prototype de la clase
+proto[CSS_COLUMN_CLASS_METADATA] = {
+    'name': 'col-md-8',
+    'sku': 'col-md-4',
+    'price': 'col-md-3',
+    'stock': 'col-md-3',
+    'category': 'col-md-6',
+    'description': 'col-md-12'
+};
+```
 
-## 💾 Implementación
+## 4. Descripción Técnica
+
+El decorador CssColumnClass almacena una cadena de texto con clases CSS que serán aplicadas al contenedor del input en la UI. BaseEntity proporciona el método getCssColumnClass() para acceder a estas clases, permitiendo que los componentes de vista las utilicen para controlar el layout.
 
 ### Código del Decorador
-
 ```typescript
 // src/decorations/css_column_class_decorator.ts
 
-/**
- * Symbol para almacenar metadata de CSS column class
- */
 export const CSS_COLUMN_CLASS_METADATA = Symbol('cssColumnClass');
 
-/**
- * @CssColumnClass() - Asigna clase CSS de columna a una propiedad
- * 
- * @param className - Clase(s) CSS a aplicar (ej: 'col-md-6')
- * @returns PropertyDecorator
- */
 export function CssColumnClass(className: string): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        // Inicializar metadata si no existe
         if (!target[CSS_COLUMN_CLASS_METADATA]) {
             target[CSS_COLUMN_CLASS_METADATA] = {};
         }
         
-        // Guardar clase CSS
         target[CSS_COLUMN_CLASS_METADATA][propertyKey] = className;
     };
 }
 ```
 
-**Ubicación:** `src/decorations/css_column_class_decorator.ts` (línea ~1-30)
-
----
-
-## 🔍 Metadata Storage
-
-### Estructura en Prototype
-
+### Accesores en BaseEntity
 ```typescript
-Product.prototype[CSS_COLUMN_CLASS_METADATA] = {
-    'name': 'col-md-8',          // 8/12 columnas
-    'sku': 'col-md-4',            // 4/12 columnas
-    'price': 'col-md-3',          // 3/12 columnas
-    'stock': 'col-md-3',          // 3/12 columnas
-    'category': 'col-md-6',       // 6/12 columnas
-    'description': 'col-md-12'    // Full width
-};
-```
+// src/entities/base_entitiy.ts (línea ~1520-1560)
 
-### Acceso desde BaseEntity
-
-```typescript
-// src/entities/base_entitiy.ts
-
-/**
- * Obtiene la clase CSS de columna de una propiedad
- * 
- * @param propertyKey - Nombre de la propiedad
- * @returns Clase CSS o 'col-md-12' (default full width)
- */
 public getCssColumnClass(propertyKey: string): string {
     const constructor = this.constructor as typeof BaseEntity;
     const cssMetadata = constructor.prototype[CSS_COLUMN_CLASS_METADATA];
     
     if (!cssMetadata || !cssMetadata[propertyKey]) {
-        return 'col-md-12';  // Default: full width
+        return 'col-md-12';
     }
     
     return cssMetadata[propertyKey];
 }
 
-/**
- * Obtiene la clase CSS de columna (método estático)
- */
 public static getCssColumnClass(propertyKey: string): string {
     const cssMetadata = this.prototype[CSS_COLUMN_CLASS_METADATA];
     
@@ -127,21 +85,63 @@ public static getCssColumnClass(propertyKey: string): string {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~1520-1560)
+## 5. Flujo de Funcionamiento
 
----
+```
+1. Decorador aplica clase CSS a propiedad
+   ↓
+2. Metadata se almacena en prototype
+   ↓
+3. DetailView renderiza formulario
+   ↓
+4. Para cada propiedad llama getCssColumnClass(prop)
+   ↓
+5. Retorna clase CSS o 'col-md-12' (default)
+   ↓
+6. Vue aplica clase al div contenedor del input
+   ↓
+7. CSS Grid/Flexbox controla ancho del campo
+```
 
-## 🎨 Impacto en UI
+## 6. Reglas Obligatorias
 
-### DetailView con CssColumnClass
+1. Default es 'col-md-12' si no se especifica decorador
+2. Pueden especificarse múltiples clases en un string
+3. Las clases deben existir en el CSS del proyecto
+4. Para Bootstrap, las columnas deben sumar 12 por fila
+5. Las clases son responsivas si se usan breakpoints apropiados
 
+## 7. Prohibiciones
+
+1. NO usar clases CSS no definidas en el proyecto
+2. NO asumir que las clases funcionarán sin CSS apropiado
+3. NO depender de suma exacta de 12 columnas sin planificación
+4. NO mezclar sistemas de grid incompatibles
+5. NO usar espacios extra o formato incorrecto en classNames
+
+## 8. Dependencias
+
+### Decoradores Relacionados
+- **PropertyIndex**: Controla orden de propiedades
+- **ViewGroup**: Organiza campos por secciones
+- **ViewGroupRow**: Define filas explícitas para layout
+
+### Clases
+- **BaseEntity**: Contiene getCssColumnClass()
+- **DefaultDetailView**: Aplica clases en template
+
+### CSS Frameworks
+- **Bootstrap Grid**: Sistema de 12 columnas
+- **Tailwind CSS**: Utility classes para width
+- **CSS Grid**: Grid nativo del navegador
+
+## 9. Relaciones
+
+### Con DetailView
 ```vue
-<!-- src/views/default_detailview.vue -->
-
 <template>
   <div class="detail-view">
     <form @submit.prevent="saveEntity" class="row">
-      <!-- Cada campo con su clase CSS de columna -->
       <div 
         v-for="prop in properties" 
         :key="prop"
@@ -153,11 +153,6 @@ public static getCssColumnClass(propertyKey: string): string {
           :property="prop"
           :entity="entity"
         />
-      </div>
-      
-      <div class="col-md-12">
-        <button type="submit">Save</button>
-        <button type="button" @click="cancel">Cancel</button>
       </div>
     </form>
   </div>
@@ -174,63 +169,42 @@ function getCssColumnClass(propertyName: string): string {
     return entityClass.value.getCssColumnClass(propertyName);
 }
 </script>
-
-<style scoped>
-/* Bootstrap Grid */
-.row {
-    display: flex;
-    flex-wrap: wrap;
-    margin: -15px;
-}
-
-.row > div {
-    padding: 15px;
-}
-
-/* Responsive columns */
-@media (min-width: 768px) {
-    .col-md-1 { width: 8.333%; }
-    .col-md-2 { width: 16.666%; }
-    .col-md-3 { width: 25%; }
-    .col-md-4 { width: 33.333%; }
-    .col-md-6 { width: 50%; }
-    .col-md-8 { width: 66.666%; }
-    .col-md-12 { width: 100%; }
-}
-
-@media (max-width: 767px) {
-    [class*="col-md-"] {
-        width: 100%;  /* Stack en móviles */
-    }
-}
-</style>
 ```
 
----
+### Con ViewGroup y ViewGroupRow
+```typescript
+@PropertyName('Product Name', String)
+@ViewGroup('Basic Info')
+@ViewGroupRow(1)
+@CssColumnClass('col-md-8')
+name!: string;
 
-## 🧪 Ejemplos de Uso
+@PropertyName('SKU', String)
+@ViewGroup('Basic Info')
+@ViewGroupRow(1)
+@CssColumnClass('col-md-4')
+sku!: string;
+```
 
-### 1. Two-Column Layout
+## 10. Notas de Implementación
+
+### Two-Column Layout
 
 ```typescript
-import { CssColumnClass } from '@/decorations/css_column_class_decorator';
-import { PropertyName } from '@/decorations/property_name_decorator';
-import { Required } from '@/decorations/required_decorator';
+import { CssColumnClass, PropertyName, Required } from '@/decorations';
 import BaseEntity from '@/entities/base_entitiy';
 
 export class User extends BaseEntity {
-    // Primera fila: firstName | lastName
     @PropertyName('First Name', String)
     @Required()
-    @CssColumnClass('col-md-6')  // ← 50% width
+    @CssColumnClass('col-md-6')
     firstName!: string;
     
     @PropertyName('Last Name', String)
     @Required()
-    @CssColumnClass('col-md-6')  // ← 50% width
+    @CssColumnClass('col-md-6')
     lastName!: string;
     
-    // Segunda fila: email | phone
     @PropertyName('Email', String)
     @Required()
     @CssColumnClass('col-md-6')
@@ -242,62 +216,255 @@ export class User extends BaseEntity {
 }
 ```
 
-**Resultado en UI:**
-```
-┌─────────────────────────┬─────────────────────────┐
-│ First Name              │ Last Name               │
-│ [John                 ] │ [Doe                  ] │
-├─────────────────────────┼─────────────────────────┤
-│ Email                   │ Phone                   │
-│ [john@example.com     ] │ [(555) 123-4567       ] │
-└─────────────────────────┴─────────────────────────┘
-```
-
----
-
-### 2. Asymmetric Columns
+### Asymmetric Columns
 
 ```typescript
 export class Product extends BaseEntity {
-    // Name: 8 cols, SKU: 4 cols
     @PropertyName('Product Name', String)
     @Required()
-    @CssColumnClass('col-md-8')  // ← 66.666% width
+    @CssColumnClass('col-md-8')
     name!: string;
     
     @PropertyName('SKU', String)
     @Required()
-    @CssColumnClass('col-md-4')  // ← 33.333% width
+    @CssColumnClass('col-md-4')
     sku!: string;
     
-    // Price: 3 cols, Stock: 3 cols, Category: 6 cols
     @PropertyName('Price', Number)
     @Required()
-    @CssColumnClass('col-md-3')  // ← 25%
+    @CssColumnClass('col-md-3')
     price!: number;
     
     @PropertyName('Stock', Number)
     @Required()
-    @CssColumnClass('col-md-3')  // ← 25%
+    @CssColumnClass('col-md-3')
     stock!: number;
     
     @PropertyName('Category', String)
-    @CssColumnClass('col-md-6')  // ← 50%
+    @CssColumnClass('col-md-6')
     category!: string;
     
-    // Description: full width
     @PropertyName('Description', String)
-    @StringType(StringTypeEnum.TEXTAREA)
-    @CssColumnClass('col-md-12')  // ← 100% width
+    @CssColumnClass('col-md-12')
     description!: string;
 }
 ```
 
-**Resultado:**
+### Address Form (Complex Layout)
+
+```typescript
+export class Customer extends BaseEntity {
+    @PropertyName('Full Name', String)
+    @Required()
+    @CssColumnClass('col-md-12')
+    fullName!: string;
+    
+    @PropertyName('Email', String)
+    @Required()
+    @CssColumnClass('col-md-8')
+    email!: string;
+    
+    @PropertyName('Phone', String)
+    @CssColumnClass('col-md-4')
+    phone!: string;
+    
+    @PropertyName('Street Address', String)
+    @Required()
+    @CssColumnClass('col-md-12')
+    address!: string;
+    
+    @PropertyName('City', String)
+    @Required()
+    @CssColumnClass('col-md-6')
+    city!: string;
+    
+    @PropertyName('State', String)
+    @Required()
+    @CssColumnClass('col-md-3')
+    state!: string;
+    
+    @PropertyName('ZIP Code', String)
+    @Required()
+    @CssColumnClass('col-md-3')
+    zipCode!: string;
+}
 ```
-┌────────────────────────────────────────┬──────────────────┐
-│ Product Name                           │ SKU              │
-│ [Wireless Mouse                      ] │ [PROD-0042     ] │
+
+### Tailwind CSS Classes
+
+```typescript
+export class Product extends BaseEntity {
+    @PropertyName('Product Name', String)
+    @Required()
+    @CssColumnClass('w-2/3')
+    name!: string;
+    
+    @PropertyName('SKU', String)
+    @Required()
+    @CssColumnClass('w-1/3')
+    sku!: string;
+    
+    @PropertyName('Price', Number)
+    @CssColumnClass('w-1/4')
+    price!: number;
+    
+    @PropertyName('Stock', Number)
+    @CssColumnClass('w-1/4')
+    stock!: number;
+    
+    @PropertyName('Category', String)
+    @CssColumnClass('w-1/2')
+    category!: string;
+    
+    @PropertyName('Description', String)
+    @CssColumnClass('w-full')
+    description!: string;
+}
+```
+
+### Multiple Responsive Classes
+
+```typescript
+export class Product extends BaseEntity {
+    @PropertyName('Product Name', String)
+    @Required()
+    @CssColumnClass('col-md-6 col-lg-8')
+    name!: string;
+    
+    @PropertyName('SKU', String)
+    @CssColumnClass('col-md-6 col-lg-4')
+    sku!: string;
+    
+    @PropertyName('Description', String)
+    @CssColumnClass('col-12')
+    description!: string;
+}
+```
+
+### Custom CSS Grid
+
+```typescript
+export class Event extends BaseEntity {
+    @PropertyName('Event Name', String)
+    @Required()
+    @CssColumnClass('grid-col-span-2')
+    name!: string;
+    
+    @PropertyName('Date', Date)
+    @Required()
+    @CssColumnClass('grid-col-span-1')
+    eventDate!: Date;
+    
+    @PropertyName('Time', String)
+    @Required()
+    @CssColumnClass('grid-col-span-1')
+    eventTime!: string;
+}
+```
+
+### ViewGroup + CssColumnClass
+
+```typescript
+export class Product extends BaseEntity {
+    @PropertyName('Product Name', String)
+    @ViewGroup('Basic Info')
+    @CssColumnClass('col-md-8')
+    name!: string;
+    
+    @PropertyName('SKU', String)
+    @ViewGroup('Basic Info')
+    @CssColumnClass('col-md-4')
+    sku!: string;
+    
+    @PropertyName('Price', Number)
+    @ViewGroup('Pricing')
+    @CssColumnClass('col-md-4')
+    price!: number;
+    
+    @PropertyName('Cost', Number)
+    @ViewGroup('Pricing')
+    @CssColumnClass('col-md-4')
+    cost!: number;
+    
+    @PropertyName('Tax Rate', Number)
+    @ViewGroup('Pricing')
+    @CssColumnClass('col-md-4')
+    taxRate!: number;
+}
+```
+
+### Conditional Classes in Vue
+
+```vue
+<template>
+  <div class="detail-view">
+    <form class="row">
+      <div 
+        v-for="prop in properties" 
+        :key="prop"
+        :class="getColumnClass(prop)"
+      >
+        <component 
+          :is="getInputComponent(prop)"
+          v-model="entity[prop]"
+          :property="prop"
+          :entity="entity"
+        />
+      </div>
+    </form>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+
+const isMobile = computed(() => window.innerWidth < 768);
+
+function getColumnClass(propertyName: string): string {
+    const baseClass = entityClass.value.getCssColumnClass(propertyName);
+    
+    if (isMobile.value) {
+        return 'col-12';
+    }
+    
+    return baseClass;
+}
+</script>
+```
+
+### Testing CSS Classes
+
+```typescript
+describe('Product CSS Column Classes', () => {
+    it('should have correct CSS classes', () => {
+        expect(Product.getCssColumnClass('name')).toBe('col-md-8');
+        expect(Product.getCssColumnClass('sku')).toBe('col-md-4');
+        expect(Product.getCssColumnClass('price')).toBe('col-md-3');
+    });
+    
+    it('should default to col-md-12 if not set', () => {
+        expect(Product.getCssColumnClass('undefinedProp')).toBe('col-md-12');
+    });
+});
+```
+
+## 11. Referencias Cruzadas
+
+### Documentación Relacionada
+- **property-index-decorator.md**: Control de orden de propiedades
+- **view-group-decorator.md**: Organización de campos por grupos
+- **view-group-row-decorator.md**: Control de filas en layout
+- **../02-base-entity/base-entity-core.md**: Método getCssColumnClass()
+- **../04-components/DefaultViews.md**: Aplicación de clases en vistas
+
+### Componentes UI Relacionados
+- **src/views/default_detailview.vue**: Vista que aplica las clases CSS
+- **src/components/ComponentContainerComponent.vue**: Contenedor de inputs
+
+### Métodos BaseEntity Relacionados
+- **getCssColumnClass(propertyKey: string): string**: Obtiene clase CSS de instancia
+- **static getCssColumnClass(propertyKey: string): string**: Obtiene clase CSS estática
+- **getProperties(): string[]**: Lista propiedades para iterar en vista
 ├────────────┬────────────┬──────────────────────────────────┤
 │ Price      │ Stock      │ Category                         │
 │ [$25     ] │ [50      ] │ [Electronics                   ] │

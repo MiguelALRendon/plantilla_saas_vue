@@ -1,54 +1,78 @@
-# 🔄 BaseEntity - Métodos de Estado y Conversión
+# BaseEntity: State and Conversion Methods
 
-**Referencias:**
-- `base-entity-core.md` - Conceptos básicos de BaseEntity
-- `crud-operations.md` - Uso de métodos de conversión en CRUD
-- `lifecycle-hooks.md` - Hooks de ciclo de vida
+## 1. Propósito
 
----
+El sistema de métodos de estado y conversión gestiona el ciclo de vida de la entidad a través de cuatro capacidades fundamentales: tracking de operaciones asíncronas mediante estados de carga (setLoading, loaded, getLoadingState), conversión bidireccional entre instancia de clase y objetos planos (toObject, toPersistentObject), detección de cambios no guardados mediante comparación con snapshot original (getDirtyState, resetChanges), y validación de nullability para implementar patrón Null Object (isNull). El sistema permite rastrear si entidad está cargando datos desde API (getLoadingState), si está ejecutando operación save (getSaving), si tiene cambios sin guardar que requieren confirmación antes de navegación (getDirtyState), y provee mecanismos de conversión para operaciones CRUD que transforman instancia TypeScript con métodos a objeto plano JSON para HTTP requests. El snapshot _originalState se crea en constructor usando toPersistentObject() (solo propiedades decoradas con @PropertyName) y se actualiza después de save() exitoso. El sistema es crítico para Application.changeView() que previene navegación con cambios sin guardar mediante openConfirmationMenu().
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/entities/base_entitiy.ts`  
-**Clase:** `export abstract class BaseEntity`
+**Responsabilidades cubiertas:**
+- setLoading(): Marca entidad como "cargando datos", establece _isLoading = true para mostrar spinners en UI
+- loaded(): Marca "carga completada", establece _isLoading = false para ocultar loaders
+- getLoadingState(): Retorna boolean indicando si operación de carga está en progreso
+- getSaving (getter): Retorna boolean indicando si operación save() está en progreso, establecido automáticamente por CRUD
+- toObject(): Convierte instancia completa a Record<string, any> incluyendo TODAS las propiedades (públicas y privadas como _isLoading, _originalState, _isSaving)
+- toPersistentObject(): Convierte solo propiedades decoradas con @PropertyName a Record<string, any>, excluye propiedades privadas y temporales
+- isNull(): Implementa patrón Null Object, retorna false para BaseEntity, true para EmptyEntity
+- getDirtyState(): Compara JSON.stringify(_originalState) vs JSON.stringify(toPersistentObject()), retorna true si hay cambios no guardados
+- resetChanges(): Restaura estado original ejecutando Object.assign(this, structuredClone(_originalState)), revierte cambios no guardados
+- onBeforeRouteLeave(): Hook de navegación que retorna true por defecto, puede sobreescribirse en subclases
 
----
+**Límites del alcance:**
+- getDirtyState() no detecta cambios en propiedades sin @PropertyName (no están en _originalState)
+- Comparación JSON no detecta diferencias en orden de propiedades (consideradas iguales)
+- structuredClone() en resetChanges() no clona funciones ni métodos (solo datos)
+- isNull() solo verifica si ES EmptyEntity, no valida si propiedades individuales son null/undefined/empty
+- getLoadingState() y getSaving son estados independientes (carga de datos vs guardado), no se sincronizan
+- toObject() incluye propiedades privadas, NO filtradas automáticamente
+- onBeforeRouteLeave() no se usa directamente, Application.changeView() verifica getDirtyState() en su lugar
+- _originalState no se actualiza en update(), solo en save() exitoso
+- resetChanges() no emite eventos ni notifica a UI, componentes deben detectar cambios manualmente
+- No provee historial de cambios (undo/redo), solo snapshot binario original vs actual
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-Los **métodos de estado y conversión** gestionan:
+**_isLoading:** Propiedad privada boolean que indica si entidad está cargando datos. Establecida por setLoading() (true) y loaded() (false). Consultada por getLoadingState(). Típicamente usada durante fetch de datos relacionados o inicialización asíncrona. Independiente de _isSaving.
 
-1. **Estados de carga** - Tracking de operaciones asíncronas
-2. **Conversión de objetos** - Entidad ↔ Object plano
-3. **Dirty state** - Detección de cambios sin guardar
-4. **Validación de estado** - Verificación de nullability
+**_isSaving:** Propiedad privada boolean que indica si operación save() está en progreso. Establecida automáticamente por save() al inicio (true) y al completar/fallar (false). Consultada por getter getSaving. Usada para deshabilitar botones UI durante guardado. Independiente de _isLoading.
 
-**Concepto fundamental:**  
-> Estos métodos permiten rastrear el estado de la entidad (cargando, guardando, modificada) y convertir entre la instancia de clase y objetos planos para operaciones de API.
+**_originalState:** Snapshot del estado inicial de entidad creado en constructor mediante structuredClone(toPersistentObject()). Contiene solo propiedades decoradas con @PropertyName. Usado por getDirtyState() como referencia para detectar cambios. Actualizado después de save() exitoso con nuevo estado guardado. Usado por resetChanges() para restaurar estado previo.
 
----
+**toObject():** Método que retorna this como Record<string, any>. Conversión directa SIN filtrado. Incluye TODAS las propiedades: name, price, _isLoading, _originalState, _isSaving, etc. No incluye métodos (solo propiedades). Usado internamente, NO para API requests.
 
-## 📊 Métodos de Estado de Carga
+**toPersistentObject():** Método que retorna Record<string, any> conteniendo SOLO propiedades decoradas con @PropertyName. Filtra propiedades privadas (_isLoading, _originalState, _isSaving) y no decoradas. Usado en constructor para crear _originalState. Usado en getDirtyState() para comparación. Representa "estado de negocio" de entidad.
 
-### setLoading()
+**getDirtyState():** Método que detecta cambios no guardados comparando JSON.stringify(_originalState) vs JSON.stringify(toPersistentObject()). Retorna true si strings difieren (hay cambios), false si son idénticos (sin cambios). Usado por Application.changeView() para prevenir navegación con datos no guardados. Limitado a propiedades en _originalState.
+
+**resetChanges():** Método que revierte cambios no guardados ejecutando Object.assign(this, structuredClone(_originalState)). Restaura valores originales. Después de ejecución, getDirtyState() retorna false. No afecta propiedades no decoradas (no están en _originalState).
+
+**isNull():** Método boolean que implementa patrón Null Object Pattern. Retorna false en BaseEntity (instancia normal), retorna true en EmptyEntity (instancia vacía). Permite código sin verificación null/undefined. NO verifica si propiedades individuales son null, solo si instancia ES EmptyEntity.
+
+**EmptyEntity:** Clase especial que extiende BaseEntity y sobreescribe isNull() para retornar true. Usada como placeholder en lugar de null/undefined. Permite llamar métodos sin errores. Ejemplo: customer: Customer = new EmptyEntity() as Customer.
+
+**Dirty State Pattern:** Patrón de diseño para detectar modificaciones. Consiste en: 1) Crear snapshot al inicio (constructor), 2) Comparar estado actual vs snapshot (getDirtyState), 3) Opción de revertir (resetChanges), 4) Actualizar snapshot después de persistir (save). Implementado con JSON.stringify para comparación.
+
+## 4. Descripción Técnica
+
+### Métodos de Loading State
+
+#### setLoading() - Marcar Inicio de Carga
 
 ```typescript
 public setLoading(): void
 ```
 
-**Propósito:** Marca la entidad como "cargando datos".
+Establece _isLoading = true para indicar que operación de carga está en progreso.
 
 **Ubicación:** Línea 57
-
-**Comportamiento:**
-- Establece `_isLoading = true`
-- Usado antes de operaciones asíncronas
-- Permite mostrar spinners/loaders en UI
 
 **Ejemplo:**
 
 ```typescript
 export class Product extends BaseEntity {
+    @PropertyName('Name', String)
+    name!: string;
+    
     async loadRelatedData() {
         this.setLoading();
         
@@ -68,7 +92,7 @@ product.setLoading();
 console.log(product.getLoadingState()); // true
 ```
 
-**Uso en componentes Vue:**
+**Uso en componente Vue:**
 
 ```vue
 <template>
@@ -81,38 +105,17 @@ console.log(product.getLoadingState()); // true
 </template>
 ```
 
----
-
-### loaded()
+#### loaded() - Marcar Fin de Carga
 
 ```typescript
 public loaded(): void
 ```
 
-**Propósito:** Marca la entidad como "carga completada".
+Establece _isLoading = false para indicar que carga completó.
 
 **Ubicación:** Línea 61
 
-**Comportamiento:**
-- Establece `_isLoading = false`
-- Debe llamarse después de operaciones asíncronas
-- Permite ocultar loaders en UI
-
-**Ejemplo:**
-
-```typescript
-const product = new Product({ id: 1 });
-
-// Iniciar carga
-product.setLoading();
-console.log(product.getLoadingState()); // true
-
-// Completar carga
-product.loaded();
-console.log(product.getLoadingState()); // false
-```
-
-**Patrón try-finally:**
+**Pattern try-finally:**
 
 ```typescript
 export class Order extends BaseEntity {
@@ -122,41 +125,24 @@ export class Order extends BaseEntity {
         try {
             const items = await this.fetchItems();
             const customer = await this.fetchCustomer();
-            // ...
         } catch (error) {
             console.error(error);
         } finally {
-            this.loaded();  // ← Siempre se ejecuta
+            this.loaded();  // Siempre ejecuta
         }
     }
 }
 ```
 
----
-
-### getLoadingState()
+#### getLoadingState() - Consultar Estado de Carga
 
 ```typescript
 public getLoadingState(): boolean
 ```
 
-**Propósito:** Obtiene el estado actual de carga.
-
-**Retorna:** `true` si está cargando, `false` si no.
+Retorna valor actual de _isLoading.
 
 **Ubicación:** Línea 65
-
-**Ejemplo:**
-
-```typescript
-const user = new User({ name: 'Alice' });
-
-if (user.getLoadingState()) {
-    console.log('Cargando...');
-} else {
-    console.log('Listo');
-}
-```
 
 **Uso reactivo en Vue:**
 
@@ -169,71 +155,30 @@ const isLoading = computed(() => entity.getLoadingState());
 
 <template>
     <button :disabled="isLoading">
-        <span v-if="isLoading">Guardando...</span>
-        <span v-else>Guardar</span>
+        <span v-if="isLoading">Cargando...</span>
+        <span v-else>Cargar Datos</span>
     </button>
 </template>
 ```
 
----
-
-### getSaving (getter)
+#### getSaving - Consultar Estado de Guardado (Getter)
 
 ```typescript
 public get getSaving(): boolean
 ```
 
-**Propósito:** Obtiene el estado actual de guardado de la entidad.
-
-**Retorna:** `true` si está guardando (operación save() en curso), `false` si no.
+Retorna valor de _isSaving (establecido automáticamente por save()).
 
 **Ubicación:** Línea 596
 
-**Comportamiento:**
-- Retorna el valor de `_isSaving ?? false`
-- Se establece en `true` al inicio de operaciones save()
-- Se establece en `false` al completar o fallar save()
-- Útil para deshabilitar botones durante guardado
+**Diferencia entre Loading y Saving:**
+
+| Método | Propósito | Establecido por |
+|--------|-----------|-----------------|
+| getLoadingState() | Carga de datos | Developer (setLoading/loaded) |
+| getSaving | Guardado de datos | Framework (save() interno) |
 
 **Ejemplo:**
-
-```typescript
-const product = new Product({ name: 'Widget', price: 100 });
-
-console.log(product.getSaving); // false
-
-// Durante save():
-product.save(); // _isSaving se establece a true internamente
-
-// Después de completar:
-// _isSaving se establece a false
-```
-
-**Uso en componentes Vue:**
-
-```vue
-<script setup>
-import { computed } from 'vue';
-
-const isSaving = computed(() => entity.getSaving);
-</script>
-
-<template>
-    <button @click="entity.save()" :disabled="isSaving">
-        <span v-if="isSaving">Guardando...</span>
-        <span v-else>Guardar</span>
-    </button>
-</template>
-```
-
-**Diferencia entre getLoadingState() y getSaving:**
-
-| Método | Propósito | Cuándo se usa |
-|--------|-----------|---------------|
-| `getLoadingState()` | Estado de carga de datos | Fetch/refresh de datos |
-| `getSaving` | Estado de guardado | Durante save()/update() |
-
-**Ejemplo combinado:**
 
 ```typescript
 export class Order extends BaseEntity {
@@ -244,147 +189,43 @@ export class Order extends BaseEntity {
     }
     
     async submitOrder() {
-        // save() internamente maneja _isSaving
-        await this.save();
+        await this.save();  // _isSaving establecido internamente
     }
 }
 
 const order = new Order({...});
 
-// Cargando datos
+// Durante initialize():
 console.log(order.getLoadingState()); // true
 console.log(order.getSaving);         // false
 
-// Guardando cambios
+// Durante submitOrder():
 console.log(order.getLoadingState()); // false
 console.log(order.getSaving);         // true
 ```
 
----
-
-### isNull()
-
-```typescript
-isNull(): boolean
-```
-
-**Propósito:** Verifica si la instancia representa una entidad nula o vacía (patrón Null Object).
-
-**Retorna:** `false` para entidades normales, `true` para `EmptyEntity`.
-
-**Ubicación:** Línea 69
-
-**Comportamiento:**
-- `BaseEntity.isNull()` siempre retorna `false`
-- `EmptyEntity.isNull()` override retorna `true`
-- Útil para validar resultados sin usar `null` o `undefined`
-
-**Implementación:**
-
-```typescript
-// En BaseEntity
-isNull(): boolean {
-    return false;
-}
-
-// En EmptyEntity (línea 959)
-export class EmptyEntity extends BaseEntity {
-    override isNull(): boolean {
-        return true;
-    }
-}
-```
-
-**Patrón Null Object:**
-
-```typescript
-function findProduct(id: number): BaseEntity {
-    const found = products.find(p => p.id === id);
-    
-    // Retornar EmptyEntity en lugar de null
-    return found || new EmptyEntity({});
-}
-
-// Uso sin verificar null
-const product = findProduct(999);
-
-if (product.isNull()) {
-    console.log('Producto no encontrado');
-} else {
-    console.log('Producto:', product.getDefaultPropertyValue());
-}
-```
-
-**Ventajas del patrón:**
-
-✅ No necesitas verificar `if (product !== null)`  
-✅ Puedes llamar métodos sin errores  
-✅ Código más limpio y seguro
-
-**Ejemplo con operaciones seguras:**
-
-```typescript
-// Sin isNull() (inseguro)
-const product = getProduct(id);
-if (product !== null) {
-    console.log(product.name);
-} else {
-    console.log('No encontrado');
-}
-
-// Con isNull() (seguro)
-const product = getProduct(id);
-if (!product.isNull()) {
-    console.log(product.name);
-} else {
-    console.log('No encontrado');
-}
-```
-
-**Uso en componentes Vue:**
+**Uso en botón guardar:**
 
 ```vue
 <template>
-    <div v-if="!product.isNull()">
-        <h1>{{ product.name }}</h1>
-        <p>{{ product.description }}</p>
-    </div>
-    <div v-else>
-        <p>Producto no encontrado</p>
-    </div>
+    <button @click="entity.save()" :disabled="entity.getSaving">
+        <span v-if="entity.getSaving">Guardando...</span>
+        <span v-else>Guardar</span>
+    </button>
 </template>
 ```
 
-**Nota:** `isNull()` NO verifica si las propiedades individuales son nulas o vacías, solo verifica si la entidad en sí es una `EmptyEntity`.
+### Métodos de Conversión
 
-```typescript
-const product = new Product({ name: '', price: 0 });
-console.log(product.isNull()); // false (es un Product válido, aunque vacío)
-
-const empty = new EmptyEntity({});
-console.log(empty.isNull()); // true (es EmptyEntity)
-```
-
----
-
-## 🔄 Métodos de Conversión
-
-### toObject()
+#### toObject() - Conversión Completa
 
 ```typescript
 public toObject(): Record<string, any>
 ```
 
-**Propósito:** Convierte la instancia de BaseEntity a un objeto plano de JavaScript.
-
-**Retorna:** Objeto con todas las propiedades de la entidad
+Retorna this como Record<string, any>. Conversión directa sin filtrado, incluye TODAS las propiedades.
 
 **Ubicación:** Línea 74
-
-**Comportamiento:**
-- Retorna `this` como `Record<string, any>`
-- Incluye TODAS las propiedades públicas (incluso `_isLoading`, `_originalState`, etc.)
-- Es una conversión directa sin filtrado
 
 **Ejemplo:**
 
@@ -395,10 +236,6 @@ export class Product extends BaseEntity {
     
     @PropertyName('Price', Number)
     price!: number;
-    
-    calculateTax(): number {
-        return this.price * 0.16;
-    }
 }
 
 const product = new Product({ name: 'Widget', price: 100 });
@@ -410,32 +247,38 @@ console.log(obj);
 //   price: 100,
 //   _isLoading: false,
 //   _originalState: {...},
-//   _isSaving: false
+//   _isSaving: false,
+//   oid: '...'
 // }
-
-console.log(typeof obj.calculateTax); // undefined (métodos no se incluyen)
 ```
 
-**Nota:** `toObject()` NO filtra propiedades privadas. Para obtener solo propiedades de negocio, usa `toPersistentObject()`.
+**Nota:** toObject() NO filtra propiedades privadas. Para obtener solo propiedades de negocio, usar toPersistentObject().
 
----
-
-### toPersistentObject()
+#### toPersistentObject() - Conversión Filtrada
 
 ```typescript
 public toPersistentObject(): Record<string, any>
 ```
 
-**Propósito:** Convierte la entidad a un objeto plano conteniendo **SOLO** las propiedades decoradas con `@PropertyName`.
-
-**Retorna:** Objeto filtrado con propiedades de negocio
+Retorna Record<string, any> con SOLO propiedades decoradas con @PropertyName.
 
 **Ubicación:** Línea 78
 
-**Comportamiento:**
-1. Obtiene todas las propiedades decoradas con `@PropertyName`
-2. Filtra y retorna solo esas propiedades
-3. Excluye `_isLoading`, `_originalState`, `_isSaving`, etc.
+**Implementación:**
+
+```typescript
+public toPersistentObject(): Record<string, any> {
+    const result: Record<string, any> = {};
+    const allProperties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
+    const propertyKeys = Object.keys(allProperties);
+    
+    for (const key of propertyKeys) {
+        result[key] = this[key];
+    }
+    
+    return result;
+}
+```
 
 **Ejemplo:**
 
@@ -450,8 +293,7 @@ export class User extends BaseEntity {
     @PropertyName('Email', String)
     email!: string;
     
-    // Sin @PropertyName (no se incluye)
-    temporaryFlag: boolean = false;
+    temporaryFlag: boolean = false;  // Sin @PropertyName
 }
 
 const user = new User({ 
@@ -468,23 +310,19 @@ console.log(persistentObj);
 //   name: 'Alice',
 //   email: 'alice@example.com'
 // }
-// ← temporaryFlag, _isLoading, _originalState NO se incluyen
+// temporaryFlag, _isLoading, _originalState NO incluidos
 ```
 
-**Implementación interna:**
+**Diferencia en output:**
 
 ```typescript
-public toPersistentObject(): Record<string, any> {
-    const result: Record<string, any> = {};
-    const allProperties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
-    const propertyKeys = Object.keys(allProperties);
-    
-    for (const key of propertyKeys) {
-        result[key] = this[key];
-    }
-    
-    return result;
-}
+const product = new Product({ name: 'Widget', price: 100 });
+
+console.log(Object.keys(product.toObject()));
+// ['name', 'price', '_isLoading', '_originalState', '_isSaving', 'oid']
+
+console.log(Object.keys(product.toPersistentObject()));
+// ['name', 'price']
 ```
 
 **Uso en constructor:**
@@ -493,125 +331,34 @@ public toPersistentObject(): Record<string, any> {
 constructor(data: Record<string, any>) {
     Object.assign(this, data);
     this._originalState = structuredClone(this.toPersistentObject());
+    // Snapshot inicial solo con propiedades de negocio
 }
 ```
 
-El snapshot inicial se crea con `toPersistentObject()` para capturar solo propiedades de negocio.
+### Métodos de Dirty State
 
-**Diferencia con toObject():**
-
-```typescript
-const product = new Product({ name: 'Widget', price: 100 });
-
-// toObject() incluye TODO
-console.log(Object.keys(product.toObject()));
-// ['name', 'price', '_isLoading', '_originalState', '_isSaving', 'oid']
-
-// toPersistentObject() solo propiedades decoradas
-console.log(Object.keys(product.toPersistentObject()));
-// ['name', 'price']
-```
-
----
-
-## 🧩 Métodos de Validación de Estado
-
-### isNull()
-
-```typescript
-isNull(): boolean
-```
-
-**Propósito:** Verifica si la entidad es nula/vacía (patrón Null Object).
-
-**Retorna:** `false` por defecto, `true` en `EmptyEntity`
-
-**Ubicación:** Línea 69
-
-**Comportamiento:**
-- Por defecto retorna `false`
-- Sobreescrito en `EmptyEntity` para retornar `true`
-- Permite implementar patrón Null Object
-
-**Ejemplo:**
-
-```typescript
-export class Product extends BaseEntity {
-    // ...
-}
-
-const product = new Product({ name: 'Widget' });
-console.log(product.isNull()); // false
-
-// EmptyEntity (clase especial)
-export class EmptyEntity extends BaseEntity {
-    override isNull(): boolean {
-        return true;
-    }
-}
-
-const emptyProduct = new EmptyEntity({});
-console.log(emptyProduct.isNull()); // true
-```
-
-**Uso en composables/componentes:**
-
-```typescript
-// En un composable para ObjectInput
-const isEmptySelection = computed(() => {
-    return entity.value.relatedEntity?.isNull() ?? true;
-});
-```
-
-```vue
-<template>
-    <div v-if="product.isNull()" class="empty-state">
-        No hay producto seleccionado
-    </div>
-    <div v-else>
-        {{ product.name }}
-    </div>
-</template>
-```
-
-**Caso de uso: Valores por defecto**
-
-```typescript
-export class Order extends BaseEntity {
-    @PropertyName('Customer', Object)
-    customer: Customer = new EmptyEntity({}) as Customer;
-    
-    hasValidCustomer(): boolean {
-        return !this.customer.isNull();
-    }
-}
-
-const order = new Order({});
-console.log(order.customer.isNull()); // true
-console.log(order.hasValidCustomer()); // false
-```
-
----
-
-## 🔍 Métodos de Dirty State (Cambios Sin Guardar)
-
-### getDirtyState()
+#### getDirtyState() - Detectar Cambios No Guardados
 
 ```typescript
 public getDirtyState(): boolean
 ```
 
-**Propósito:** Detecta si la entidad tiene cambios sin guardar comparando el estado actual con `_originalState`.
-
-**Retorna:** `true` si hay cambios, `false` si no hay cambios
+Compara JSON.stringify(_originalState) vs JSON.stringify(toPersistentObject()). Retorna true si difieren.
 
 **Ubicación:** Línea 878
 
-**Comportamiento:**
-1. Serializa `_originalState` a JSON
-2. Serializa estado actual (`toPersistentObject()`) a JSON
-3. Compara ambos strings
-4. Retorna `true` si son diferentes
+**Implementación:**
+
+```typescript
+public getDirtyState(): boolean {
+    var snapshotJson = JSON.stringify(this._originalState);
+    var actualJson = JSON.stringify(this.toPersistentObject());
+    console.log('Snapshot:', snapshotJson);
+    console.log('Actual:', actualJson);
+    console.log('Dirty State:', snapshotJson !== actualJson);
+    return snapshotJson !== actualJson;
+}
+```
 
 **Ejemplo:**
 
@@ -624,34 +371,17 @@ export class Product extends BaseEntity {
     price!: number;
 }
 
-// Estado inicial
 const product = new Product({ name: 'Widget', price: 100 });
 console.log(product.getDirtyState()); // false
 
-// Modificar propiedad
 product.name = 'Super Widget';
 console.log(product.getDirtyState()); // true
 
-// Modificar otra propiedad
 product.price = 120;
 console.log(product.getDirtyState()); // true
 
-// Resetear cambios
 product.resetChanges();
 console.log(product.getDirtyState()); // false
-```
-
-**Implementación interna:**
-
-```typescript
-public getDirtyState(): boolean {
-    var snapshotJson = JSON.stringify(this._originalState);
-    var actualJson = JSON.stringify(this.toPersistentObject());
-    console.log('Snapshot:', snapshotJson);
-    console.log('Actual:', actualJson);
-    console.log('Dirty State:', snapshotJson !== actualJson);
-    return snapshotJson !== actualJson;
-}
 ```
 
 **Uso en Application.changeView():**
@@ -674,10 +404,9 @@ changeView = (entityClass: typeof BaseEntity, component: Component, viewType: Vi
 }
 ```
 
-**Casos de uso:**
+**Pattern de prevención de navegación:**
 
 ```typescript
-// 1. Prevenir navegación con cambios sin guardar
 onBeforeRouteLeave((to, from, next) => {
     if (product.getDirtyState()) {
         const confirmLeave = confirm('¿Salir sin guardar cambios?');
@@ -686,12 +415,15 @@ onBeforeRouteLeave((to, from, next) => {
         next();
     }
 });
-
-// 2. Mostrar indicador visual
-const hasUnsavedChanges = computed(() => product.getDirtyState());
 ```
 
+**UI indicator:**
+
 ```vue
+<script setup>
+const hasUnsavedChanges = computed(() => product.getDirtyState());
+</script>
+
 <template>
     <button :class="{ 'has-changes': hasUnsavedChanges }">
         Guardar
@@ -700,44 +432,17 @@ const hasUnsavedChanges = computed(() => product.getDirtyState());
 </template>
 ```
 
----
-
-### resetChanges()
+#### resetChanges() - Revertir Cambios
 
 ```typescript
 public resetChanges(): void
 ```
 
-**Propósito:** Revierte todos los cambios no guardados restaurando el estado original.
+Restaura valores de _originalState usando Object.assign y structuredClone.
 
 **Ubicación:** Línea 887
 
-**Comportamiento:**
-1. Copia `_originalState` (structuredClone)
-2. Asigna todas las propiedades originales a la instancia
-3. Elimina cambios no guardados
-
-**Ejemplo:**
-
-```typescript
-const product = new Product({ name: 'Widget', price: 100 });
-
-// _originalState = { name: 'Widget', price: 100 }
-
-// Hacer cambios
-product.name = 'Super Widget';
-product.price = 150;
-console.log(product.getDirtyState()); // true
-
-// Revertir cambios
-product.resetChanges();
-
-console.log(product.name);  // 'Widget' (valor original)
-console.log(product.price); // 100 (valor original)
-console.log(product.getDirtyState()); // false
-```
-
-**Implementación interna:**
+**Implementación:**
 
 ```typescript
 public resetChanges(): void {
@@ -747,12 +452,27 @@ public resetChanges(): void {
 }
 ```
 
-**Uso en botón de cancelar:**
+**Ejemplo:**
+
+```typescript
+const product = new Product({ name: 'Widget', price: 100 });
+// _originalState = { name: 'Widget', price: 100 }
+
+product.name = 'Super Widget';
+product.price = 150;
+console.log(product.getDirtyState()); // true
+
+product.resetChanges();
+
+console.log(product.name);  // 'Widget'
+console.log(product.price); // 100
+console.log(product.getDirtyState()); // false
+```
+
+**Uso en botón cancelar:**
 
 ```vue
 <script setup>
-import { ref } from 'vue';
-
 const product = ref(new Product({ name: 'Widget', price: 100 }));
 
 const cancel = () => {
@@ -762,120 +482,448 @@ const cancel = () => {
 </script>
 
 <template>
-    <div>
-        <input v-model="product.name" />
-        <input v-model="product.price" type="number" />
-        
-        <button @click="cancel" :disabled="!product.getDirtyState()">
-            Cancelar Cambios
-        </button>
-    </div>
+    <input v-model="product.name" />
+    <input v-model="product.price" type="number" />
+    
+    <button @click="cancel" :disabled="!product.getDirtyState()">
+        Cancelar Cambios
+    </button>
 </template>
 ```
 
-**Efecto después de save():**
+**Comportamiento después de save():**
 
 ```typescript
 const product = new Product({ name: 'Widget', price: 100 });
 
-// Modificar
 product.price = 120;
 console.log(product.getDirtyState()); // true
 
-// Guardar
 await product.save();
+// _originalState actualizado = { name: 'Widget', price: 120 }
 
-// Después de guardar exitosamente:
-// _originalState se actualiza con el nuevo estado
 console.log(product.getDirtyState()); // false
 
-// Si ahora haces cambios:
 product.price = 130;
 console.log(product.getDirtyState()); // true
 
-// resetChanges() restaura al estado guardado (120, no 100)
 product.resetChanges();
-console.log(product.price); // 120
+console.log(product.price); // 120 (estado guardado, NO 100 inicial)
 ```
 
-**Actualización de `_originalState` en save():**
+**Actualización de _originalState en save():**
 
 ```typescript
-// En BaseEntity.save() - Línea 755
+// BaseEntity.save() - Línea 755
 const response = await Application.axiosInstance.post(endpoint!, dataToSend);
 const mappedData = this.mapFromPersistentKeys(response.data);
 Object.assign(this, mappedData);
 
-// ← Actualizar snapshot con nuevo estado
 this._originalState = structuredClone(this.toPersistentObject());
+// Snapshot actualizado con nuevo estado guardado
 ```
 
----
+### Métodos de Validación
 
-### onBeforeRouteLeave()
+#### isNull() - Patrón Null Object
+
+```typescript
+isNull(): boolean
+```
+
+Retorna false en BaseEntity, true en EmptyEntity.
+
+**Ubicación:** Línea 69
+
+**Implementación en BaseEntity:**
+
+```typescript
+isNull(): boolean {
+    return false;
+}
+```
+
+**Implementación en EmptyEntity:**
+
+```typescript
+export class EmptyEntity extends BaseEntity {
+    override isNull(): boolean {
+        return true;
+    }
+}
+```
+
+**Ejemplo:**
+
+```typescript
+export class Product extends BaseEntity {
+    @PropertyName('Name', String)
+    name!: string;
+}
+
+const product = new Product({ name: 'Widget' });
+console.log(product.isNull()); // false
+
+const emptyProduct = new EmptyEntity({});
+console.log(emptyProduct.isNull()); // true
+```
+
+**Pattern de valores por defecto:**
+
+```typescript
+export class Order extends BaseEntity {
+    @PropertyName('Customer', Object)
+    customer: Customer = new EmptyEntity({}) as Customer;
+    
+    hasValidCustomer(): boolean {
+        return !this.customer.isNull();
+    }
+}
+
+const order = new Order({});
+console.log(order.customer.isNull()); // true
+console.log(order.hasValidCustomer()); // false
+```
+
+**Uso en componente Vue:**
+
+```vue
+<template>
+    <div v-if="product.isNull()" class="empty-state">
+        No hay producto seleccionado
+    </div>
+    <div v-else>
+        {{ product.name }}
+    </div>
+</template>
+```
+
+**Nota:** isNull() NO verifica si propiedades individuales son null/undefined/empty:
+
+```typescript
+const product = new Product({ name: '', price: 0 });
+console.log(product.isNull()); // false (es Product, aunque vacío)
+
+const empty = new EmptyEntity({});
+console.log(empty.isNull()); // true (es EmptyEntity)
+```
+
+#### onBeforeRouteLeave() - Hook de Navegación
 
 ```typescript
 public onBeforeRouteLeave(): boolean
 ```
 
-**Propósito:** Hook de navegación para prevenir salida con cambios sin guardar.
-
-**Retorna:** `true` para permitir navegación, `false` para bloquearla
+Retorna true por defecto. Puede sobreescribirse para lógica custom.
 
 **Ubicación:** Línea 874
 
-**Comportamiento:**
-- Por defecto retorna `true` (permitir navegación)
-- Puede sobreescribirse en subclases
-- Usado por `Application.changeView()` internamente
-
-**Ejemplo por defecto:**
+**Implementación por defecto:**
 
 ```typescript
-export class Product extends BaseEntity {
-    // ...
-}
-
-const product = new Product({ name: 'Widget' });
-console.log(product.onBeforeRouteLeave()); // true (siempre permite)
-```
-
-**Uso real en Application:**
-
-```typescript
-// Application.changeView() usa getDirtyState() en lugar de onBeforeRouteLeave()
-changeView = (entityClass, component, viewType, entity) => {
-    if(this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
-        // Mostrar confirmación si hay cambios sin guardar
-        this.ApplicationUIService.openConfirmationMenu(...);
-        return;
-    }
-    this.setViewChanges(entityClass, component, viewType, entity);
+public onBeforeRouteLeave(): boolean {
+    return true;
 }
 ```
 
-**Sobreescribir para lógica custom:**
+**Uso override:**
 
 ```typescript
 export class SpecialProduct extends BaseEntity {
     override onBeforeRouteLeave(): boolean {
-        // Lógica custom de validación
         if (this.price < 0) {
             alert('Precio no puede ser negativo');
-            return false; // Bloquear navegación
+            return false;
         }
-        return true; // Permitir navegación
+        return true;
     }
 }
 ```
 
----
+**Nota:** Application.changeView() NO usa onBeforeRouteLeave() directamente, verifica getDirtyState() en su lugar.
 
-## 📋 Ejemplo Completo: Flujo de Estado
+## 5. Flujo de Funcionamiento
+
+### Flujo de Estado de Carga
+
+```
+Usuario llama método async (loadData)
+        ↓
+Código llama entity.setLoading()
+        ↓
+_isLoading = true
+        ↓
+getLoadingState() retorna true
+        ↓
+UI muestra spinner/loader
+        ↓
+Operación async ejecuta (fetch, timeout, etc.)
+        ↓
+finally block ejecuta entity.loaded()
+        ↓
+_isLoading = false
+        ↓
+getLoadingState() retorna false
+        ↓
+UI oculta spinner/loader
+```
+
+### Flujo de Dirty State Detection
+
+```
+Constructor ejecuta
+        ↓
+Object.assign(this, data)
+        ↓
+_originalState = structuredClone(toPersistentObject())
+Snapshot inicial = { name: 'Widget', price: 100 }
+        ↓
+getDirtyState() retorna false (sin cambios)
+        ↓
+Usuario modifica propiedad
+entity.name = 'Super Widget'
+        ↓
+getDirtyState() ejecuta
+        ↓
+Serializa _originalState
+snapshotJson = '{"name":"Widget","price":100}'
+        ↓
+Serializa estado actual
+actualJson = '{"name":"Super Widget","price":100}'
+        ↓
+Compara strings
+snapshotJson !== actualJson → true
+        ↓
+getDirtyState() retorna true (hay cambios)
+        ↓
+UI muestra indicador * unsaved changes
+```
+
+### Flujo de Reset Changes
+
+```
+Usuario tiene cambios: entity.name = 'New Name'
+        ↓
+getDirtyState() → true
+        ↓
+Usuario hace click en "Cancelar"
+        ↓
+entity.resetChanges() ejecuta
+        ↓
+Verifica if (_originalState exists)
+        ↓
+Clona snapshot
+clonedState = structuredClone(_originalState)
+        ↓
+Asigna propiedades originales
+Object.assign(this, clonedState)
+        ↓
+entity.name restaurado a valor original
+        ↓
+getDirtyState() → false
+        ↓
+UI oculta indicador unsaved changes
+```
+
+### Flujo de Prevención de Navegación
+
+```
+Usuario hace click en botón de navegación
+        ↓
+Application.changeView() ejecuta
+        ↓
+Obtiene entityObject del View.value
+        ↓
+Verifica entityObject.getDirtyState()
+        ↓
+¿getDirtyState() retorna true?
+    ├─ NO → Ejecutar navegación directamente
+    │       setViewChanges(...)
+    │
+    └─ SÍ → Mostrar confirmación
+            openConfirmationMenu(
+                WARNING,
+                'Salir sin guardar',
+                '¿Seguro?',
+                onConfirm: setViewChanges(...)
+            )
+            ↓
+        Usuario elige opción
+            ├─ Confirmar → Ejecutar navegación
+            │              (cambios se pierden)
+            │
+            └─ Cancelar → No navegar
+                          (permanecer en vista)
+```
+
+### Flujo de Actualización Post-Save
+
+```
+Usuario modifica entity y llama save()
+        ↓
+save() ejecuta HTTP request (POST/PUT)
+        ↓
+Response exitoso recibido
+        ↓
+mapFromPersistentKeys(response.data)
+        ↓
+Object.assign(this, mappedData)
+Propiedades actualizadas con data de servidor
+        ↓
+_originalState = structuredClone(toPersistentObject())
+Snapshot actualizado con NUEVO estado guardado
+        ↓
+getDirtyState() → false
+        ↓
+Usuario hace nuevos cambios
+        ↓
+getDirtyState() → true
+        ↓
+resetChanges() restaura al estado guardado
+(NO al estado inicial pre-save)
+```
+
+### Flujo de Conversión toObject vs toPersistentObject
+
+```
+Entity con propiedades:
+- name (decorated @PropertyName)
+- price (decorated @PropertyName)
+- _isLoading (private, no decorated)
+- temporaryFlag (no decorated)
+        ↓
+entity.toObject() ejecuta
+        ↓
+Retorna this as Record<string, any>
+{ name, price, _isLoading, _originalState, temporaryFlag }
+        ↓
+entity.toPersistentObject() ejecuta
+        ↓
+getAllPropertiesNonFilter() obtiene decorated keys
+['name', 'price']
+        ↓
+Itera sobre decorated keys
+result = { name: this.name, price: this.price }
+        ↓
+Retorna result
+{ name, price }
+```
+
+## 6. Reglas Obligatorias
+
+**Regla 1:** setLoading() y loaded() DEBEN llamarse en pares. Usar try-finally para garantizar que loaded() ejecuta incluso si hay error.
+
+**Regla 2:** _originalState DEBE crearse en constructor usando structuredClone(toPersistentObject()), NO toObject(). Solo capturar propiedades de negocio.
+
+**Regla 3:** getDirtyState() DEBE comparar _originalState con toPersistentObject(), NO con toObject(). Propiedades privadas no participan en dirty detection.
+
+**Regla 4:** resetChanges() DEBE verificar existencia de _originalState antes de Object.assign. Usar structuredClone para evitar referencias compartidas.
+
+**Regla 5:** Application.changeView() DEBE verificar getDirtyState() antes de navegación. Si true, mostrar openConfirmationMenu() con warning.
+
+**Regla 6:** save() exitoso DEBE actualizar _originalState con structuredClone(toPersistentObject()). Snapshot debe reflejar estado guardado actual, no inicial.
+
+**Regla 7:** toPersistentObject() DEBE iterar solo sobre propiedades decoradas con @PropertyName obtenidas de getAllPropertiesNonFilter(). No incluir propiedades no decoradas.
+
+**Regla 8:** isNull() en BaseEntity DEBE retornar false siempre. Solo EmptyEntity override retorna true. No cambiar comportamiento default.
+
+**Regla 9:** getSaving y getLoadingState() son estados independientes. NO compartir _isSaving y _isLoading. Cada uno tiene propósito diferente (guardado vs carga).
+
+**Regla 10:** Propiedades sin @PropertyName NO participan en dirty state detection. Cambios en propiedades no decoradas no disparan getDirtyState() = true.
+
+**Regla 11:** getDirtyState() usa JSON.stringify para comparación. Orden de propiedades NO importa. undefined vs ausente SÍ son diferentes.
+
+**Regla 12:** onBeforeRouteLeave() por defecto retorna true (permite navegación). Override solo para lógica de validación custom, NO para dirty state (usar getDirtyState()).
+
+## 7. Prohibiciones
+
+**Prohibido:** Llamar setLoading() sin el correspondiente loaded(). Causará loading state permanente en UI.
+
+**Prohibido:** Usar toObject() para crear _originalState. toObject() incluye propiedades privadas que no deben participar en dirty detection.
+
+**Prohibido:** Modificar _originalState directamente. Solo actualizar mediante save() exitoso o constructor. Modificación manual rompe dirty state detection.
+
+**Prohibido:** Comparar getDirtyState() con propiedades no decoradas. Cambios en temporaryFlag, _customData, etc. NO son detectados como dirty.
+
+**Prohibido:** Ignorar getDirtyState() en navegación. Application.changeView() DEBE verificar antes de permitir cambio de vista.
+
+**Prohibido:** Usar Object.assign sin structuredClone en resetChanges(). Causará referencias compartidas entre _originalState y propiedades actuales.
+
+**Prohibido:** Asumir que isNull() verifica propiedades vacías. isNull() solo verifica si instancia ES EmptyEntity, no valida name === '' o price === 0.
+
+**Prohibido:** Cachear resultado de getDirtyState(). Debe recalcularse cada vez porque estado cambia con modificaciones de propiedades.
+
+**Prohibido:** Llamar resetChanges() si _originalState es undefined. Verificar existencia primero con if (_originalState).
+
+**Prohibido:** Override isNull() en entidades normales para retornar true. Rompe contrato de Null Object Pattern. Solo EmptyEntity debe retornar true.
+
+**Prohibido:** Sincronizar manualmente _isSaving. Es establecido automáticamente por save() interno. Developer no debe modificar directamente.
+
+**Prohibido:** Asumir que toPersistentObject() incluye todas las propiedades. Solo incluye decoradas con @PropertyName.
+
+## 8. Dependencias
+
+**Constructor de BaseEntity:**
+- toPersistentObject(): Para crear _originalState inicial
+- structuredClone(): Para clonar snapshot sin referencias compartidas
+- Object.assign(): Para asignar data inicial a instancia
+
+**CRUD Operations:**
+- save(): Actualiza _originalState después de HTTP response exitoso
+- Establece _isSaving = true al inicio, false al completar
+- Usa toPersistentObject() para obtener data a persistir
+
+**Application Singleton:**
+- Application.changeView(): Verifica getDirtyState() antes de navegación
+- Application.ApplicationUIService.openConfirmationMenu(): Muestra diálogo si hay cambios sin guardar
+- Application.ApplicationUIService.showToast(): Notifica usuario después de resetChanges()
+
+**Decoradores:**
+- @PropertyName: Define qué propiedades se incluyen en toPersistentObject()
+- Meta-programación: getAllPropertiesNonFilter() obtiene lista de propiedades decoradas
+
+**Metadata System:**
+- getAllPropertiesNonFilter(): Retorna Record<string, PropertyMetadata> con propiedades decoradas
+- Usado por toPersistentObject() para filtrar propiedades
+
+**Browser APIs:**
+- JSON.stringify(): Para comparación de objetos en getDirtyState()
+- structuredClone(): Para clonación profunda en constructor y resetChanges()
+
+**Vue Reactivity (Indirect):**
+- computed(): Para crear referencias reactivas a getLoadingState(), getSaving, getDirtyState()
+- v-if/v-show: Para renderizado condicional basado en estados
+
+## 9. Relaciones
+
+**Relación con CRUD Operations (1:N):**
+save() usa: toPersistentObject() para obtener data, actualiza _originalState después de éxito, establece _isSaving durante ejecución.
+
+**Relación con Application.changeView() (N:1):**
+Multiple vistas verifican getDirtyState() antes de navegación. Application controla flujo con openConfirmationMenu().
+
+**Relación con Constructor (1:1):**
+Constructor crea _originalState inicial usando toPersistentObject(). Snapshot establece baseline para dirty detection.
+
+**Relación con Metadata System (1:N):**
+toPersistentObject() consulta getAllPropertiesNonFilter() una vez por conversión. Multiple conversiones leen misma metadata de prototype.
+
+**Relación con UI Components (N:N):**
+Multiple componentes Vue observan getLoadingState(), getSaving, getDirtyState() mediante computed(). Multiple entities pueden estar en UI simultáneamente.
+
+**Relación con EmptyEntity (1:1 inheritance):**
+EmptyEntity extiende BaseEntity y override isNull() para retornar true. Implementa Null Object Pattern.
+
+**Relación con resetChanges() y getDirtyState() (1:1 bidirectional):**
+resetChanges() restaura estado que causa getDirtyState() = false. getDirtyState() detecta cambios que resetChanges() puede revertir.
+
+## 10. Notas de Implementación
+
+### Ejemplo Completo: Flujo de Estado End-to-End
 
 ```typescript
 // ========================================
-// 1. Crear entidad con estado inicial
+// 1. Definir Entidad
 // ========================================
 
 @ModuleName('Order', 'Orders')
@@ -890,32 +938,40 @@ export class Order extends BaseEntity {
     status!: string;
 }
 
+// ========================================
+// 2. Crear Instancia - Estado Inicial
+// ========================================
+
 const order = new Order({
     orderNumber: 'ORD-001',
     total: 500,
     status: 'pending'
 });
 
-// Estado inicial:
+// Constructor ejecuta:
+// Object.assign(this, data)
+// _originalState = structuredClone(toPersistentObject())
+// _originalState = { orderNumber: 'ORD-001', total: 500, status: 'pending' }
+
 console.log(order.getLoadingState()); // false
 console.log(order.getDirtyState());   // false
-console.log(order._originalState);    // { orderNumber: 'ORD-001', total: 500, status: 'pending' }
+console.log(order._originalState);    
+// { orderNumber: 'ORD-001', total: 500, status: 'pending' }
 
 // ========================================
-// 2. Cargar datos adicionales
+// 3. Cargar Datos Adicionales
 // ========================================
 
 order.setLoading();
 console.log(order.getLoadingState()); // true
 
-// Simular fetch...
 await new Promise(resolve => setTimeout(resolve, 1000));
 
 order.loaded();
 console.log(order.getLoadingState()); // false
 
 // ========================================
-// 3. Modificar datos (dirty state)
+// 4. Modificar Datos (Dirty State)
 // ========================================
 
 order.total = 600;
@@ -925,13 +981,14 @@ console.log(order.getDirtyState()); // true
 
 // Ver conversiones:
 console.log(order.toObject());
-// { orderNumber: 'ORD-001', total: 600, status: 'processing', _isLoading: false, _originalState: {...}, ... }
+// { orderNumber: 'ORD-001', total: 600, status: 'processing', 
+//   _isLoading: false, _originalState: {...}, _isSaving: false, oid: '...' }
 
 console.log(order.toPersistentObject());
 // { orderNumber: 'ORD-001', total: 600, status: 'processing' }
 
 // ========================================
-// 4. Cancelar cambios
+// 5. Cancelar Cambios
 // ========================================
 
 order.resetChanges();
@@ -941,7 +998,7 @@ console.log(order.status);           // 'pending' (valor original)
 console.log(order.getDirtyState());  // false
 
 // ========================================
-// 5. Guardar cambios
+// 6. Guardar Cambios
 // ========================================
 
 order.total = 700;
@@ -949,12 +1006,18 @@ order.status = 'completed';
 
 await order.save();
 
-// Después de save():
+// save() ejecuta:
+// 1. Validación
+// 2. HTTP request (POST/PUT)
+// 3. Object.assign(this, response.data)
+// 4. _originalState = structuredClone(toPersistentObject())
+
 console.log(order.getDirtyState()); // false (snapshot actualizado)
-console.log(order._originalState);  // { orderNumber: 'ORD-001', total: 700, status: 'completed' }
+console.log(order._originalState);  
+// { orderNumber: 'ORD-001', total: 700, status: 'completed' }
 
 // ========================================
-// 6. Prevenir navegación con cambios
+// 7. Prevenir Navegación con Cambios
 // ========================================
 
 order.total = 800;
@@ -962,26 +1025,15 @@ order.total = 800;
 // Intentar cambiar vista
 Application.changeView(Product, ProductListView, ViewTypes.LISTVIEW);
 
-// → Muestra diálogo: "Tienes cambios sin guardar. ¿Estás seguro?"
+// Application.changeView() ejecuta:
+// if (entityObject.getDirtyState()) {
+//     openConfirmationMenu(WARNING, '¿Salir sin guardar?')
+// }
+
+// → Muestra diálogo con opciones Confirmar/Cancelar
 ```
 
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. _originalState Usa toPersistentObject()
-
-El snapshot inicial se crea con `toPersistentObject()`, NO con `toObject()`:
-
-```typescript
-constructor(data: Record<string, any>) {
-    Object.assign(this, data);
-    this._originalState = structuredClone(this.toPersistentObject());
-    // ← Solo captura propiedades decoradas
-}
-```
-
-**Consecuencia:** Cambios en propiedades NO decoradas no se detectan como dirty:
+### Consideración: Propiedades No Decoradas No Participan en Dirty State
 
 ```typescript
 export class Product extends BaseEntity {
@@ -993,62 +1045,181 @@ export class Product extends BaseEntity {
 
 const product = new Product({ name: 'Widget' });
 
+// _originalState = { name: 'Widget' }
+// temporaryFlag NO está en snapshot
+
 product.temporaryFlag = true;
-console.log(product.getDirtyState()); // false (temporaryFlag no está en _originalState)
+console.log(product.getDirtyState()); 
+// false (temporaryFlag no participa)
 
 product.name = 'New Name';
-console.log(product.getDirtyState()); // true (name sí está en _originalState)
+console.log(product.getDirtyState()); 
+// true (name SÍ participa)
 ```
 
-### 2. getDirtyState() Usa Comparación por JSON
-
-La comparación se hace convirtiendo a JSON:
+### Consideración: getDirtyState() Usa JSON Comparison
 
 ```typescript
-JSON.stringify(this._originalState) !== JSON.stringify(this.toPersistentObject())
+const product1 = new Product({ name: 'Widget', price: 100 });
+const product2 = new Product({ price: 100, name: 'Widget' });
+
+// Orden diferente, pero JSON.stringify produce mismo resultado
+console.log(product1.getDirtyState()); // false
+console.log(product2.getDirtyState()); // false
+
+// Comparación:
+JSON.stringify({ name: 'Widget', price: 100 })
+JSON.stringify({ price: 100, name: 'Widget' })
+// Ambos producen: '{"name":"Widget","price":100}'
 ```
 
-**Limitaciones:**
-- Objetos con propiedades en diferente orden se consideran iguales
-- Valores `undefined` vs ausentes se tratan diferente
-- No detecta cambios en métodos o funciones
-
-### 3. resetChanges() Usa structuredClone()
+**Limitación con undefined:**
 
 ```typescript
-Object.assign(this, structuredClone(this._originalState));
+const obj1 = { name: 'Widget', price: undefined };
+const obj2 = { name: 'Widget' };
+
+JSON.stringify(obj1); // '{"name":"Widget"}'
+JSON.stringify(obj2); // '{"name":"Widget"}'
+// Indistinguibles en JSON (undefined se omite)
 ```
 
-**Ventajas:**
-- Clonación profunda de objetos anidados
-- Previene referencias compartidas
-
-**Limitación:**
-- No clona funciones ni métodos
-
-### 4. isNull() Solo Para Patrón Null Object
-
-`isNull()` NO verifica si las propiedades son nulas/vacías, solo si la entidad ES una `EmptyEntity`:
+### Consideración: structuredClone en resetChanges()
 
 ```typescript
-const product = new Product({ name: '', price: 0 });
-console.log(product.isNull()); // false (aunque name esté vacío)
+// Ventaja: Clonación profunda
+const order = new Order({
+    orderNumber: 'ORD-001',
+    details: { items: [1, 2, 3] }
+});
 
-const emptyProduct = new EmptyEntity({});
-console.log(emptyProduct.isNull()); // true
+order.details.items.push(4);
+order.resetChanges();
+
+console.log(order.details.items); 
+// [1, 2, 3] (restaurado sin referencia compartida)
 ```
 
----
+**Limitación: No clona funciones:**
 
-## 🔗 Referencias
+```typescript
+const entity = new CustomEntity({
+    name: 'Test',
+    callback: () => console.log('Hello')
+});
 
-- **Constructor:** `base-entity-core.md`
-- **CRUD Operations:** `crud-operations.md`
-- **Lifecycle Hooks:** `lifecycle-hooks.md`
-- **Application Navigation:** `../../03-application/application-singleton.md`
+entity.resetChanges();
+console.log(entity.callback); 
+// undefined (funciones no se clonan)
+```
 
----
+### Pattern: Debugging Dirty State
 
-**Última actualización:** 11 de Febrero, 2026  
-**Archivo fuente:** `src/entities/base_entitiy.ts` (líneas 57-887)  
-**Estado:** ✅ Completo
+```typescript
+const product = new Product({ name: 'Widget', price: 100 });
+
+// 1. Ver snapshot original
+console.log('Original State:', product._originalState);
+// { name: 'Widget', price: 100 }
+
+// 2. Modificar
+product.price = 150;
+
+// 3. Ver estado actual persistente
+console.log('Current Persistent:', product.toPersistentObject());
+// { name: 'Widget', price: 150 }
+
+// 4. Ver serialización JSON
+console.log('Snapshot JSON:', JSON.stringify(product._originalState));
+// '{"name":"Widget","price":100}'
+
+console.log('Actual JSON:', JSON.stringify(product.toPersistentObject()));
+// '{"name":"Widget","price":150}'
+
+// 5. Ver resultado de comparación
+console.log('Is Dirty:', product.getDirtyState());
+// true
+```
+
+### Pattern: Componente Vue con Estados Combinados
+
+```vue
+<script setup>
+import { ref, computed } from 'vue';
+
+const order = ref(new Order({ orderNumber: 'ORD-001', total: 500 }));
+
+const isLoading = computed(() => order.value.getLoadingState());
+const isSaving = computed(() => order.value.getSaving);
+const hasChanges = computed(() => order.value.getDirtyState());
+const canSave = computed(() => hasChanges.value && !isSaving.value);
+
+const loadData = async () => {
+    order.value.setLoading();
+    try {
+        // fetch data...
+    } finally {
+        order.value.loaded();
+    }
+};
+
+const save = async () => {
+    await order.value.save();
+};
+
+const cancel = () => {
+    order.value.resetChanges();
+};
+</script>
+
+<template>
+    <div>
+        <div v-if="isLoading">
+            <LoadingSpinner />
+        </div>
+        
+        <form v-else @submit.prevent="save">
+            <input v-model="order.total" type="number" />
+            
+            <button type="submit" :disabled="!canSave">
+                <span v-if="isSaving">Guardando...</span>
+                <span v-else>Guardar</span>
+                <span v-if="hasChanges">*</span>
+            </button>
+            
+            <button type="button" @click="cancel" :disabled="!hasChanges">
+                Cancelar
+            </button>
+        </form>
+    </div>
+</template>
+```
+
+## 11. Referencias Cruzadas
+
+**Documentos relacionados:**
+- base-entity-core.md: Constructor que crea _originalState inicial
+- crud-operations.md: save() actualiza _originalState después de éxito
+- lifecycle-hooks.md: Hooks ejecutan después de actualización de _originalState
+- metadata-access.md: getAllPropertiesNonFilter() usado por toPersistentObject()
+- persistence-methods.md: mapToPersistentKeys() usa toObject() internamente
+
+**Archivos fuente:**
+- src/entities/base_entitiy.ts: Implementación de todos los métodos de estado (líneas 57-887)
+- src/application/application.ts: Uso de getDirtyState() en changeView() (línea 135)
+- src/entities/base_entitiy.ts: EmptyEntity class (línea 959)
+
+**Líneas relevantes en código:**
+- Línea 57: setLoading()
+- Línea 61: loaded()
+- Línea 65: getLoadingState()
+- Línea 596: getSaving getter
+- Línea 74: toObject()
+- Línea 78: toPersistentObject()
+- Línea 69: isNull()
+- Línea 878: getDirtyState()
+- Línea 887: resetChanges()
+- Línea 874: onBeforeRouteLeave()
+- Línea 959: EmptyEntity class
+
+**Última actualización:** 11 de Febrero, 2026
