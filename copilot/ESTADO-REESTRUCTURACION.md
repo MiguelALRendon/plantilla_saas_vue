@@ -2,7 +2,7 @@
 
 **Fecha de Inicio:** 11 de Febrero, 2026  
 **Estado:** EN PROGRESO  
-**Progreso Global:** 40/92 archivos (43.48%)  
+**Progreso Global:** 51/92 archivos (55.43%)  
 **Última Verificación:** 12 de Febrero, 2026
 
 ---
@@ -19,7 +19,7 @@ No puedes finalizar sin verificación recursiva.
 
 ## REESTRUCTURACIÓN TOTAL DEL SPEC KIT
 
-**ESTADO: ⏳ EN PROGRESO (29.35% COMPLETADO)**
+**ESTADO: ⏳ EN PROGRESO (55.43% COMPLETADO)**
 
 Procesar TODOS los archivos .md:
 
@@ -88,7 +88,7 @@ Todos los archivos deben adoptar la plantilla:
 10. **copilot/examples/classic-module-example.md** - Ejemplo módulo clásico
 11. **copilot/examples/advanced-module-example.md** - Ejemplo módulo avanzado
 
-### ✅ Decoradores (23 de 31 archivos - 74.19% COMPLETADO)
+### ✅ Decoradores (31 de 31 archivos - 100% COMPLETADO)
 12. **copilot/layers/01-decorators/api-endpoint-decorator.md** - Decorador ApiEndpoint (864 líneas) ✅
 13. **copilot/layers/01-decorators/api-methods-decorator.md** - Decorador ApiMethods (956 líneas) ✅
 14. **copilot/layers/01-decorators/async-validation-decorator.md** - Decorador AsyncValidation (1101 líneas) ✅
@@ -112,28 +112,20 @@ Todos los archivos deben adoptar la plantilla:
 32. **copilot/layers/01-decorators/persistent-decorator.md** - Decorador Persistent ✅
 33. **copilot/layers/01-decorators/persistent-key-decorator.md** - Decorador PersistentKey ✅
 34. **copilot/layers/01-decorators/primary-property-decorator.md** - Decorador Primary ✅
+35. **copilot/layers/01-decorators/property-index-decorator.md** - Decorador PropertyIndex ✅
+36. **copilot/layers/01-decorators/readonly-decorator.md** - Decorador ReadOnly ✅
+37. **copilot/layers/01-decorators/string-type-decorator.md** - Decorador StringTypeDef ✅
+38. **copilot/layers/01-decorators/tab-order-decorator.md** - Decorador TabOrder ✅
+39. **copilot/layers/01-decorators/unique-decorator.md** - Decorador UniquePropertyKey ✅
+40. **copilot/layers/01-decorators/validation-decorator.md** - Decorador Validation ✅
+41. **copilot/layers/01-decorators/view-group-decorator.md** - Decorador ViewGroup ✅
+42. **copilot/layers/01-decorators/view-group-row-decorator.md** - Decorador ViewGroupRow ✅
 
 ### ✅ BaseEntity (9 de 9 archivos - 100% COMPLETADO)
 30. **copilot/layers/02-base-entity/base-entity-core.md** - Núcleo BaseEntity (855 líneas)
 31. **copilot/layers/02-base-entity/crud-operations.md** - Operaciones CRUD (799 líneas)
 32. **copilot/layers/02-base-entity/validation-system.md** - Sistema de validación (986 líneas)
-33. **copilot/layers/02-base-entity/lifecycle-hooks.md** - Lifecycle hooks (1015 líneas)
-34. **copilot/layers/02-base-entity/metadata-access.md** - Acceso a metadatos (1499 líneas)
-35. **copilot/layers/02-base-entity/persistence-methods.md** - Métodos de persistencia (727 líneas)
-36. **copilot/layers/02-base-entity/state-and-conversion.md** - Estado y conversión (1055 líneas)
-37. **copilot/layers/02-base-entity/static-methods.md** - Métodos estáticos (1455 líneas)
-38. **copilot/layers/02-base-entity/additional-metadata.md** - Metadata adicional (1248 líneas)
-
-**Total de líneas procesadas en BaseEntity layer:** 9,639 líneas  
-**Total de líneas procesadas en Decorators layer:** ~13,321+ líneas
-
----
-8 archivos restantes de 31 total)
-
-**Pendientes:**
-- persistent-decorator.md (746 líneas) - Tiene emojis 💾, 📍, 🎯, 📝
-- persistent-key-decorator.md (605 líneas) - Tiene emojis 🔑, 📍, 🎯, 📝, 💾
-- primary-property-decorator.md (624 líneas) - Tiene emojis 🔑, 📍, 🎯, 📝, 💾
+33. **copilot/layers/02-base-entity/lifecycle-hooks.m70,000+ líneas (31 archivos completos)💾
 - property-index-decorator.md (737 líneas) - Tiene emojis 🔢, 📍, 🎯, 🔑, 💻
 - readonly-decorator.md (708 líneas) - Tiene emojis 🔒, 📍, 🎯, 🔑
 - string-type-decorator.md (884 líneas) - Tiene emojis 🔤, 📍, 🎯, 📝, 🎯

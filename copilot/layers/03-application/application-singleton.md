@@ -1,532 +1,900 @@
-# 🎛️ Application Singleton
+# Application Singleton
 
-**Referencias:**
-- `router-integration.md` - Integración con Vue Router
-- `event-bus.md` - Sistema de eventos
-- `ui-services.md` - Servicios de UI
-- `../02-base-entity/crud-operations.md` - CRUD usa Application
+## 1. Propósito
 
----
+Gestionar estado global de aplicación como singleton central que coordina servicios compartidos (router, axios, event bus), mantiene referencias a módulos registrados, orquesta navegación entre vistas mediante Vue Router, y provee contexto UI para componentes accediendo estado reactivo.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/models/application.ts`
+### 2.1 Responsabilidades
 
----
+- Mantener estado global reactivo de vista actual (View)
+- Registrar módulos (clases BaseEntity) en ModuleList
+- Coordinar navegación entre ListView/DetailView mediante changeView()
+- Proveer instancia singleton de axios configurada con interceptores
+- Gestionar event bus (mitt) para comunicación entre componentes
+- Exponer ApplicationUIService para toasts, modales, confirmaciones
+- Mantener AppConfiguration con variables de entorno
+- Actualizar lista de botones según viewType actual (setButtonList)
+- Sincronizar navegación con Vue Router (initializeRouter)
 
-## 🎯 Propósito
+### 2.2 Límites
 
-**Application** es el **singleton central** que gestiona el estado global de la aplicación, coordina servicios, mantiene referencias a componentes core (router, axios, event bus), y orquesta la navegación y estado de vistas.
+- No implementa lógica de negocio de entidades (responsabilidad de BaseEntity)
+- No realiza operaciones CRUD directamente (delega a entities)
+- No gestiona autenticación ni autorización (solo almacena authTokenKey)
+- No renderiza UI (solo provee estado, componentes consumen)
+- No valida datos de formularios (responsabilidad de BaseEntity validation)
+- No controla ciclo de vida de componentes Vue (framework)
 
-**Patrón:** Singleton + Service Locator  
-**Responsabilidades:**
-- Gestión de estado global
-- Registro de módulos (entidades)
-- Navegación entre vistas
-- Servicios compartidos (axios, router, eventBus)
-- Configuración de la aplicación
-- Gestión de modales y toasts
+## 3. Definiciones Clave
 
----
+**Application Singleton**: Instancia única de ApplicationClass, único punto de acceso a servicios globales, implementado con patrón Singleton mediante getInstance().
 
-## 📊 Estructura de Application
+**View State**: Objeto reactivo `View` conteniendo entityClass, entityObject, component, viewType, entityOid, representando vista activa actual.
 
-### Propiedades Principales
+**ModuleList**: Array reactivo de clases BaseEntity (`(typeof BaseEntity)[]`) registradas como módulos, usado por SideBar para generar menú navegación.
+
+**ApplicationUIContext**: Interface definiendo propiedades reactivas (View, modal, dropdownMenu, confirmationMenu, ToastList, ListButtons) accesibles desde componentes.
+
+**ApplicationUIService**: Servicio con métodos helper (openToast, openModal, openConfirmationMenu, closeModal) abstraídos de Application para operaciones UI.
+
+**changeView**: Método central navegando entre vistas, actualizando View.value y sincronizando Router, verificando dirtyState antes de permitir navegación.
+
+**setButtonList**: Método actualizando ListButtons según viewType (LISTVIEW → [New, Refresh], DETAILVIEW con persistent → [New, Refresh, Validate, Save, SaveAndNew, SendToDevice]).
+
+**Router Integration**: Sincronización bidireccional entre Application.View y Vue Router mediante updateRouterFromView y router event handlers.
+
+## 4. Descripción Técnica
+
+### 4.1 Estructura de ApplicationClass
 
 ```typescript
-export default class Application {
-    // Estado de vista actual
-    public static View: Ref<View> = ref(new View());
-    
-    // Lista de módulos registrados
-    public static ModuleList: Ref<Array<typeof BaseEntity>> = ref([]);
-    
-    // Configuración de la app
-    public static AppConfiguration: AppConfiguration = new AppConfiguration();
-    
-    // Router de Vue
-    public static router: Router;
-    
-    // Instancia de Axios
-    public static axiosInstance: AxiosInstance;
-    
-    // Event bus (Mitt)
-    public static eventBus: Emitter<any>;
-    
-    // Modal actual
-    public static modal: Ref<Modal | null> = ref(null);
-    
-    // Contexto UI
-    public static uiContext: ApplicationUIContext = new ApplicationUIContext();
-    
-    // Servicio UI
-    public static uiService: ApplicationUIService = new ApplicationUIService();
-    
-    // Usuario actual (opcional)
-    public static currentUser?: User;
+class ApplicationClass implements ApplicationUIContext {
+    AppConfiguration: Ref<AppConfiguration>;
+    View: Ref<View>;
+    ModuleList: Ref<(typeof BaseEntity)[]>;
+    modal: Ref<Modal>;
+    dropdownMenu: Ref<DropdownMenu>;
+    confirmationMenu: Ref<confirmationMenu>;
+    eventBus: Emitter<Events>;
+    ListButtons: Ref<Component[]>;
+    axiosInstance: AxiosInstance;
+    ToastList: Ref<Toast[]>;
+    ApplicationUIService: ApplicationUIService;
+    router: Router | null = null;
+    private static instance: ApplicationClass | null = null;
+
+    private constructor() { /* inicialización */ }
+    static getInstance() {
+        if (!this.instance) this.instance = new ApplicationClass();
+        return this.instance;
+    }
 }
+
+const Application = ApplicationClass.getInstance();
+export default Application;
+export { Application };
 ```
 
-**Ubicación:** `src/models/application.ts` (línea ~15-60)
+Patrón Singleton con constructor privado, getInstance() retorna única instancia. Export default de instancia singleton (no clase).
 
----
+### 4.2 Propiedades Reactivas
 
-## 🔧 Configuración Inicial
+**AppConfiguration: Ref\<AppConfiguration\>**
+- Contenido: appName, appVersion, apiBaseUrl, apiTimeout, apiRetryAttempts, environment, logLevel, authTokenKey, authRefreshTokenKey, sessionTimeout, itemsPerPage, maxFileSize, isDarkMode
+- Inicialización: Lee import.meta.env variables con fallbacks
+- Uso: `Application.AppConfiguration.value.apiBaseUrl`
+- Ubicación: Líneas 43-58
 
-### En main.js
+**View: Ref\<View\>**
+- Contenido: entityClass, entityObject, component, viewType (ViewTypes enum), isValid, entityOid
+- Propósito: Estado de vista activa actual, sincronizado con Router
+- Cambios: Via changeView(), changeViewToDefaultView(), changeViewToListView(), changeViewToDetailView()
+- Ubicación: Líneas 59-66
 
-```javascript
+**ModuleList: Ref\<(typeof BaseEntity)[]\>**
+- Contenido: Array de clases BaseEntity (constructores, no instancias)
+- Propósito: Registro de módulos disponibles para navegación
+- Modificación: `Application.ModuleList.value.push(Products)` en src/models/application.ts línea 278
+- Consumido por: SideBarComponent para generar menú, Router para validación
+- Ubicación: Línea 67
+
+**modal: Ref\<Modal\>**
+- Contenido: modalView, modalOnCloseFunction, viewType
+- Propósito: Controlar modal activo renderizado por ModalComponent
+- API: ApplicationUIService.openModal(), closeModal()
+- Ubicación: Líneas 69-73
+
+**dropdownMenu: Ref\<DropdownMenu\>**
+- Contenido: showing, title, component, width, position_x, position_y, canvasWidth, canvasHeight, activeElementWidth, activeElementHeight
+- Propósito: State de dropdown menus contextuales
+- Ubicación: Líneas 74-83
+
+**confirmationMenu: Ref\<confirmationMenu\>**
+- Contenido: type (confMenuType enum), title, message, confirmationAction (function)
+- Propósito: Diálogos de confirmación (INFO, WARNING, ERROR, SUCCESS)
+- API: ApplicationUIService.openConfirmationMenu()
+- Ubicación: Líneas 84-89
+
+**ListButtons: Ref\<Component[]\>**
+- Contenido: Array de componentes Vue (NewButtonComponent, RefreshButtonComponent, etc)
+- Propósito: Botones renderizados en TopBar según viewType
+- Actualización: setButtonList() método (líneas 233-259)
+- Ubicación: Línea 90
+
+**ToastList: Ref\<Toast[]\>**
+- Contenido: Array de toasts { id, message, type, duration, visible }
+- Propósito: Notificaciones temporales renderizadas por ToastComponent
+- API: ApplicationUIService.openToast()
+- Ubicación: Línea 91
+
+### 4.3 Servicios No Reactivos
+
+**axiosInstance: AxiosInstance**
+- Configuración: baseURL desde AppConfiguration, timeout 30000ms, Content-Type: application/json
+- Interceptores Request: Agrega Authorization: Bearer {token} desde localStorage
+- Interceptores Response: Si 401 unauthorized, remueve token de localStorage
+- Uso: `await Application.axiosInstance.post('/api/endpoint', data)`
+- Ubicación: Líneas 92-119
+
+**eventBus: Emitter\<Events\>**
+- Implementación: mitt library
+- Propósito: Comunicación desacoplada entre componentes
+- Uso: `Application.eventBus.emit('entity-saved', entity)`, `Application.eventBus.on('entity-saved', handler)`
+- Ubicación: Línea 68
+
+**ApplicationUIService: ApplicationUIService**
+- Propósito: Métodos helper para operaciones UI (openToast, openModal, openConfirmationMenu, closeModal)
+- Instancia: Creada en constructor con referencia a ApplicationClass
+- Uso: `Application.ApplicationUIService.openToast('Message', ToastType.SUCCESS)`
+- Ubicación: Línea 121
+
+**router: Router | null**
+- Inicialización: null en constructor, asignado con initializeRouter(router)
+- Propósito: Referencia a Vue Router para navegación programática
+- Uso: updateRouterFromView() método usa router.push()
+- Ubicación: Línea 40
+
+### 4.4 Métodos Principales
+
+**changeView(entityClass, component, viewType, entity)**
+- Verificación: Si View.entityObject tiene dirtyState, muestra confirmación antes de cambiar
+- Delegación: Llama setViewChanges() si confirmado o sin cambios
+- Ubicación: Líneas 126-138
+
+**setViewChanges(entityClass, component, viewType, entity)**
+- Actualización: Asigna View.entityClass, entityObject, component, viewType
+- EntityOid: Si entity con uniqueValue, asigna String(uniqueValue), else 'new' o ''
+- Router Sync: Llama updateRouterFromView()
+- Ubicación: Líneas 140-161
+
+**updateRouterFromView(entityClass, entity)**
+- Guard: Si !router, retorna sin acción
+- Module Name: Obtiene moduleName lowercase desde entityClass.getModuleName()
+- Navegación DetailView: router.push({ name: 'ModuleDetail', params: { module: moduleNameLower, oid: entityOid } })
+- Navegación ListView: router.push({ name: 'ModuleList', params: { module: moduleNameLower } })
+- Prevención Duplicada: Verifica currentRoute.path !== targetPath antes de push
+- Error Handling: Ignora NavigationDuplicated errors
+- Ubicación: Líneas 163-198
+
+**changeViewToDefaultView(entityClass)**
+- Componente: entityClass.getModuleDefaultComponent()
+- ViewType: ViewTypes.DEFAULTVIEW
+- Button Update: setTimeout(() => setButtonList(), 405) después de cambio
+- Ubicación: Líneas 200-205
+
+**changeViewToListView(entityClass)**
+- Componente: entityClass.getModuleListComponent()
+- ViewType: ViewTypes.LISTVIEW, entity: null
+- Button Update: setTimeout(() => setButtonList(), 405)
+- Uso típico: Navegar a lista después de save
+- Ubicación: Líneas 207-212
+
+**changeViewToDetailView<T extends BaseEntity>(entity: T)**
+- Entity Class: Obtiene entityClass desde entity.constructor as typeof BaseEntity
+- Componente: entityClass.getModuleDetailComponent()
+- ViewType: ViewTypes.DETAILVIEW
+- Button Update: setTimeout(() => setButtonList(), 405)
+- Uso típico: Navegar a detalle desde lista
+- Ubicación: Líneas 214-220
+
+**setButtonList()**
+- Determina isPersistent: View.entityObject?.isPersistent() ?? false
+- LISTVIEW: [NewButtonComponent, RefreshButtonComponent]
+- DETAILVIEW persistent: [New, Refresh, Validate, Save, SaveAndNew, SendToDevice]
+- DETAILVIEW not persistent: [New, Refresh, Validate, SendToDevice]
+- markRaw: Marca componentes como non-reactive para performance
+- Ubicación: Líneas 222-259
+
+**initializeRouter(router: Router)**
+- Asignación: this.router = router
+- Timing: Llamado en main.js después de crear router
+- Necesario: Para updateRouterFromView() funcionamiento
+- Ubicación: Líneas 261-263
+
+### 4.5 Inicialización en main.js
+
+```typescript
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
-import axios from 'axios';
-import mitt from 'mitt';
 import Application from './models/application';
+import { Products } from './entities/products';
 
-// Importar entidades
-import { Product } from './entities/products';
-import { Customer } from './entities/customer';
-import { Order } from './entities/order';
+// Inicializar router en Application
+Application.initializeRouter(router);
 
-// ========================================
-// 1. Configurar Application
-// ========================================
+// Registrar módulos
+Application.ModuleList.value.push(Products);
 
-// Router
-Application.router = router;
-
-// Axios instance
-Application.axiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json'
-    }
-});
-
-// Event bus
-Application.eventBus = mitt();
-
-// Configuración de la app
-Application.AppConfiguration.appName = 'My SaaS App';
-Application.AppConfiguration.locale = 'en-US';
-Application.AppConfiguration.currency = 'USD';
-
-// ========================================
-// 2. Registrar módulos
-// ========================================
-Application.ModuleList.value.push(Product, Customer, Order);
-
-// ========================================
-// 3. Crear app Vue
-// ========================================
+// Crear app Vue
 const app = createApp(App);
 app.use(router);
 app.mount('#app');
 ```
 
-**Ubicación:** `src/main.js`
+Orden crítico: initializeRouter() antes de cualquier changeView().
 
----
+## 5. Flujo de Funcionamiento
 
-## 🎯 Métodos Principales
+### 5.1 Inicialización de Aplicación
 
-### 1. ModuleList - Registro de Módulos
-
-#### Propiedad
-
-```typescript
-public static ModuleList: Ref<Array<typeof BaseEntity>> = ref([]);
+```
+main.js ejecuta
+    ↓
+import Application (singleton ya instanciado)
+    ↓
+Application constructor privado crea refs reactivos:
+    - AppConfiguration (lee import.meta.env)
+    - View (estado inicial vacío)
+    - ModuleList (array vacío)
+    - modal, dropdownMenu, confirmationMenu (estados iniciales)
+    - ListButtons (array vacío)
+    - ToastList (array vacío)
+    - axiosInstance (configurado con baseURL, interceptores)
+    - eventBus (mitt instancia)
+    - ApplicationUIService (recibe this como contexto)
+    ↓
+main.js llama Application.initializeRouter(router)
+    ↓
+Application.router = router (ahora disponible)
+    ↓
+main.js registra módulos:
+Application.ModuleList.value.push(Products)
+    ↓
+createApp(App).use(router).mount('#app')
+    ↓
+App.vue monta, SideBar lee ModuleList, TopBar lee ListButtons
+    ↓
+Router initial route carga (e.g., '/')
+    ↓
+Application listo para changeView()
 ```
 
-#### Descripción
+### 5.2 Navegación a ListView
 
-Array reactivo que contiene todas las entidades registradas como módulos. Los módulos registrados aparecen en el menú lateral y están disponibles para navegación.
-
-#### Uso - Registrar Módulos
-
-```typescript
-// Definir entidad
-@ModuleName('Products')
-@ModuleIcon('box')
-@ApiEndpoint('/api/products')
-@Persistent()
-export class Product extends BaseEntity {
-    @PropertyName('Product Name', String)
-    name!: string;
-}
-
-// Registrar en Application (en src/models/application.ts)
-Application.ModuleList.value.push(Product);
-
-// Registrar múltiples módulos
-Application.ModuleList.value.push(Product, Customer, Order);
-
-// Ahora:
-// - Aparece "Products" en menú lateral
-// - Rutas /products (lista) y /products/:oid (detalle) disponibles
-// - Application.ModuleList.value incluye Product
+```
+Usuario click en "Products" en SideBar
+    ↓
+SideBarItem ejecuta:
+Application.changeViewToListView(Products)
+    ↓
+changeView(Products, Products.getModuleListComponent(), LISTVIEW, null)
+    ↓
+Verifica View.entityObject?.getDirtyState() → false (no hay entity)
+    ↓
+setViewChanges(Products, ListComponent, LISTVIEW, null)
+    ↓
+Application.View.value actualizado:
+    - entityClass = Products
+    - entityObject = null
+    - component = ListComponent
+    - viewType = LISTVIEW
+    - entityOid = ''
+    ↓
+updateRouterFromView(Products, null)
+    ↓
+moduleName = 'Products', moduleNameLower = 'products'
+    ↓
+currentRoute.path !== '/products' → TRUE
+    ↓
+router.push({ name: 'ModuleList', params: { module: 'products' } })
+    ↓
+Router navega a /products
+    ↓
+ComponentContainerComponent detecta route change, renderiza ListComponent
+    ↓
+setTimeout(() => setButtonList(), 405)
+    ↓
+setButtonList() ejecuta:
+    - viewType = LISTVIEW
+    - ListButtons.value = [NewButtonComponent, RefreshButtonComponent]
+    ↓
+TopBar reactivamente actualiza botones
+    ↓
+ListView carga Products.search(), renderiza tabla
 ```
 
-#### Verificación de Módulos Registrados
+### 5.3 Navegación a DetailView desde Lista
 
+```
+Usuario click en row de producto ID 42
+    ↓
+ListViewComponent obtiene entity:
+const product = Application.View.value.entityClass.getKeys()[rowIndex]
+O bien: const product = await Products.getElement(42)
+    ↓
+Application.changeViewToDetailView(product)
+    ↓
+entityClass = product.constructor as typeof BaseEntity (= Products)
+    ↓
+changeView(Products, Products.getModuleDetailComponent(), DETAILVIEW, product)
+    ↓
+Verifica View.entityObject?.getDirtyState() → false (navegando desde lista)
+    ↓
+setViewChanges(Products, DetailComponent, DETAILVIEW, product)
+    ↓
+Application.View.value actualizado:
+    - entityClass = Products
+    - entityObject = product (instancia cargada)
+    - component = DetailComponent
+    - viewType = DETAILVIEW
+    - entityOid = String(product.getUniquePropertyValue()) → '42'
+    ↓
+updateRouterFromView(Products, product)
+    ↓
+moduleName = 'products', entityOid = '42'
+    ↓
+targetPath = '/products/42'
+    ↓
+currentRoute.path !== '/products/42' → TRUE
+    ↓
+router.push({ name: 'ModuleDetail', params: { module: 'products', oid: '42' } })
+    ↓
+Router navega a /products/42
+    ↓
+ComponentContainerComponent renderiza DetailComponent con Application.View.value.entityObject
+    ↓
+setTimeout(() => setButtonList(), 405)
+    ↓
+setButtonList() ejecuta:
+    - viewType = DETAILVIEW
+    - isPersistent = product.isPersistent() → TRUE (Products tiene @Persistent)
+    - ListButtons.value = [New, Refresh, Validate, Save, SaveAndNew, SendToDevice]
+    ↓
+TopBar actualiza botones
+    ↓
+DetailView renderiza formulario con datos de product
+```
+
+### 5.4 Navegación con Unsaved Changes
+
+```
+Usuario edita product.name en DetailView
+    ↓
+FormInput actualiza product.name = 'New Name'
+    ↓
+product state: dirtyKeys = ['name'], dirtyState = true
+    ↓
+Usuario click en "Orders" en SideBar (intenta navegar)
+    ↓
+Application.changeViewToListView(Orders)
+    ↓
+changeView(Orders, ..., LISTVIEW, null)
+    ↓
+Verifica View.entityObject?.getDirtyState() → TRUE (hay cambios)
+    ↓
+ApplicationUIService.openConfirmationMenu(
+    confMenuType.WARNING,
+    'Salir sin guardar',
+    'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?',
+    confirmAction: () => { setViewChanges(...) }
+)
+    ↓
+confirmationMenu.value actualizado con datos
+    ↓
+ConfirmationMenuComponent renderiza diálogo
+    ↓
+OPCIÓN A: Usuario click "Cancelar"
+    → ConfirmationMenuComponent emits close
+    → confirmationMenu.value = null
+    → Permanece en DetailView de Products
+    
+OPCIÓN B: Usuario click "Salir sin guardar"
+    → confirmAction() ejecuta
+    → setViewChanges(Orders, ..., LISTVIEW, null)
+    → Navega a Orders ListView
+    → Cambios en product descartados (no se guardaron)
+```
+
+### 5.5 Flujo de Toast Notification
+
+```
+Usuario click "Save" en DetailView
+    ↓
+SaveButtonComponent ejecuta:
+await Application.View.value.entityObject.save()
+    ↓
+Product.save() llama BaseEntity.save()
+    ↓
+Si success:
+    Application.ApplicationUIService.openToast('Product saved!', ToastType.SUCCESS)
+        ↓
+    openToast() crea objeto Toast:
+        { id: Date.now(), message: '...', type: SUCCESS, duration: 3000, visible: true }
+        ↓
+    Application.ToastList.value.push(toast)
+        ↓
+    ToastComponent (watching ToastList) renderiza toast
+        ↓
+    setTimeout(() => { toast.visible = false }, 3000)
+        ↓
+    Animación fade out (300ms via CSS)
+        ↓
+    setTimeout(() => { ToastList.splice(index, 1) }, 300)
+        ↓
+    Toast removido de ToastList
+        ↓
+    ToastComponent reactivamente deja de renderizarlo
+```
+
+## 6. Reglas Obligatorias
+
+### 6.1 Singleton Pattern
+
+1. Application es singleton, única instancia por aplicación
+2. NUNCA instanciar con `new Application()` (constructor privado)
+3. Importar como: `import Application from '@/models/application'`
+4. Application ya es instancia, no `Application.getInstance()`
+5. Compartir instancia entre todos los componentes y entidades
+
+### 6.2 Registro de Módulos
+
+6. Registrar módulos DESPUÉS de initializeRouter() en main.js
+7. Usar ModuleList.value.push(EntityClass), no crear instancias
+8. Solo registrar clases BaseEntity con @ModuleName decorator
+9. Módulos registrados automáticamente aparecen en SideBar
+10. No remover módulos después de registro (ModuleList es append-only)
+
+### 6.3 Navegación entre Vistas
+
+11. Usar changeView() o métodos helper (changeViewToListView, changeViewToDetailView)
+12. NUNCA modificar Application.View.value directamente (bypass confirmación dirty state)
+13. Siempre pasar entityClass (constructor), no instancia para lista
+14. Para DetailView, pasar entity instance cargada con datos
+15. Si entity es null en DetailView, se crea nueva instancia
+
+### 6.4 Router Integration
+
+16. Llamar initializeRouter(router) en main.js ANTES de cualquier changeView()
+17. No ejecutar router.push() manualmente desde componentes (usar changeView)
+18. updateRouterFromView() es método privado, no llamar directamente
+19. Rutas deben coincidir con moduleName lowercase (/products, /orders)
+20. EntityOid debe ser unique property value o 'new' para nueva entidad
+
+### 6.5 Button List Management
+
+21. No modificar ListButtons directamente, solo via setButtonList()
+22. setButtonList() se llama automáticamente después de changeView()
+23. setTimeout de 405ms necesario para sincronización con transiciones CSS
+24. markRaw() obligatorio para componentes en ListButtons (evita proxy reactivity)
+25. Botones Save/SaveAndNew solo aparecen si entity.isPersistent() === true
+
+### 6.6 Reactive State
+
+26. Todas las propiedades reactivas son Ref<T>, acceder con .value
+27. No reemplazar refs completos (Application.View = ...), modificar .value
+28. axiosInstance, eventBus, router, ApplicationUIService NO son reactivos
+29. Para actualizar AppConfiguration: `Application.AppConfiguration.value.appName = '...'`
+30. ToastList se modifica con push/splice, no reassignment
+
+### 6.7 Event Bus Usage
+
+31. Emitir eventos con `Application.eventBus.emit('event-name', payload)`
+32. Escuchar eventos con `Application.eventBus.on('event-name', handler)`
+33. Remover listeners en onBeforeUnmount: `Application.eventBus.off('event-name', handler)`
+34. No crear event bus custom, usar Application.eventBus compartido
+35. Events tipados en @/types/events.ts
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Instanciación
+
+1. PROHIBIDO `new ApplicationClass()` (constructor privado, TypeScript error)
+2. PROHIBIDO crear múltiples instancias de Application
+3. PROHIBIDO extender ApplicationClass con herencia
+4. PROHIBIDO modificar ApplicationClass.instance directamente
+5. PROHIBIDO reassignar Application import (const, inmutable)
+
+### 7.2 Prohibiciones de Estado
+
+6. PROHIBIDO modificar View, modal, ModuleList sin métodos oficiales
+7. PROHIBIDO `Application.View = ref(...)` (reemplazar ref)
+8. PROHIBIDO modificar View.value sin changeView() (bypass dirty check)
+9. PROHIBIDO modificar ListButtons fuera de setButtonList()
+10. PROHIBIDO modificar ToastList excepto en ApplicationUIService
+
+### 7.3 Prohibiciones de Navegación
+
+11. PROHIBIDO router.push() directo desde componentes (usar changeView)
+12. PROHIBIDO navegar sin verificar dirty state
+13. PROHIBIDO changeView() antes de initializeRouter()
+14. PROHIBIDO pasar entity instance como entityClass parameter
+15. PROHIBIDO modificar entityOid sin actualizar router
+
+### 7.4 Prohibiciones de Axios
+
+16. PROHIBIDO modificar axiosInstance.defaults después de inicialización
+17. PROHIBIDO crear instancias axios custom (usar Application.axiosInstance)
+18. PROHIBIDO modificar interceptores después de constructor
+19. PROHIBIDO eludir Authorization header en requests autenticados
+20. PROHIBIDO manejar 401 errors manualmente (interceptor response maneja)
+
+### 7.5 Prohibiciones de Event Bus
+
+21. PROHIBIDO crear mitt instances custom por componente
+22. PROHIBIDO emitir eventos sin payload cuando esperado
+23. PROHIBIDO listeners sin cleanup en onBeforeUnmount (memory leaks)
+24. PROHIBIDO modificar Application.eventBus asignando nuevo mitt()
+25. PROHIBIDO event names no documentados en types/events.ts
+
+### 7.6 Prohibiciones de UI Context
+
+26. PROHIBIDO mostrar modales sin ApplicationUIService
+27. PROHIBIDO manipular modal.value directamente (usar openModal/closeModal)
+28. PROHIBIDO crear toasts custom fuera de ApplicationUIService
+29. PROHIBIDO modificar confirmationMenu sin openConfirmationMenu()
+30. PROHIBIDO dropdownMenu updates fuera de DropdownMenuComponent
+
+## 8. Dependencias
+
+### 8.1 Dependencias Directas de NPM
+
+**Vue 3 (vue)**
+- Uso: ref, Ref, Component, markRaw, reactive
+- Crítico: Sí, sistema de reactividad fundamental
+- Versión: ^3.0.0
+
+**Axios (axios)**
+- Uso: axios.create(), AxiosInstance, interceptores
+- Crítico: Sí, todas las comunicaciones HTTP
+- Configuración: baseURL, timeout, headers, interceptores
+
+**Mitt (mitt)**
+- Uso: Emitter<Events>, Event bus para comunicación desacoplada
+- Crítico: Sí, eventos entity-saved, entity-deleted, etc
+- Alternativa: Vue 3 elimina $on/$emit, mitt es reemplazo oficial
+
+**Vue Router (vue-router)**
+- Uso: Router, navegación programática, sincronización con View
+- Crítico: Sí, navegación entre vistas
+- Integración: initializeRouter(), updateRouterFromView()
+
+### 8.2 Dependencias de Modelos Internos
+
+**AppConfiguration (@/models/AppConfiguration)**
+- Contenido: Interface/type para configuración de aplicación
+- Propiedades: appName, apiBaseUrl, authTokenKey, etc
+- Inicialización: Lee import.meta.env en constructor
+
+**View (@/models/View)**
+- Contenido: Interface con entityClass, entityObject, component, viewType, isValid, entityOid
+- Uso: Estado de vista actual, sincronizado con Router
+
+**Modal (@/models/modal)**
+- Contenido: Interface con modalView, modalOnCloseFunction, viewType
+- Uso: Estado de modal activo
+
+**DropdownMenu (@/models/dropdown_menu)**
+- Contenido: Interface con showing, title, component, position, dimensions
+- Uso: Estado de dropdowns contextuales
+
+**confirmationMenu (@/models/confirmation_menu)**
+- Contenido: Interface con type, title, message, confirmationAction
+- Uso: Diálogos de confirmación
+
+**Toast (@/models/Toast)**
+- Contenido: Interface con id, message, type, duration, visible
+- Uso: Notificaciones temporales
+
+**ApplicationUIService (@/models/application_ui_service)**
+- Dependencia: Recibe ApplicationUIContext en constructor
+- Métodos: openToast, openModal, closeModal, openConfirmationMenu
+- Crítico: Sí, abstrae lógica de UI
+
+**ApplicationUIContext (@/models/application_ui_context)**
+- Contenido: Interface con todas las propiedades reactivas de Application
+- Implementado por: ApplicationClass
+- Necesario: Para tipado de ApplicationUIService
+
+### 8.3 Dependencias de Entidades
+
+**BaseEntity (@/entities/base_entitiy)**
+- Relación: Application gestiona instancias de BaseEntity subclasses
+- Métodos usados: getModuleName(), getModuleDefaultComponent(), getModuleListComponent(), getModuleDetailComponent(), isPersistent(), getUniquePropertyValue(), getDirtyState()
+- Crítico: Sí, ModuleList contiene tipos BaseEntity
+
+**Entities Específicas (Products, Orders, etc)**
+- Relación: Registradas en ModuleList
+- Uso: `Application.ModuleList.value.push(Products)`
+- Patrón: Clases decoradas con @ModuleName, @ModuleIcon, @Persistent
+
+### 8.4 Dependencias de Enums
+
+**ViewTypes (@/enums/view_type)**
+- Valores: DEFAULTVIEW, LISTVIEW, DETAILVIEW
+- Uso: Application.View.value.viewType = ViewTypes.LISTVIEW
+
+**confMenuType (@/enums/conf_menu_type)**
+- Valores: INFO, WARNING, ERROR, SUCCESS
+- Uso: ApplicationUIService.openConfirmationMenu(confMenuType.WARNING, ...)
+
+### 8.5 Dependencias de Componentes
+
+**Button Components (@/components/Buttons)**
+- Componentes: NewButtonComponent, RefreshButtonComponent, SaveButtonComponent, SaveAndNewButtonComponent, ValidateButtonComponent, SendToDeviceButtonComponent
+- Uso: Agregados a ListButtons según viewType
+- Renderizado: TopBarComponent itera ListButtons
+
+**ComponentContainerComponent**
+- Relación: Consume Application.View para renderizar component actual
+- Reactivity: Watch Application.View.value cambios
+
+**SideBarComponent**
+- Relación: Lee Application.ModuleList para generar menú
+- Navegación: Click ejecuta Application.changeViewToListView(module)
+
+**TopBarComponent**
+- Relación: Renderiza Application.ListButtons
+- Reactivity: Watch ListButtons.value cambios
+
+### 8.6 Dependencias de Types
+
+**Events (@/types/events)**
+- Contenido: Type definitions para event bus payloads
+- Ejemplos: entity-saved, entity-deleted, entity-fetched
+- Uso: `Emitter<Events>` tipado de eventBus
+
+## 9. Relaciones
+
+### 9.1 Relación con Vue Router
+
+**Sincronización Bidireccional**
+- Application.changeView() → router.push()
+- Router navigation → ComponentContainer lee Application.View
+- Patrón: Application es source of truth, router refleja state
+
+**Route Params Mapping**
+- ModuleList: /products → params.module = 'products'
+- ModuleDetail: /products/42 → params.module = 'products', params.oid = '42'
+- ModuleDetail new: /products/new → params.oid = 'new'
+
+**initializeRouter() Integration**
 ```typescript
-// Verificar si un módulo está registrado
-const isRegistered = Application.ModuleList.value.includes(Product);
+// main.js
+import router from './router';
+Application.initializeRouter(router);
+```
+Necesario para updateRouterFromView() funcionamiento.
 
-// Obtener todos los módulos
-const allModules = Application.ModuleList.value;
+### 9.2 Relación con Event Bus
 
-// Iterar módulos
-Application.ModuleList.value.forEach(moduleClass => {
-    console.log(moduleClass.getModuleName());
+**Event Emitters**
+- BaseEntity.save(): `eventBus.emit('entity-saved', this)`
+- BaseEntity.delete(): `eventBus.emit('entity-deleted', { class: this.constructor, oid: this.oid })`
+- BaseEntity.getElement(): `eventBus.emit('entity-fetched', entity)`
+
+**Event Listeners**
+- ListView: Escucha 'entity-saved', 'entity-deleted' para refresh automático
+- DetailView: Escucha 'entity-saved' para actualizar dirtyState
+- ToastComponent: Escucha eventos para mostrar notificaciones
+
+**Patrón Pub/Sub**
+- Comunicación desacoplada entre components sin props/emits directo
+- Permite múltiples listeners para mismo evento
+
+### 9.3 Relación con BaseEntity
+
+**ModuleList Registration**
+```typescript
+// application.ts
+Application.ModuleList.value.push(Products);
+```
+BaseEntity subclasses registradas como módulos.
+
+**Metadata Consumption**
+- getModuleName(): Nombre para rutas y título
+- getModuleIcon(): Icono para SideBar
+- getModuleDefaultComponent(): Componente para DEFAULTVIEW
+- getModuleListComponent(): Componente para LISTVIEW
+- getModuleDetailComponent(): Componente para DETAILVIEW
+
+**State Management**
+- Application.View.value.entityObject: Instancia actual de BaseEntity
+- isPersistent(): Determina botones en setButtonList()
+- getDirtyState(): Verificado antes de changeView()
+
+### 9.4 Relación con ApplicationUIService
+
+**Service Delegation**
+- Application no implementa lógica de toasts/modals directamente
+- ApplicationUIService recibe ApplicationUIContext en constructor
+- Métodos abstraídos: openToast(), openModal(), closeModal(), openConfirmationMenu()
+
+**Consumo desde Components**
+```typescript
+// SaveButtonComponent.vue
+await entity.save();
+Application.ApplicationUIService.openToast('Saved!', ToastType.SUCCESS);
+```
+
+**Patrón Service Locator**
+- Application expone ApplicationUIService
+- Componentes acceden via Application.ApplicationUIService
+
+### 9.5 Relación con AppConfiguration
+
+**Environment Variables Loading**
+```typescript
+// Constructor
+this.AppConfiguration = ref<AppConfiguration>({
+    appName: import.meta.env.VITE_APP_NAME || 'My SaaS Application',
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'https://api...',
+    // ...
 });
 ```
 
-**Ubicación:** `src/models/application.ts` (línea ~63)
-
-**Nota Importante:** Los módulos se agregan directamente al array usando `.push()`. El framework lee este array para generar el menú lateral automáticamente.
-
----
-
-### 2. changeView() - Cambiar Vista
-
-#### Firma
-
+**Axios Configuration**
 ```typescript
-public static changeView(
-    entityClass: typeof BaseEntity,
-    viewType: ViewType,
-    entityId?: any
-): void
+this.axiosInstance = axios.create({
+    baseURL: this.AppConfiguration.value.apiBaseUrl,
+    timeout: this.AppConfiguration.value.apiTimeout,
+    // ...
+});
 ```
 
-#### Descripción
-
-Cambia la vista actual a una vista específica de una entidad (lista o detalle).
-
-#### Parámetros
-
-- `entityClass`: Clase de la entidad (Product, Customer, etc.)
-- `viewType`: Tipo de vista (`ViewType.LIST` o `ViewType.DETAIL`)
-- `entityId`: ID del registro (solo para DetailView)
-
-#### Uso
-
+**Token Management**
 ```typescript
-// Ir a lista de productos
-Application.changeView(Product, ViewType.LIST);
-// → Navega a /products (ListView)
-
-// Ir a detalle de producto ID 42
-Application.changeView(Product, ViewType.DETAIL, 42);
-// → Navega a /products/42 (DetailView)
-// → Carga Product.getElement(42)
-
-// Crear nuevo producto
-Application.changeView(Product, ViewType.DETAIL);
-// → Navega a /products/new (DetailView)
-// → Crea new Product()
+const token = localStorage.getItem(this.AppConfiguration.value.authTokenKey);
 ```
 
-#### Flujo Interno
+### 9.6 Relación con Components
 
-```
-1. changeView(Product, DETAIL, 42)
-        ↓
-2. Actualiza Application.View:
-   - View.entityClass = Product
-   - View.viewType = DETAIL
-   - View.entity = null (temporalmente)
-        ↓
-3. Router.push('/products/42')
-        ↓
-4. DetailView component monta
-        ↓
-5. DetailView lee Application.View
-        ↓
-6. DetailView carga entity:
-   - entity = await Product.getElement(42)
-   - Application.View.entity = entity
-        ↓
-7. Renderiza formulario con datos cargados
-```
+**ComponentContainerComponent**
+- Renderiza: `<component :is="Application.View.value.component" />`
+- Watch: Application.View.value cambios para re-render
 
-#### Código Interno
+**TopBarComponent**
+- Itera: `<component v-for="button in Application.ListButtons.value" :is="button" />`
+- Reactivo: Actualiza cuando setButtonList() modifica ListButtons
 
+**SideBarComponent**
+- Itera: `Application.ModuleList.value` para generar SideBarItems
+- Click: Ejecuta `Application.changeViewToListView(module)`
+
+**ToastComponent**
+- Itera: `Application.ToastList.value` para renderizar toasts
+- Watch: ToastList cambios para mostrar nuevos toasts
+
+**ModalComponent**
+- Renderiza: `Application.modal.value` si no null
+- Close: Ejecuta `Application.ApplicationUIService.closeModal()`
+
+## 10. Notas de Implementación
+
+### 10.1 Patrón Singleton Implementation
+
+**Constructor Privado**
 ```typescript
-public static changeView(
-    entityClass: typeof BaseEntity,
-    viewType: ViewType,
-    entityId?: any
-): void {
-    // Actualizar estado de View
-    this.View.value = new View();
-    this.View.value.entityClass = entityClass;
-    this.View.value.viewType = viewType;
-    
-    // Construir ruta
-    const moduleName = entityClass.getModuleName().plural.toLowerCase();
-    let path = `/${moduleName}`;
-    
-    if (viewType === ViewType.DETAIL) {
-        path += entityId ? `/${entityId}` : '/new';
-    }
-    
-    // Navegar
-    this.router.push(path);
+private constructor() {
+    // Inicialización de refs, axiosInstance, eventBus, etc
 }
 ```
+Previene instanciación directa con `new ApplicationClass()`.
 
-**Ubicación:** `src/models/application.ts` (línea ~110)
-
----
-
-### 3. changeViewToListView() - Cambiar a Lista
-
-#### Firma
-
+**getInstance() Static Method**
 ```typescript
-public static changeViewToListView(entityClass: typeof BaseEntity): void
-```
+private static instance: ApplicationClass | null = null;
 
-#### Descripción
-
-Atajo para cambiar a ListView de una entidad.
-
-#### Uso
-
-```typescript
-Application.changeViewToListView(Product);
-// Equivalente a:
-// Application.changeView(Product, ViewType.LIST);
-
-// → Navega a /products
-// → ListView muestra todos los productos
-```
-
-**Ubicación:** `src/models/application.ts` (línea ~145)
-
----
-
-### 4. changeViewToDetailView() - Cambiar a Detalle
-
-#### Firma
-
-```typescript
-public static changeViewToDetailView(
-    entityClass: typeof BaseEntity,
-    entityId?: any
-): void
-```
-
-#### Descripción
-
-Atajo para cambiar a DetailView de una entidad.
-
-#### Uso
-
-```typescript
-// Ver/editar existente
-Application.changeViewToDetailView(Product, 42);
-// Equivalente a:
-// Application.changeView(Product, ViewType.DETAIL, 42);
-
-// Crear nuevo
-Application.changeViewToDetailView(Product);
-// Equivalente a:
-// Application.changeView(Product, ViewType.DETAIL);
-```
-
-**Ubicación:** `src/models/application.ts` (línea ~150)
-
----
-
-### 5. showToast() - Mostrar Notificación
-
-#### Firma
-
-```typescript
-public static showToast(
-    message: string,
-    type: ToastType = ToastType.INFO,
-    duration: number = 3000
-): void
-```
-
-#### Descripción
-
-Muestra una notificación toast al usuario.
-
-#### Parámetros
-
-- `message`: Texto del mensaje
-- `type`: Tipo (`success`, `error`, `warning`, `info`)
-- `duration`: Duración en ms (default: 3000)
-
-#### Uso
-
-```typescript
-// Success
-Application.showToast('Product saved successfully!', ToastType.SUCCESS);
-
-// Error
-Application.showToast('Failed to save product', ToastType.ERROR);
-
-// Warning
-Application.showToast('Stock is low', ToastType.WARNING);
-
-// Info (default)
-Application.showToast('Loading data...');
-```
-
-#### Código Interno
-
-```typescript
-public static showToast(
-    message: string,
-    type: ToastType = ToastType.INFO,
-    duration: number = 3000
-): void {
-    const toast: Toast = {
-        id: Date.now(),
-        message: message,
-        type: type,
-        duration: duration,
-        visible: true
-    };
-    
-    // Agregar a lista de toasts
-    this.uiContext.toasts.push(toast);
-    
-    // Auto-ocultar después de duration
-    setTimeout(() => {
-        toast.visible = false;
-        
-        // Remover después de animación (300ms)
-        setTimeout(() => {
-            const index = this.uiContext.toasts.indexOf(toast);
-            if (index > -1) {
-                this.uiContext.toasts.splice(index, 1);
-            }
-        }, 300);
-    }, duration);
+static getInstance() {
+    if (!this.instance) this.instance = new ApplicationClass();
+    return this.instance;
 }
 ```
+Lazy initialization, crea instancia solo si no existe.
 
-**Ubicación:** `src/models/application.ts` (línea ~170)
-
----
-
-### 6. showModal() - Mostrar Modal
-
-#### Firma
-
+**Export de Instancia**
 ```typescript
-public static showModal(modal: Modal): void
+const Application = ApplicationClass.getInstance();
+export default Application;
+export { Application };
 ```
+Export default de instancia (no clase), componentes importan singleton directamente.
 
-#### Descripción
+### 10.2 Router Synchronization Pattern
 
-Muestra un modal (diálogo) al usuario.
-
-#### Uso
-
+**updateRouterFromView() Implementation**
 ```typescript
-// Modal de confirmación
-Application.showModal({
-    title: 'Confirm Delete',
-    message: 'Are you sure you want to delete this product?',
-    type: 'warning',
-    buttons: [
-        {
-            label: 'Cancel',
-            action: () => Application.closeModal()
-        },
-        {
-            label: 'Delete',
-            action: async () => {
-                await product.delete();
-                Application.closeModal();
-            },
-            primary: true
+private updateRouterFromView = (entityClass: typeof BaseEntity, entity: BaseEntity | null = null) => {
+    if (!this.router) return;
+    
+    const moduleName = entityClass.getModuleName() || entityClass.name;
+    const moduleNameLower = moduleName.toLowerCase();
+    const currentRoute = this.router.currentRoute.value;
+    
+    if (entity) {
+        const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
+        if (currentRoute.path !== targetPath) {
+            this.router.push({ 
+                name: 'ModuleDetail', 
+                params: { module: moduleNameLower, oid: this.View.value.entityOid } 
+            }).catch((err: any) => {
+                if (err.name !== 'NavigationDuplicated') {
+                    console.error('[Application] Error al navegar:', err);
+                }
+            });
         }
-    ]
-});
-
-// Modal con componente custom
-Application.showModal({
-    title: 'Product Details',
-    component: ProductDetailComponent,
-    props: { productId: 42 },
-    width: '800px'
-});
-```
-
-#### Código Interno
-
-```typescript
-public static showModal(modal: Modal): void {
-    this.modal.value = modal;
-}
-
-public static closeModal(): void {
-    this.modal.value = null;
+    } else {
+        const targetPath = `/${moduleNameLower}`;
+        if (currentRoute.path !== targetPath) {
+            this.router.push({ name: 'ModuleList', params: { module: moduleNameLower } }).catch((err: any) => {
+                if (err.name !== 'NavigationDuplicated') {
+                    console.error('[Application] Error al navegar:', err);
+                }
+            });
+        }
+    }
 }
 ```
 
-**Ubicación:** `src/models/application.ts` (línea ~210)
+**Key Features:**
+- Guard: Si !router, retorna silenciosamente
+- Path Check: Previene navegación duplicada (currentRoute.path !== targetPath)
+- Error Handling: Ignora NavigationDuplicated (Vue Router warning común)
+- Module Name: Obtiene de getModuleName() con fallback a class name
+- EntityOid: Usa View.value.entityOid (ya calculado en setViewChanges)
 
----
+### 10.3 Dirty State Confirmation Flow
 
-### 7. setButtonList() - Actualizar Lista de Botones
-
-#### Firma
-
+**changeView() with Dirty Check**
 ```typescript
-setButtonList(): void
+changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
+    if(this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
+        this.ApplicationUIService.openConfirmationMenu(
+            confMenuType.WARNING,
+            'Salir sin guardar',
+            'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?',
+            () => {
+                this.setViewChanges(entityClass, component, viewType, entity);
+            }
+        );
+        return;
+    }
+    this.setViewChanges(entityClass, component, viewType, entity);
+}
 ```
 
-#### Descripción
-
-Actualiza `Application.ListButtons` según el `viewType` actual y si la entidad es persistente. Este método determina qué botones de acción se muestran en la barra de herramientas superior.
-
-#### Ubicación
-
-`src/models/application.ts` (línea 233)
-
-#### Comportamiento
-
-```
-LISTVIEW:
-    → [New, Refresh]
-
-DETAILVIEW + Persistent:
-    → [New, Refresh, Validate, Save, SaveAndNew, SendToDevice]
-
-DETAILVIEW + Non-Persistent:
-    → [New, Refresh, Validate, SendToDevice]
-
-Default:
-    → []
-```
-
-#### Uso
-
+**Confirmation Menu Structure**
 ```typescript
-// Llamado automáticamente por changeView()
-Application.changeViewToListView(Product);
-// → setButtonList() ejecuta
-// → ListButtons.value = [NewButtonComponent, RefreshButtonComponent]
-
-Application.changeViewToDetailView(Order, 42);
-// → setButtonList() ejecuta  
-// → Si Order.isPersistent() === true:
-//   ListButtons.value = [New, Refresh, Validate, Save, SaveAndNew, SendToDevice]
+this.ApplicationUIService.openConfirmationMenu(
+    confMenuType.WARNING,    // type
+    'Salir sin guardar',     // title
+    '¿Estás seguro...?',     // message
+    () => { /* confirm */ }  // confirmationAction
+);
 ```
 
-#### Código Interno
+**User Experience:**
+1. Usuario edita campo en DetailView → entity.dirtyState = true
+2. Usuario intenta navegar → getDirtyState() = true
+3. Confirmation menu aparece con opciones [Cancelar, Salir sin guardar]
+4. Si Cancel → Permanece en vista actual
+5. Si Confirm → confirmationAction() ejecuta setViewChanges()
 
+### 10.4 Button List Update Pattern
+
+**setButtonList() Logic**
 ```typescript
 setButtonList() {
     const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
@@ -538,7 +906,6 @@ setButtonList() {
                 markRaw(RefreshButtonComponent)
             ];
             break;
-            
         case ViewTypes.DETAILVIEW:
             if (isPersistentEntity) {
                 this.ListButtons.value = [
@@ -558,180 +925,36 @@ setButtonList() {
                 ];
             }
             break;
-            
         default:
             this.ListButtons.value = [];
     }
 }
 ```
 
-#### Uso en TopBar
+**markRaw() Usage:**
+- Vue 3 proxy wraps objects para reactividad
+- Components en arrays reactivos causan warnings
+- markRaw() marca componente como non-reactive (safe)
+- Still reactive en array (ListButtons.value), pero component itself no reactivo
 
-```vue
-<!-- TopBarComponent.vue -->
-<template>
-    <div class="top-bar">
-        <h1>{{ Application.View.value.moduleName }}</h1>
-        
-        <div class="button-list">
-            <component
-                v-for="(button, index) in Application.ListButtons.value"
-                :key="index"
-                :is="button"
-            />
-        </div>
-    </div>
-</template>
-```
-
-#### Ejemplo de Entidad No Persistente
-
+**setTimeout Pattern:**
 ```typescript
-@ModuleName('Report', 'Reports')
-// Sin @Persistent() ni @ApiEndpoint()
-export class Report extends BaseEntity {
-    @PropertyName('Report Type', String)
-    type!: string;
-    
-    @PropertyName('Date Range', String)
-    dateRange!: string;
-    
-    // No es persistente → no puede save/delete
-    override isPersistent(): boolean {
-        return false;
-    }
-}
-
-// Al abrir DetailView de Report:
-Application.changeViewToDetailView(Report);
-// → setButtonList() detecta isPersistent() === false
-// → Botones: [New, Refresh, Validate, SendToDevice]
-// → NO incluye: Save, SaveAndNew (porque no puede guardar)
-```
-
----
-
-## 🎯 Propiedades Reactivas
-
-### View (Ref\<View\>)
-
-Estado de la vista actual:
-
-```typescript
-Application.View.value = {
-    entityClass: Product,      // Entidad actual
-    viewType: ViewType.DETAIL, // DETAIL o LIST
-    entity: productInstance,   // Instancia cargada (o null)
-    isLoading: false,          // Cargando datos?
-    errors: []                 // Errores de carga
+changeViewToListView = (entityClass: typeof BaseEntity) => {
+    this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW, null);
+    setTimeout(() => {
+        this.setButtonList();
+    }, 405);
 }
 ```
+405ms delay sincroniza con CSS transitions (típicamente 400ms).
 
-**Uso en componentes:**
+### 10.5 Axios Interceptor Setup
 
-```vue
-<template>
-  <div>
-    <h1>{{ Application.View.value.entityClass.getModuleNameSingular() }}</h1>
-    
-    <div v-if="Application.View.value.isLoading">Loading...</div>
-    
-    <component :is="getCurrentViewComponent()" />
-  </div>
-</template>
-
-<script setup>
-import Application from '@/models/application';
-import { computed } from 'vue';
-
-const getCurrentViewComponent = computed(() => {
-    const viewType = Application.View.value.viewType;
-    return viewType === ViewType.LIST ? 'ListView' : 'DetailView';
-});
-</script>
-```
-
----
-
-### ModuleList (Ref<Array<typeof BaseEntity>>)
-
-Lista de módulos registrados:
-
-```typescript
-Application.ModuleList.value = [
-    Product,
-    Customer,
-    Order,
-    // ...
-]
-```
-
-**Uso en SideBar:**
-
-```vue
-<template>
-  <div class="sidebar">
-    <div
-      v-for="entityClass in Application.ModuleList.value"
-      :key="entityClass.name"
-      class="sidebar-item"
-      @click="navigateToModule(entityClass)"
-    >
-      <span class="icon">{{ entityClass.getModuleIcon() }}</span>
-      <span class="name">{{ entityClass.getModuleNamePlural() }}</span>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import Application from '@/models/application';
-import { ViewType } from '@/enums/view_type';
-
-function navigateToModule(entityClass) {
-    Application.changeView(entityClass, ViewType.LIST);
-}
-</script>
-```
-
-**Ubicación:** `src/components/SideBarComponent.vue`
-
----
-
-## 🔌 Integración con Axios
-
-### axiosInstance (AxiosInstance)
-
-**Propósito:** Instancia configurada de Axios para realizar peticiones HTTP a la API.
-
-**Tipo:** `AxiosInstance`
-
-**Ubicación:** `src/models/application.ts` (línea 91)
-
-#### Configuración Inicial
-
-```typescript
-// Constructor de Application
-this.axiosInstance = axios.create({
-    baseURL: this.AppConfiguration.value.apiBaseUrl,
-    timeout: this.AppConfiguration.value.apiTimeout,
-    headers: {
-        'Content-Type': 'application/json',
-    }
-});
-```
-
-#### Interceptores Preconfigurados
-
-**Request Interceptor (línea 98):**
-- Añade automáticamente token de autenticación desde localStorage
-- Header: `Authorization: Bearer <token>`
-
+**Request Interceptor**
 ```typescript
 this.axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem(
-            this.AppConfiguration.value.authTokenKey
-        );
+        const token = localStorage.getItem(this.AppConfiguration.value.authTokenKey);
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -742,451 +965,272 @@ this.axiosInstance.interceptors.request.use(
     }
 );
 ```
+Agrega Authorization header automáticamente si token exists.
 
-**Response Interceptor (línea 108):**
-- Maneja errores 401 (Unauthorized)
-- Elimina token inválido del localStorage
-
+**Response Interceptor**
 ```typescript
 this.axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Sesión expirada → limpiar token
-            localStorage.removeItem(
-                this.AppConfiguration.value.authTokenKey
-            );
+            localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
         }
         return Promise.reject(error);
     }
 );
 ```
+Si 401 Unauthorized, remueve token (auto-logout).
 
-#### Uso en BaseEntity
-
+**Usage en BaseEntity:**
 ```typescript
-// BaseEntity.save() usa axiosInstance
-public async save(): Promise<this> {
-    const endpoint = this.getApiEndpoint();
-    const method = this.id ? 'PUT' : 'POST';
-    const url = this.id ? `${endpoint}/${this.id}` : endpoint;
-    
-    try {
-        const response = await Application.axiosInstance.request({
-            method,
-            url,
-            data: this.toDictionary()
-        });
-        
-        // Actualizar entidad con respuesta
-        Object.assign(this, response.data);
-        
-        return this;
-    } catch (error) {
-        // Manejar error
-        console.error(error);
-        throw error;
-    }
+async save() {
+    const payload = this.toDictionary();
+    const response = await Application.axiosInstance.post(this.getApiEndpoint(), payload);
+    return response.data;
+}
+```
+No necesita configurar headers manualmente.
+
+### 10.6 Module Registration Best Practices
+
+**Registration en application.ts (End of File)**
+```typescript
+const Application = ApplicationClass.getInstance();
+
+// Registrar módulos aquí
+Application.ModuleList.value.push(Products);
+
+export default Application;
+export { Application };
+```
+
+**MEJOR: Registration en main.js**
+```typescript
+import Application from './models/application';
+import { Products } from './entities/products';
+import { Orders } from './entities/orders';
+import { Customers } from './entities/customers';
+
+// Registrar DESPUÉS de initializeRouter
+Application.initializeRouter(router);
+
+Application.ModuleList.value.push(
+    Products,
+    Orders,
+    Customers
+);
+```
+Centraliza registro en punto de entrada.
+
+**Module Requirements:**
+- Clase debe extender BaseEntity
+- Debe tener @ModuleName('Name') decorator
+- Opcional: @ModuleIcon, @Persistent, @ApiEndpoint
+- getModuleDefaultComponent(), getModuleListComponent(), getModuleDetailComponent() deben retornar componentes válidos
+
+### 10.7 Event Bus Integration
+
+**Emitting Events en BaseEntity:**
+```typescript
+async save() {
+    // ... save logic
+    Application.eventBus.emit('entity-saved', this);
+    return this;
 }
 ```
 
-#### Uso Directo en Código Custom
-
-```typescript
-// Petición GET
-const response = await Application.axiosInstance.get('/api/products');
-console.log(response.data);  // Array de productos
-
-// Petición POST
-const newProduct = await Application.axiosInstance.post('/api/products', {
-    product_name: 'Widget',
-    product_price: 19.99
-});
-
-// Petición PUT
-const updated = await Application.axiosInstance.put('/api/products/42', {
-    product_name: 'Updated Widget'
-});
-
-// Petición DELETE
-await Application.axiosInstance.delete('/api/products/42');
-```
-
-#### Modificar Configuración en Runtime
-
-```typescript
-// Cambiar baseURL
-Application.axiosInstance.defaults.baseURL = 'https://api.newserver.com';
-
-// Cambiar timeout
-Application.axiosInstance.defaults.timeout = 30000;  // 30 segundos
-
-// Añadir header global
-Application.axiosInstance.defaults.headers.common['X-Custom-Header'] = 'value';
-
-// Remover header
-delete Application.axiosInstance.defaults.headers.common['X-Custom-Header'];
-```
-
-#### Interceptores Adicionales
-
-```typescript
-// Request interceptor custom (agregar timestamp)
-Application.axiosInstance.interceptors.request.use((config) => {
-    config.headers['X-Request-Time'] = new Date().toISOString();
-    return config;
-});
-
-// Response interceptor custom (logging)
-Application.axiosInstance.interceptors.response.use(
-    (response) => {
-        console.log(`[API] ${response.config.method?.toUpperCase()} ${response.config.url}`);
-        return response;
-    },
-    (error) => {
-        console.error(`[API ERROR] ${error.config.method?.toUpperCase()} ${error.config.url}`, error);
-        return Promise.reject(error);
-    }
-);
-```
-
----
-
-### Configurar Interceptors (Ejemplo Avanzado)
-
-```typescript
-// En main.js, después de crear axiosInstance
-
-// Request interceptor (agregar auth token)
-Application.axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Response interceptor (manejar errores globales)
-Application.axiosInstance.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    (error) => {
-        if (error.response?.status === 401) {
-            // Unauthorized → redirigir a login
-            Application.showToast('Session expired, please login', 'error');
-            Application.router.push('/login');
-        } else if (error.response?.status === 500) {
-            // Server error
-            Application.showToast('Server error, please try again later', 'error');
-        }
-        return Promise.reject(error);
-    }
-);
-```
-
----
-
-## 🔌 Integración con Event Bus
-
-### Emitir Eventos
-
-```typescript
-// BaseEntity.save() emite evento
-Application.eventBus.emit('entity-saved', {
-    entityClass: this.constructor,
-    entity: this
-});
-```
-
-### Escuchar Eventos
-
-```typescript
-// En componente Vue
-import { onMounted, onUnmounted } from 'vue';
+**Listening en Components:**
+```vue
+<script setup>
+import { onMounted, onBeforeUnmount } from 'vue';
 import Application from '@/models/application';
 
+const handleEntitySaved = (entity) => {
+    console.log('Entity saved:', entity);
+    // Refresh list, show toast, etc
+};
+
 onMounted(() => {
-    // Escuchar evento 'entity-saved'
     Application.eventBus.on('entity-saved', handleEntitySaved);
 });
 
-onUnmounted(() => {
-    // Limpiar listener
+onBeforeUnmount(() => {
     Application.eventBus.off('entity-saved', handleEntitySaved);
 });
+</script>
+```
 
-function handleEntitySaved(payload) {
-    console.log('Entity saved:', payload.entityClass.name, payload.entity);
-    
-    // Actualizar lista si es necesario
-    if (payload.entityClass === Product) {
-        refreshProductList();
-    }
+**Event Types (types/events.ts):**
+```typescript
+export interface Events {
+    'entity-saved': BaseEntity;
+    'entity-deleted': { class: typeof BaseEntity, oid: any };
+    'entity-fetched': BaseEntity;
+    'validation-error': { entity: BaseEntity, errors: Record<string, string> };
 }
 ```
 
-### Eventos del Sistema
+### 10.8 Testing Application Singleton
 
+**Unit Test - Singleton Pattern:**
 ```typescript
-// Eventos emitidos automáticamente por BaseEntity:
-'entity-saved'          // Después de save()
-'entity-deleted'        // Después de delete()
-'validation-failed'     // Si validateInputs() falla
-'validation-passed'     // Si validateInputs() pasa
-'entity-list-fetched'   // Después de getElementList()
-'entity-fetched'        // Después de getElement()
-```
-
----
-
-## 🎨 AppConfiguration
-
-### Configuración de la Aplicación
-
-```typescript
-export class AppConfiguration {
-    // Nombre de la app
-    appName: string = 'My SaaS App';
-    
-    // Idioma
-    locale: string = 'en-US';
-    
-    // Moneda
-    currency: string = 'USD';
-    
-    // Zona horaria
-    timezone: string = 'UTC';
-    
-    // Formato de fecha
-    dateFormat: string = 'MM/DD/YYYY';
-    
-    // Tema
-    theme: 'light' | 'dark' = 'light';
-    
-    // Features habilitadas
-    features: {
-        multiLanguage: boolean;
-        darkMode: boolean;
-        notifications: boolean;
-    } = {
-        multiLanguage: false,
-        darkMode: true,
-        notifications: true
-    };
-}
-```
-
-**Uso:**
-
-```typescript
-// Configurar en main.js
-Application.AppConfiguration.appName = 'Inventory Management System';
-Application.AppConfiguration.locale = 'es-ES';
-Application.AppConfiguration.currency = 'EUR';
-Application.AppConfiguration.theme = 'dark';
-
-// Usar en componentes
-const appName = Application.AppConfiguration.appName;
-const locale = Application.AppConfiguration.locale;
-```
-
----
-
-## 🧪 Ejemplos de Uso
-
-### 1. Navegación Programática
-
-```typescript
-// Desde cualquier lugar de la app
-
-// Ir a lista de productos
-Application.changeViewToListView(Product);
-
-// Ir a crear nuevo producto
-Application.changeViewToDetailView(Product);
-
-// Ir a editar producto 42
-Application.changeViewToDetailView(Product, 42);
-
-// Ir a lista de clientes
-Application.changeViewToListView(Customer);
-```
-
-### 2. Notificaciones
-
-```typescript
-// Success
-await product.save();
-Application.showToast('Product saved!', ToastType.SUCCESS);
-
-// Error
-try {
-    await product.save();
-} catch (error) {
-    Application.showToast('Save failed: ' + error.message, ToastType.ERROR);
-}
-
-// Warning
-if (product.stock < 10) {
-    Application.showToast('Low stock alert', ToastType.WARNING);
-}
-
-// Info
-Application.showToast('Loading products...', ToastType.INFO, 5000);
-```
-
-### 3. Confirmación con Modal
-
-```typescript
-async function deleteProduct(product: Product) {
-    Application.showModal({
-        title: 'Confirm Delete',
-        message: `Are you sure you want to delete "${product.name}"?`,
-        type: 'warning',
-        buttons: [
-            {
-                label: 'Cancel',
-                action: () => Application.closeModal()
-            },
-            {
-                label: 'Delete',
-                action: async () => {
-                    const deleted = await product.delete();
-                    
-                    if (deleted) {
-                        Application.closeModal();
-                        Application.changeViewToListView(Product);
-                    }
-                },
-                primary: true,
-                dangerous: true
-            }
-        ]
-    });
-}
-```
-
-### 4. Event Bus para Comunicación
-
-```typescript
-// Componente A: Emite evento
-Application.eventBus.emit('stock-updated', {
-    productId: 42,
-    newStock: 150
-});
-
-// Componente B: Escucha evento
-Application.eventBus.on('stock-updated', (payload) => {
-    console.log(`Product ${payload.productId} stock: ${payload.newStock}`);
-    refreshProductList();
+test('Application is singleton', () => {
+    const app1 = Application;
+    const app2 = Application;
+    expect(app1).toBe(app2); // Same instance
 });
 ```
 
-### 5. Axios con Auth
-
+**Unit Test - changeView:**
 ```typescript
-// Configurar header global
-Application.axiosInstance.defaults.headers.common['Authorization'] = 
-    `Bearer ${userToken}`;
-
-// Hacer request
-const response = await Application.axiosInstance.get('/api/protected-resource');
-
-// Request con headers custom
-const response = await Application.axiosInstance.post(
-    '/api/orders',
-    orderData,
-    {
-        headers: {
-            'X-Custom-Header': 'value'
-        }
-    }
-);
-```
-
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. Application es Singleton
-
-```typescript
-// ✅ CORRECTO: Usar como singleton
-Application.showToast('Hello');
-
-// ❌ INCORRECTO: No instanciar
-const app = new Application();  // ← No hacer esto
-```
-
-### 2. Configurar Antes de Crear App Vue
-
-```typescript
-// ✅ CORRECTO: Orden correcto
-Application.initializeRouter(router);
-Application.axiosInstance = axios.create({...});
-Application.ModuleList.value.push(Product);
-
-const app = createApp(App);
-app.use(router);
-app.mount('#app');
-
-// ❌ INCORRECTO: Configurar después de mount
-const app = createApp(App);
-app.mount('#app');
-
-Application.ModuleList.value.push(Product);  // ← Demasiado tarde (el menú ya se renderizó)
-```
-
-### 3. ModuleList es Reactivo
-
-```typescript
-// En componentes Vue, usar .value
-Application.ModuleList.value.forEach(entityClass => {
-    console.log(entityClass.name);
+test('changeView updates View state', () => {
+    Application.changeView(Products, ListComponent, ViewTypes.LISTVIEW);
+    expect(Application.View.value.entityClass).toBe(Products);
+    expect(Application.View.value.viewType).toBe(ViewTypes.LISTVIEW);
 });
-
-// En código no reactivo, también usar .value
-const moduleCount = Application.ModuleList.value.length;
 ```
 
-### 4. Event Bus Requiere Cleanup
-
+**Integration Test - Router Sync:**
 ```typescript
-// ✅ CORRECTO: Limpiar listeners
-onMounted(() => {
-    Application.eventBus.on('my-event', handler);
+test('changeView synchronizes router', async () => {
+    Application.initializeRouter(router);
+    Application.changeViewToListView(Products);
+    
+    await nextTick();
+    expect(router.currentRoute.value.path).toBe('/products');
 });
-
-onUnmounted(() => {
-    Application.eventBus.off('my-event', handler);  // ← Importante
-});
-
-// ❌ INCORRECTO: No limpiar (memory leak)
-onMounted(() => {
-    Application.eventBus.on('my-event', handler);
-});
-// ← Falta cleanup
 ```
 
----
+## 11. Referencias Cruzadas
 
-## 📚 Referencias Adicionales
+### 11.1 Documentación Relacionada de Application Layer
 
-- `router-integration.md` - Rutas automáticas
-- `event-bus.md` - Sistema de eventos completo
-- `ui-services.md` - Servicios de UI (toasts, modals)
-- `../02-base-entity/crud-operations.md` - BaseEntity usa Application
-- `../../02-FLOW-ARCHITECTURE.md` - Arquitectura completa
-- `../../tutorials/01-basic-crud.md` - Uso de Application en tutorial
+**copilot/layers/03-application/event-bus.md**
+- Relación: Application.eventBus implementación con mitt
+- Contenido: Event types, emit/on patterns, cleanup
 
----
+**copilot/layers/03-application/router-integration.md**
+- Relación: Application.initializeRouter(), updateRouterFromView()
+- Contenido: Route configuration, navigation guards, params mapping
 
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/models/application.ts`  
-**Líneas totales:** ~280
+**copilot/layers/03-application/ui-services.md**
+- Relación: Application.ApplicationUIService implementación
+- Contenido: openToast, openModal, openConfirmationMenu methods
+
+### 11.2 BaseEntity Core
+
+**copilot/layers/02-base-entity/base-entity-core.md**
+- Métodos consumidos: getModuleName(), isPersistent(), getUniquePropertyValue()
+- Application gestiona instancias BaseEntity en View.entityObject
+
+**copilot/layers/02-base-entity/crud-operations.md**
+- Sección: save(), delete() emitiendo eventos via Application.eventBus
+- Application.axiosInstance usado para requests HTTP
+
+**copilot/layers/02-base-entity/lifecycle-hooks.md**
+- Hooks: beforeSave(), afterSave() pueden acceder Application para navigation
+- Application.changeViewToListView() llamado después de save
+
+**copilot/layers/02-base-entity/metadata-access.md**
+- getModuleDefaultComponent(), getModuleListComponent(), getModuleDetailComponent()
+- Application usa estos métodos en changeView para determinar component
+
+### 11.3 Decoradores
+
+**copilot/layers/01-decorators/module-name-decorator.md**
+- Application.ModuleList requiere @ModuleName en entities
+- getModuleName() usado para rutas y títulos
+
+**copilot/layers/01-decorators/module-icon-decorator.md**
+- SideBar usa getModuleIcon() para mostrar iconos
+- Application no consume directamente, pero ModuleList modules deben tenerlo
+
+**copilot/layers/01-decorators/persistent-decorator.md**
+- isPersistent() determina botones en setButtonList()
+- Persistent entities muestran Save/SaveAndNew
+
+**copilot/layers/01-decorators/api-endpoint-decorator.md**
+- Application.axiosInstance usa getApiEndpoint() para construir URLs
+- CRUD operations en BaseEntity
+
+### 11.4 Componentes
+
+**copilot/layers/04-components/ComponentContainerComponent.md**
+- Renderiza: `<component :is="Application.View.value.component" />`
+- Consume Application.View para determinar qué renderizar
+
+**copilot/layers/04-components/TopBarComponent.md**
+- Itera: Application.ListButtons.value
+- Renderiza botones determinados por setButtonList()
+
+**copilot/layers/04-components/SideBarComponent.md**
+- Itera: Application.ModuleList.value
+- Genera SideBarItems con navigation handlers
+
+**copilot/layers/04-components/ToastComponents.md**
+- Lee: Application.ToastList.value
+- Renderiza notificaciones agregadas por ApplicationUIService
+
+**copilot/layers/04-components/modal-components.md**
+- Lee: Application.modal.value
+- Renderiza modal si no null
+
+### 11.5 Buttons
+
+**copilot/layers/04-components/ActionButtonComponents.md**
+- Componentes: NewButtonComponent, SaveButtonComponent, RefreshButtonComponent
+- Agregados a Application.ListButtons por setButtonList()
+
+**copilot/layers/04-components/buttons-overview.md**
+- Descripción de todos los botones usados en TopBar
+- ListButtons contiene subset basado en viewType
+
+### 11.6 Código Fuente
+
+**src/models/application.ts**
+- Líneas 1-279: Implementación completa ApplicationClass
+- Líneas 27-125: Constructor con inicialización
+- Líneas 126-220: Métodos de navegación (changeView, setViewChanges, updateRouterFromView)
+- Líneas 222-259: setButtonList()
+- Líneas 261-263: initializeRouter()
+
+**src/models/application_ui_service.ts**
+- ApplicationUIService class
+- Métodos helper para toasts, modals, confirmations
+
+**src/models/application_ui_context.ts**
+- ApplicationUIContext interface
+- Definición de propiedades reactivas
+
+**src/models/View.ts**
+- View interface/type
+- entityClass, entityObject, component, viewType, isValid, entityOid
+
+**src/router/index.ts**
+- Router configuration
+- initializeRouterWithApplication() función
+
+### 11.7 Tutoriales
+
+**copilot/tutorials/01-basic-crud.md**
+- Sección: Usar Application.changeViewToListView(), changeViewToDetailView()
+- Ejemplo: Navegación después de save
+
+**copilot/tutorials/02-validations.md**
+- Sección: Application.ApplicationUIService.openToast() para validation errors
+- Patrón: Mostrar mensajes de validación
+
+### 11.8 Contratos y Arquitectura
+
+**copilot/00-CONTRACT.md**
+- Sección 5: Application como orquestador central
+- Sección 8: Singleton pattern requirements
+
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Application Layer como Service Locator
+- Contexto: Application coordina Router, Axios, EventBus
+
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: Navigation Flow con Application.changeView()
+- Flujo: User action → Application.changeView → Router.push → Component render
+- Garantía: Application es source of truth para estado de vista

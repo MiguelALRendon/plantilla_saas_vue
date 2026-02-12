@@ -1,891 +1,853 @@
-# 🔢 ViewGroupRow Decorator
+# ViewGroupRow Decorator
 
-**Referencias:**
-- `view-group-decorator.md` - ViewGroup organiza campos, ViewGroupRow organiza filas
-- `css-column-class-decorator.md` - CssColumnClass + ViewGroupRow para layouts precisos
-- `property-index-decorator.md` - PropertyIndex vs ViewGroupRow
-- `../../02-base-entity/base-entity-core.md` - getViewGroupRow() accessor
+## 1. Propósito
 
----
+Controlar el layout de columnas de propiedades dentro de grupos visuales en formularios generados automáticamente, especificando si campos se renderizan en una sola columna (SINGLE), dos columnas lado a lado (PAIR), o tres columnas (TRIPLE) mediante enum ViewGroupRow.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/view_group_row_decorator.ts`
+### 2.1 Responsabilidades
 
----
+- Asignar tipo de layout ViewGroupRow a propiedades específicas
+- Determinar número de columnas para renderizado de campos en formulario
+- Proporcionar método getViewGroupRows() para acceso a metadata de layout
+- Permitir optimización de espacio horizontal en formularios
+- Habilitar layouts responsivos adaptables a ancho de pantalla
+- Soportar configuración combinada con @ViewGroup para organización completa
 
-## 🎯 Propósito
+### 2.2 Límites
 
-El decorador `@ViewGroupRow()` controla en qué **fila** se muestra una propiedad dentro de un ViewGroup, permitiendo layouts multi-columna organizados por filas explícitas.
+- No controla responsive breakpoints (responsabilidad de CSS)
+- No valida que propiedades PAIR o TRIPLE sean compatibles visualmente
+- No garantiza que propiedades agrupadas tengan mismo ViewGroupRow
+- No afecta serialización, persistencia ni validación de propiedades
+- No determina orden de propiedades (requiere @PropertyIndex)
+- No crea dependencias funcionales entre propiedades en mismo row
 
-**Beneficios:**
-- Control fino de layout en formularios
-- Múltiples campos en una misma fila
-- Organización visual clara
-- Layouts complejos sin CSS manual
+## 3. Definiciones Clave
 
----
+**ViewGroupRow Enum**: Enumeración que define tipos de layout de columnas: SINGLE (1 columna), PAIR (2 columnas), TRIPLE (3 columnas).
 
-## 📝 Sintaxis
+**ViewGroupRow.SINGLE**: Valor por defecto, propiedad ocupa ancho completo de formulario (100% width), renderizada una por fila.
+
+**ViewGroupRow.PAIR**: Propiedad renderizada en 2 columnas, ocupando 50% width, dos propiedades PAIR lado a lado en misma fila.
+
+**ViewGroupRow.TRIPLE**: Propiedad renderizada en 3 columnas, ocupando 33% width, tres propiedades TRIPLE lado a lado en misma fila.
+
+**ViewGroupRow Map**: Estructura Record<string, ViewGroupRow> que mapea nombres de propiedades a sus layouts asignados.
+
+**Row Grouping**: Algoritmo que agrupa propiedades consecutivas con mismo ViewGroupRow value para renderizado en misma fila.
+
+**Responsive Layout**: Patrón donde PAIR y TRIPLE colapsan a SINGLE en pantallas pequeñas (móviles) mediante media queries CSS.
+
+## 4. Descripción Técnica
+
+### 4.1 Enumeración ViewGroupRow
 
 ```typescript
-@ViewGroupRow(rowIndex: number)
-propertyName: Type;
+export enum ViewGroupRow {
+    SINGLE = 'single',
+    PAIR = 'pair',
+    TRIPLE = 'triple'
+}
 ```
 
-### Parámetros
+Enum con valores string (no numéricos) para claridad en debugging y serialización. Valores son lowercase para consistencia con clases CSS.
 
-| Parámetro | Tipo | Requerido | Descripción |
-|-----------|------|-----------|-------------|
-| `rowIndex` | `number` | Sí | Número de fila (1, 2, 3...) |
-
----
-
-## 💾 Implementación
-
-### Código del Decorador
+### 4.2 Implementación del Decorador
 
 ```typescript
-// src/decorations/view_group_row_decorator.ts
+import type { ViewGroupRow } from "@/enums/view_group_row";
 
-/**
- * Symbol para almacenar metadata de view group row
- */
-export const VIEW_GROUP_ROW_METADATA = Symbol('viewGroupRow');
+export const VIEW_GROUP_ROW_KEY = Symbol('view_group_row');
 
-/**
- * @ViewGroupRow() - Define el número de fila de una propiedad en un ViewGroup
- * 
- * @param rowIndex - Número de fila (1, 2, 3...)
- * @returns PropertyDecorator
- */
-export function ViewGroupRow(rowIndex: number): PropertyDecorator {
+export function ViewGroupRowDecorator(rowType: ViewGroupRow): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        // Inicializar metadata si no existe
-        if (!target[VIEW_GROUP_ROW_METADATA]) {
-            target[VIEW_GROUP_ROW_METADATA] = {};
+        const proto = target.constructor.prototype;
+        if (!proto[VIEW_GROUP_ROW_KEY]) {
+            proto[VIEW_GROUP_ROW_KEY] = {};
         }
-        
-        // Guardar row index
-        target[VIEW_GROUP_ROW_METADATA][propertyKey] = rowIndex;
+        proto[VIEW_GROUP_ROW_KEY][propertyKey] = rowType;
     };
 }
 ```
 
-**Ubicación:** `src/decorations/view_group_row_decorator.ts` (línea ~1-30)
+Decorador almacena enum value en prototype usando Symbol. Nombre ViewGroupRowDecorator (no simplemente ViewGroupRow) evita conflicto con enum importado.
 
----
-
-## 🔍 Metadata Storage
-
-### Estructura en Prototype
+### 4.3 Método de Acceso en BaseEntity
 
 ```typescript
-Product.prototype[VIEW_GROUP_ROW_METADATA] = {
-    'name': 1,        // Fila 1
-    'sku': 1,         // Fila 1 (misma fila que name)
-    'price': 2,       // Fila 2
-    'stock': 2,       // Fila 2 (misma fila que price)
-    'category': 2,    // Fila 2 (misma fila que price y stock)
-    'description': 3  // Fila 3
-};
+public getViewGroupRows(): Record<string, ViewGroupRow> {
+    const proto = (this.constructor as any).prototype;
+    return proto[VIEW_GROUP_ROW_KEY] || {};
+}
 ```
 
-### Acceso desde BaseEntity
+Método recupera mapa completo de ViewGroupRows desde prototype. Retorna objeto vacío cuando no configurados. Propiedades sin decorador asumen SINGLE por defecto (manejo en UI).
+
+### 4.4 Almacenamiento de Metadata
+
+El metadata se almacena en:
+- Ubicación: Constructor.prototype[VIEW_GROUP_ROW_KEY]
+- Estructura: Record<string | symbol, ViewGroupRow>
+- Vida útil: Permanente durante lifecycle de aplicación
+- Herencia: Compartida entre instancias de clase
+- Serialización: No incluida en toDictionary() ni persistencia
+
+## 5. Flujo de Funcionamiento
+
+### 5.1 Fase de Declaración
+
+```
+Developer diseña formulario con optimización de espacio horizontal
+    ↓
+Aplica @ViewGroupRowDecorator(ViewGroupRow.PAIR) a propiedades breves
+    ↓
+Aplica ViewGroupRow.SINGLE a propiedades largas (textarea, etc)
+    ↓
+TypeScript ejecuta decoradores en definición de clase
+    ↓
+ViewGroupRowDecorator() almacena {propertyKey: enum value} en prototype
+    ↓
+Metadata disponible para renderizado de formulario
+```
+
+### 5.2 Fase de Renderizado de Formulario
+
+```
+FormLayout component necesita renderizar propiedades
+    ↓
+Llama entity.getViewGroupRows() para obtener mapa de layouts
+    ↓
+Itera propiedades en orden (getKeys())
+    ↓
+Para cada propiedad, obtiene rowType = viewGroupRows[key] || SINGLE
+    ↓
+Agrupa propiedades consecutivas con mismo rowType
+    ↓
+Renderiza row container con CSS grid:
+    - SINGLE: grid-template-columns: 1fr
+    - PAIR: grid-template-columns: 1fr 1fr
+    - TRIPLE: grid-template-columns: 1fr 1fr 1fr
+    ↓
+Aplica responsive CSS para colapsar a SINGLE en móviles
+```
+
+### 5.3 Algoritmo de Agrupación por Rows
 
 ```typescript
-// src/entities/base_entitiy.ts
-
-/**
- * Obtiene el número de fila de una propiedad
- * 
- * @param propertyKey - Nombre de la propiedad
- * @returns Número de fila o undefined
- */
-public getViewGroupRow(propertyKey: string): number | undefined {
-    const constructor = this.constructor as typeof BaseEntity;
-    const rowMetadata = constructor.prototype[VIEW_GROUP_ROW_METADATA];
+function groupByRows(entity: BaseEntity): Array<{ rowType: ViewGroupRow, properties: string[] }> {
+    const keys = entity.getKeys();
+    const viewGroupRows = entity.getViewGroupRows();
+    const rows: Array<{ rowType: ViewGroupRow, properties: string[] }> = [];
     
-    if (!rowMetadata) {
-        return undefined;
-    }
+    let currentRow: { rowType: ViewGroupRow, properties: string[] } | null = null;
     
-    return rowMetadata[propertyKey];
-}
-
-/**
- * Obtiene el número de fila (método estático)
- */
-public static getViewGroupRow(propertyKey: string): number | undefined {
-    const rowMetadata = this.prototype[VIEW_GROUP_ROW_METADATA];
-    
-    if (!rowMetadata) {
-        return undefined;
-    }
-    
-    return rowMetadata[propertyKey];
-}
-
-/**
- * Obtiene propiedades agrupadas por fila
- */
-public static getPropertiesByRow(viewGroupName?: string): Map<number, string[]> {
-    const properties = viewGroupName 
-        ? this.getPropertiesByViewGroup().get(viewGroupName) || []
-        : this.getProperties();
-    
-    const rowMetadata = this.prototype[VIEW_GROUP_ROW_METADATA];
-    const propertiesByRow = new Map<number, string[]>();
-    
-    properties.forEach(prop => {
-        const row = rowMetadata?.[prop] || 1;  // Default: row 1
+    for (const key of keys) {
+        const rowType = viewGroupRows[key] || ViewGroupRow.SINGLE;
         
-        if (!propertiesByRow.has(row)) {
-            propertiesByRow.set(row, []);
+        // Si es SINGLE, siempre crear nuevo row
+        if (rowType === ViewGroupRow.SINGLE) {
+            rows.push({ rowType: ViewGroupRow.SINGLE, properties: [key] });
+            currentRow = null;
+            continue;
         }
         
-        propertiesByRow.get(row)!.push(prop);
-    });
+        // Si no hay currentRow o tipo diferente, crear nuevo
+        if (!currentRow || currentRow.rowType !== rowType) {
+            currentRow = { rowType, properties: [key] };
+            rows.push(currentRow);
+            continue;
+        }
+        
+        // Si currentRow está lleno, crear nuevo
+        const maxInRow = rowType === ViewGroupRow.PAIR ? 2 : 3;
+        if (currentRow.properties.length >= maxInRow) {
+            currentRow = { rowType, properties: [key] };
+            rows.push(currentRow);
+        } else {
+            // Agregar a currentRow existente
+            currentRow.properties.push(key);
+        }
+    }
     
-    return propertiesByRow;
+    return rows;
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~1560-1630)
+### 5.4 Ejemplo de Uso Completo
 
----
+```typescript
+class ContactForm extends BaseEntity {
+    // PAIR - Dos campos lado a lado
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    @PropertyIndex(1)
+    firstName: string;
+    
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    @PropertyIndex(2)
+    lastName: string;
+    
+    // SINGLE - Campo ancho completo
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    @PropertyIndex(3)
+    @StringTypeDef(StringType.EMAIL)
+    email: string;
+    
+    // TRIPLE - Tres campos lado a lado
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    @PropertyIndex(4)
+    city: string;
+    
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    @PropertyIndex(5)
+    state: string;
+    
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    @PropertyIndex(6)
+    zipCode: string;
+    
+    // SINGLE - Textarea ancho completo
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    @PropertyIndex(7)
+    @StringTypeDef(StringType.TEXTAREA)
+    notes: string;
+}
 
-## 🎨 Impacto en UI
+const form = new ContactForm();
+const rows = form.getViewGroupRows();
+// {
+//   firstName: 'pair',
+//   lastName: 'pair',
+//   email: 'single',
+//   city: 'triple',
+//   state: 'triple',
+//   zipCode: 'triple',
+//   notes: 'single'
+// }
+```
 
-### DetailView con ViewGroupRow
+Resultado en UI:
+```
+[First Name    ] [Last Name     ]  ← PAIR row
 
+[Email                          ]  ← SINGLE row
+
+[City    ] [State    ] [ZipCode]  ← TRIPLE row
+
+[Notes                          ]  ← SINGLE row
+[                               ]
+```
+
+## 6. Reglas Obligatorias
+
+### 6.1 Aplicación del Decorador
+
+1. @ViewGroupRowDecorator debe aplicarse a propiedades, nunca a clase
+2. Parámetro rowType debe ser valor de enum ViewGroupRow
+3. Importar ViewGroupRow desde @/enums/view_group_row
+4. No aplicar múltiples @ViewGroupRowDecorator a misma propiedad (último prevalece)
+5. Default es SINGLE si no se aplica decorador
+
+### 6.2 Selección de ViewGroupRow
+
+6. Usar SINGLE para campos largos (textarea, rich text, file upload)
+7. Usar PAIR para campos breves relacionados (firstName/lastName, city/state)
+8. Usar TRIPLE para campos muy breves (day/month/year, phone parts)
+9. Considerar ancho de labels al elegir PAIR o TRIPLE
+10. PAIR máximo 2 propiedades consecutivas, TRIPLE máximo 3
+
+### 6.3 Organización de Propiedades
+
+11. Agrupar propiedades PAIR consecutivamente para renderizado en misma fila
+12. Propiedades SINGLE interrumpen agrupación de PAIR/TRIPLE
+13. Usar @PropertyIndex para controlar orden y agrupación
+14. No mezclar PAIR y TRIPLE en misma fila (diferente rowType)
+15. Propiedades cortas consecutivas con mismo rowType se agrupan automáticamente
+
+### 6.4 Interacción con Otros Decorators
+
+16. @ViewGroupRowDecorator y @ViewGroup son compatibles, ViewGroup agrupa secciones
+17. @ViewGroupRowDecorator y @PropertyIndex obligatorios juntos para control preciso
+18. @StringTypeDef StringType.TEXTAREA debe tener ViewGroupRow.SINGLE
+19. @HideInDetailView hace irrelevante ViewGroupRow (no renderiza)
+20. @ReadOnly no afecta ViewGroupRow (readonly fields usan mismo layout)
+
+### 6.5 Responsive Design
+
+21. Implementar media queries para colapsar PAIR/TRIPLE a SINGLE en móviles
+22. Breakpoint típico: <768px colapsa a SINGLE
+23. Testear formularios en diferentes tamaños de pantalla
+24. Considerar touch targets en móviles (no campos demasiado estrechos)
+25. Labels pueden requerir wrap o truncate en layouts estrechos
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Implementación
+
+1. PROHIBIDO aplicar @ViewGroupRowDecorator a clase (es property decorator)
+2. PROHIBIDO usar strings literales en lugar de enum ViewGroupRow
+3. PROHIBIDO crear valores custom de ViewGroupRow (enum es cerrado)
+4. PROHIBIDO modificar valores de enum ViewGroupRow
+5. PROHIBIDO aplicar ViewGroupRowDecorator sin @PropertyIndex (orden indeterminado)
+
+### 7.2 Prohibiciones de Uso
+
+6. PROHIBIDO usar PAIR/TRIPLE para textarea o campos largos
+7. PROHIBIDO asumir que PAIR/TRIPLE renderiza exactamente 2/3 campos sin agrupación
+8. PROHIBIDO depender de ViewGroupRow para lógica de validación
+9. PROHIBIDO serializar ViewGroupRow metadata en APIs
+10. PROHIBIDO usar ViewGroupRow para determinar qué propiedades son importantes
+
+### 7.3 Prohibiciones de Layout
+
+11. PROHIBIDO mezclar PAIR y TRIPLE en misma fila (requiere rowType consistente)
+12. PROHIBIDO usar TRIPLE en formularios estrechos sin responsive design
+13. PROHIBIDO omitir media queries para colapso en móviles
+14. PROHIBIDO asumir que labels caben en layouts estrechos sin testing
+15. PROHIBIDO usar ViewGroupRow como reemplazo de CSS Grid custom
+
+### 7.4 Prohibiciones de Lógica
+
+16. PROHIBIDO implementar lógica de negocio basada en ViewGroupRow values
+17. PROHIBIDO usar ViewGroupRow para determinar relaciones entre propiedades
+18. PROHIBIDO modificar valores basado en rowType
+19. PROHIBIDO usar ViewGroupRow para control de acceso
+20. PROHIBIDO depender de orden de renderizado sin @PropertyIndex explícito
+
+## 8. Dependencias
+
+### 8.1 Dependencias Directas
+
+**ViewGroupRow Enum**
+- Ubicación: @/enums/view_group_row
+- Valores: SINGLE ('single'), PAIR ('pair'), TRIPLE ('triple')
+- Crítico: Sí, decorador requiere enum para tipado fuerte
+
+**Symbol (JavaScript Nativo)**
+- Propósito: Crear VIEW_GROUP_ROW_KEY único para storage
+- Uso: Almacenar metadata sin colisiones
+- Crítico: Sí, sin Symbol podría sobrescribir propiedades
+
+**PropertyDecorator (TypeScript)**
+- Propósito: Tipado de decorador de propiedad
+- Uso: Garantizar firma correcta de ViewGroupRowDecorator()
+- Crítico: Sí, TypeScript rechazará decorador incorrecto
+
+### 8.2 Dependencias de BaseEntity
+
+**getViewGroupRows() Method**
+- Propósito: Recuperar mapa completo de ViewGroupRows
+- Retorno: Record<string, ViewGroupRow>
+- Crítico: Sí, sin este método no se puede acceder a metadata
+
+**getKeys() Method**
+- Propósito: Obtener lista ordenada de propiedades
+- Uso: Fuente de keys para iterar y agrupar por rows
+- Crítico: Sí, necesario para agrupación en orden correcto
+
+### 8.3 Dependencias de UI Components
+
+**FormLayout Components**
+- Propósito: Renderizar formulario con rows de columnas
+- Uso: Consulta getViewGroupRows() y aplica CSS Grid
+- Crítico: Sí, sin componente ViewGroupRow no tiene efecto visible
+
+**CSS Grid**
+- Propósito: Sistema de layout para columnas
+- Grid Templates: 1fr, 1fr 1fr, 1fr 1fr 1fr
+- Crítico: Sí, mecanismo de renderizado de columnas
+
+**Media Queries CSS**
+- Propósito: Responsive collapse a SINGLE en móviles
+- Breakpoint: Típicamente @media (max-width: 768px)
+- Crítico: Sí, esencial para mobile UX
+
+### 8.4 Dependencias Opcionales
+
+**@PropertyIndex Decorator**
+- Relación: Crítico para control de orden y agrupación
+- Uso: Especificar orden explícito de propiedades en formulario
+- Sin PropertyIndex: Orden indeterminado, agrupación incorrecta
+
+**@ViewGroup Decorator**
+- Relación: Complementario, ViewGroup agrupa secciones
+- Uso: ViewGroupRow controla columnas dentro de secciones
+- Patrón: ViewGroup + ViewGroupRow para layout completo
+
+**@StringTypeDef Decorator**
+- Relación: TEXTAREA debe usar SINGLE, no PAIR/TRIPLE
+- Validación: Verificar consistencia en UI
+- Recomendación: Aplicar SINGLE automáticamente a TEXTAREA
+
+## 9. Relaciones
+
+### 9.1 Decoradores de Layout
+
+**@PropertyIndex**
+- Naturaleza: Crítico para ViewGroupRow
+- Razón: PropertyIndex determina orden, ViewGroupRow agrupa consecutivos
+- Uso: Siempre aplicar PropertyIndex cuando se usa ViewGroupRow
+- Ejemplo: @PropertyIndex(1) @ViewGroupRowDecorator(PAIR) firstName
+
+**@ViewGroup**
+- Naturaleza: Complementario, diferentes niveles de organización
+- Diferencia: ViewGroup crea secciones, ViewGroupRow controla columnas dentro
+- Uso conjunto: @ViewGroup("Contact") @ViewGroupRowDecorator(PAIR)
+- Patrón: Secciones con layouts de columnas optimizados
+
+**@TabOrder**
+- Relación: Independiente, controla navegación no layout visual
+- Uso: TabOrder puede diferir de orden visual en rows
+- Ejemplo: Tab navegación horizontal atravesando rows verticales
+
+### 9.2 Decoradores de Metadata
+
+**@StringTypeDef**
+- Interacción: TEXTAREA requiere SINGLE (ancho completo)
+- Validación: No usar PAIR/TRIPLE con TEXTAREA
+- Password/Email: Compatibles con cualquier rowType
+
+**@HideInDetailView**
+- Interacción: Propiedades ocultas no renderizan, ViewGroupRow irrelevante
+- Efecto: Row puede quedar incompleto si ocultan propiedades
+- Manejo: Componente ajusta grid a propiedades visibles
+
+### 9.3 BaseEntity Methods
+
+**getViewGroupRows()**
+- Retorno: Record<string, ViewGroupRow>
+- Uso: Consulta de metadata para layout de formulario
+- Default: SINGLE para propiedades sin decorador
+
+**getKeys()**
+- Relación: Fuente de propiedades en orden para agrupar
+- Algoritmo: Iterar keys, agrupar consecutivos con mismo rowType
+- Crítico: Orden determinado por PropertyIndex
+
+### 9.4 Componentes de UI
+
+**FormLayout Component**
+- Consumo: Llama getViewGroupRows() y agrupa por rows
+- Renderizado: CSS Grid con template-columns según rowType
+- Responsive: Media queries para colapso móvil
+
+**RowContainer Component**
+- Propósito: Wrapper de row con CSS Grid
+- Classes: .row-single, .row-pair, .row-triple
+- Grid: grid-template-columns configurado por rowType
+
+### 9.5 Patrones de Layout
+
+**Name Fields - PAIR**
+```typescript
+@ViewGroupRowDecorator(ViewGroupRow.PAIR) firstName: string;
+@ViewGroupRowDecorator(ViewGroupRow.PAIR) lastName: string;
+```
+Renderizado: [First Name] [Last Name] en misma fila
+
+**Address Fields - TRIPLE**
+```typescript
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) city: string;
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) state: string;
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) zipCode: string;
+```
+Renderizado: [City] [State] [Zip] en misma fila
+
+**Date Parts - TRIPLE**
+```typescript
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) day: number;
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) month: number;
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) year: number;
+```
+Renderizado: [DD] [MM] [YYYY] en misma fila
+
+**Full Width Fields - SINGLE**
+```typescript
+@ViewGroupRowDecorator(ViewGroupRow.SINGLE) email: string;
+@ViewGroupRowDecorator(ViewGroupRow.SINGLE) notes: string;
+```
+Renderizado: Cada campo en su propia fila ancho completo
+
+## 10. Notas de Implementación
+
+### 10.1 Patrones de Uso Comunes
+
+**Formulario de Contacto Optimizado**
+```typescript
+class Contact extends BaseEntity {
+    // Row 1: PAIR - Name fields
+    @PropertyIndex(1)
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    firstName: string;
+    
+    @PropertyIndex(2)
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    lastName: string;
+    
+    // Row 2: SINGLE - Email full width
+    @PropertyIndex(3)
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    @StringTypeDef(StringType.EMAIL)
+    email: string;
+    
+    // Row 3: PAIR - Contact method
+    @PropertyIndex(4)
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    @StringTypeDef(StringType.TELEPHONE)
+    phone: string;
+    
+    @PropertyIndex(5)
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    company: string;
+    
+    // Row 4: TRIPLE - Address components
+    @PropertyIndex(6)
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    city: string;
+    
+    @PropertyIndex(7)
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    state: string;
+    
+    @PropertyIndex(8)
+    @ViewGroupRowDecorator(ViewGroupRow.TRIPLE)
+    zipCode: string;
+    
+    // Row 5: SINGLE - Notes full width
+    @PropertyIndex(9)
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    @StringTypeDef(StringType.TEXTAREA)
+    notes: string;
+}
+```
+
+### 10.2 Implementación en Componentes
+
+**FormLayout con CSS Grid**
 ```vue
-<!-- src/views/default_detailview.vue -->
-
 <template>
-  <div class="detail-view">
-    <form @submit.prevent="saveEntity">
-      <!-- Iterar por grupos -->
-      <div 
-        v-for="[groupName, groupProps] in propertiesByGroup" 
-        :key="groupName"
-        class="view-group"
-      >
-        <h3 class="group-title">{{ groupName }}</h3>
-        
-        <!-- Iterar por filas dentro del grupo -->
-        <div 
-          v-for="[rowIndex, rowProps] in getRowsForGroup(groupProps)" 
-          :key="rowIndex"
-          class="row"
+    <form class="form-layout">
+        <div
+            v-for="(row, index) in rows"
+            :key="index"
+            :class="['form-row', `row-${row.rowType}`]"
         >
-          <!-- Campos en la fila -->
-          <div 
-            v-for="prop in rowProps" 
-            :key="prop"
-            :class="getCssColumnClass(prop)"
-          >
-            <component 
-              :is="getInputComponent(prop)"
-              v-model="entity[prop]"
-              :property="prop"
-              :entity="entity"
+            <FormInput
+                v-for="propertyKey in row.properties"
+                :key="propertyKey"
+                :entity="entity"
+                :propertyKey="propertyKey"
             />
-          </div>
         </div>
-      </div>
-      
-      <button type="submit">Save</button>
     </form>
-  </div>
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue';
-import Application from '@/models/application';
+<script>
+import { ViewGroupRow } from '@/enums/view_group_row';
 
-const entityClass = computed(() => Application.View.value.entityClass);
-
-// Obtener propiedades agrupadas
-const propertiesByGroup = computed(() => {
-    return entityClass.value.getPropertiesByViewGroup();
-});
-
-// Obtener filas para un grupo
-function getRowsForGroup(properties: string[]): Map<number, string[]> {
-    const rowsMap = new Map<number, string[]>();
-    
-    properties.forEach(prop => {
-        const row = entityClass.value.getViewGroupRow(prop) || 1;
-        
-        if (!rowsMap.has(row)) {
-            rowsMap.set(row, []);
+export default {
+    computed: {
+        rows() {
+            return this.groupByRows(this.entity);
         }
-        
-        rowsMap.get(row)!.push(prop);
-    });
-    
-    // Ordenar por número de fila
-    return new Map([...rowsMap.entries()].sort((a, b) => a[0] - b[0]));
-}
-
-function getCssColumnClass(prop: string): string {
-    return entityClass.value.getCssColumnClass(prop);
-}
+    },
+    methods: {
+        groupByRows(entity) {
+            const keys = entity.getKeys();
+            const viewGroupRows = entity.getViewGroupRows();
+            const rows = [];
+            
+            let currentRow = null;
+            
+            for (const key of keys) {
+                const rowType = viewGroupRows[key] || ViewGroupRow.SINGLE;
+                
+                // SINGLE siempre nuevo row
+                if (rowType === ViewGroupRow.SINGLE) {
+                    rows.push({ rowType: ViewGroupRow.SINGLE, properties: [key] });
+                    currentRow = null;
+                    continue;
+                }
+                
+                // Nuevo row si tipo diferente o no existe
+                if (!currentRow || currentRow.rowType !== rowType) {
+                    currentRow = { rowType, properties: [key] };
+                    rows.push(currentRow);
+                    continue;
+                }
+                
+                // Verificar si row está lleno
+                const maxInRow = rowType === ViewGroupRow.PAIR ? 2 : 3;
+                if (currentRow.properties.length >= maxInRow) {
+                    currentRow = { rowType, properties: [key] };
+                    rows.push(currentRow);
+                } else {
+                    currentRow.properties.push(key);
+                }
+            }
+            
+            return rows;
+        }
+    }
+};
 </script>
-```
 
----
-
-## 🧪 Ejemplos de Uso
-
-### 1. Two Columns Per Row
-
-```typescript
-import { ViewGroupRow } from '@/decorations/view_group_row_decorator';
-import { ViewGroup } from '@/decorations/view_group_decorator';
-import { CssColumnClass } from '@/decorations/css_column_class_decorator';
-import { PropertyName } from '@/decorations/property_name_decorator';
-import { Required } from '@/decorations/required_decorator';
-import BaseEntity from '@/entities/base_entitiy';
-
-export class User extends BaseEntity {
-    // Fila 1: firstName | lastName
-    @PropertyName('First Name', String)
-    @Required()
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(1)  // ← Fila 1
-    @CssColumnClass('col-md-6')
-    firstName!: string;
-    
-    @PropertyName('Last Name', String)
-    @Required()
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(1)  // ← Fila 1 (misma fila)
-    @CssColumnClass('col-md-6')
-    lastName!: string;
-    
-    // Fila 2: email | phone
-    @PropertyName('Email', String)
-    @Required()
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(2)  // ← Fila 2
-    @CssColumnClass('col-md-6')
-    email!: string;
-    
-    @PropertyName('Phone', String)
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(2)  // ← Fila 2 (misma fila)
-    @CssColumnClass('col-md-6')
-    phone!: string;
+<style>
+.form-row {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
 }
-```
 
-**Resultado en UI:**
-```
-┌─ Personal Info ──────────────────────────────────────┐
-│ ┌────────────────────────┬────────────────────────┐  │
-│ │ First Name             │ Last Name              │  │  ← Fila 1
-│ │ [John                ] │ [Doe                 ] │  │
-│ ├────────────────────────┼────────────────────────┤  │
-│ │ Email                  │ Phone                  │  │  ← Fila 2
-│ │ [john@example.com    ] │ [(555) 123-4567      ] │  │
-│ └────────────────────────┴────────────────────────┘  │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-### 2. Three Columns Per Row
-
-```typescript
-export class Product extends BaseEntity {
-    // Fila 1: name (full width)
-    @PropertyName('Product Name', String)
-    @Required()
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-12')
-    name!: string;
-    
-    // Fila 2: price | stock | category (3 columnas)
-    @PropertyName('Price', Number)
-    @Required()
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    price!: number;
-    
-    @PropertyName('Stock', Number)
-    @Required()
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    stock!: number;
-    
-    @PropertyName('Category', String)
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    category!: string;
+.row-single {
+    grid-template-columns: 1fr;
 }
-```
 
-**Resultado:**
-```
-┌─ Basic Info ─────────────────────────────────────────┐
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ Product Name                                     │ │  ← Fila 1
-│ │ [Wireless Mouse                                ] │ │
-│ ├───────────────┬───────────────┬──────────────────┤ │
-│ │ Price         │ Stock         │ Category         │ │  ← Fila 2
-│ │ [$25        ] │ [50         ] │ [Electronics   ] │ │
-│ └───────────────┴───────────────┴──────────────────┘ │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-### 3. Complex Address Form
-
-```typescript
-export class Customer extends BaseEntity {
-    // Row 1: Full name (full width)
-    @PropertyName('Full Name', String)
-    @Required()
-    @ViewGroup('Contact Info')
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-12')
-    fullName!: string;
-    
-    // Row 2: Email (8 cols) + Phone (4 cols)
-    @PropertyName('Email', String)
-    @Required()
-    @ViewGroup('Contact Info')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-8')
-    email!: string;
-    
-    @PropertyName('Phone', String)
-    @ViewGroup('Contact Info')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    phone!: string;
-    
-    // Row 3: Address (full width)
-    @PropertyName('Street Address', String)
-    @Required()
-    @ViewGroup('Address')
-    @ViewGroupRow(1)  // ← Row 1 of "Address" group
-    @CssColumnClass('col-md-12')
-    address!: string;
-    
-    // Row 4: City (6) + State (3) + ZIP (3)
-    @PropertyName('City', String)
-    @Required()
-    @ViewGroup('Address')
-    @ViewGroupRow(2)  // ← Row 2 of "Address" group
-    @CssColumnClass('col-md-6')
-    city!: string;
-    
-    @PropertyName('State', String)
-    @Required()
-    @ViewGroup('Address')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-3')
-    state!: string;
-    
-    @PropertyName('ZIP Code', String)
-    @Required()
-    @ViewGroup('Address')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-3')
-    zipCode!: string;
+.row-pair {
+    grid-template-columns: 1fr 1fr;
 }
-```
 
-**Resultado:**
-```
-┌─ Contact Info ───────────────────────────────────────┐
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ Full Name                                        │ │  ← Row 1
-│ │ [John Doe                                      ] │ │
-│ ├────────────────────────────────────┬─────────────┤ │
-│ │ Email                              │ Phone       │ │  ← Row 2
-│ │ [john@example.com                ] │ [555-1234 ] │ │
-│ └────────────────────────────────────┴─────────────┘ │
-└──────────────────────────────────────────────────────┘
-
-┌─ Address ────────────────────────────────────────────┐
-│ ┌──────────────────────────────────────────────────┐ │
-│ │ Street Address                                   │ │  ← Row 1
-│ │ [123 Main St                                   ] │ │
-│ ├──────────────────────────────┬────────┬─────────┤ │
-│ │ City                          │ State  │ ZIP Code│ │  ← Row 2
-│ │ [New York                   ] │ [NY  ] │ [10001] │ │
-│ └──────────────────────────────┴────────┴─────────┘ │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-### 4. Asymmetric Rows
-
-```typescript
-export class Product extends BaseEntity {
-    // Row 1: Name (8 cols) + SKU (4 cols)
-    @PropertyName('Product Name', String)
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-8')
-    name!: string;
-    
-    @PropertyName('SKU', String)
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-4')
-    sku!: string;
-    
-    // Row 2: Price (3) + Cost (3) + Margin (3) + Stock (3)
-    @PropertyName('Price', Number)
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-3')
-    price!: number;
-    
-    @PropertyName('Cost', Number)
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-3')
-    cost!: number;
-    
-    @PropertyName('Margin', Number)
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-3')
-    margin!: number;
-    
-    @PropertyName('Stock', Number)
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-3')
-    stock!: number;
-    
-    // Row 3: Description (full width)
-    @PropertyName('Description', String)
-    @ViewGroupRow(3)
-    @CssColumnClass('col-md-12')
-    description!: string;
+.row-triple {
+    grid-template-columns: 1fr 1fr 1fr;
 }
-```
 
-**Resultado:**
-```
-┌────────────────────────────────────┬────────────────┐
-│ Product Name                       │ SKU            │  ← Row 1
-│ [Wireless Mouse                  ] │ [PROD-0042   ] │
-├───────────┬───────────┬───────────┬────────────────┤
-│ Price     │ Cost      │ Margin    │ Stock          │  ← Row 2
-│ [$25    ] │ [$12    ] │ [52%    ] │ [50          ] │
-├────────────────────────────────────────────────────┤
-│ Description                                        │  ← Row 3
-│ [High-quality wireless mouse with ergonomic...  ] │
-└────────────────────────────────────────────────────┘
-```
-
----
-
-### 5. Without ViewGroupRow (Default Behavior)
-
-```typescript
-export class Product extends BaseEntity {
-    // Sin ViewGroupRow → todos en fila separada
-    @PropertyName('Product Name', String)
-    @CssColumnClass('col-md-6')
-    name!: string;
-    
-    @PropertyName('SKU', String)
-    @CssColumnClass('col-md-6')
-    sku!: string;
-    
-    @PropertyName('Price', Number)
-    @CssColumnClass('col-md-6')
-    price!: number;
+/* Responsive: Colapsar a SINGLE en móviles */
+@media (max-width: 768px) {
+    .row-pair,
+    .row-triple {
+        grid-template-columns: 1fr;
+    }
 }
+
+/* Tablet: TRIPLE colapsa a PAIR */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .row-triple {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+</style>
 ```
 
-**Resultado (sin ViewGroupRow):**
-```
-┌────────────────────────────────────────────────────┐
-│ Product Name                                       │  ← Row 1
-│ [Wireless Mouse                                  ] │
-├────────────────────────────────────────────────────┤
-│ SKU                                                │  ← Row 2
-│ [PROD-0042                                       ] │
-├────────────────────────────────────────────────────┤
-│ Price                                              │  ← Row 3
-│ [$25                                             ] │
-└────────────────────────────────────────────────────┘
-```
+### 10.3 Testing y Validación
 
-**Con ViewGroupRow:**
-```
-┌────────────────────────────┬───────────────────────┐
-│ Product Name               │ SKU                   │  ← Row 1
-│ [Wireless Mouse          ] │ [PROD-0042          ] │
-├────────────────────────────┴───────────────────────┤
-│ Price                                              │  ← Row 2
-│ [$25                                             ] │
-└────────────────────────────────────────────────────┘
-```
-
----
-
-### 6. Responsive Rows
-
-```vue
-<template>
-  <div class="detail-view">
-    <form>
-      <div 
-        v-for="[rowIndex, rowProps] in propertiesByRow" 
-        :key="rowIndex"
-        :class="getRowClass(rowProps)"
-      >
-        <div 
-          v-for="prop in rowProps" 
-          :key="prop"
-          :class="getColumnClass(prop)"
-        >
-          <component 
-            :is="getInputComponent(prop)"
-            v-model="entity[prop]"
-            :property="prop"
-            :entity="entity"
-          />
-        </div>
-      </div>
-    </form>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-
-const isMobile = computed(() => window.innerWidth < 768);
-
-function getRowClass(rowProps: string[]): string {
-    // En móvil, stack verticalmente
-    if (isMobile.value) {
-        return 'row-mobile';
+**Unit Test de ViewGroupRow**
+```typescript
+test('getViewGroupRows returns configured rows', () => {
+    class TestEntity extends BaseEntity {
+        @ViewGroupRowDecorator(ViewGroupRow.PAIR) fieldA: string;
+        @ViewGroupRowDecorator(ViewGroupRow.PAIR) fieldB: string;
+        @ViewGroupRowDecorator(ViewGroupRow.SINGLE) fieldC: string;
     }
     
-    return 'row';
-}
-
-function getColumnClass(prop: string): string {
-    const baseClass = entityClass.value.getCssColumnClass(prop);
+    const entity = new TestEntity();
+    const rows = entity.getViewGroupRows();
     
-    // En móvil, todo full width
-    if (isMobile.value) {
-        return 'col-12';
-    }
-    
-    return baseClass;
-}
-</script>
-```
-
----
-
-### 7. Dynamic Row Generation
-
-```vue
-<template>
-  <div class="detail-view">
-    <form>
-      <!-- Generar rows dinámicamente -->
-      <div 
-        v-for="row in maxRows" 
-        :key="row"
-        class="row"
-      >
-        <div 
-          v-for="prop in getPropertiesInRow(row)" 
-          :key="prop"
-          :class="getCssColumnClass(prop)"
-        >
-          <component 
-            :is="getInputComponent(prop)"
-            v-model="entity[prop]"
-            :property="prop"
-            :entity="entity"
-          />
-        </div>
-      </div>
-    </form>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-
-const entityClass = computed(() => Application.View.value.entityClass);
-const properties = computed(() => entityClass.value.getProperties());
-
-// Obtener máximo número de filas
-const maxRows = computed(() => {
-    let max = 1;
-    properties.value.forEach(prop => {
-        const row = entityClass.value.getViewGroupRow(prop) || 1;
-        if (row > max) max = row;
-    });
-    return max;
+    expect(rows.fieldA).toBe(ViewGroupRow.PAIR);
+    expect(rows.fieldB).toBe(ViewGroupRow.PAIR);
+    expect(rows.fieldC).toBe(ViewGroupRow.SINGLE);
 });
 
-// Obtener propiedades en una fila específica
-function getPropertiesInRow(rowIndex: number): string[] {
-    return properties.value.filter(prop => {
-        const row = entityClass.value.getViewGroupRow(prop) || 1;
-        return row === rowIndex;
-    });
-}
-</script>
+test('properties without ViewGroupRow assume SINGLE', () => {
+    class TestEntity extends BaseEntity {
+        @ViewGroupRowDecorator(ViewGroupRow.PAIR) paired: string;
+        unpaired: string;
+    }
+    
+    const entity = new TestEntity();
+    const rows = entity.getViewGroupRows();
+    
+    expect(rows.paired).toBe(ViewGroupRow.PAIR);
+    expect(rows.unpaired).toBeUndefined(); // UI asume SINGLE
+});
 ```
 
----
-
-### 8. Conditional Rows
-
+**Integration Test de Row Grouping**
 ```typescript
-export class Invoice extends BaseEntity {
-    // Row 1: Always visible
-    @PropertyName('Invoice Number', String)
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-6')
-    invoiceNumber!: string;
+test('groups consecutive PAIR properties in same row', () => {
+    class TestEntity extends BaseEntity {
+        @PropertyIndex(1) @ViewGroupRowDecorator(ViewGroupRow.PAIR) firstName: string;
+        @PropertyIndex(2) @ViewGroupRowDecorator(ViewGroupRow.PAIR) lastName: string;
+        @PropertyIndex(3) @ViewGroupRowDecorator(ViewGroupRow.SINGLE) email: string;
+    }
     
-    @PropertyName('Date', Date)
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-6')
-    invoiceDate!: Date;
+    const entity = new TestEntity();
+    const rows = groupByRows(entity);
     
-    // Row 2: Only if paid
-    @PropertyName('Payment Method', String)
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-6')
-    paymentMethod?: string;
-    
-    @PropertyName('Payment Date', Date)
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-6')
-    paymentDate?: Date;
-}
-
-// En Vue, ocultar row 2 si no está pagado:
-<div 
-    v-if="entity.paymentMethod"
-    class="row"
->
-  <!-- Display row 2 fields -->
-</div>
-```
-
----
-
-### 9. Nested Groups with Rows
-
-```typescript
-export class Employee extends BaseEntity {
-    // Group 1: Personal Info
-    // Row 1
-    @PropertyName('First Name', String)
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-6')
-    firstName!: string;
-    
-    @PropertyName('Last Name', String)
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-6')
-    lastName!: string;
-    
-    // Row 2
-    @PropertyName('Email', String)
-    @ViewGroup('Personal Info')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-12')
-    email!: string;
-    
-    // Group 2: Employment
-    // Row 1
-    @PropertyName('Department', String)
-    @ViewGroup('Employment')
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-6')
-    department!: string;
-    
-    @PropertyName('Position', String)
-    @ViewGroup('Employment')
-    @ViewGroupRow(1)
-    @CssColumnClass('col-md-6')
-    position!: string;
-    
-    // Row 2
-    @PropertyName('Salary', Number)
-    @ViewGroup('Employment')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    salary!: number;
-    
-    @PropertyName('Start Date', Date)
-    @ViewGroup('Employment')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    startDate!: Date;
-    
-    @PropertyName('Status', String)
-    @ViewGroup('Employment')
-    @ViewGroupRow(2)
-    @CssColumnClass('col-md-4')
-    status!: string;
-}
-```
-
-**Resultado:**
-```
-┌─ Personal Info ──────────────────────────────────────┐
-│ ┌────────────────────────┬────────────────────────┐  │
-│ │ First Name             │ Last Name              │  │  ← Row 1
-│ │ [John                ] │ [Doe                 ] │  │
-│ ├────────────────────────────────────────────────┤  │
-│ │ Email                                          │  │  ← Row 2
-│ │ [john.doe@example.com                        ] │  │
-│ └────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────┘
-
-┌─ Employment ─────────────────────────────────────────┐
-│ ┌────────────────────────┬────────────────────────┐  │
-│ │ Department             │ Position               │  │  ← Row 1
-│ │ [Engineering         ] │ [Senior Developer    ] │  │
-│ ├───────────────┬────────────────┬─────────────────┤  │
-│ │ Salary        │ Start Date     │ Status          │  │  ← Row 2
-│ │ [$95,000    ] │ [2020-01-15  ] │ [Active       ] │  │
-│ └───────────────┴────────────────┴─────────────────┘  │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-### 10. Testing ViewGroupRow
-
-```typescript
-describe('Product ViewGroupRow', () => {
-    it('should have correct row assignments', () => {
-        expect(Product.getViewGroupRow('name')).toBe(1);
-        expect(Product.getViewGroupRow('sku')).toBe(1);
-        expect(Product.getViewGroupRow('price')).toBe(2);
-        expect(Product.getViewGroupRow('stock')).toBe(2);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toEqual({
+        rowType: ViewGroupRow.PAIR,
+        properties: ['firstName', 'lastName']
     });
-    
-    it('should group properties by row', () => {
-        const propertiesByRow = Product.getPropertiesByRow();
-        
-        expect(propertiesByRow.get(1)).toEqual(['name', 'sku']);
-        expect(propertiesByRow.get(2)).toEqual(['price', 'stock', 'category']);
-    });
-    
-    it('should default to row 1 if not specified', () => {
-        expect(Product.getViewGroupRow('undefinedProp')).toBeUndefined();
-        
-        // En getPropertiesByRow, default a row 1
-        const propertiesByRow = Product.getPropertiesByRow();
-        // Propiedades sin ViewGroupRow van a row 1
+    expect(rows[1]).toEqual({
+        rowType: ViewGroupRow.SINGLE,
+        properties: ['email']
     });
 });
 ```
 
----
+### 10.4 Debugging y Diagnóstico
 
-## ⚠️ Consideraciones Importantes
-
-### 1. Row Numbers Start at 1
-
+**Inspeccionar ViewGroupRows**
 ```typescript
-// ✅ BUENO: Empezar en 1
-@ViewGroupRow(1) firstName!: string;
-@ViewGroupRow(2) email!: string;
+const contact = new Contact();
+const viewGroupRows = contact.getViewGroupRows();
+console.log('ViewGroupRows:', viewGroupRows);
+// {
+//   firstName: 'pair',
+//   lastName: 'pair',
+//   email: 'single',
+//   city: 'triple',
+//   state: 'triple',
+//   zipCode: 'triple'
+// }
 
-// ❌ MALO: Empezar en 0
-@ViewGroupRow(0) firstName!: string;  // ← Evitar 0
+// Ver agrupación en rows
+const rows = groupByRows(contact);
+console.log('Rows:', rows);
+// [
+//   { rowType: 'pair', properties: ['firstName', 'lastName'] },
+//   { rowType: 'single', properties: ['email'] },
+//   { rowType: 'triple', properties: ['city', 'state', 'zipCode'] }
+// ]
 ```
 
-### 2. Gaps in Row Numbers
+### 10.5 Migraciones y Refactoring
 
+**Agregar ViewGroupRow a Formulario Existente**
 ```typescript
-// ✅ BUENO: Secuencia continua
-@ViewGroupRow(1) name!: string;
-@ViewGroupRow(2) email!: string;
-@ViewGroupRow(3) phone!: string;
+// Antes - Sin layout optimization
+class Contact extends BaseEntity {
+    firstName: string;
+    lastName: string;
+    email: string;
+}
 
-// ⚠️ EVITAR: Gaps innecesarios 
-@ViewGroupRow(1) name!: string;
-@ViewGroupRow(5) email!: string;  // ← Gap de 2-4 (rows vacías)
+// Después - Con PAIR optimization
+class Contact extends BaseEntity {
+    @PropertyIndex(1)
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    firstName: string;
+    
+    @PropertyIndex(2)
+    @ViewGroupRowDecorator(ViewGroupRow.PAIR)
+    lastName: string;
+    
+    @PropertyIndex(3)
+    @ViewGroupRowDecorator(ViewGroupRow.SINGLE)
+    email: string;
+}
 ```
 
-### 3. Column Sum Per Row
+Verificar que FormLayout implementa CSS Grid con rowType classes.
 
+**Cambiar Row Type**
 ```typescript
-// ✅ BUENO: Suma 12 por fila
-@ViewGroupRow(1) @CssColumnClass('col-md-6') firstName!: string;  // 6
-@ViewGroupRow(1) @CssColumnClass('col-md-6') lastName!: string;   // 6 → Total: 12
+// Antes - SINGLE para todo
+@ViewGroupRowDecorator(ViewGroupRow.SINGLE) city: string;
+@ViewGroupRowDecorator(ViewGroupRow.SINGLE) state: string;
+@ViewGroupRowDecorator(ViewGroupRow.SINGLE) zipCode: string;
 
-// ⚠️ PROBLEMA: Suma > 12 (wrap)
-@ViewGroupRow(1) @CssColumnClass('col-md-8') firstName!: string;  // 8
-@ViewGroupRow(1) @CssColumnClass('col-md-6') lastName!: string;   // 6 → Total: 14 (wrap)
+// Después - TRIPLE para optimizar espacio
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) city: string;
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) state: string;
+@ViewGroupRowDecorator(ViewGroupRow.TRIPLE) zipCode: string;
 ```
 
-### 4. ViewGroup Scope
+Testear que labels no truncan y campos son suficientemente anchos.
 
-```typescript
-// ViewGroupRow es relativo al ViewGroup
-@ViewGroup('Group A')
-@ViewGroupRow(1)  // ← Row 1 de "Group A"
-propertyA!: string;
+## 11. Referencias Cruzadas
 
-@ViewGroup('Group B')
-@ViewGroupRow(1)  // ← Row 1 de "Group B" (diferente)
-propertyB!: string;
+### 11.1 Documentación Relacionada
 
-// Cada grupo tiene su propio sistema de filas
-```
+**copilot/layers/02-base-entity/metadata-access.md**
+- Sección: Métodos de Acceso a Metadata de Layout
+- Contenido: Implementación de getViewGroupRows()
+- Relevancia: Único método de acceso a ViewGroupRow metadata
 
-### 5. Default Behavior (Sin ViewGroupRow)
+**copilot/layers/01-decorators/property-index-decorator.md**
+- Relación: Crítico para ViewGroupRow, controla orden de agrupación
+- Uso: Siempre aplicar PropertyIndex con ViewGroupRow
+- Patrón: PropertyIndex determina orden, ViewGroupRow agrupa
 
-```typescript
-// Sin ViewGroupRow → cada propiedad en su propia fila
-@PropertyName('Name', String)
-name!: string;  // ← Row 1 (implícito)
+**copilot/layers/01-decorators/view-group-decorator.md**
+- Relación: Complementario, diferentes niveles de organización
+- Diferencia: ViewGroup crea secciones, ViewGroupRow controla columnas
+- Uso conjunto: Secciones con layouts de columnas optimizados
 
-@PropertyName('Email', String)
-email!: string;  // ← Row 2 (implícito)
+**copilot/layers/01-decorators/string-type-decorator.md**
+- Interacción: TEXTAREA requiere SINGLE (ancho completo)
+- Validación: No usar PAIR/TRIPLE con TEXTAREA
+- Patrón: Verificar consistencia en metadata
 
-// Con ViewGroupRow → control explícito
-@PropertyName('Name', String)
-@ViewGroupRow(1)
-name!: string;  // ← Row 1 (explícito)
+**copilot/layers/01-decorators/hide-in-detail-view-decorator.md**
+- Interacción: Propiedades ocultas no renderizan
+- Efecto: Row puede quedar vacío o incompleto
+- Manejo: Componente ajusta grid a propiedades visibles
 
-@PropertyName('Email', String)
-@ViewGroupRow(1)  // ← Same row 1
-email!: string;
-```
+### 11.2 BaseEntity Core
 
----
+**copilot/layers/02-base-entity/base-entity-core.md**
+- Método: getViewGroupRows()
+- Almacenamiento: prototype[VIEW_GROUP_ROW_KEY]
 
-## 📚 Referencias Adicionales
+**copilot/layers/02-base-entity/metadata-access.md**
+- Sección: Métodos de Layout Avanzado
+- Contenido: getViewGroupRows() implementation
 
-- `view-group-decorator.md` - ViewGroup organiza campos
-- `css-column-class-decorator.md` - CssColumnClass controla anchos
-- `property-index-decorator.md` - PropertyIndex vs ViewGroupRow
-- `../../02-base-entity/base-entity-core.md` - getViewGroupRow(), getPropertiesByRow()
+### 11.3 Enumeraciones
 
----
+**src/enums/view_group_row.ts**
+- Contenido: Definición de enum ViewGroupRow
+- Valores: SINGLE ('single'), PAIR ('pair'), TRIPLE ('triple')
+- Uso: Importado por decorador y componentes
 
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/decorations/view_group_row_decorator.ts`  
-**Líneas:** ~30
+### 11.4 Componentes de UI
+
+**copilot/layers/04-components/FormLayoutComponents.md**
+- Consumo: Usa getViewGroupRows() para layout de columnas
+- Renderizado: CSS Grid con template-columns
+- Responsive: Media queries para colapso móvil
+
+**copilot/layers/04-components/DetailViewTable.md**
+- Relación: Renderiza formularios con rows optimizados
+- Responsabilidad: Agrupar propiedades y aplicar CSS Grid
+
+### 11.5 Código Fuente
+
+**src/decorations/view_group_row_decorator.ts**
+- Líneas: 1-14
+- Exports: VIEW_GROUP_ROW_KEY, ViewGroupRowDecorator
+
+**src/entities/base_entity.ts**
+- Líneas 282-285: Método getViewGroupRows()
+- Dependencias: Importa VIEW_GROUP_ROW_KEY, ViewGroupRow
+
+### 11.6 Tutoriales y Ejemplos
+
+**copilot/tutorials/01-basic-crud.md**
+- Sección: Optimización de Layout de Formularios
+- Ejemplo: Contact form con PAIR y TRIPLE
+- Patrón: Optimización de espacio horizontal
+
+**copilot/examples/advanced-module-example.md**
+- Sección: Layouts Avanzados con ViewGroupRow
+- Patrón: Formularios complejos con múltiples rowTypes
+- Técnica: ViewGroup + ViewGroupRow para máxima organización
+
+### 11.7 Contratos y Arquitectura
+
+**copilot/00-CONTRACT.md**
+- Sección 4.2: Metadata de Layout Avanzado
+- Principio: ViewGroupRow controla columnas en formularios
+- Sección 8.1: Decoradores como configuración de UI
+
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Sistema de Layout de Formularios
+- Contexto: ViewGroupRow dentro de decoradores de layout
+- Flujo: Entity → ViewGroupRow → CSS Grid
+
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: Renderizado Responsivo de Formularios
+- Flujo: getViewGroupRows() → Row grouping → CSS Grid → Responsive collapse
+- Garantía: Layout optimizado respeta ViewGroupRow en todos los tamaños
