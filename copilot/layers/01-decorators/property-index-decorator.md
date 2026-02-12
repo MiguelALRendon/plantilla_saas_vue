@@ -1,736 +1,576 @@
-# 🔢 PropertyIndex Decorator
+# PropertyIndex Decorator
 
-**Referencias:**
-- `property-name-decorator.md` - PropertyName
-- `view-group-decorator.md` - ViewGroup
-- `view-group-row-decorator.md` - ViewGroupRow
-- `../04-components/detail-view-table.md` - Orden de renderizado
+## 1. Propósito
 
----
+Establecer el orden de visualización y procesamiento de propiedades de entidades mediante índices numéricos secuenciales, determinando la secuencia en la que las propiedades se renderizan en interfaces de usuario y se procesan en operaciones de entidad.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/property_index_decorator.ts`
+### 2.1 Responsabilidades
 
----
+- Asignar índice numérico explícito a propiedades específicas de entidad
+- Permitir ordenamiento personalizado de propiedades independiente del orden de declaración en código
+- Garantizar consistencia de ordenamiento en todas las vistas de entidad
+- Facilitar modificación de orden de presentación sin alterar estructura de clase
+- Proporcionar mecanismo de ordenamiento compatible con otros decoradores de visualización
 
-## 🎯 Propósito
+### 2.2 Límites
 
-Define el **orden de aparición** de las propiedades en:
-- Formularios de detalle
-- Columnas de tablas de lista
-- Iteraciones sobre propiedades
+- No modifica el orden de propiedades en memoria o almacenamiento
+- No afecta la lógica de negocio o procesamiento de datos
+- No determina visibilidad de propiedades (requiere decoradores Hide*)
+- No controla navegación por teclado (requiere @TabOrder)
+- No influye en validación o persistencia de propiedades
+- No permite ordenamiento dinámico basado en estado de entidad
 
-Sin PropertyIndex, las propiedades aparecen en orden alfabético o indefinido.  
-Con PropertyIndex, controlas exactamen el orden de presentación.
+## 3. Definiciones Clave
 
----
+**PropertyIndex**: Índice numérico entero asociado a propiedad que determina su posición relativa en secuencias ordenadas.
 
-## 🔑 Símbolo de Metadatos
+**PropertyIndexMap**: Estructura Record<string, number> que mapea nombres de propiedades a sus índices asignados.
+
+**Implicit Index**: Valor Number.MAX_SAFE_INTEGER asignado automáticamente a propiedades sin decorador @PropertyIndex explícito, colocándolas al final de secuencias ordenadas.
+
+**Sorted Keys**: Array de nombres de propiedades ordenado según sus PropertyIndex values, usado por getKeys() para determinar secuencia de presentación.
+
+**Index Collision**: Situación donde múltiples propiedades comparten el mismo índice numérico, resultando en ordenamiento indeterminado entre ellas basado en implementación del motor de ordenamiento JavaScript.
+
+## 4. Descripción Técnica
+
+### 4.1 Implementación del Decorador
 
 ```typescript
 export const PROPERTY_INDEX_KEY = Symbol('property_index');
-```
 
-### Almacenamiento
-
-```typescript
-proto[PROPERTY_INDEX_KEY] = {
-    'id': 1,
-    'firstName': 2,
-    'lastName': 3,
-    'email': 4,
-    'phone': 5
-}
-```
-
----
-
-## 💻 Firma del Decorador
-
-```typescript
-function PropertyIndex(index: number): PropertyDecorator
-```
-
-### Tipos
-
-```typescript
-export type PropertyIndexValue = number;  // 1, 2, 3, ...
-```
-
----
-
-## 📖 Uso Básico
-
-### Orden Simple
-
-```typescript
-export class Customer extends BaseEntity {
-    @PropertyIndex(1)  // ← Aparece primero
-    @PropertyName('Customer ID', Number)
-    id!: number;
-    
-    @PropertyIndex(2)  // ← Aparece segundo
-    @PropertyName('First Name', String)
-    firstName!: string;
-    
-    @PropertyIndex(3)  // ← Aparece tercero
-    @PropertyName('Last Name', String)
-    lastName!: string;
-    
-    @PropertyIndex(4)  // ← Aparece cuarto
-    @PropertyName('Email', String)
-    email!: string;
-}
-```
-
-### Resultado en Formulario
-
-```
-╔═══════════════════════════════════════╗
-║        Customer Details               ║
-╠═══════════════════════════════════════╣
-║  Customer ID: [1                  ]   ║  ← Index 1
-║  First Name:  [John               ]   ║  ← Index 2
-║  Last Name:   [Doe                ]   ║  ← Index 3
-║  Email:       [john@example.com   ]   ║  ← Index 4
-╚═══════════════════════════════════════╝
-```
-
-### Resultado en Tabla (Lista)
-
-```
-╔═══════════════════════════════════════════════════╗
-║                    Customers                      ║
-╠═══════════════╦════════════╦═══════════╦═════════╣
-║ Customer ID   │ First Name │ Last Name │ Email   ║
-║    (Index 1)  │  (Index 2) │ (Index 3) │(Index 4)║
-╠═══════════════╬════════════╬═══════════╬═════════╣
-║      1        │    John    │    Doe    │ john... ║
-║      2        │    Jane    │   Smith   │ jane... ║
-╚═══════════════╩════════════╩═══════════╩═════════╝
-```
-
----
-
-## 🔍 Funciones Accesoras en BaseEntity
-
-### Métodos de Instancia
-
-#### `getProperties(): string[]`
-Retorna array de nombres de propiedades **ordenado por PropertyIndex**.
-
-```typescript
-// Uso
-const customer = new Customer();
-customer.getProperties();
-// Retorna: ['id', 'firstName', 'lastName', 'email']
-// ↑ Ordenado por PropertyIndex (1, 2, 3, 4)
-
-// Si no hubiera PropertyIndex:
-// Retorna: ['email', 'firstName', 'id', 'lastName']  ← Orden alfabético
-
-// Ubicación en BaseEntity (línea ~145)
-public getProperties(): string[] {
-    const propertyNames = (this.constructor as any).prototype[PROPERTY_NAME_KEY];
-    if (!propertyNames) return [];
-    
-    const properties = Object.keys(propertyNames);
-    
-    // Obtener índices
-    const propertyIndices = (this.constructor as any).prototype[PROPERTY_INDEX_KEY];
-    
-    if (!propertyIndices) {
-        return properties;  // Sin orden, retornar como está
-    }
-    
-    // Ordenar por índice
-    return properties.sort((a, b) => {
-        const indexA = propertyIndices[a] ?? 9999;
-        const indexB = propertyIndices[b] ?? 9999;
-        return indexA - indexB;
-    });
-}
-```
-
-#### `getPropertyIndex(key: string): number | undefined`
-Obtiene el índice de una propiedad específica.
-
-```typescript
-// Uso
-customer.getPropertyIndex('firstName');
-// Retorna: 2
-
-customer.getPropertyIndex('email');
-// Retorna: 4
-
-customer.getPropertyIndex('unknownProp');
-// Retorna: undefined
-
-// Ubicación en BaseEntity (línea ~170)
-public getPropertyIndex(key: string): number | undefined {
-    const propertyIndices = (this.constructor as any).prototype[PROPERTY_INDEX_KEY];
-    return propertyIndices?.[key];
-}
-```
-
----
-
-## 🎨 Impacto en UI
-
-### 1. Orden de Inputs en DetailView
-
-```vue
-<template>
-  <div class="detail-view">
-    <div 
-      v-for="propertyKey in entity.getProperties()"  
-      :key="propertyKey"
-      class="form-field"
-    >
-      <!-- ↑ getProperties() retorna propiedades ordenadas por PropertyIndex -->
-      
-      <label>{{ entity.getPropertyName(propertyKey) }}</label>
-      <component 
-        :is="getInputComponent(propertyKey)"
-        v-model="entity[propertyKey]"
-      />
-    </div>
-  </div>
-</template>
-```
-
-**Ubicación:** `src/views/default_detailview.vue` (línea ~140)
-
-### 2. Orden de Columnas en ListView
-
-```vue
-<template>
-  <table class="list-table">
-    <thead>
-      <tr>
-        <th 
-          v-for="propertyKey in entityClass.prototype.getProperties()"
-          :key="propertyKey"
-        >
-          <!-- ↑ Columnas ordenadas por PropertyIndex -->
-          {{ entityClass.prototype.getPropertyName(propertyKey) }}
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="entity in entities" :key="entity.id">
-        <td 
-          v-for="propertyKey in entity.getProperties()"
-          :key="propertyKey"
-        >
-          {{ entity[propertyKey] }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</template>
-```
-
-**Ubicación:** `src/views/default_listview.vue` (línea ~85)
-
----
-
-## 🔗 Decoradores Relacionados
-
-### Combinar con ViewGroup
-
-PropertyIndex define orden **dentro de cada grupo**:
-
-```typescript
-export class Employee extends BaseEntity {
-    // Grupo: Personal (orden interno: 1, 2, 3)
-    @PropertyIndex(1)  // ← Primero en grupo "Personal"
-    @PropertyName('First Name', String)
-    @ViewGroup('Personal')
-    firstName!: string;
-    
-    @PropertyIndex(2)  // ← Segundo en grupo "Personal"
-    @PropertyName('Last Name', String)
-    @ViewGroup('Personal')
-    lastName!: string;
-    
-    @PropertyIndex(3)  // ← Tercero en grupo "Personal"
-    @PropertyName('Date of Birth', Date)
-    @ViewGroup('Personal')
-    dateOfBirth?: Date;
-    
-    // Grupo: Contact (orden interno: 4, 5)
-    @PropertyIndex(4)  // ← Primero en grupo "Contact"
-    @PropertyName('Email', String)
-    @ViewGroup('Contact')
-    email!: string;
-    
-    @PropertyIndex(5)  // ← Segundo en grupo "Contact"
-    @PropertyName('Phone', String)
-    @ViewGroup('Contact')
-    phone?: string;
-}
-```
-
-**Resultado:**
-
-```
-╔═══════════════════════════════════════╗
-║ 📋 Personal  [-]                      ║
-║ ┌───────────────────────────────────┐ ║
-║ │ First Name:     [John          ]  │ ║  ← Index 1
-║ │ Last Name:      [Doe           ]  │ ║  ← Index 2
-║ │ Date of Birth:  [1990-05-15    ]  │ ║  ← Index 3
-║ └───────────────────────────────────┘ ║
-║                                       ║
-║ 📞 Contact  [-]                       ║
-║ ┌───────────────────────────────────┐ ║
-║ │ Email: [john.doe@example.com   ]  │ ║  ← Index 4
-║ │ Phone: [+1-555-123-4567        ]  │ ║  ← Index 5
-║ └───────────────────────────────────┘ ║
-╚═══════════════════════════════════════╝
-```
-
-### Combinar con ViewGroupRow
-
-PropertyIndex + ViewGroupRow + CSSColumnClass = Layout completo:
-
-```typescript
-export class Product extends BaseEntity {
-    // Fila 1, columna izquierda (índice 1)
-    @PropertyIndex(1)
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(1)
-    @CSSColumnClass('col-md-6')
-    @PropertyName('Product Name', String)
-    name!: string;
-    
-    // Fila 1, columna derecha (índice 2)
-    @PropertyIndex(2)
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(1)
-    @CSSColumnClass('col-md-6')
-    @PropertyName('SKU', String)
-    sku!: string;
-    
-    // Fila 2, ancho completo (índice 3)
-    @PropertyIndex(3)
-    @ViewGroup('Basic Info')
-    @ViewGroupRow(2)
-    @CSSColumnClass('col-md-12')
-    @PropertyName('Description', String)
-    description?: string;
-}
-```
-
-**Resultado:**
-
-```
-╔═══════════════════════════════════════════════════╗
-║ Basic Info  [-]                                   ║
-║ ┌───────────────────────────────────────────────┐ ║
-║ │ Fila 1:                                       │ ║
-║ │  [Product Name: Laptop  ] [SKU: LAP-001   ]  │ ║
-║ │       ↑ Index 1               ↑ Index 2       │ ║
-║ │                                               │ ║
-║ │ Fila 2:                                       │ ║
-║ │  [Description: High-performance laptop...  ] │ ║
-║ │       ↑ Index 3                               │ ║
-║ └───────────────────────────────────────────────┘ ║
-╚═══════════════════════════════════════════════════╝
-```
-
----
-
-## 🧪 Ejemplos Avanzados
-
-### 1. Saltos en Numeración (Reservar Espacios)
-
-```typescript
-export class Invoice extends BaseEntity {
-    @PropertyIndex(10)  // ← Salto para insertar propiedades después
-    @PropertyName('Invoice Number', String)
-    invoiceNumber!: string;
-    
-    @PropertyIndex(20)
-    @PropertyName('Customer', Customer)
-    customer!: Customer;
-    
-    @PropertyIndex(30)
-    @PropertyName('Issue Date', Date)
-    issueDate!: Date;
-    
-    // Más adelante puedo agregar entre 10 y 20:
-    @PropertyIndex(15)  // ← Insertado después
-    @PropertyName('Invoice Type', String)
-    invoiceType?: string;
-}
-
-// Orden final: 10, 15, 20, 30
-// invoiceNumber, invoiceType, customer, issueDate
-```
-
-### 2. Índices Negativos (Propiedades al Final)
-
-```typescript
-export class User extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('Username', String)
-    username!: string;
-    
-    @PropertyIndex(2)
-    @PropertyName('Email', String)
-    email!: string;
-    
-    // Metadatos al final (índices altos)
-    @PropertyIndex(9990)
-    @PropertyName('Created At', Date)
-    @ReadOnly(true)
-    createdAt!: Date;
-    
-    @PropertyIndex(9991)
-    @PropertyName('Updated At', Date)
-    @ReadOnly(true)
-    updatedAt!: Date;
-}
-
-// Orden: username, email, ..., createdAt, updatedAt
-```
-
-### 3. Propiedades Sin Índice (van al final)
-
-```typescript
-export class Product extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('Product Name', String)
-    name!: string;
-    
-    @PropertyIndex(2)
-    @PropertyName('Price', Number)
-    price!: number;
-    
-    // Sin PropertyIndex → va al final
-    @PropertyName('Internal Notes', String)
-    internalNotes?: string;
-}
-
-// Orden: name (1), price (2), internalNotes (sin índice → al final)
-```
-
-### 4. Orden Dinámico Según Contexto
-
-```typescript
-export class Document extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('Document ID', Number)
-    id!: number;
-    
-    @PropertyIndex(2)
-    @PropertyName('Title', String)
-    title!: string;
-    
-    // Override getProperties() para orden dinámico
-    getProperties(): string[] {
-        const baseProperties = super.getProperties();
-        
-        // Si es administrador, mostrar propiedades técnicas primero
-        if (Application.currentUser?.isAdmin) {
-            return ['id', ...baseProperties.filter(p => p !== 'id')];
-        }
-        
-        // Si es usuario regular, ocultar ID
-        return baseProperties.filter(p => p !== 'id');
-    }
-}
-```
-
-### 5. Re-ordenar Programáticamente
-
-```typescript
-export class CustomEntity extends BaseEntity {
-    // Cambiar orden en runtime
-    static setPropertyOrder(newOrder: string[]) {
-        const indices: Record<string, number> = {};
-        
-        newOrder.forEach((propKey, index) => {
-            indices[propKey] = index + 1;
-        });
-        
-        this.prototype[PROPERTY_INDEX_KEY] = indices;
-    }
-}
-
-// Uso:
-CustomEntity.setPropertyOrder(['name', 'email', 'phone', 'id']);
-// Ahora getProperties() retorna en ese orden
-```
-
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. Índices Únicos (Recomendado)
-
-Evita duplicar índices:
-
-```typescript
-// ❌ MAL: Índices duplicados
-@PropertyIndex(1)
-name!: string;
-
-@PropertyIndex(1)  // ← Duplicado
-email!: string;
-
-// Resultado: Orden indefinido entre name y email
-
-// ✅ BIEN: Índices únicos
-@PropertyIndex(1)
-name!: string;
-
-@PropertyIndex(2)
-email!: string;
-```
-
-### 2. Empezar en 1, no en 0
-
-Convención: empezar en 1 facilita lectura:
-
-```typescript
-// ✅ RECOMENDADO
-@PropertyIndex(1)  // Inicio en 1
-@PropertyIndex(2)
-@PropertyIndex(3)
-
-// ⚠️ Funciona pero confuso
-@PropertyIndex(0)  // Inicio en 0
-@PropertyIndex(1)
-@PropertyIndex(2)
-```
-
-### 3. Espaciar Índices para Inserciones Futuras
-
-```typescript
-// ❌ Compacto (difícil insertar después)
-@PropertyIndex(1)
-@PropertyIndex(2)
-@PropertyIndex(3)
-
-// ✅ Espaciado (fácil insertar)
-@PropertyIndex(10)
-@PropertyIndex(20)
-@PropertyIndex(30)
-
-// Ahora puedo insertar:
-@PropertyIndex(15)  // Entre 10 y 20
-@PropertyIndex(25)  // Entre 20 y 30
-```
-
-### 4. Propiedades Heredadas
-
-Las propiedades de clases padre mantienen su índice:
-
-```typescript
-class BaseUser extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('ID', Number)
-    id!: number;
-    
-    @PropertyIndex(2)
-    @PropertyName('Email', String)
-    email!: string;
-}
-
-class Customer extends BaseUser {
-    @PropertyIndex(3)  // ← Continúa numeración
-    @PropertyName('Company', String)
-    company!: string;
-}
-
-// Orden en Customer: id (1), email (2), company (3)
-```
-
-### 5. Performance No Afectado
-
-PropertyIndex no impacta performance, solo organiza metadata.
-
----
-
-## 🔧 Implementación Interna
-
-### Código del Decorador
-
-```typescript
 export function PropertyIndex(index: number): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
-        
         if (!proto[PROPERTY_INDEX_KEY]) {
             proto[PROPERTY_INDEX_KEY] = {};
         }
-        
         proto[PROPERTY_INDEX_KEY][propertyKey] = index;
     };
 }
 ```
 
-**Ubicación:** `src/decorations/property_index_decorator.ts` (línea ~10)
+El decorador utiliza Symbol único para evitar colisiones de namespace. Almacena metadata en prototype de constructor para permitir herencia de configuración. Implementa inicialización lazy del objeto de índices para minimizar overhead en entidades sin este decorador.
 
-### Lectura y Ordenamiento
+### 4.2 Método de Acceso en BaseEntity
 
 ```typescript
-// En BaseEntity.getProperties()
-public getProperties(): string[] {
-    const propertyNames = (this.constructor as any).prototype[PROPERTY_NAME_KEY];
-    if (!propertyNames) return [];
+public getPropertyIndices(): Record<string, number> {
+    const proto = (this.constructor as any).prototype;
+    return proto[PROPERTY_INDEX_KEY] || {};
+}
+```
+
+Método de instancia que recupera mapa completo de índices desde prototype. Retorna objeto vacío cuando no existen índices configurados, evitando errores de nullish access en operaciones de ordenamiento posteriores.
+
+### 4.3 Método getKeys() con Ordenamiento
+
+```typescript
+public getKeys(): string[] {
+    const columns = (this.constructor as typeof BaseEntity).getProperties();
+    const keys = Object.keys(columns);
+    const propertyIndices = this.getPropertyIndices();
     
-    const properties = Object.keys(propertyNames);
-    const propertyIndices = (this.constructor as any).prototype[PROPERTY_INDEX_KEY];
-    
-    if (!propertyIndices) {
-        return properties;  // Sin orden
-    }
-    
-    // Ordenar por índice
-    return properties.sort((a, b) => {
-        const indexA = propertyIndices[a] ?? 9999;  // Sin índice → al final
-        const indexB = propertyIndices[b] ?? 9999;
+    return keys.sort((a, b) => {
+        const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
+        const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
         return indexA - indexB;
     });
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~145)
+Algoritmo de ordenamiento que:
+1. Obtiene lista completa de propiedades de entidad
+2. Recupera mapa de índices configurados
+3. Ordena propiedades comparando índices numéricos
+4. Asigna Number.MAX_SAFE_INTEGER a propiedades sin índice, colocándolas al final
+5. Mantiene orden declarativo relativo entre propiedades sin índice explícito
 
----
+### 4.4 Almacenamiento de Metadata
 
-## 📊 Flujo de Renderizado
+El metadata se almacena en:
+- Ubicación: Constructor.prototype[PROPERTY_INDEX_KEY]
+- Estructura: Record<string | symbol, number>
+- Vida útil: Permanente durante ejecución de aplicación
+- Herencia: Compartida entre instancias de misma clase
+- Serialización: No incluida en toDictionary() ni persistencia
+
+## 5. Flujo de Funcionamiento
+
+### 5.1 Fase de Declaración
 
 ```
-1. Component necesita renderizar propiedades
-        ↓
-2. Llama entity.getProperties()
-        ↓
-3. BaseEntity.getProperties() ejecuta:
-   a. Obtiene PROPERTY_NAME_KEY → lista de propiedades
-   b. Obtiene PROPERTY_INDEX_KEY → índices de ordenamiento
-        ↓
-4. Si hay índices:
-   a. Ordena propiedades por índice (sort por valor numérico)
-   b. Propiedades sin índice → al final (índice 9999)
-        ↓
-5. Retorna array ordenado: ['id', 'name', 'email', ...]
-        ↓
-6. Component itera sobre array en ese orden
-        ↓
-7. Renderiza inputs/columnas en orden correcto
+Developer escribe clase entidad
+    ↓
+Aplica @PropertyIndex(n) a propiedades específicas
+    ↓
+TypeScript ejecuta decoradores en orden de declaración
+    ↓
+PropertyIndex() crea/actualiza objeto en prototype
+    ↓
+Almacena {propertyKey: index} en PROPERTY_INDEX_KEY
+    ↓
+Metadata disponible para todas las instancias
 ```
 
----
+### 5.2 Fase de Acceso a Metadata
 
-## 🎓 Mejores Prácticas
+```
+Código llama entity.getKeys()
+    ↓
+getKeys() invoca entity.getPropertyIndices()
+    ↓
+getPropertyIndices() lee prototype[PROPERTY_INDEX_KEY]
+    ↓
+Retorna Record<string, number> con índices configurados
+    ↓
+getKeys() ejecuta sort() comparando índices
+    ↓
+Propiedades sin índice reciben MAX_SAFE_INTEGER
+    ↓
+Retorna array ordenado de nombres de propiedades
+```
 
-### 1. Usar Constantes para Índices
+### 5.3 Fase de Renderizado en UI
 
+```
+Componente necesita ordenar propiedades
+    ↓
+Llama entity.getKeys() para obtener secuencia ordenada
+    ↓
+Itera sobre keys en orden devuelto
+    ↓
+Para cada key, renderiza FormInput correspondiente
+    ↓
+Resultado: formulario con campos en orden especificado
+```
+
+### 5.4 Ejemplo de Ordenamiento
+
+Dada esta entidad:
 ```typescript
-// constants/property-indices.ts
-export const PROPERTY_INDICES = {
-    ID: 1,
-    NAME: 10,
-    DESCRIPTION: 20,
-    CATEGORY: 30,
-    PRICE: 40,
-    STOCK: 50,
-    CREATED_AT: 9990,
-    UPDATED_AT: 9991
-} as const;
-
-// entities/product.ts
-import { PROPERTY_INDICES } from '@/constants/property-indices';
-
-export class Product extends BaseEntity {
-    @PropertyIndex(PROPERTY_INDICES.ID)
-    @PropertyName('Product ID', Number)
-    id!: number;
-    
-    @PropertyIndex(PROPERTY_INDICES.NAME)
-    @PropertyName('Product Name', String)
-    name!: string;
-    
-    // ...
+class User extends BaseEntity {
+    @PropertyIndex(3) email: string;
+    @PropertyIndex(1) firstName: string;
+    @PropertyIndex(2) lastName: string;
+    phone: string; // Sin índice
 }
 ```
 
-### 2. Esquema de Numeración por Grupos
+Secuencia resultante de getKeys():
+1. firstName (index: 1)
+2. lastName (index: 2)
+3. email (index: 3)
+4. phone (index: MAX_SAFE_INTEGER, orden declarativo)
 
+## 6. Reglas Obligatorias
+
+### 6.1 Aplicación del Decorador
+
+1. @PropertyIndex debe aplicarse a propiedades de clase, nunca a clase completa
+2. Índice debe ser número entero positivo mayor o igual a cero
+3. No aplicar @PropertyIndex a propiedades calculadas (getters)
+4. No aplicar a propiedades privadas no renderizadas en UI
+5. Índices pueden tener gaps (1, 3, 7 es válido)
+
+### 6.2 Gestión de Índices
+
+6. Usar secuencias incrementales (0, 1, 2...) para claridad de mantenimiento
+7. Evitar colisiones de índices (múltiples propiedades con mismo valor)
+8. Documentar razón de índices no secuenciales si se usan
+9. Si se reordena propiedad, actualizar su índice explícitamente
+10. Mantener coherencia de índices en clases heredadas
+
+### 6.3 Interacción con Otros Decoradores
+
+11. @PropertyIndex y @TabOrder son independientes, configurar ambos para formularios
+12. Propiedades con @HideInListView siguen requiriendo @PropertyIndex si se muestran en DetailView
+13. @Disabled y @ReadOnly no afectan ordenamiento ni son afectados
+14. @ViewGroup no invalida @PropertyIndex, ordenar dentro de grupos
+15. Propiedad con @PropertyIndex(0) siempre aparece primera independiente de otros decoradores
+
+### 6.4 BaseEntity y Herencia
+
+16. getPropertyIndices() retorna solo índices de propiedades de entidad actual
+17. Clases hijas pueden sobrescribir índices de clase padre
+18. getKeys() siempre retorna array ordenado, nunca null o undefined
+19. Invocar getKeys() múltiples veces retorna mismo orden (idempotente)
+20. PropertyIndex no afecta JSON.stringify() ni Object.keys() nativos
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Implementación
+
+1. PROHIBIDO usar índices negativos
+2. PROHIBIDO usar números decimales como índices (1.5 es inválido)
+3. PROHIBIDO usar Infinity o NaN como índices
+4. PROHIBIDO usar strings como índices (decorador requiere number)
+5. PROHIBIDO aplicar múltiples @PropertyIndex al mismo propertyKey
+
+### 7.2 Prohibiciones de Uso
+
+6. PROHIBIDO asumir que getKeys() retorna orden alfabético
+7. PROHIBIDO modificar directamente prototype[PROPERTY_INDEX_KEY]
+8. PROHIBIDO depender de orden declarativo sin @PropertyIndex explícito
+9. PROHIBIDO usar PropertyIndex para controlar orden de validación
+10. PROHIBIDO usar PropertyIndex para determinar orden de persistencia en API
+
+### 7.3 Prohibiciones de Lógica
+
+11. PROHIBIDO implementar lógica de negocio basada en valores de índice
+12. PROHIBIDO usar índice como identificador de propiedad
+13. PROHIBIDO exponer valores de índice en UI de usuario final
+14. PROHIBIDO serializar PropertyIndex metadata en requests HTTP
+15. PROHIBIDO usar PropertyIndex para determinar prioridad de campos requeridos
+
+## 8. Dependencias
+
+### 8.1 Dependencias Directas
+
+**Symbol (JavaScript Nativo)**
+- Propósito: Crear PROPERTY_INDEX_KEY único para evitar colisiones de namespace
+- Uso: Almacenar metadata en prototype sin interferir con propiedades de entidad
+- Crítico: Sí, sin Symbol el sistema podría sobrescribir propiedades de entidad
+
+**PropertyDecorator (TypeScript)**
+- Propósito: Tipado de decorador de propiedad
+- Uso: Garantizar firma correcta de función decoradora
+- Crítico: Sí, TypeScript rechazará decorador sin este tipo
+
+**BaseEntity.prototype**
+- Propósito: Almacenamiento de metadata compartida entre instancias
+- Uso: Ubicación de Record<string, number> con índices
+- Crítico: Sí, sin prototype cada instancia requeriría configuración individual
+
+### 8.2 Dependencias de BaseEntity
+
+**BaseEntity.getProperties()**
+- Propósito: Obtener lista completa de propiedades de entidad
+- Uso: Fuente de keys para ordenamiento en getKeys()
+- Crítico: Sí, sin propiedades no hay qué ordenar
+
+**Array.prototype.sort()**
+- Propósito: Algoritmo de ordenamiento de propiedades
+- Uso: Comparación de índices numéricos para determinar secuencia
+- Crítico: Sí, sort() es mecanismo de ordenamiento principal
+
+**Number.MAX_SAFE_INTEGER**
+- Propósito: Valor sentinel para propiedades sin índice explícito
+- Uso: Colocar propiedades no decoradas al final de secuencia
+- Crítico: Sí, garantiza que propiedades decoradas siempre preceden a no decoradas
+
+### 8.3 Dependencias Opcionales
+
+**@TabOrder**
+- Propósito: Ordenamiento de navegación por teclado
+- Relación: Independiente de PropertyIndex, puede tener valores diferentes
+- Recomendación: Mantener ambos sincronizados para coherencia UX
+
+**@ViewGroup**
+- Propósito: Agrupación de propiedades en secciones visuales
+- Relación: PropertyIndex ordena dentro de grupos, no entre grupos
+- Recomendación: Aplicar índices secuenciales dentro de cada grupo
+
+## 9. Relaciones
+
+### 9.1 Decoradores de Ordenamiento
+
+**@TabOrder**
+- Naturaleza: Decoradores hermanos con propósitos diferentes
+- Diferencia: TabOrder controla navegación por Tab, PropertyIndex controla visualización
+- Interacción: Ninguna, son completamente independientes
+- Escenario: Formulario puede tener orden visual diferente de orden de navegación
+- Recomendación: Sincronizar ambos para evitar confusión de usuario
+
+### 9.2 Decoradores de Visibilidad
+
+**@HideInListView**
+- Interacción: Propiedad oculta en ListView aún requiere @PropertyIndex para DetailView
+- Comportamiento: getKeys() incluye propiedades ocultas en su ordenamiento
+- Filtrado: Componente ListView filtra propiedades ocultas después de ordenamiento
+- Ejemplo: Email con PropertyIndex(5) y HideInListView aparece quinta en DetailView
+
+**@HideInDetailView**
+- Interacción: Propiedad oculta en DetailView aún requiere @PropertyIndex para ListView
+- Comportamiento: Similar a HideInListView pero invertido
+- Ejemplo: CreatedAt con PropertyIndex(10) y HideInDetailView aparece décimo en ListView
+
+### 9.3 BaseEntity Methods
+
+**getKeys()**
+- Relación: Consumidor principal de PropertyIndex metadata
+- Uso: Retorna propiedades ordenadas por índices
+- Garantía: Siempre respeta @PropertyIndex antes de orden declarativo
+
+**getArrayKeys()**
+- Relación: No consume PropertyIndex, usa orden propio
+- Diferencia: Filtra solo propiedades Array y no las ordena por índice
+- Justificación: Arrays tienen ordenamiento funcional específico en UIInputArray
+
+**getArrayKeysOrdered()**
+- Relación: Similar a getKeys() pero solo para propiedades Array
+- Decorador usado: @TabOrder (no PropertyIndex)
+- Razón: Arrays necesitan navegación consistente pero visualización funcional
+
+### 9.4 Componentes de UI
+
+**FormLayoutComponent**
+- Uso: Consume getKeys() para determinar secuencia de FormInputs
+- Algoritmo: Itera keys en orden, renderiza input para cada key
+- Respeto: Total, no reordena ni filtra keys devueltos
+
+**DetailViewTableComponent**
+- Uso: Consume getKeys() para determinar filas de tabla
+- Filtrado: Aplica HideInDetailView después de obtener keys ordenados
+- Resultado: Tabla con propiedades visibles en orden especificado
+
+**ListViewComponent**
+- Uso: Similar a DetailView pero aplica HideInListView
+- Paginación: No afecta ordenamiento, opera sobre conjunto ya ordenado
+
+### 9.5 Validación y Persistencia
+
+**Validation System**
+- Relación: Ninguna, validación no depende de orden de propiedades
+- Independencia: Validaciones ejecutan en orden de definición, no de PropertyIndex
+- Advertencia: No usar PropertyIndex para controlar secuencia de validaciones
+
+**toDictionary()**
+- Relación: Ninguna, serialización no respeta PropertyIndex
+- Comportamiento: Object.keys() nativo, orden indeterminado en JSON
+- Implicación: API backend no recibe propiedades en orden de PropertyIndex
+
+## 10. Notas de Implementación
+
+### 10.1 Patrones de Uso Comunes
+
+**Ordenamiento de Campos de Formulario**
 ```typescript
-// 1-999:    Propiedades principales
-// 1000-1999: Relaciones
-// 2000-2999: Campos calculados
-// 9000-9999: Metadatos (createdAt, updatedAt, etc.)
-
-@PropertyIndex(1)
-id!: number;
-
-@PropertyIndex(10)
-name!: string;
-
-@PropertyIndex(1000)  // Relaciones
-customer!: Customer;
-
-@PropertyIndex(2000)  // Calculados
-totalAmount!: number;
-
-@PropertyIndex(9000)  // Metadatos
-createdAt!: Date;
-```
-
-### 3. Documentar Orden en Comentarios
-
-```typescript
-export class Order extends BaseEntity {
-    // [1-10] Identificación
-    @PropertyIndex(1)
-    id!: number;
-    
-    @PropertyIndex(2)
-    orderNumber!: string;
-    
-    // [11-20] Cliente
-    @PropertyIndex(11)
-    customer!: Customer;
-    
-    @PropertyIndex(12)
-    shippingAddress!: Address;
-    
-    // [21-30] Items
-    @PropertyIndex(21)
-    items!: OrderItem[];
-    
-    // [31-40] Totales
-    @PropertyIndex(31)
-    subtotal!: number;
-    
-    @PropertyIndex(32)
-    tax!: number;
-    
-    @PropertyIndex(33)
-    total!: number;
+class ContactForm extends BaseEntity {
+    @PropertyIndex(0) @Required() firstName: string;
+    @PropertyIndex(1) @Required() lastName: string;
+    @PropertyIndex(2) @Validation(...) email: string;
+    @PropertyIndex(3) phone: string;
+    @PropertyIndex(4) address: string;
 }
 ```
 
----
+Resultado: Formulario con firstName → lastName → email → phone → address en ese orden visual exacto. Sin @PropertyIndex, orden dependería de implementación del motor JavaScript.
 
-## 📚 Referencias Adicionales
+**Reordenamiento sin Modificar Declaración**
+```typescript
+class Product extends BaseEntity {
+    id: number;
+    name: string;
+    @PropertyIndex(0) price: number; // Destacar precio al inicio
+    category: string;
+    stock: number;
+}
+```
 
-- `property-name-decorator.md` - Definir propiedades
-- `view-group-decorator.md` - Agrupar propiedades
-- `view-group-row-decorator.md` - Organizar en filas
-- `css-column-class-decorator.md` - Layout responsive
-- `../02-base-entity/metadata-access.md` - Acceso a metadatos
-- `../../02-FLOW-ARCHITECTURE.md` - Flujo de renderizado
+Price aparece primero visualmente aunque esté tercero en código. Resto de propiedades siguen orden declarativo.
 
----
+**Índices con Gaps para Extensibilidad**
+```typescript
+class User extends BaseEntity {
+    @PropertyIndex(10) username: string;
+    @PropertyIndex(20) email: string;
+    @PropertyIndex(30) role: string;
+}
+```
 
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/decorations/property_index_decorator.ts`
+Gaps de 10 permiten insertar propiedades futuras (ej: @PropertyIndex(15) displayName) sin renumerar todos los índices existentes.
+
+### 10.2 Casos de Comportamiento Especial
+
+**Colisión de Índices**
+```typescript
+class Entity extends BaseEntity {
+    @PropertyIndex(1) propA: string;
+    @PropertyIndex(1) propB: string; // Mismo índice
+    @PropertyIndex(2) propC: string;
+}
+```
+
+Resultado: propA y propB tendrán orden indeterminado entre sí (depende de Array.sort() de JavaScript), pero ambos precederán a propC. Evitar este patrón.
+
+**Propiedades sin Índice**
+```typescript
+class Mixed extends BaseEntity {
+    @PropertyIndex(0) first: string;
+    middle: string; // Sin índice
+    @PropertyIndex(1) last: string;
+}
+```
+
+Resultado: first → last → middle. Propiedades sin índice siempre aparecen al final independiente de declaración.
+
+**Herencia de Índices**
+```typescript
+class Parent extends BaseEntity {
+    @PropertyIndex(0) parentProp: string;
+}
+
+class Child extends Parent {
+    @PropertyIndex(1) childProp: string;
+}
+```
+
+Comportamiento: Cada clase mantiene su propio PropertyIndex metadata. getKeys() en Child considera solo propiedades declaradas en Child, no hereda índices de Parent.
+
+### 10.3 Performance y Optimización
+
+**Complejidad de Ordenamiento**
+- Tiempo: O(n log n) donde n = número de propiedades
+- Espacio: O(n) para array temporal de keys
+- Impacto: Negligible incluso con 100+ propiedades por entidad
+
+**Cache de getKeys()**
+No implementado actualmente. getKeys() reordena en cada invocación. Para entidades con 50+ propiedades invocadas frecuentemente, considerar:
+```typescript
+private _cachedKeys?: string[];
+public getKeys(): string[] {
+    if (!this._cachedKeys) {
+        this._cachedKeys = this._computeSortedKeys();
+    }
+    return this._cachedKeys;
+}
+```
+
+**Minimizar Uso de PropertyIndex**
+Solo aplicar a entidades con formularios complejos. Entidades simples de 3-5 propiedades raramente requieren ordenamiento explícito.
+
+### 10.4 Debugging y Diagnóstico
+
+**Inspeccionar Índices en Runtime**
+```typescript
+const user = new User();
+const indices = user.getPropertyIndices();
+console.log('PropertyIndex map:', indices);
+// Output: { firstName: 1, lastName: 2, email: 3 }
+
+const orderedKeys = user.getKeys();
+console.log('Ordered keys:', orderedKeys);
+// Output: ['firstName', 'lastName', 'email', 'phone']
+```
+
+**Detectar Índices Faltantes**
+```typescript
+const allKeys = Object.keys(User.getProperties());
+const indexedKeys = Object.keys(user.getPropertyIndices());
+const missingIndices = allKeys.filter(k => !indexedKeys.includes(k));
+console.log('Properties without @PropertyIndex:', missingIndices);
+```
+
+**Validar Secuencia Continua**
+```typescript
+const indices = Object.values(user.getPropertyIndices()).sort();
+const hasGaps = indices.some((val, i, arr) => i > 0 && val !== arr[i-1] + 1);
+if (hasGaps) console.warn('PropertyIndex sequence has gaps');
+```
+
+### 10.5 Migraciones y Refactoring
+
+**Agregar PropertyIndex a Entidad Existente**
+1. Identificar orden actual de propiedades en UI
+2. Aplicar @PropertyIndex siguiendo ese orden (evitar cambios abruptos)
+3. Testear formularios afectados
+4. Documentar razón del ordenamiento específico
+
+**Cambiar Orden de Propiedad**
+1. Modificar solo el valor numérico del @PropertyIndex
+2. No mover declaración de propiedad en clase
+3. Verificar que nuevo orden no rompe lógica de formulario
+4. Actualizar tests que asuman orden específico
+
+**Remover PropertyIndex**
+1. Eliminar decorador @PropertyIndex
+2. Verificar que orden declarativo es aceptable
+3. Documentar que ahora se depende de orden de código
+4. Considerar impacto en formularios generados
+
+## 11. Referencias Cruzadas
+
+### 11.1 Documentación Relacionada
+
+**copilot/layers/02-base-entity/metadata-access.md**
+- Sección: Métodos de Acceso a Metadata de Ordenamiento
+- Contenido: Descripción detallada de getPropertyIndices() y getKeys()
+- Relevancia: Implementación técnica de acceso a PropertyIndex metadata
+
+**copilot/layers/01-decorators/tab-order-decorator.md**
+- Relación: Decorador hermano para ordenamiento de navegación
+- Diferencia: TabOrder controla Tab key, PropertyIndex controla Visual Order
+- Uso conjunto: Mantener ambos sincronizados para coherencia UX
+
+**copilot/layers/01-decorators/view-group-decorator.md**
+- Relación: Agrupación de propiedades en secciones visuales
+- Interacción: PropertyIndex ordena dentro de grupos, ViewGroup crea grupos
+- Patrón: Usar índices secuenciales dentro de cada ViewGroup
+
+**copilot/layers/01-decorators/hide-in-list-view-decorator.md**
+**copilot/layers/01-decorators/hide-in-detail-view-decorator.md**
+- Relación: Filtrado de propiedades después de ordenamiento
+- Flujo: getKeys() ordena → Componente filtra ocultos → Renderizado
+- Implicación: Propiedades ocultas aún necesitan PropertyIndex para otras vistas
+
+### 11.2 Componentes de UI
+
+**copilot/layers/04-components/FormLayoutComponent.md**
+- Consumo: Usa getKeys() para determinar secuencia de FormInputs
+- Respeto: Total del orden devuelto, no reordena
+- Customización: ModuleCustomComponents pueden anular FormLayoutComponent completo
+
+**copilot/layers/04-components/DetailViewTableComponent.md**
+- Consumo: Usa getKeys() para generar filas de tabla
+- Filtrado: Aplica HideInDetailView después de ordenamiento
+- Presentación: Tabla vertical con propiedades en orden PropertyIndex
+
+**copilot/layers/04-components/ListViewComponent.md**
+- Consumo: Usa getKeys() para columnas de tabla
+- Filtrado: Aplica HideInListView después de ordenamiento
+- Presentación: Tabla horizontal con columnas en orden PropertyIndex
+
+### 11.3 Código Fuente
+
+**src/decorations/property_index_decorator.ts**
+- Líneas: 1-12
+- Contenido: Implementación completa del decorador
+- Symbol: PROPERTY_INDEX_KEY exportado para uso en BaseEntity
+
+**src/entities/base_entity.ts**
+- Líneas 95-100: Algoritmo de ordenamiento en getKeys()
+- Líneas 118-121: Método getPropertyIndices()
+- Dependencias: Importa PROPERTY_INDEX_KEY desde decorator file
+
+### 11.4 Tutoriales y Ejemplos
+
+**copilot/tutorials/01-basic-crud.md**
+- Sección: Configuración Avanzada de Propiedades
+- Ejemplo: Uso de @PropertyIndex para ordenar formulario de Usuario
+- Código: Entidad User con firstName, lastName, email ordenados
+
+**copilot/examples/advanced-module-example.md**
+- Sección: Optimización de Formularios Complejos
+- Patrón: Uso de PropertyIndex con gaps para escalabilidad
+- Técnica: Reordenamiento de Product con price al inicio
+
+### 11.5 Contratos y Arquitectura
+
+**copilot/00-CONTRACT.md**
+- Sección 4.2: Arquitectura en Capas
+- Principio: Metadata define comportamiento, PropertyIndex es metadata de presentación
+- Sección 8.1: Decoradores como única fuente de configuración
+
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Sistema de Decoradores
+- Contexto: PropertyIndex dentro del ecosistema de decoradores de metadatos
+- Flujo: Entity → Decorators → Metadata → UI
+
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: Generación de Interfaces
+- Flujo: getKeys() → Component iteration → FormInput rendering
+- Garantía: Orden de PropertyIndex respetado en toda la cadena de renderizado

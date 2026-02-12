@@ -1,1110 +1,767 @@
-# 🛣️ Router Integration
+# Router Integration
 
-**Referencias:**
-- `application-singleton.md` - Application gestiona router
-- `event-bus.md` - Eventos de navegación
-- `../02-base-entity/crud-operations.md` - CRUD navega usando router
-- `../../02-FLOW-ARCHITECTURE.md` - Flujo de navegación completo
+## 1. Propósito
 
----
+Sincronizar estado de navegación entre Vue Router y Application singleton mediante rutas genéricas dinámicas, eliminando necesidad de definir rutas manualmente por módulo, generando automáticamente rutas ListView (/:module) y DetailView (/:module/:oid) para todas las entidades registradas en ModuleList.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/router/index.ts`  
-**Integración:** `src/models/application.ts`
+### 2.1 Responsabilidades
 
----
+- Definir rutas genéricas /:module y /:module/:oid para todos los módulos
+- Sincronizar router.currentRoute con Application.View state
+- Ejecutar beforeEach guard para resolver módulo desde params.module
+- Redirigir ruta raíz (/) al primer módulo en ModuleList
+- Integrar con Application mediante initializeRouterWithApplication()
+- Actualizar Application.View cuando URL cambia directamente (navegación browser)
+- Renderizar ComponentContainerComponent para todas las rutas de módulos
 
-## 🎯 Propósito
+### 2.2 Límites
 
-El sistema de **routing automático** genera rutas dinámicamente para cada módulo registrado, eliminando la necesidad de definir rutas manualmente. Cada entidad con `@ModuleName` obtiene automáticamente:
+- No define rutas estáticas específicas por entidad (rutas genéricas)
+- No valida permisos de acceso a rutas (responsabilidad de guards adicionales)
+- No gestiona redirects complejos o nested routes
+- No implementa lazy loading de módulos (todos registrados en ModuleList)
+- No controla history back/forward (Vue Router nativo)
+- No persiste estado de navegación (session storage)
 
-1. **ListView route:** `/entity-name` (lista de registros)
-2. **DetailView route:** `/entity-name/:id` (ver/editar registro)
-3. **Create route:** `/entity-name/new` (crear nuevo registro)
+## 3. Definiciones Clave
 
-**Beneficio:** Registras una entidad → rutas creadas automáticamente.
+**Rutas Genéricas**: Rutas con parámetros dinámicos (/:module, /:module/:oid) que funcionan para todas las entidades, eliminando necesidad de rutas por módulo.
 
----
+**/:module Route**: Ruta ListView genérica (e.g., /products, /customers) donde :module matchea moduleName lowercase.
 
-## 🏗️ Configuración del Router
+**/:module/:oid Route**: Ruta DetailView genérica (e.g., /products/42, /customers/new) donde :oid es identificador único o 'new'.
 
-### Router Base (index.ts)
+**initializeRouterWithApplication()**: Función que recibe Application singleton y configura guards de navegación, necesaria para sincronización.
+
+**beforeEach Guard**: Navigation guard ejecutado antes de cada navegación, resuelve moduleClass desde params.module y actualiza Application.View.
+
+**ComponentContainerComponent**: Componente genérico renderizado por todas las rutas, lee Application.View para determinar qué component renderizar (ListView o DetailView).
+
+**Module Resolution**: Proceso de buscar entityClass en ModuleList.value comparando getModuleName() lowercase con params.module.
+
+**Router-Application Sync**: Sincronización bidireccional donde Application.changeView() actualiza router, y router navigation actualiza Application.View.
+
+## 4. Descripción Técnica
+
+### 4.1 Definición de Rutas Genéricas
 
 ```typescript
-// src/router/index.ts
-
-import { createRouter, createWebHistory } from 'vue-router';
-import type { RouteRecordRaw } from 'vue-router';
-
-// Vistas por defecto
-import DefaultListView from '@/views/default_listview.vue';
-import DefaultDetailView from '@/views/default_detailview.vue';
-
-// Rutas estáticas (si las hay)
+// src/router/index.ts (líneas 8-33)
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
-        redirect: '/dashboard'
-    },
-    {
-        path: '/dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/Dashboard.vue')
-    },
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('@/views/Login.vue')
-    }
-];
-
-const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes
-});
-
-export default router;
-```
-
-**Ubicación:** `src/router/index.ts` (línea ~1-30)
-
----
-
-## 🔄 Sistema de Rutas Genéricas
-
-### Implementación Real del Framework
-
-El framework utiliza un **sistema de rutas genéricas** que funcionan para TODAS las entidades, sin necesidad de crear rutas específicas por módulo.
-
-### Rutas Definidas en router/index.ts
-
-```typescript
-// src/router/index.ts
-import { createRouter, createWebHistory } from 'vue-router';
-import DefaultListView from '@/views/default_listview.vue';
-import DefaultDetailView from '@/views/default_detailview.vue';
-
-const routes = [
-    {
-        path: '/',
+        name: 'Home',
         redirect: () => {
-            // Redirigir al primer módulo
-            if (Application.ModuleList.value.length > 0) {
+            // Redirigir al primer módulo si existe
+            if (Application && Application.ModuleList.value.length > 0) {
                 const firstModule = Application.ModuleList.value[0];
-                const moduleName = firstModule.getModuleName()?.toLowerCase() || 'home';
-                return `/${moduleName}`;
+                const moduleName = firstModule.getModuleName() || firstModule.name;
+                return `/${moduleName.toLowerCase()}`;
             }
-            return '/home';
+            return '/';
         }
     },
     {
-        // RUTA GENÉRICA PARA TODAS LAS LISTAS
         path: '/:module',
         name: 'ModuleList',
-        component: DefaultListView,
-        // :module puede ser "products", "customers", "orders", etc.
+        component: { template: '<component-container-component />' },
+        meta: { viewType: 'list' }
     },
     {
-        // RUTA GENÉRICA PARA TODOS LOS DETALLES
         path: '/:module/:oid',
         name: 'ModuleDetail',
-        component: DefaultDetailView,
-        // :module = nombre del módulo
-        // :oid = identificador del registro ("42", "new", etc.)
+        component: { template: '<component-container-component />' },
+        meta: { viewType: 'detail' }
     }
 ];
+```
 
-const router = createRouter({
+**Ruta Raíz '/'**: Redirect dinámico al primer módulo registrado. Si ModuleList vacío, permanece en '/'.
+
+**ModuleList Route**: /:module renderiza ComponentContainerComponent con meta.viewType = 'list'. Ejemplos: /products, /customers, /orders.
+
+**ModuleDetail Route**: /:module/:oid renderiza ComponentContainerComponent con meta.viewType = 'detail'. Ejemplos: /products/42, /customers/new.
+
+### 4.2 Router Creation
+
+```typescript
+// src/router/index.ts (líneas 36-39)
+const router: Router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes
 });
+```
 
-// Integración con Application
-export function initializeRouterWithApplication(app: typeof Application) {
-    router.beforeEach((to, from, next) => {
-        const moduleName = to.params.module as string;
-        const oid = to.params.oid as string;
+createWebHistory para URLs limpias sin #hash. BASE_URL desde import.meta.env para subdirectory deployment.
+
+### 4.3 initializeRouterWithApplication
+
+```typescript
+// src/router/index.ts (línea 42-44)
+let Application: any = null;
+
+export function initializeRouterWithApplication(app: any) {
+    Application = app;
+}
+```
+
+Guarda referencia a Application singleton para uso en guards y redirects. Llamada en main.js después de crear router.
+
+### 4.4 beforeEach Navigation Guard
+
+```typescript
+// src/router/index.ts (líneas 47-104)
+router.beforeEach((to, _from, next) => {
+    if (!Application) {
+        next();
+        return;
+    }
+
+    const moduleName = to.params.module as string;
+    const oid = to.params.oid as string;
+
+    // Buscar el módulo correspondiente
+    const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
+        const modName = mod.getModuleName() || mod.name;
+        return modName.toLowerCase() === moduleName?.toLowerCase();
+    });
+
+    if (moduleClass) {
+        // Si la navegación viene de cambiar la URL directamente (no desde Application)
+        // necesitamos actualizar Application
+        const currentModule = Application.View.value.entityClass;
+        const currentModuleName = currentModule ? (currentModule.getModuleName() || currentModule.name).toLowerCase() : '';
+        const currentOid = Application.View.value.entityOid;
         
-        if (moduleName) {
-            // Buscar módulo en ModuleList
-            const moduleClass = app.ModuleList.value.find(
-                m => m.getModuleName()?.toLowerCase() === moduleName.toLowerCase()
-            );
-            
-            if (moduleClass) {
-                app.View.value.entityClass = moduleClass;
-                app.View.value.entityOid = oid || '';
+        // Solo actualizar Application si la URL es diferente de lo que Application tiene
+        if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
+            if (oid && to.meta.viewType === 'detail') {
+                // Vista de detalle - setear entityOid
+                Application.View.value.entityOid = oid;
+                
+                // Si el OID es 'new', crear una nueva instancia
+                if (oid === 'new') {
+                    const newEntity = moduleClass.createNewInstance();
+                    Application.changeViewToDetailView(newEntity);
+                } else {
+                    // Para OIDs existentes, componente maneja carga
+                    console.log('[Router] Preparando detail view para OID:', oid);
+                }
+                
+            } else {
+                // Vista de lista
+                Application.View.value.entityOid = '';
+                
+                // Cambiar a list view si no estamos ahí
+                if (Application.View.value.viewType !== 'LISTVIEW') {
+                    Application.changeViewToListView(moduleClass);
+                }
             }
         }
         
         next();
-    });
-}
-
-export default router;
-```
-
-**Ubicación:** `src/router/index.ts`
-
-### Cómo se Registran los Módulos
-
-```typescript
-// En src/models/application.ts (final del archivo)
-import { Products } from '@/entities/products';
-import { Customer } from '@/entities/customer';
-import { Order } from '@/entities/order';
-
-// Agregar módulos directamente al array
-Application.ModuleList.value.push(Products, Customer, Order);
-
-// No se crean rutas dinámicas
-// Las rutas genéricas /:module y /:module/:oid ya existen para todos
-```
-
-**Ubicación:** `src/models/application.ts` (línea ~279)
-
-### Ventajas del Sistema de Rutas Genéricas
-
-✅ **Configuración simple** - Solo 2 rutas para infinitas entidades  
-✅ **Sin código repetitivo** - No hay `addRoute()` por cada módulo  
-✅ **URL consistentes** - Todas las entidades usan el mismo patrón  
-✅ **Fácil mantenimiento** - Cambios en una ruta afectan a todas  
-✅ **Type-safe** - Los componentes leen `Application.View` para saber qué entidad renderizar
-
-### Ejemplos de URLs
-
-```
-/products          → Lista de productos
-/products/42       → Detalle del producto con OID 42
-/products/new      → Crear nuevo producto
-
-/customers         → Lista de clientes
-/customers/100     → Detalle del cliente con OID 100  
-/customers/new     → Crear nuevo cliente
-
-/orders            → Lista de órdenes
-/orders/xyz-123    → Detalle de la orden con OID xyz-123
-/orders/new        → Crear nueva orden
-```
-
-Todas estas URLs usan las mismas 2 rutas genéricas definidas en el router.
-
----
-
-## 🎯 Flujo de Navegación Completo
-
-### 1. Usuario Hace Click en "Products" (SideBar)
-
-```
-1. Usuario click "Products" en sidebar
-        ↓
-2. SideBarItemComponent llama:
-   Application.changeViewToDefaultView(Product)
-        ↓
-3. Application actualiza View.value:
-   - entityClass = Product
-   - viewType = DEFAULTVIEW
-   - entityObject = null
-        ↓
-4. Application.router.push({ 
-     name: 'ModuleList', 
-     params: { module: 'products' } 
-   })
-   → Navega a /products
-        ↓
-5. Router busca ruta '/:module'
-   → Encuentra: {
-       path: '/:module',
-       name: 'ModuleList',
-       component: DefaultListView
-     }
-        ↓
-6. Router guard (beforeEach) ejecuta:
-   - Lee params.module = 'products'
-   - Busca en ModuleList la clase Product
-   - Confirma que Application.View.entityClass = Product
-        ↓
-7. DefaultListView se monta
-        ↓
-8. DefaultListView lee Application.View.value.entityClass
-   → entityClass = Product
-        ↓
-9. DetailViewTableComponent usa Product para:
-   - Obtener metadatos (columnas, nombres)
-   - Renderizar tabla
-        ↓
-10. Tabla con productos se muestra
-```
-
-### 2. Usuario Hace Click en "Edit" (ListView)
-
-```
-1. Usuario click "Edit" en fila producto ID 42
-        ↓
-2. DetailViewTableComponent llama:
-   Application.changeViewToDetailView(productInstance)
-        ↓
-3. Application actualiza View.value:
-   - entityClass = Product
-   - viewType = DETAILVIEW  
-   - entityObject = productInstance
-   - entityOid = "42"
-        ↓
-4. Application.router.push({ 
-     name: 'ModuleDetail', 
-     params: { module: 'products', oid: '42' } 
-   })
-   → Navega a /products/42
-2. ListView llama:
-   Application.changeViewToDetailView(Product, 42)
-        ↓
-3. Application.changeView(Product, ViewType.DETAIL, 42)
-        ↓
-4. Application actualiza View.value:
-   - entityClass = Product
-   - viewType = DETAIL
-   - entity = null (temporalmente)
-        ↓
-5. Application.router.push('/products/42')
-        ↓
-6. Router busca ruta '/products/42'
-   → Encuentra: {
-       path: '/products/:id',
-       component: DefaultDetailView,
-       meta: { entityClass: Product, viewType: DETAIL }
-     }
-        ↓
-7. DefaultDetailView se monta
-        ↓
-8. DefaultDetailView lee route.params.id = '42'
-        ↓
-9. DefaultDetailView carga producto:
-   product = await Product.getElement(42)
-        ↓
-10. DefaultDetailView actualiza Application.View.value.entity = product
-        ↓
-11. Renderiza formulario con datos del producto
-```
-
-### 3. Usuario Hace Click en "Create" (ListView)
-
-```
-1. Usuario click "Create New" en ListView
-        ↓
-2. ListView llama:
-   Application.changeViewToDetailView(Product)
-        ↓
-3. Application.changeView(Product, ViewType.DETAIL)  // sin ID
-        ↓
-4. Application.router.push('/products/new')
-        ↓
-5. Router busca ruta '/products/new'
-   → Encuentra: '/products/:id' (donde :id = 'new')
-        ↓
-6. DefaultDetailView se monta
-        ↓
-7. DetailView detecta params.id === 'new'
-        ↓
-8. DetailView crea nueva instancia:
-   product = new Product()
-        ↓
-9. Application.View.value.entity = product
-        ↓
-10. Renderiza formulario vacío
-```
-
----
-
-## 🧩 Componentes de Vista
-
-### DefaultListView
-
-```vue
-<!-- src/views/default_listview.vue -->
-
-<template>
-  <div class="list-view">
-    <!-- Header -->
-    <div class="header">
-      <h1>{{ moduleNamePlural }}</h1>
-      <button @click="createNew">Create New</button>
-    </div>
-    
-    <!-- Loading -->
-    <div v-if="isLoading" class="loading">Loading...</div>
-    
-    <!-- Table -->
-    <table v-else>
-      <thead>
-        <tr>
-          <th v-for="prop in displayProperties" :key="prop">
-            {{ entityClass.getPropertyName(prop) }}
-          </th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="entity in entities" :key="entity[primaryKey]">
-          <td v-for="prop in displayProperties" :key="prop">
-            {{ formatValue(entity, prop) }}
-          </td>
-          <td>
-            <button @click="editEntity(entity)">Edit</button>
-            <button @click="deleteEntity(entity)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import Application from '@/models/application';
-import type BaseEntity from '@/entities/base_entitiy';
-
-// ========================================
-// Setup
-// ========================================
-
-const route = useRoute();
-const entityClass = computed(() => Application.View.value.entityClass);
-const entities = ref<BaseEntity[]>([]);
-const isLoading = ref(true);
-
-// ========================================
-// Computed
-// ========================================
-
-const moduleNamePlural = computed(() => 
-    entityClass.value?.getModuleNamePlural() || ''
-);
-
-const displayProperties = computed(() => 
-    entityClass.value?.getProperties().filter(prop => 
-        !entityClass.value.isHideInListView(prop)
-    ) || []
-);
-
-const primaryKey = computed(() => 
-    entityClass.value?.getPrimaryProperty() || 'id'
-);
-
-// ========================================
-// Methods
-// ========================================
-
-async function loadData() {
-    if (!entityClass.value) return;
-    
-    isLoading.value = true;
-    try {
-        entities.value = await entityClass.value.getElementList();
-    } catch (error) {
-        console.error('Failed to load entities:', error);
-        Application.showToast('Failed to load data', 'error');
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-function createNew() {
-    Application.changeViewToDetailView(entityClass.value);
-}
-
-function editEntity(entity: BaseEntity) {
-    const id = entity[primaryKey.value];
-    Application.changeViewToDetailView(entityClass.value, id);
-}
-
-async function deleteEntity(entity: BaseEntity) {
-    Application.showModal({
-        title: 'Confirm Delete',
-        message: `Are you sure you want to delete this ${entityClass.value.getModuleNameSingular()}?`,
-        buttons: [
-            {
-                label: 'Cancel',
-                action: () => Application.closeModal()
-            },
-            {
-                label: 'Delete',
-                action: async () => {
-                    const deleted = await entity.delete();
-                    if (deleted) {
-                        Application.closeModal();
-                        await loadData();  // Reload list
-                    }
-                },
-                primary: true,
-                dangerous: true
-            }
-        ]
-    });
-}
-
-function formatValue(entity: BaseEntity, prop: string): string {
-    const value = entity[prop];
-    const displayFormat = entityClass.value.getDisplayFormat(prop);
-    
-    if (displayFormat) {
-        return displayFormat(value);
-    }
-    
-    return value?.toString() || '';
-}
-
-// ========================================
-// Lifecycle
-// ========================================
-
-onMounted(() => {
-    loadData();
-    
-    // Escuchar eventos de actualización
-    Application.eventBus.on('entity-saved', loadData);
-    Application.eventBus.on('entity-deleted', loadData);
-});
-
-onUnmounted(() => {
-    Application.eventBus.off('entity-saved', loadData);
-    Application.eventBus.off('entity-deleted', loadData);
-});
-</script>
-```
-
-**Ubicación:** `src/views/default_listview.vue` (línea ~1-150)
-
----
-
-### DefaultDetailView
-
-```vue
-<!-- src/views/default_detailview.vue -->
-
-<template>
-  <div class="detail-view">
-    <!-- Header -->
-    <div class="header">
-      <h1>{{ isNew ? 'Create' : 'Edit' }} {{ moduleNameSingular }}</h1>
-      <button @click="goBack">Back to List</button>
-    </div>
-    
-    <!-- Loading -->
-    <div v-if="isLoading" class="loading">Loading...</div>
-    
-    <!-- Form -->
-    <form v-else @submit.prevent="saveEntity">
-      <div 
-        v-for="prop in editableProperties" 
-        :key="prop"
-        class="form-group"
-      >
-        <label>
-          {{ entityClass.getPropertyName(prop) }}
-          <span v-if="entityClass.isRequired(prop)" class="required">*</span>
-        </label>
-        
-        <!-- Componente de input dinámico -->
-        <component 
-          :is="getInputComponent(prop)"
-          v-model="entity[prop]"
-          :property="prop"
-          :entity="entity"
-          :entity-class="entityClass"
-          :disabled="entityClass.isReadOnly(prop) || entityClass.isDisabled(prop)"
-        />
-        
-        <!-- Error de validación -->
-        <span v-if="entity.errors[prop]" class="error">
-          {{ entity.errors[prop] }}
-        </span>
-      </div>
-      
-      <!-- Actions -->
-      <div class="actions">
-        <button type="button" @click="goBack">Cancel</button>
-        <button type="submit" :disabled="isSaving">
-          {{ isSaving ? 'Saving...' : 'Save' }}
-        </button>
-      </div>
-    </form>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import Application from '@/models/application';
-import type BaseEntity from '@/entities/base_entitiy';
-
-// ========================================
-// Setup
-// ========================================
-
-const route = useRoute();
-const entity = ref<BaseEntity | null>(null);
-const isLoading = ref(true);
-const isSaving = ref(false);
-
-const entityClass = computed(() => Application.View.value.entityClass);
-const isNew = computed(() => route.params.id === 'new');
-
-// ========================================
-// Computed
-// ========================================
-
-const moduleNameSingular = computed(() => 
-    entityClass.value?.getModuleNameSingular() || ''
-);
-
-const editableProperties = computed(() => 
-    entityClass.value?.getProperties().filter(prop => 
-        !entityClass.value.isHideInDetailView(prop)
-    ) || []
-);
-
-// ========================================
-// Methods
-// ========================================
-
-async function loadData() {
-    if (!entityClass.value) return;
-    
-    isLoading.value = true;
-    try {
-        if (isNew.value) {
-            // Crear nueva instancia
-            entity.value = new entityClass.value();
-        } else {
-            // Cargar existente
-            const id = route.params.id;
-            entity.value = await entityClass.value.getElement(id);
-        }
-        
-        // Actualizar Application.View
-        Application.View.value.entity = entity.value;
-    } catch (error) {
-        console.error('Failed to load entity:', error);
-        Application.showToast('Failed to load data', 'error');
-        goBack();
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-async function saveEntity() {
-    if (!entity.value) return;
-    
-    isSaving.value = true;
-    try {
-        const saved = await entity.value.save();
-        
-        if (saved) {
-            Application.showToast('Saved successfully', 'success');
-            goBack();
-        }
-    } catch (error) {
-        console.error('Save failed:', error);
-        Application.showToast('Save failed', 'error');
-    } finally {
-        isSaving.value = false;
-    }
-}
-
-function goBack() {
-    Application.changeViewToListView(entityClass.value);
-}
-
-function getInputComponent(prop: string): string {
-    const type = entityClass.value.getPropertyType(prop);
-    
-    // Mapeo tipo → componente
-    const componentMap = {
-        String: 'TextInput',
-        Number: 'NumberInput',
-        Boolean: 'CheckboxInput',
-        Date: 'DateInput',
-        Object: 'ObjectInput',
-        Array: 'ArrayInput'
-    };
-    
-    return componentMap[type.name] || 'TextInput';
-}
-
-// ========================================
-// Lifecycle
-// ========================================
-
-onMounted(() => {
-    loadData();
-});
-</script>
-```
-
-**Ubicación:** `src/views/default_detailview.vue` (línea ~1-140)
-
----
-
-## 🛠️ Guards de Navegación
-
-### Proteger Rutas (Auth)
-
-```typescript
-// src/router/index.ts
-
-router.beforeEach((to, from, next) => {
-    const isAuthenticated = !!Application.currentUser;
-    const requiresAuth = to.meta.requiresAuth !== false;  // por defecto true
-    
-    if (requiresAuth && !isAuthenticated) {
-        // Redirigir a login
-        next({
-            path: '/login',
-            query: { redirect: to.fullPath }  // Guardar ruta destino
-        });
     } else {
-        next();
+        // Módulo no encontrado
+        console.warn('[Router] Módulo no encontrado:', moduleName);
+        next(false); // Cancelar navegación
     }
 });
 ```
 
-### Actualizar Application.View en Navegación
+**Module Resolution**: Busca moduleClass en ModuleList.value comparando getModuleName() lowercase.
+
+**Sync Check**: Solo actualiza Application si URL difiere de Application.View state (evita loops).
+
+**DetailView Handling**: Si oid === 'new', crea instancia con createNewInstance() y llama changeViewToDetailView(). Si oid numérico, componente carga datos.
+
+**ListView Handling**: Limpia entityOid y llama changeViewToListView() si viewType no es LISTVIEW.
+
+**Module Not Found**: Si moduleClass no encontrado, cancela navegación con next(false).
+
+### 4.5 Router Export
 
 ```typescript
-router.beforeEach((to, from, next) => {
-    // Si la ruta tiene meta.entityClass, actualizar View
-    if (to.meta.entityClass) {
-        Application.View.value.entityClass = to.meta.entityClass;
-        Application.View.value.viewType = to.meta.viewType;
+// src/router/index.ts (líneas 106-113)
+export default router;
+export { initializeRouterWithApplication };
+```
+
+Export default de router para app.use(router) en main.js. Named export de initializeRouterWithApplication para setup.
+
+## 5. Flujo de Funcionamiento
+
+### 5.1 Inicialización del Router en main.js
+
+```
+main.js ejecuta
+    ↓
+import router from '@/router'
+    ↓
+import Application from '@/models/application'
+    ↓
+import { initializeRouterWithApplication } from '@/router'
+    ↓
+Application.ModuleList.value.push(Products, Orders, Customers)
+    ↓
+initializeRouterWithApplication(Application)
+    → Guarda referencia Application en router module
+    → beforeEach guard ahora puede acceder Application
+    ↓
+const app = createApp(App)
+    ↓
+app.use(router)
+    ↓
+Application.initializeRouter(router)
+    → Application.router = router
+    → updateRouterFromView() ahora puede usar router.push()
+    ↓
+app.mount('#app')
+    ↓
+Router listo, navegación habilitada
+```
+
+### 5.2 Navegación Programática via Application.changeView()
+
+```
+Usuario click "Products" en SideBar
+    ↓
+SideBarItem ejecuta:
+Application.changeViewToListView(Products)
+    ↓
+changeView(Products, ListComponent, LISTVIEW, null)
+    ↓
+setViewChanges() actualiza:
+    - View.value.entityClass = Products
+    - View.value.entityObject = null
+    - View.value.viewType = LISTVIEW
+    - View.value.entityOid = ''
+    ↓
+updateRouterFromView(Products, null)
+    ↓
+moduleName = 'Products', moduleNameLower = 'products'
+    ↓
+targetPath = '/products'
+    ↓
+currentRoute.path !== '/products' → TRUE
+    ↓
+router.push({ name: 'ModuleList', params: { module: 'products' } })
+    ↓
+Vue Router navega a /products
+    ↓
+beforeEach guard ejecuta:
+    - params.module = 'products'
+    - moduleClass = Products (found en ModuleList)
+    - currentModuleName = 'products', currentOid = ''
+    - URL match Application state → NO actualiza Application (ya actualizado)
+    - next() permite navegación
+    ↓
+ComponentContainerComponent re-renderiza con Application.View.value
+    ↓
+Renderiza component = Products.getModuleListComponent()
+```
+
+### 5.3 Navegación Directa via Browser URL
+
+```
+Usuario escribe /customers/42 en address bar y presiona Enter
+    ↓
+Vue Router detecta cambio de URL
+    ↓
+beforeEach guard ejecuta:
+    - to.params.module = 'customers'
+    - to.params.oid = '42'
+    ↓
+Busca moduleClass en ModuleList:
+const moduleClass = Application.ModuleList.value.find(
+    mod => mod.getModuleName().toLowerCase() === 'customers'
+)
+    → moduleClass = Customers (found)
+    ↓
+Verifica si Application needs update:
+    - currentModuleName = 'products' (estaba en lista de productos)
+    - moduleName = 'customers'
+    - currentModuleName !== moduleName → TRUE
+    ↓
+oid = '42', to.meta.viewType = 'detail' → Ruta de detalle
+    ↓
+Application.View.value.entityOid = '42'
+    ↓
+oid !== 'new' → No crear instancia, componente carga datos
+    ↓
+next() permite navegación
+    ↓
+ComponentContainerComponent detecta Application.View.value change
+    ↓
+Renderiza component = Customers.getModuleDetailComponent()
+    ↓
+DetailView monta, lee Application.View.value.entityOid = '42'
+    ↓
+DetailView ejecuta:
+const customer = await Customers.getElement(42)
+    ↓
+DetailView renderiza formulario con datos de customer
+```
+
+### 5.4 Navegación a Nueva Entidad (/module/new)
+
+```
+Usuario click "New" button en ListView de Products
+    ↓
+NewButtonComponent ejecuta:
+const newProduct = new Products();
+Application.changeViewToDetailView(newProduct);
+    ↓
+setViewChanges() actualiza View:
+    - entityClass = Products
+    - entityObject = newProduct (instancia vacía)
+    - viewType = DETAILVIEW
+    - entityOid = 'new' (uniqueValue es undefined → 'new')
+    ↓
+updateRouterFromView(Products, newProduct):
+    - targetPath = '/products/new'
+    - router.push({ name: 'ModuleDetail', params: { module: 'products', oid: 'new' } })
+    ↓
+Vue Router navega a /products/new
+    ↓
+beforeEach guard ejecuta:
+    - params.module = 'products', params.oid = 'new'
+    - moduleClass = Products (found)
+    - currentModuleName = 'products', currentOid = 'new'
+    - URL match Application state → NO actualiza (ya sincronizado)
+    - next()
+    ↓
+ComponentContainerComponent renderiza DetailView
+    ↓
+DetailView monta con Application.View.value.entityObject = newProduct
+    ↓
+FormInputs renderizados vacíos (entity nueva)
+```
+
+### 5.5 404 - Módulo No Encontrado
+
+```
+Usuario navega a /nonexistent-module
+    ↓
+beforeEach guard ejecuta:
+    - params.module = 'nonexistent-module'
+    ↓
+Busca moduleClass en ModuleList:
+Application.ModuleList.value.find(...)
+    → moduleClass = undefined (not found)
+    ↓
+else branch:
+console.warn('[Router] Módulo no encontrado:', 'nonexistent-module');
+next(false);
+    ↓
+next(false) cancela navegación
+    ↓
+Usuario permanece en ruta anterior
+    ↓
+Opcional: Mostrar toast "Módulo no encontrado"
+```
+
+## 6. Reglas Obligatorias
+
+### 6.1 Inicialización del Router
+
+1. Llamar initializeRouterWithApplication(Application) ANTES de app.use(router)
+2. Llamar Application.initializeRouter(router) DESPUÉS de app.use(router)
+3. Registrar módulos en ModuleList ANTES de initializeRouterWithApplication()
+4. No crear router instances múltiples (singleton)
+5. Usar createWebHistory para URLs limpias (no createWebHashHistory excepto legacy)
+
+### 6.2 Definición de Rutas
+
+6. Rutas genéricas /:module y /:module/:oid son inmutables (no agregar rutas por módulo)
+7. Todos los módulos comparten mismas rutas, diferenciados por :module param
+8. ComponentContainerComponent es componente genérico para todas las rutas de módulos
+9. meta.viewType proporciona hint ('list', 'detail') para logging
+10. Rutas estáticas (/, /login, /dashboard) OK, pero no conflictuar con módulos
+
+### 6.3 beforeEach Guard
+
+11. Guard DEBE verificar if (!Application) antes de procesar
+12. moduleClass resolution OBLIGATORIA con .find() en ModuleList
+13. Si moduleClass no encontrado, ejecutar next(false) para cancelar navegación
+14. Solo actualizar Application.View si URL difiere de state actual (evitar loops)
+15. Para oid === 'new', crear instancia con moduleClass.createNewInstance()
+
+### 6.4 Navegación Programática
+
+16. SIEMPRE usar Application.changeView() methods, NUNCA router.push() directo
+17. updateRouterFromView() es método privado, llamado automáticamente
+18. Si currentRoute.path === targetPath, NO ejecutar router.push() (evitar warnings)
+19. Ignore NavigationDuplicated errors con catch (no crítico)
+20. entityOid DEBE sincronizarse con params.oid
+
+### 6.5 ComponentContainerComponent
+
+21. Componente lee Application.View.value para determinar qué renderizar
+22. Watch Application.View.value cambios para re-render reactivo
+23. No cachear component references (usar markRaw si necesario)
+24. Renderiza component dinámicamente con <component :is="component" />
+25. Maneja casos de entityClass null (fallback a mensaje "No module selected")
+
+### 6.6 Module Name Mapping
+
+26. moduleName SIEMPRE lowercase en URL (getModuleName().toLowerCase())
+27. Comparison case-insensitive (toLowerCase() en ambos lados)
+28. Fallback a class.name si getModuleName() retorna null
+29. No permitir espacios en moduleName (usar - para palabras compuestas)
+30. moduleName único por módulo (no duplicados en ModuleList)
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Definición de Rutas
+
+1. PROHIBIDO agregar rutas específicas por módulo (/:products, /:customers)
+2. PROHIBIDO nested routes dentro de rutas de módulos
+3. PROHIBIDO modificar routes array después de createRouter()
+4. PROHIBIDO rutas con matcheo ambiguo (/:foo, /:bar)
+5. PROHIBIDO rutas estáticas que conflictúen con módulos (e.g., /products estático cuando Products existe)
+
+### 7.2 Prohibiciones de Navegación
+
+6. PROHIBIDO router.push() directo desde componentes (usar Application.changeView)
+7. PROHIBIDO router.replace() sin actualizar Application.View
+8. PROHIBIDO navegación sin verificar si módulo existe en ModuleList
+9. PROHIBIDO back/forward manipulation sin sincronizar Application
+10. PROHIBIDO múltiples router.push() síncronos (causa warnings)
+
+### 7.3 Prohibiciones de beforeEach Guard
+
+11. PROHIBIDO lógica asíncrona bloqueante en beforeEach (usar async guards)
+12. PROHIBIDO modificar to.params directamente (inmutable)
+13. PROHIBIDO next() sin argumentos cuando cancelando (usar next(false))
+14. PROHIBIDO múltiples next() calls en misma ejecución (error)
+15. PROHIBIDO actualizar Application.View sin verificar cambio necesario (loops)
+
+### 7.4 Prohibiciones de Sincronización
+
+16. PROHIBIDO updateRouterFromView() manual (llamado automáticamente)
+17. PROHIBIDO modificar Application.View sin correspondiente router.push()
+18. PROHIBIDO router.push() sin correspondiente Application.View update
+19. PROHIBIDO asumir que router.push() es síncrono (usar await si critico)
+20. PROHIBIDO ignorar router errors (puede causar estado inconsistente)
+
+### 7.5 Prohibiciones de Params
+
+21. PROHIBIDO params.module con uppercase (siempre lowercase)
+22. PROHIBIDO params.oid con espacios o caracteres especiales
+23. PROHIBIDO asumir params.oid es número (puede ser 'new' o string)
+24. PROHIBIDO modificar params en guards después de navigation
+25. PROHIBIDO params custom (:foo) fuera de :module y :oid
+
+### 7.6 Prohibiciones de ComponentContainerComponent
+
+26. PROHIBIDO renderizar componentes específicos directamente (usar Application.View)
+27. PROHIBIDO cachear component references sin invalidation
+28. PROHIBIDO asunciones sobre entityObject (puede ser null)
+29. PROHIBIDO lógica de negocio en ComponentContainer (solo renderizado)
+30. PROHIBIDO estilos específicos de módulo en ComponentContainer (scope a módulo)
+
+## 8. Dependencias
+
+### 8.1 Dependencia Directa de Vue Router
+
+**vue-router (vue-router)**
+- Versión: ^4.0.0
+- API: createRouter, createWebHistory, RouteRecordRaw, Router, beforeEach
+- Crítico: Sí, core del routing system
+- Guards: beforeEach para module resolution
+
+### 8.2 Dependencia de Application
+
+**Application Singleton (@/models/application)**
+- Relación: Router sincroniza con Application.View state
+- Métodos usados: changeViewToListView(), changeViewToDetailView(), initializeRouter()
+- Propiedades: View.value.entityClass, View.value.entityOid, ModuleList.value
+- Crítico: Sí, source of truth para navegación
+
+### 8.3 Dependencia de BaseEntity
+
+**BaseEntity (@/entities/base_entitiy)**
+- Métodos usados: getModuleName(), createNewInstance()
+- Type: typeof BaseEntity en ModuleList.value
+- Crítico: Sí, module resolution depende de getModuleName()
+
+### 8.4 Dependencia de Componentes
+
+**ComponentContainerComponent (@/components/ComponentContainerComponent)**
+- Renderizado: Todas las rutas /:module y /:module/:oid
+- Consumo: Lee Application.View.value.component y renderiza
+- Crítico: Sí, sin este componente rutas no renderizarían nada
+
+### 8.5 Dependencia de Enums
+
+**ViewTypes (@/enums/view_type)**
+- Valores: LISTVIEW, DETAILVIEW, DEFAULTVIEW
+- Uso: meta.viewType en route definition, Application.View.value.viewType
+- Crítico: Sí, determina tipo de vista
+
+## 9. Relaciones
+
+### 9.1 Relación con Application Singleton
+
+**Sincronización Bidireccional**
+- Application.changeView() → updateRouterFromView() → router.push()
+- Router navigation → beforeEach guard → Application.View update
+
+**initializeRouter() Integration**
+```typescript
+// main.js
+Application.initializeRouter(router);
+// Ahora Application.router disponible para updateRouterFromView()
+```
+
+**initializeRouterWithApplication() Integration**
+```typescript
+// main.js
+initializeRouterWithApplication(Application);
+// Ahora beforeEach guard puede acceder Application
+```
+
+### 9.2 Relación con ModuleList
+
+**Module Resolution**
+```typescript
+const moduleClass = Application.ModuleList.value.find(
+    mod => mod.getModuleName().toLowerCase() === moduleName.toLowerCase()
+);
+```
+
+ModuleList es fuente de verdad para módulos disponibles. Solo módulos registrados son navegables.
+
+**Home Redirect**
+```typescript
+redirect: () => {
+    if (Application.ModuleList.value.length > 0) {
+        const firstModule = Application.ModuleList.value[0];
+        return `/${firstModule.getModuleName().toLowerCase()}`;
     }
-    
-    next();
+    return '/';
+}
+```
+
+Ruta raíz redirige al primer módulo registrado.
+
+### 9.3 Relación con ComponentContainerComponent
+
+**Dynamic Component Rendering**
+```vue
+<!-- ComponentContainerComponent.vue -->
+<component :is="Application.View.value.component" />
+```
+
+ComponentContainerComponent lee Application.View y renderiza component correspondiente (ListView o DetailView).
+
+**Reactivity**
+```typescript
+watch(() => Application.View.value, () => {
+    // Re-render cuando View cambia
 });
 ```
 
-### Verificar Permisos por Módulo
+### 9.4 Relación con ListView/DetailView
+
+**ListView desde URL**
+- URL: /products
+- beforeEach: Resuelve Products, llama changeViewToListView(Products)
+- Application.View.component = Products.getModuleListComponent()
+- ComponentContainer renderiza ListView
+
+**DetailView desde URL**
+- URL: /products/42
+- beforeEach: Resuelve Products, setea entityOid = '42'
+- Application.View.component = Products.getModuleDetailComponent()
+- ComponentContainer renderiza DetailView
+- DetailView carga entity con getElement(42)
+
+### 9.5 Relación con Navegación Browser
+
+**Back Button**
+- Usuario presiona browser back
+- Router history change detectado
+- beforeEach ejecuta con to = previous URL
+- Application.View actualizado a previous state
+- ComponentContainer re-renderiza previous component
+
+**Address Bar Navigation**
+- Usuario escribe URL directamente
+- beforeEach ejecuta con to = nueva URL
+- Module resolution y Application update
+- ComponentContainer renderiza
+
+**URL Copy/Paste**
+- Usuario comparte /products/42
+- Otro usuario abre URL
+- beforeEach resuelve Products y oid=42
+- DetailView carga y renderiza producto
+
+## 10. Notas de Implementación
+
+### 10.1 Setup Completo en main.js
 
 ```typescript
-router.beforeEach((to, from, next) => {
-    const entityClass = to.meta.entityClass;
-    
-    if (entityClass) {
-        const permission = entityClass.getModulePermission();
-        const userHasPermission = Application.currentUser?.hasPermission(permission);
-        
-        if (!userHasPermission) {
-            Application.showToast('You do not have permission', 'error');
-            next(false);  // Bloquear navegación
-            return;
-        }
-    }
-    
-    next();
-});
-```
-
-**Ubicación:** `src/router/index.ts` (línea ~40-80)
-
----
-
-## 🔧 API de Router Internal
-
-### initializeRouter()
-
-```typescript
-initializeRouter(router: Router): void
-```
-
-**Propósito:** Vincula la instancia de Vue Router con Application.
-
-**Parámetros:**
-- `router: Router` - Instancia de Vue Router creada con `createRouter()`
-
-**Ubicación:** `src/models/application.ts` (línea 269)
-
-**Ejemplo:**
-
-```typescript
-// src/main.ts
-
+// main.js
 import { createApp } from 'vue';
 import App from './App.vue';
-import router from './router';
+import router, { initializeRouterWithApplication } from './router';
 import Application from './models/application';
+import { Products } from './entities/products';
+import { Customers } from './entities/customers';
+import { Orders } from './entities/orders';
 
+// 1. Registrar módulos PRIMERO
+Application.ModuleList.value.push(Products, Customers, Orders);
+
+// 2. Inicializar router con Application
+initializeRouterWithApplication(Application);
+
+// 3. Crear app y usar router
 const app = createApp(App);
-
-// ========================================
-// VINCULAR ROUTER CON APPLICATION
-// ========================================
-Application.initializeRouter(router);
-// → Application.router = router
-// → Permite a Application controlar navegación
-
 app.use(router);
+
+// 4. Inicializar Application con router
+Application.initializeRouter(router);
+
+// 5. Montar app
 app.mount('#app');
 ```
 
-**Comportamiento:**
-- Almacena referencia al router en `Application.router`
-- Debe llamarse **antes** de navegar o cambiar vistas
--Solo necesita llamarse una vez durante inicialización de la app
+Orden crítico garantiza sincronización correcta.
 
-**Error común:**
-
-```typescript
-// ❌ INCORRECTO: Cambiar vista antes de inicializar router
-Application.changeViewToDefaultView(Product);  // ← Error: router es undefined
-Application.initializeRouter(router);
-
-// ✅ CORRECTO: Inicializar router primero
-Application.initializeRouter(router);
-Application.changeViewToDefaultView(Product);
-```
-
-**Nota:** Los módulos se agregan directamente a `ModuleList.value.push()` y no requieren configuración especial del router.
-
----
-
-### updateRouterFromView()
-
-```typescript
-private updateRouterFromView(
-    entityClass: typeof BaseEntity, 
-    entity: BaseEntity | null = null
-): void
-```
-
-**Propósito:** Sincroniza la URL del router con el estado de `Application.View`.
-
-**Parámetros:**
-- `entityClass: typeof BaseEntity` - Clase de la entidad actual
-- `entity: BaseEntity | null` - Instancia de entidad (null para listview)
-
-**Ubicación:** `src/models/application.ts` (línea 169)
-
-**Comportamiento:**
-
-```
-Si entity es null:
-    → Navegar a /:module (ListView)
-    
-Si entity existe:
-    → Navegar a /:module/:oid (DetailView)
-    
-Prevenir navegación duplicada:
-    → Si ya estamos en la ruta correcta, no navegar
-```
-
-**Ejemplo de uso interno:**
-
-```typescript
-// Dentro de Application.changeView()
-private setViewChanges = (
-    entityClass: typeof BaseEntity, 
-    viewType: ViewTypes, 
-    entity: BaseEntity | null = null
-) => {
-    // Actualizar Application.View
-    this.View.value = {
-        entityClass,
-        viewType,
-        entityObject: entity,
-        // ...
-    };
-    
-    // Sincronizar URL con estado
-    this.updateRouterFromView(entityClass, entity);
-    // → Si ListView: router.push('/products')
-    // → Si DetailView: router.push('/products/42')
-};
-```
-
-**Lógica interna:**
-
-```typescript
-private updateRouterFromView = (
-    entityClass: typeof BaseEntity, 
-    entity: BaseEntity | null = null
-) => {
-    if (!this.router) return;
-    
-    const moduleName = entityClass.getModuleName() || entityClass.name;
-    const moduleNameLower = moduleName.toLowerCase();
-    
-    const currentRoute = this.router.currentRoute.value;
-    
-    if (entity) {
-        // DetailView: /:module/:oid
-        const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
-        
-        if (currentRoute.path !== targetPath) {
-            this.router.push(targetPath).catch(err => {
-                // Ignorar error de navegación duplicada
-                if (err.name !== 'NavigationDuplicated') {
-                    console.error('Navigation error:', err);
-                }
-            });
-        }
-    } else {
-        // ListView: /:module
-        const targetPath = `/${moduleNameLower}`;
-        
-        if (currentRoute.path !== targetPath) {
-            this.router.push(targetPath).catch(err => {
-                if (err.name !== 'NavigationDuplicated') {
-                    console.error('Navigation error:', err);
-                }
-            });
-        }
-    }
-};
-```
-
-**Casos de uso:**
-
-```
-Usuario llama: Application.changeViewToListView(Product)
-    ↓
-Application.setViewChanges(Product, LISTVIEW, null)
-    ↓
-Application.updateRouterFromView(Product, null)
-    ↓
-Router.push('/products')  ← URL sincronizada
-
----
-
-Usuario llama: Application.changeViewToDetailView(Product, 42)
-    ↓
-Application.setViewChanges(Product, DETAILVIEW, productInstance)
-    ↓
-Application.updateRouterFromView(Product, productInstance)
-    ↓
-Router.push('/products/42')  ← URL sincronizada
-```
-
-**Prevención de navegación duplicada:**
-
-```typescript
-// Si ya estamos en /products, no navegar de nuevo
-this.router.currentRoute.value.path === '/products'
-// → Skip navigation
-// → Evita error NavigationDuplicated
-
-// Si navegamos de /products a /products/42
-this.router.currentRoute.value.path !== '/products/42'
-// → Proceder con navigation
-```
-
----
-
-## 🧪 Ejemplos de Uso
-
-### 1. Navegación Programática
-
-```typescript
-// En cualquier componente o código
-
-// Ir a lista de productos
-Application.changeViewToListView(Product);
-// → Router navega a /products
-// → DefaultListView se monta
-// → Carga Product.getElementList()
-
-// Ir a editar producto 42
-Application.changeViewToDetailView(Product, 42);
-// → Router navega a /products/42
-// → DefaultDetailView se monta
-// → Carga Product.getElement(42)
-
-// Crear nuevo producto
-Application.changeViewToDetailView(Product);
-// → Router navega a /products/new
-// → DetailView crea new Product()
-```
-
-### 2. Usar useRouter en Componentes
+### 10.2 ComponentContainerComponent Implementation
 
 ```vue
+<template>
+    <div class="component-container">
+        <component 
+            v-if="Application.View.value.component"
+            :is="Application.View.value.component"
+        />
+        <div v-else class="no-module">
+            <p>No module selected</p>
+        </div>
+    </div>
+</template>
+
 <script setup>
-import { useRouter } from 'vue-router';
+import { watch } from 'vue';
 import Application from '@/models/application';
 
-const router = useRouter();
-
-// Navegar directamente con router
-function navigateToProducts() {
-    router.push('/products');
-}
-
-// O usar Application (recomendado)
-function navigateToProducts() {
-    Application.changeViewToListView(Product);
-}
-</script>
-```
-
-### 3. Leer Params en Componente
-
-```vue
-<script setup>
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-
-// Leer ID de la ruta /products/42
-const productId = route.params.id;  // '42'
-
-// Leer query params /products?search=laptop
-const search = route.query.search;  // 'laptop'
-</script>
-```
-
-### 4. Navegación con Query Params
-
-```typescript
-// Navegar con query params
-Application.router.push({
-    path: '/products',
-    query: {
-        search: 'laptop',
-        category: 'electronics',
-        page: 2
-    }
+// Watch para logging (opcional)
+watch(() => Application.View.value.component, (newComponent) => {
+    console.log('[ComponentContainer] Rendering:', newComponent?.name);
 });
-// → URL: /products?search=laptop&category=electronics&page=2
-
-// Leer en componente
-const route = useRoute();
-const search = route.query.search;       // 'laptop'
-const category = route.query.category;   // 'electronics'
-const page = Number(route.query.page);   // 2
+</script>
 ```
 
-### 5. Redirigir Después de Guardar
+### 10.3 Testing Router Integration
 
+**Unit Test - Module Resolution**
 ```typescript
-async function saveProduct(product: Product) {
-    const saved = await product.save();
+test('beforeEach resolves module from params', async () => {
+    Application.ModuleList.value = [Products];
     
-    if (saved) {
-        // Opción 1: Volver a lista
-        Application.changeViewToListView(Product);
-        
-        // Opción 2: Ir a detalle del producto guardado
-        Application.changeViewToDetailView(Product, product.id);
-        
-        // Opción 3: Ir a otra vista
-        Application.changeViewToListView(Order);
-    }
+    await router.push('/products');
+    
+    expect(Application.View.value.entityClass).toBe(Products);
+    expect(Application.View.value.viewType).toBe(ViewTypes.LISTVIEW);
+});
+```
+
+**Integration Test - Navigation**
+```typescript
+test('navigating to /products/42 loads DetailView', async () => {
+    Application.ModuleList.value = [Products];
+    
+    await router.push('/products/42');
+    
+    expect(router.currentRoute.value.path).toBe('/products/42');
+    expect(Application.View.value.entityOid).toBe('42');
+});
+```
+
+### 10.4 Debugging Router Issues
+
+**Log Navigation**
+```typescript
+router.beforeEach((to, from, next) => {
+    console.log('[Router] Navigating:', from.path, '→', to.path);
+    // ... resto del guard
+    next();
+});
+```
+
+**Log Module Resolution**
+```typescript
+const moduleClass = Application.ModuleList.value.find(...);
+if (moduleClass) {
+    console.log('[Router] Module resolved:', moduleClass.name);
+} else {
+    console.error('[Router] Module not found:', moduleName);
 }
 ```
 
-### 6. Componentes Custom por Módulo
+## 11. Referencias Cruzadas
 
-```typescript
-// Entity con componentes custom
-import ProductListView from '@/views/ProductListView.vue';
-import ProductDetailView from '@/views/ProductDetailView.vue';
+### 11.1 Application Layer
 
-@ModuleName('Products')
-@ModuleListComponent(ProductListView)
-@ModuleDetailComponent(ProductDetailView)
-@ApiEndpoint('/api/products')
-@Persistent()
-export class Product extends BaseEntity {
-    // ... propiedades
-}
-```
+**copilot/layers/03-application/application-singleton.md**
+- Métodos: initializeRouter(), changeView(), updateRouterFromView()
+- Propiedades: router, View, ModuleList
+- Sincronización: Router push/pop sincroniza con Application.View
 
-**Funcionamiento:**
+**copilot/layers/03-application/event-bus.md**
+- Evento: view-changed (si implementado)
+- Emisión: Application.changeView() puede emitir evento
 
-1. Entidad define componentes custom con decoradores
-2. Al navegar a `/products`, el router carga `DefaultListView`
-3. `DefaultListView` lee `Product.getModuleListComponent()`
-4. Si retorna componente custom, lo usa; sino usa vista default
-5. Lo mismo para DetailView
+### 11.2 BaseEntity Core
 
-**Ventaja:** No requiere modificar rutas, solo decoradores en la entidad.
+**copilot/layers/02-base-entity/metadata-access.md**
+- Método: getModuleName() usado para module resolution
+- Método: createNewInstance() usado para /module/new routes
 
-**Nota:** El sistema de rutas genéricas soporta componentes custom sin necesidad de crear rutas adicionales. Los componentes leen `Application.View.value.entityClass` para determinar qué entidad renderizar y qué componente custom usar (si está definido).
+### 11.3 Decoradores
 
----
+**copilot/layers/01-decorators/module-name-decorator.md**
+- getModuleName() determina :module param en URL
+- ModuleName debe ser lowercase-compatible
 
-## ⚠️ Consideraciones Importantes
+### 11.4 Componentes
 
-### 1. Order de Registro Importa
+**copilot/layers/04-components/ComponentContainerComponent.md**
+- Renderizado: Todas las rutas /:module y /:module/:oid
+- Consumo: Application.View.value.component
 
-```typescript
-// ✅ CORRECTO: Configurar router antes de cambiar vistas
-Application.initializeRouter(router);
-Application.changeViewToDefaultView(Product);
+**copilot/layers/04-components/SideBarComponent.md**
+- Navegación: Click ejecuta Application.changeViewToListView()
+- Sincroniza: Router refleja cambio
 
-// ❌ INCORRECTO: Router no configurado
-Application.changeViewToDefaultView(Product);  // ← Error: router es undefined
-Application.initializeRouter(router);
-```
+### 11.5 Código Fuente
 
-### 2. Agregar Módulos a ModuleList
+**src/router/index.ts**
+- Líneas 1-113: Implementación completa
+- Líneas 8-33: Route definitions
+- Líneas 47-104: beforeEach guard
 
-```typescript
-// Los módulos se agregan directamente al array
-Application.ModuleList.value.push(Product);
+**src/models/application.ts**
+- Líneas 163-198: updateRouterFromView() implementation
+- Línea 261-263: initializeRouter() method
 
-// Agregar múltiples módulos
-Application.ModuleList.value.push(Product, Customer, Order);
+### 11.6 Contratos y Arquitectura
 
-// Evitar duplicados (opcional)
-if (!Application.ModuleList.value.includes(Product)) {
-    Application.ModuleList.value.push(Product);
-}
-```
+**copilot/00-CONTRACT.md**
+- Sección 7: Router integration con Application
+- Principio: Router refleja Application state
 
-### 3. OIDs en URL
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Router genérico con rutas dinámicas
+- Contexto: Eliminación de rutas manuales
 
-```typescript
-// URLs esperadas:
-'/products'       → ListView
-'/products/42'    → DetailView (OID "42")
-'/products/new'   → DetailView (crear nuevo)
-
-// OIDs pueden ser string o number
-// El framework los trata como string en las URLs
-```
-
-### 4. Parámetros de Ruta
-
-```typescript
-// Las rutas genéricas tienen parámetros:
-{
-    path: '/:module/:oid',
-    name: 'ModuleDetail',
-    component: DefaultDetailView
-}
-
-// Acceso a parámetros:
-    }
-}
-
-// Acceder en componente:
-const route = useRoute();
-const entityClass = route.meta.entityClass;
-```
-
----
-
-## 📚 Referencias Adicionales
-
-- `application-singleton.md` - Application.router, changeView()
-- `event-bus.md` - Eventos de navegación
-- `../02-base-entity/crud-operations.md` - save() redirige después de crear
-- `../../02-FLOW-ARCHITECTURE.md` - Diagrama flujo navegación
-- `../../tutorials/01-basic-crud.md` - Navegación en tutorial
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/router/index.ts`, `src/models/application.ts`  
-**Líneas totales:** ~150 (router), ~280 (application)
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: Navigation Flow con Router
+- Flujo: User action → Application.changeView → Router.push → beforeEach → ComponentContainer render

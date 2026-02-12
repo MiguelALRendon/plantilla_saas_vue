@@ -1,149 +1,84 @@
-# 🎨 UI Services - ApplicationUIService
+# UI Services
 
-**Referencias:**
-- `application-singleton.md` - Application Singleton
-- `event-bus.md` - Sistema de eventos
-- `../../02-FLOW-ARCHITECTURE.md` - Arquitectura de flujos
+## 1. Propósito
 
----
+Proporcionar servicio centralizado ApplicationUIService abstraído de Application singleton para gestionar operaciones UI comunes (toasts, modales, confirmaciones, loading screens, sidebar toggle, tema oscuro) mediante métodos helper que emiten eventos y actualizan estado reactivo Application.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/models/application_ui_service.ts` (líneas 1-136)  
-**Clase:** `export class ApplicationUIService`
+### 2.1 Responsabilidades
 
----
+- Mostrar toast notifications con showToast(message, type)
+- Gestionar modales con showModal(), showModalOnFunction(), closeModal()
+- Controlar confirmation menus con openConfirmationMenu(), acceptConfigurationMenu()
+- Gestionar dropdown menus con openDropdownMenu(), closeDropdownMenu()
+- Controlar loading screens con showLoadingScreen(), hideLoadingScreen()
+- Toggle sidebar con toggleSidebar(), setSidebar(state)
+- Toggle dark mode con toggleDarkMode()
+- Emitir eventos correspondientes via Application.eventBus
 
-## 🎯 Propósito
+### 2.2 Límites
 
-`ApplicationUIService` es la **capa de servicios de UI** que proporciona métodos para:
+- No renderiza UI directamente (responsabilidad de componentes)
+- No gestiona estado local de componentes UI (solo estado global Application)
+- No valida permisos de acceso a modales (responsabilidad de caller)
+- No implementa animaciones (CSS en componentes)
+- No persiste configuración UI (solo memoria)
+- No gestiona múltiples modales simultáneos (uno a la vez)
 
-1. **Toasts** - Notificaciones temporales
-2. **Modales** - Ventanas emergentes
-3. **Confirmaciones** - Diálogos de confirmación
-4. **Dropdown Menus** - Menús contextuales
-5. **Loading States** - Indicadores de carga
-6. **UI Controls** - Sidebar, dark mode, etc.
+## 3. Definiciones Clave
 
-**Concepto fundamental:**  
-> En lugar de que cada componente gestione su propia UI, centralizamos todo en ApplicationUIService que emite eventos mediante el EventBus.
+**ApplicationUIService**: Clase servicio instanciada en Application constructor, recibe ApplicationUIContext para acceso a propiedades reactivas.
 
----
+**ApplicationUIContext**: Interface definiendo propiedades reactivas de Application (modal, ToastList, confirmationMenu, dropdownMenu, AppConfiguration, eventBus).
 
-## 🏗️ Constructor
+**showToast(message, type)**: Agrega Toast a ToastList.value, ToastComponent renderiza automáticamente, auto-remove después de duration.
+
+**showModal(entity, viewType)**: Actualiza modal.value con entityClass y viewType, emite 'show-modal', ModalComponent escucha y renderiza.
+
+**openConfirmationMenu(type, title, message, onAccept)**: Actualiza confirmationMenu.value con datos, emite 'show-confirmation', ConfirmationMenuComponent renderiza diálogo.
+
+**showLoadingScreen()/hideLoadingScreen()**: Emite 'show-loading'/'hide-loading', LoadingScreenComponent escucha y muestra/oculta overlay.
+
+**toggleSidebar()**: Emite 'toggle-sidebar' sin payload, SideBarComponent invierte estado collapsed.
+
+**toggleDarkMode()**: Invierte AppConfiguration.value.isDarkMode, CSS reacciona con :root[data-theme="dark"].
+
+## 4. Descripción Técnica
+
+### 4.1 Estructura de ApplicationUIService
 
 ```typescript
+// src/models/application_ui_service.ts (líneas 9-138)
 export class ApplicationUIService {
     private app: ApplicationUIContext;
 
     constructor(app: ApplicationUIContext) {
         this.app = app;
     }
+
+    // Métodos UI...
 }
 ```
 
-**Inicialización:**
+Constructor recibe ApplicationUIContext (Application implements interface), guarda referencia en private app property.
+
+### 4.2 Toast Management
+
+**showToast(message: string, type: ToastType)**
 ```typescript
-// En Application constructor
-this.ApplicationUIService = new ApplicationUIService(this);
-```
-
-**Acceso global:**
-```typescript
-import Application from '@/models/application';
-
-Application.ApplicationUIService.showToast('Hello!', ToastType.SUCCESS);
-```
-
----
-
-## 🎨 MÉTODOS DE UI CONTROLS
-
-### toggleDarkMode()
-
-```typescript
-toggleDarkMode = () => {
-    this.app.AppConfiguration.value.isDarkMode = !this.app.AppConfiguration.value.isDarkMode;
-}
-```
-
-Alterna entre modo claro y oscuro.
-
-**Uso:**
-```typescript
-Application.ApplicationUIService.toggleDarkMode();
-```
-
-**Ubicación en código:** Línea 16
-
-### toggleSidebar()
-
-```typescript
-toggleSidebar = () => {
-    this.app.eventBus.emit('toggle-sidebar');
-}
-```
-
-Alterna la visibilidad del sidebar (abierto/cerrado).
-
-**Funcionamiento:**
-1. Emite evento `'toggle-sidebar'`
-2. `SideBarComponent` escucha el evento
-3. El sidebar se abre/cierra con animación
-
-**Uso:**
-```typescript
-// En un botón hamburguesa
-Application.ApplicationUIService.toggleSidebar();
-```
-
-**Ubicación en código:** Línea 20
-
-### setSidebar()
-
-```typescript
-setSidebar = (state: boolean) => {
-    this.app.eventBus.emit('toggle-sidebar', state);
-}
-```
-
-Establece el estado del sidebar explícitamente.
-
-**Parámetros:**
-- `state: boolean` - `true` para abrir, `false` para cerrar
-
-**Uso:**
-```typescript
-// Forzar sidebar abierto
-Application.ApplicationUIService.setSidebar(true);
-
-// Forzar sidebar cerrado
-Application.ApplicationUIService.setSidebar(false);
-```
-
-**Ubicación en código:** Línea 24
-
----
-
-## 🔔 MÉTODOS DE TOAST
-
-### showToast()
-
-```typescript
+// Líneas 30-32
 showToast = (message: string, type: ToastType) => {
     this.app.ToastList.value.push(new Toast(message, type));
 }
 ```
 
-Muestra una notificación toast temporal.
+Agrega instancia Toast a ToastList.value. Toast class (src/models/Toast.ts) contiene: message, type, id, timestamp. ToastComponent reactivamente renderiza nuevos toasts.
 
-**Parámetros:**
-- `message: string` - Texto a mostrar
-- `type: ToastType` - Tipo de toast (SUCCESS, ERROR, WARNING, INFO)
-
-**Tipos disponibles:**
+**ToastType Enum**
 ```typescript
-enum ToastType {
+// src/enums/ToastType.ts
+export enum ToastType {
     SUCCESS = 'success',
     ERROR = 'error',
     WARNING = 'warning',
@@ -151,69 +86,20 @@ enum ToastType {
 }
 ```
 
-**Uso:**
+**Usage**
 ```typescript
-// Toast de éxito
-Application.ApplicationUIService.showToast(
-    'Guardado con éxito', 
-    ToastType.SUCCESS
-);
-
-// Toast de error
-Application.ApplicationUIService.showToast(
-    'Error al procesar', 
-    ToastType.ERROR
-);
-
-// Toast de advertencia
-Application.ApplicationUIService.showToast(
-    'Cambios no guardados', 
-    ToastType.WARNING
-);
-
-// Toast informativo
-Application.ApplicationUIService.showToast(
-    'Cargando datos...', 
-    ToastType.INFO
-);
+Application.ApplicationUIService.showToast('Product saved!', ToastType.SUCCESS);
+Application.ApplicationUIService.showToast('Failed to load', ToastType.ERROR);
+Application.ApplicationUIService.showToast('Stock is low', ToastType.WARNING);
+Application.ApplicationUIService.showToast('Data loaded', ToastType.INFO);
 ```
 
-**Funcionamiento:**
-1. Crea instancia de clase `Toast`
-2. La agrega a `Application.ToastList`
-3. `ToastContainerComponent` detecta el cambio y renderiza el toast
-4. El toast se auto-elimina después de 3-5 segundos
+### 4.3 Modal Management
 
-**Ubicación en código:** Línea 28
-
-**Clase Toast:**
+**showModal(entity, viewType, customViewId?)**
 ```typescript
-// src/models/Toast.ts
-export class Toast {
-    message: string;
-    type: ToastType;
-    id: string;
-    
-    constructor(message: string, type: ToastType) {
-        this.message = message;
-        this.type = type;
-        this.id = Date.now().toString();
-    }
-}
-```
-
----
-
-## 🗨️ MÉTODOS DE MODAL
-
-### showModal()
-
-```typescript
-showModal = (
-    entity: typeof BaseEntity, 
-    viewType: ViewTypes, 
-    customViewId?: string
-) => {
+// Líneas 34-40
+showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
     this.app.modal.value.modalView = entity;
     this.app.modal.value.modalOnCloseFunction = null;
     this.app.modal.value.viewType = viewType;
@@ -222,46 +108,12 @@ showModal = (
 }
 ```
 
-Abre un modal con una entidad.
+Actualiza modal.value state, emite 'show-modal' event. ModalComponent escucha evento y renderiza modal overlay.
 
-**Parámetros:**
-- `entity: typeof BaseEntity` - Clase de entidad a mostrar
-- `viewType: ViewTypes` - Tipo de vista (LISTVIEW, DETAILVIEW)
-- `customViewId?: string` - ID de vista custom (opcional)
-
-**Uso:**
+**showModalOnFunction(entity, onCloseFunction, viewType, customViewId?)**
 ```typescript
-// Mostrar lista de productos en modal
-Application.ApplicationUIService.showModal(
-    Product, 
-    ViewTypes.LISTVIEW
-);
-
-// Mostrar detalle en modal
-Application.ApplicationUIService.showModal(
-    product.constructor as typeof BaseEntity, 
-    ViewTypes.DETAILVIEW
-);
-
-// Mostrar vista custom
-Application.ApplicationUIService.showModal(
-    Product, 
-    ViewTypes.CUSTOMVIEW, 
-    'dashboard'
-);
-```
-
-**Ubicación en código:** Línea 32
-
-### showModalOnFunction()
-
-```typescript
-showModalOnFunction = (
-    entity: typeof BaseEntity, 
-    onCloseFunction: (param: any) => void, 
-    viewType: ViewTypes, 
-    customViewId?: string
-) => {
+// Líneas 42-48
+showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param: any) => void, viewType: ViewTypes, customViewId?: string) => {
     this.app.modal.value.modalView = entity;
     this.app.modal.value.modalOnCloseFunction = onCloseFunction;
     this.app.modal.value.viewType = viewType;
@@ -270,33 +122,11 @@ showModalOnFunction = (
 }
 ```
 
-Abre un modal con callback al cerrar.
+Similar a showModal pero incluye callback onCloseFunction ejecutado cuando modal cierra.
 
-**Parámetros:**
-- `entity: typeof BaseEntity` - Clase de entidad
-- `onCloseFunction: (param: any) => void` - Función que se ejecuta al cerrar
-- `viewType: ViewTypes` - Tipo de vista
-- `customViewId?: string` - ID de vista custom
-
-**Uso típico - Lookup/Selección:**
+**closeModal()**
 ```typescript
-// Abrir modal para seleccionar un producto
-Application.ApplicationUIService.showModalOnFunction(
-    Product,
-    (selectedProduct: Product) => {
-        // Callback cuando se selecciona un producto
-        console.log('Producto seleccionado:', selectedProduct);
-        order.product = selectedProduct;
-    },
-    ViewTypes.LISTVIEW
-);
-```
-
-**Ubicación en código:** Línea 40
-
-### closeModal()
-
-```typescript
+// Líneas 50-55
 closeModal = () => {
     this.app.eventBus.emit('hide-modal');
     setTimeout(() => {
@@ -305,23 +135,11 @@ closeModal = () => {
 }
 ```
 
-Cierra el modal actual.
+Emite 'hide-modal' para animación de cierre, después de 150ms limpia modal.value.modalView.
 
-**Funcionamiento:**
-1. Emite evento `'hide-modal'`
-2. Modal se oculta con animación
-3. Después de 150ms, limpia los datos del modal
-
-**Uso:**
+**closeModalOnFunction(param)**
 ```typescript
-Application.ApplicationUIService.closeModal();
-```
-
-**Ubicación en código:** Línea 49
-
-### closeModalOnFunction()
-
-```typescript
+// Líneas 57-65
 closeModalOnFunction = (param: any) => {
     if (this.app.modal.value.modalOnCloseFunction) {
         this.app.modal.value.modalOnCloseFunction(param);
@@ -334,35 +152,14 @@ closeModalOnFunction = (param: any) => {
 }
 ```
 
-Cierra el modal ejecutando el callback con un parámetro.
+Ejecuta onCloseFunction callback con param, luego cierra modal.
 
-**Parámetros:**
-- `param: any` - Parámetro a pasar al callback
+### 4.4 Dropdown Menu Management
 
-**Uso:**
+**openDropdownMenu(position, title, component, width?)**
 ```typescript
-// En el componente del modal, cuando se selecciona un item
-const handleSelectItem = (item: Product) => {
-    Application.ApplicationUIService.closeModalOnFunction(item);
-    // Esto ejecutará el callback definido en showModalOnFunction
-};
-```
-
-**Ubicación en código:** Línea 56
-
----
-
-## 📋 MÉTODOS DE DROPDOWN MENU
-
-### openDropdownMenu()
-
-```typescript
-openDropdownMenu = (
-    position: HTMLElement, 
-    title: string, 
-    component: Component, 
-    width?: string
-) => {
+// Líneas 67-79
+openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string) => {
     const rect = position.getBoundingClientRect();
     this.app.dropdownMenu.value.position_x = `${rect.left}px`;
     this.app.dropdownMenu.value.position_y = `${rect.bottom}px`;
@@ -377,45 +174,11 @@ openDropdownMenu = (
 }
 ```
 
-Abre un menú dropdown en una posición específica.
+Calcula posición relativa a position element usando getBoundingClientRect(), actualiza dropdownMenu.value con posición y component. markRaw() previene Vue reactive wrapping de component.
 
-**Parámetros:**
-- `position: HTMLElement` - Elemento HTML de referencia para posicionamiento
-- `title: string` - Título del dropdown
-- `component: Component` - Componente Vue a renderizar dentro
-- `width?: string` - Ancho opcional (ej: '300px')
-
-**Uso:**
+**closeDropdownMenu()**
 ```typescript
-// En un template Vue
-<button ref="menuButton" @click="openMenu">Options</button>
-
-// En el script
-import OptionsMenuComponent from '@/components/OptionsMenu.vue';
-
-const openMenu = () => {
-    const button = menuButton.value; // ref del botón
-    
-    Application.ApplicationUIService.openDropdownMenu(
-        button,
-        'Opciones',
-        OptionsMenuComponent,
-        '250px'
-    );
-};
-```
-
-**Funcionamiento:**
-1. Calcula posición del elemento de referencia
-2. Posiciona el dropdown justo debajo del elemento
-3. Renderiza el componente proporcionado
-4. Muestra el dropdown con animación
-
-**Ubicación en código:** Línea 67
-
-### closeDropdownMenu()
-
-```typescript
+// Líneas 81-87
 closeDropdownMenu = () => {
     this.app.dropdownMenu.value.showing = false;
     setTimeout(() => {
@@ -425,35 +188,14 @@ closeDropdownMenu = () => {
 }
 ```
 
-Cierra el dropdown menu actual.
+Oculta dropdown inmediatamente (showing = false), limpia component/title después de 500ms (tiempo para animación).
 
-**Funcionamiento:**
-1. Oculta el dropdown con animación
-2. Después de 500ms, limpia el componente
+### 4.5 Confirmation Menu Management
 
-**Uso:**
+**openConfirmationMenu(type, title, message, onAccept?, acceptButtonText, cancelButtonText)**
 ```typescript
-// Llamar desde el componente dentro del dropdown
-Application.ApplicationUIService.closeDropdownMenu();
-```
-
-**Ubicación en código:** Línea 85
-
----
-
-## ⚠️ MÉTODOS DE CONFIRMATION MENU
-
-### openConfirmationMenu()
-
-```typescript
-openConfirmationMenu = (
-    type: confMenuType, 
-    title: string, 
-    message: string, 
-    onAccept?: () => void, 
-    acceptButtonText: string = 'Aceptar', 
-    cancelButtonText: string = 'Cancelar'
-) => {
+// Líneas 89-99
+openConfirmationMenu = (type: confMenuType, title: string, message: string, onAccept?: () => void, acceptButtonText: string = 'Aceptar', cancelButtonText: string = 'Cancelar') => {
     this.app.confirmationMenu.value = {
         type,
         title,
@@ -466,19 +208,12 @@ openConfirmationMenu = (
 }
 ```
 
-Abre un diálogo de confirmación.
+Actualiza confirmationMenu.value con todos los parámetros, emite 'show-confirmation'. ConfirmationMenuComponent escucha y renderiza diálogo.
 
-**Parámetros:**
-- `type: confMenuType` - Tipo de confirmación (INFO, WARNING, ERROR, SUCCESS)
-- `title: string` - Título del diálogo
-- `message: string` - Mensaje a mostrar
-- `onAccept?: () => void` - Callback al aceptar (opcional)
-- `acceptButtonText?: string` - Texto del botón Aceptar (default: 'Aceptar')
-- `cancelButtonText?: string` - Texto del botón Cancelar (default: 'Cancelar')
-
-**Tipos disponibles:**
+**confMenuType Enum**
 ```typescript
-enum confMenuType {
+// src/enums/conf_menu_type.ts
+export enum confMenuType {
     INFO = 'info',
     WARNING = 'warning',
     ERROR = 'error',
@@ -486,43 +221,9 @@ enum confMenuType {
 }
 ```
 
-**Uso:**
-
+**acceptConfigurationMenu()**
 ```typescript
-// Confirmación simple
-Application.ApplicationUIService.openConfirmationMenu(
-    confMenuType.WARNING,
-    'Eliminar producto',
-    '¿Estás seguro de que quieres eliminar este producto?',
-    () => {
-        // Se ejecuta si el usuario acepta
-        product.delete();
-    }
-);
-
-// Confirmación de error (solo informativo, sin callback)
-Application.ApplicationUIService.openConfirmationMenu(
-    confMenuType.ERROR,
-    'Error al guardar',
-    'No se pudo conectar con el servidor'
-);
-
-// Confirmación personalizada
-Application.ApplicationUIService.openConfirmationMenu(
-    confMenuType.INFO,
-    'Cambios detectados',
-    'Hay cambios sin guardar. ¿Deseas guardar antes de continuar?',
-    () => product.save(),
-    'Guardar',
-    'Descartar'
-);
-```
-
-**Ubicación en código:** Línea 93
-
-### acceptConfigurationMenu()
-
-```typescript
+// Líneas 101-106
 acceptConfigurationMenu = () => {
     if (this.app.confirmationMenu.value.confirmationAction) {
         this.app.confirmationMenu.value.confirmationAction();
@@ -532,19 +233,11 @@ acceptConfigurationMenu = () => {
 }
 ```
 
-Ejecuta la acción de aceptar y cierra el menú de confirmación.
+Ejecuta confirmationAction callback si exists, luego cierra confirmation menu.
 
-**Funcionamiento:**
-1. Ejecuta el callback `confirmationAction` si existe
-2. Cierra el menú de confirmación
-
-**Ubicación en código:** Línea 101
-
-**Nota:** Este método es llamado internamente por `ConfirmationDialogComponent`.
-
-### closeConfirmationMenu()
-
+**closeConfirmationMenu()**
 ```typescript
+// Líneas 108-119
 closeConfirmationMenu = () => {
     this.app.eventBus.emit('hide-confirmation');
     setTimeout(() => {
@@ -558,318 +251,837 @@ closeConfirmationMenu = () => {
 }
 ```
 
-Cierra el menú de confirmación sin ejecutar acción.
+Emite 'hide-confirmation', después de 500ms resetea confirmationMenu.value a valores default.
 
-**Funcionamiento:**
-1. Emite evento `'hide-confirmation'`
-2. Oculta con animación
-3. Después de 500ms, resetea los valores
+### 4.6 Loading Screen Management
 
-**Ubicación en código:** Línea 109
-
----
-
-## ⏳ MÉTODOS DE LOADING
-
-### showLoadingScreen()
-
+**showLoadingScreen()**
 ```typescript
+// Líneas 121-123
 showLoadingScreen = () => {
     this.app.eventBus.emit('show-loading');
 }
 ```
 
-Muestra pantalla de carga completa (full screen).
+Emite 'show-loading' event, LoadingScreenComponent escucha y muestra overlay full-screen.
 
-**Uso:**
+**hideLoadingScreen()**
 ```typescript
-// Mostrar loading durante operación larga
-Application.ApplicationUIService.showLoadingScreen();
-
-try {
-    await performHeavyOperation();
-} finally {
-    Application.ApplicationUIService.hideLoadingScreen();
-}
-```
-
-**Ubicación en código:** Línea 121
-
-### hideLoadingScreen()
-
-```typescript
+// Líneas 125-127
 hideLoadingScreen = () => {
     this.app.eventBus.emit('hide-loading');
 }
 ```
 
-Oculta la pantalla de carga completa.
+Emite 'hide-loading' event, LoadingScreenComponent oculta overlay.
 
-**Ubicación en código:** Línea 125
-
-### showLoadingMenu()
-
+**showLoadingMenu() / hideLoadingMenu()**
 ```typescript
+// Líneas 129-135
 showLoadingMenu = () => {
     this.app.eventBus.emit('show-loading-menu');
 }
-```
 
-Muestra popup de carga (más pequeño que loading screen).
-
-**Uso:**
-```typescript
-// Se usa automáticamente en save(), update(), delete()
-// Pero también se puede usar manualmente:
-
-Application.ApplicationUIService.showLoadingMenu();
-
-await quickOperation();
-
-Application.ApplicationUIService.hideLoadingMenu();
-```
-
-**Diferencia con showLoadingScreen:**
-- `showLoadingScreen()` - Full screen, bloquea toda la aplicación
-- `showLoadingMenu()` - Popup pequeño, menos intrusivo
-
-**Ubicación en código:** Línea 129
-
-### hideLoadingMenu()
-
-```typescript
 hideLoadingMenu = () => {
     this.app.eventBus.emit('hide-loading-menu');
 }
 ```
 
-Oculta el popup de carga.
+Similar a loading screen pero para loading indicator más pequeño (menu-specific).
 
-**Ubicación en código:** Línea 133
+### 4.7 Sidebar and Theme Management
 
----
-
-## 🔄 Flujo de Eventos
-
-Todos los métodos de UI Service funcionan mediante el patrón **Event Bus**:
-
-```
-ApplicationUIService
-        ↓ (emite evento)
-    EventBus (mitt)
-        ↓ (propaga)
-Componentes UI (escuchan)
-        ↓
-    Renderizan/Actúan
-```
-
-**Ejemplo completo:**
-
+**toggleSidebar()**
 ```typescript
-// 1. Service emite evento
-Application.ApplicationUIService.showToast('Success!', ToastType.SUCCESS);
-
-// 2. Internamente:
-this.app.ToastList.value.push(new Toast('Success!', ToastType.SUCCESS));
-
-// 3. ToastContainerComponent detecta el cambio en ToastList
-// (Vue reactivity)
-
-// 4. Renderiza el toast
-<ToastItemComponent 
-    v-for="toast in Application.ToastList.value"
-    :toast="toast" />
-
-// 5. Después de 3s, ToastItemComponent se auto-elimina
-```
-
----
-
-## 📦 Modelo de Datos
-
-### Modal
-
-```typescript
-// src/models/modal.ts
-export interface Modal {
-    modalView: typeof BaseEntity | null;
-    modalOnCloseFunction: ((param: any) => void) | null;
-    viewType: ViewTypes;
-    customViewId?: string;
+// Líneas 19-21
+toggleSidebar = () => {
+    this.app.eventBus.emit('toggle-sidebar');
 }
 ```
 
-### DropdownMenu
+Emite 'toggle-sidebar' sin payload, SideBarComponent invierte collapsed state.
 
+**setSidebar(state: boolean)**
 ```typescript
-// src/models/dropdown_menu.ts
-export interface DropdownMenu {
-    showing: boolean;
-    title: string;
-    component: Component | null;
-    width: string;
-    position_x: string;
-    position_y: string;
-    canvasWidth: string;
-    canvasHeight: string;
-    activeElementWidth: string;
-    activeElementHeight: string;
+// Líneas 23-25
+setSidebar = (state: boolean) => {
+    this.app.eventBus.emit('toggle-sidebar', state);
 }
 ```
 
-### ConfirmationMenu
+Emite 'toggle-sidebar' con payload boolean (true = mostrar, false = ocultar), SideBarComponent aplica state explícito.
 
+**toggleDarkMode()**
 ```typescript
-// src/models/confirmation_menu.ts
-export interface confirmationMenu {
-    type: confMenuType;
-    title: string;
-    message: string;
-    confirmationAction?: () => void;
-    acceptButtonText?: string;
-    cancelButtonText?: string;
+// Líneas 16-18
+toggleDarkMode = () => {
+    this.app.AppConfiguration.value.isDarkMode = !this.app.AppConfiguration.value.isDarkMode;
 }
 ```
 
-### Toast
+Invierte AppConfiguration.value.isDarkMode. CSS reacciona mediante computed property binding :root[data-theme="dark"].
+
+## 5. Flujo de Funcionamiento
+
+### 5.1 Flujo de Toast Notification
+
+```
+Usuario click "Save" button
+    ↓
+SaveButtonComponent ejecuta:
+await entity.save()
+    ↓
+Si success:
+Application.ApplicationUIService.showToast('Product saved!', ToastType.SUCCESS)
+    ↓
+showToast() ejecuta:
+this.app.ToastList.value.push(new Toast('Product saved!', ToastType.SUCCESS))
+    ↓
+ToastList.value cambio detectado por ToastComponent (watch)
+    ↓
+ToastComponent renderiza nuevo toast en lista
+    ↓
+Toast class tiene duration default (3000ms)
+    ↓
+setTimeout(() => { toast.visible = false }, 3000)
+    ↓
+CSS transition fade-out (300ms)
+    ↓
+setTimeout(() => { ToastList.splice(index, 1) }, 300)
+    ↓
+Toast removido de ToastList
+    ↓
+ToastComponent deja de renderizar toast
+```
+
+### 5.2 Flujo de Modal
+
+```
+Usuario click en row de tabla (quiere ver detalles en modal)
+    ↓
+ListViewComponent ejecuta:
+Application.ApplicationUIService.showModal(
+    Products,
+    ViewTypes.DETAILVIEW
+)
+    ↓
+showModal() actualiza:
+    - modal.value.modalView = Products
+    - modal.value.viewType = ViewTypes.DETAILVIEW
+    - modal.value.modalOnCloseFunction = null
+    ↓
+showModal() emite:
+Application.eventBus.emit('show-modal')
+    ↓
+ModalComponent escucha 'show-modal':
+const handleShowModal = () => {
+    modalVisible.value = true;
+};
+Application.eventBus.on('show-modal', handleShowModal);
+    ↓
+ModalComponent actualiza estado:
+modalVisible.value = true
+    ↓
+ModalComponent renderiza:
+<div v-if="modalVisible" class="modal-overlay">
+    <component :is="modal.value.modalView.getModuleDetailComponent()" />
+</div>
+    ↓
+Usuario interactúa con modal, luego click "Close"
+    ↓
+ModalComponent ejecuta:
+Application.ApplicationUIService.closeModal()
+    ↓
+closeModal() emite:
+Application.eventBus.emit('hide-modal')
+    ↓
+ModalComponent escucha 'hide-modal':
+modalVisible.value = false
+    ↓
+CSS transition fade-out (150ms)
+    ↓
+setTimeout(() => { modal.value.modalView = null }, 150)
+    ↓
+Modal limpiado y removido del DOM
+```
+
+### 5.3 Flujo de Confirmation Menu (Dirty State)
+
+```
+Usuario edita product.name en DetailView
+    ↓
+FormInput actualiza product.name = 'New Name'
+    ↓
+product.dirtyState = true
+    ↓
+Usuario intenta navegar a Orders (click en SideBar)
+    ↓
+Application.changeView() detecta dirtyState:
+if (View.entityObject?.getDirtyState()) { ... }
+    ↓
+Application.ApplicationUIService.openConfirmationMenu(
+    confMenuType.WARNING,
+    'Salir sin guardar',
+    'Tienes cambios sin guardar. ¿Estás seguro?',
+    () => { setViewChanges(...) }  // confirmationAction
+)
+    ↓
+openConfirmationMenu() actualiza:
+    - confirmationMenu.value.type = WARNING
+    - confirmationMenu.value.title = 'Salir sin guardar'
+    - confirmationMenu.value.message = '...'
+    - confirmationMenu.value.confirmationAction = callback
+    ↓
+openConfirmationMenu() emite:
+Application.eventBus.emit('show-confirmation')
+    ↓
+ConfirmationMenuComponent escucha 'show-confirmation':
+confirmationVisible.value = true
+    ↓
+ConfirmationMenuComponent renderiza diálogo con botones [Cancelar, Aceptar]
+    ↓
+OPCIÓN A: Usuario click "Cancelar"
+    → ConfirmationMenuComponent ejecuta:
+      Application.ApplicationUIService.closeConfirmationMenu()
+    → Emite 'hide-confirmation'
+    → confirmationVisible.value = false
+    → Permanece en DetailView de Products
+
+OPCIÓN B: Usuario click "Aceptar"
+    → ConfirmationMenuComponent ejecuta:
+      Application.ApplicationUIService.acceptConfigurationMenu()
+    → Ejecuta confirmationAction callback:
+      setViewChanges(Orders, ...) // Navega a Orders
+    → Luego closeConfirmationMenu()
+    → Cambios en product descartados
+    → Navega a Orders ListView
+```
+
+### 5.4 Flujo de Loading Screen
+
+```
+Usuario click "Refresh" button en ListView
+    ↓
+RefreshButtonComponent ejecuta:
+Application.ApplicationUIService.showLoadingScreen()
+    ↓
+showLoadingScreen() emite:
+Application.eventBus.emit('show-loading')
+    ↓
+LoadingScreenComponent escucha 'show-loading':
+loadingVisible.value = true
+    ↓
+LoadingScreenComponent renderiza:
+<div v-if="loadingVisible" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+</div>
+    ↓
+RefreshButtonComponent ejecuta operación larga:
+try {
+    const products = await Products.getElementList();
+    updateListView(products);
+} finally {
+    Application.ApplicationUIService.hideLoadingScreen();
+}
+    ↓
+hideLoadingScreen() emite:
+Application.eventBus.emit('hide-loading')
+    ↓
+LoadingScreenComponent escucha 'hide-loading':
+loadingVisible.value = false
+    ↓
+LoadingScreenComponent oculta overlay con fade transition
+```
+
+### 5.5 Flujo de Toggle Dark Mode
+
+```
+Usuario click "Dark Mode" toggle en TopBar
+    ↓
+DarkModeButtonComponent ejecuta:
+Application.ApplicationUIService.toggleDarkMode()
+    ↓
+toggleDarkMode() ejecuta:
+AppConfiguration.value.isDarkMode = !AppConfiguration.value.isDarkMode
+    ↓
+Si antes era false, ahora true (activar dark mode)
+    ↓
+App.vue tiene computed:
+const theme = computed(() => 
+    Application.AppConfiguration.value.isDarkMode ? 'dark' : 'light'
+)
+    ↓
+Template binding:
+<div :data-theme="theme">
+    ↓
+HTML actualizado:
+<div data-theme="dark">
+    ↓
+CSS reacciona:
+:root[data-theme="dark"] {
+    --background-color: #1a1a1a;
+    --text-color: #ffffff;
+    ...
+}
+    ↓
+Todo el UI re-renderiza con colores dark
+```
+
+## 6. Reglas Obligatorias
+
+### 6.1 Instanciación y Acceso
+
+1. ApplicationUIService instanciado EN Application constructor
+2. SIEMPRE acceder via Application.ApplicationUIService (no crear instancias)
+3. Constructor recibe ApplicationUIContext (Application implements interface)
+4. Private app property guarda referencia a Application context
+5. Métodos usan this.app para acceder propiedades reactivas
+
+### 6.2 Toast Management
+
+6. Usar ToastType enum para type parameter (SUCCESS, ERROR, WARNING, INFO)
+7. Toast auto-remove después de duration (default 3000ms en Toast class)
+8. No remover toasts manualmente (Toast class maneja lifecycle)
+9. showToast() agrega a ToastList, no reemplaza
+10. ToastComponent renderiza múltiples toasts simultáneos (stack)
+
+### 6.3 Modal Management
+
+11. Solo un modal activo a la vez (new modal reemplaza anterior)
+12. Usar showModal() para modales simples sin callback
+13. Usar showModalOnFunction() para modales con callback on close
+14. closeModal() delay 150ms para animación fade-out CSS
+15. closeModalOnFunction() ejecuta callback ANTES de cerrar
+
+### 6.4 Confirmation Menu
+
+16. Usar confMenuType enum (INFO, WARNING, ERROR, SUCCESS)
+17. confirmationAction callback OPCIONAL (puede ser undefined)
+18. acceptConfigurationMenu() DEBE verificar if (confirmationAction) antes de ejecutar
+19. acceptButtonText y cancelButtonText default ('Aceptar', 'Cancelar')
+20. closeConfirmationMenu() delay 500ms para animación
+
+### 6.5 Loading Screens
+
+21. SIEMPRE usar try/finally para garantizar hideLoadingScreen()
+22. showLoadingScreen() antes de operación larga
+23. hideLoadingScreen() en finally block (ejecuta incluso si error)
+24. showLoadingMenu() para loading indicators pequeños (no full-screen)
+25. No anidar múltiples loading screens (conflicto visual)
+
+### 6.6 Event Emission
+
+26. Todos los métodos que emiten eventos DEBEN usar Application.eventBus
+27. Event names deben coincidir con Events type definition
+28. Componentes UI escuchan eventos con on() en onMounted()
+29. Componentes DEBEN off() en onBeforeUnmount() (memory leak prevention)
+30. Delays (setTimeout) necesarios para animaciones CSS sync
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Instanciación
+
+1. PROHIBIDO `new ApplicationUIService()` manual (instanciado en Application)
+2. PROHIBIDO múltiples instancias de ApplicationUIService
+3. PROHIBIDO modificar ApplicationUIService.prototype
+4. PROHIBIDO extender ApplicationUIService con herencia
+5. PROHIBIDO acceder this.app fuera de ApplicationUIService methods
+
+### 7.2 Prohibiciones de Toasts
+
+6. PROHIBIDO remover toasts manualmente de ToastList (auto-remove)
+7. PROHIBIDO modificar Toast instance después de push a ToastList
+8. PROHIBIDO showToast() sin ToastType (no default)
+9. PROHIBIDO toast messages vacíos (message = '')
+10. PROHIBIDO más de 5 toasts simultáneos (UX pobre)
+
+### 7.3 Prohibiciones de Modales
+
+11. PROHIBIDO mostrar múltiples modales simultáneamente
+12. PROHIBIDO closeModal() sin delay (animación se corta)
+13. PROHIBIDO modificar modal.value directamente (usar showModal/closeModal)
+14. PROHIBIDO modales anidados (modal dentro de modal)
+15. PROHIBIDO showModal() sin entityClass válido
+
+### 7.4 Prohibiciones de Confirmation Menus
+
+16. PROHIBIDO openConfirmationMenu() sin title o message
+17. PROHIBIDO confirmationAction con lógica síncrona bloqueante (>100ms)
+18. PROHIBIDO acceptConfigurationMenu() sin verificar if (confirmationAction)
+19. PROHIBIDO modificar confirmationMenu.value durante animación
+20. PROHIBIDO confirmation menus para operaciones reversibles (usar toasts)
+
+### 7.5 Prohibiciones de Loading Screens
+
+21. PROHIBIDO showLoadingScreen() sin correspondiente hideLoadingScreen()
+22. PROHIBIDO hideLoadingScreen() sin try/finally
+23. PROHIBIDO loading screens para operaciones <500ms (flicker visual)
+24. PROHIBIDO múltiples showLoadingScreen() sin hide entre medio
+25. PROHIBIDO loading screens sin feedback al usuario (mensaje "Loading...")
+
+### 7.6 Prohibiciones de Event Emission
+
+26. PROHIBIDO emitir eventos no definidos en Events type
+27. PROHIBIDO emitir eventos con payload incorrecto
+28. PROHIBIDO emitir eventos desde computed properties (side effects)
+29. PROHIBIDO emitir eventos desde render functions
+30. PROHIBIDO asumir orden de ejecución de listeners (async)
+
+## 8. Dependencias
+
+### 8.1 Dependencia de Application
+
+**Application Singleton (@/models/application)**
+- Relación: ApplicationUIService instanciado en Application constructor
+- Acceso: Application.ApplicationUIService
+- Constructor: `new ApplicationUIService(this)` donde this = ApplicationClass
+- Crítico: Sí, ApplicationUIService requiere ApplicationUIContext
+
+### 8.2 Dependencia de ApplicationUIContext
+
+**ApplicationUIContext Interface (@/models/application_ui_context)**
+- Contenido: Interface definiendo propiedades reactivas (modal, ToastList, confirmationMenu, dropdownMenu, AppConfiguration, eventBus)
+- Implementado por: ApplicationClass
+- Constructor param: `constructor(app: ApplicationUIContext)`
+- Crítico: Sí, tipado de this.app
+
+### 8.3 Dependencia de Models
+
+**Modal (@/models/modal)**
+- Propiedades: modalView, modalOnCloseFunction, viewType, customViewId
+- Uso: this.app.modal.value actualizado por showModal()
+
+**Toast (@/models/Toast)**
+- Constructor: `new Toast(message: string, type: ToastType)`
+- Propiedades: message, type, id, timestamp, duration
+- Uso: Agregado a ToastList.value
+
+**DropdownMenu (@/models/dropdown_menu)**
+- Propiedades: showing, title, component, width, position_x, position_y, canvasWidth, canvasHeight, activeElementWidth, activeElementHeight
+- Uso: Actualizado por openDropdownMenu()
+
+**confirmationMenu (@/models/confirmation_menu)**
+- Propiedades: type, title, message, confirmationAction, acceptButtonText, cancelButtonText
+- Uso: Actualizado por openConfirmationMenu()
+
+### 8.4 Dependencia de Enums
+
+**ToastType (@/enums/ToastType)**
+- Valores: SUCCESS, ERROR, WARNING, INFO
+- Uso: Parameter type en showToast()
+
+**confMenuType (@/enums/conf_menu_type)**
+- Valores: INFO, WARNING, ERROR, SUCCESS
+- Uso: Parameter type en openConfirmationMenu()
+
+**ViewTypes (@/enums/view_type)**
+- Valores: LISTVIEW, DETAILVIEW, DEFAULTVIEW
+- Uso: Parameter viewType en showModal()
+
+### 8.5 Dependencia de Componentes UI
+
+**ToastComponent (@/components/ToastComponent)**
+- Escucha: ToastList.value cambios
+- Renderiza: Stack de toasts basado en ToastList
+
+**ModalComponent (@/components/ModalComponent)**
+- Escucha: 'show-modal', 'hide-modal' eventos
+- Renderiza: Modal overlay con component dinámico
+
+**ConfirmationMenuComponent (@/components/ConfirmationMenuComponent)**
+- Escucha: 'show-confirmation', 'hide-confirmation' eventos
+- Renderiza: Diálogo confirmación con botones
+
+**LoadingScreenComponent (@/components/LoadingScreenComponent)**
+- Escucha: 'show-loading', 'hide-loading' eventos
+- Renderiza: Full-screen loading overlay
+
+**SideBarComponent (@/components/SideBarComponent)**
+- Escucha: 'toggle-sidebar' evento
+- Acción: Invierte collapsed state
+
+### 8.6 Dependencia de Event Bus
+
+**mitt (mitt)**
+- API: emit(), on(), off()
+- Acceso: this.app.eventBus
+- Eventos: show-modal, hide-modal, show-confirmation, hide-confirmation, show-loading, hide-loading, toggle-sidebar
+
+## 9. Relaciones
+
+### 9.1 Relación con Application
+
+**Instanciación**
+```typescript
+// Application constructor (línea 121)
+this.ApplicationUIService = new ApplicationUIService(this);
+```
+
+ApplicationUIService recibe Application instance como context.
+
+**Acceso**
+```typescript
+Application.ApplicationUIService.showToast('Message', ToastType.SUCCESS);
+```
+
+### 9.2 Relación con Event Bus
+
+**Event Emission Pattern**
+```typescript
+showModal(...) {
+    // 1. Actualizar state
+    this.app.modal.value = {...};
+    
+    // 2. Emitir evento
+    this.app.eventBus.emit('show-modal');
+}
+```
+
+State update seguido de event emission, componentes escuchan y reaccionan.
+
+### 9.3 Relación con Toast System
+
+**Toast Creation**
+```typescript
+showToast(message, type) {
+    this.app.ToastList.value.push(new Toast(message, type));
+}
+```
+
+Toast class maneja lifecycle (auto-remove después de duration).
+
+**ToastComponent Consumption**
+```vue
+<div v-for="toast in Application.ToastList.value" :key="toast.id">
+    <div :class="`toast toast-${toast.type}`">
+        {{ toast.message }}
+    </div>
+</div>
+```
+
+### 9.4 Relación con Modal System
+
+**Modal Flow**
+```typescript
+// Service
+showModal(Products, ViewTypes.DETAILVIEW)
+    → modal.value.modalView = Products
+    → emit('show-modal')
+
+// Component
+<div v-if="modalVisible">
+    <component :is="modal.value.modalView.getModuleDetailComponent()" />
+</div>
+```
+
+### 9.5 Relación con Confirmation System
+
+**Confirmation with Callback**
+```typescript
+openConfirmationMenu(
+    confMenuType.WARNING,
+    'Delete Product',
+    'Are you sure?',
+    async () => {
+        await product.delete();
+        Application.changeViewToListView(Products);
+    }
+)
+```
+
+Callback ejecutado only si usuario acepta.
+
+### 9.6 Relación con Loading System
+
+**Try/Finally Pattern**
+```typescript
+async refreshData() {
+    try {
+        Application.ApplicationUIService.showLoadingScreen();
+        const data = await fetchData();
+        updateUI(data);
+    } finally {
+        Application.ApplicationUIService.hideLoadingScreen();
+    }
+}
+```
+
+Finally garantiza hide incluso si error.
+
+## 10. Notas de Implementación
+
+### 10.1 Toast with Auto-Remove
 
 ```typescript
-// src/models/Toast.ts
+// Toast class (src/models/Toast.ts)
 export class Toast {
+    id: number;
     message: string;
     type: ToastType;
-    id: string;
+    timestamp: number;
+    duration: number;
     
-    constructor(message: string, type: ToastType) {
+    constructor(message: string, type: ToastType, duration: number = 3000) {
+        this.id = Date.now() + Math.random();
         this.message = message;
         this.type = type;
-        this.id = Date.now().toString();
-    }
-}
-```
-
----
-
-## 🎓 Ejemplos Prácticos
-
-### Ejemplo 1: Flujo de Guardado con UI
-
-```typescript
-export class Product extends BaseEntity {
-    override async save(): Promise<this> {
-        // 1. Mostrar loading
-        Application.ApplicationUIService.showLoadingMenu();
+        this.timestamp = Date.now();
+        this.duration = duration;
         
-        try {
-            // 2. Guardar
-            await super.save();
-            
-            // 3. Ocultar loading (ya lo hace BaseEntity)
-            // 4. Mostrar toast de éxito (ya lo hace BaseEntity)
-            
-        } catch (error) {
-            // 5. Ocultar loading
-            Application.ApplicationUIService.hideLoadingMenu();
-            
-            // 6. Mostrar error
-            Application.ApplicationUIService.openConfirmationMenu(
-                confMenuType.ERROR,
-                'Error',
-                error.message
-            );
-        }
-        
-        return this;
-    }
-}
-```
-
-### Ejemplo 2: Confirmación antes de Eliminar
-
-```typescript
-const deleteProduct = (product: Product) => {
-    Application.ApplicationUIService.openConfirmationMenu(
-        confMenuType.WARNING,
-        'Eliminar Producto',
-        `¿Estás seguro de eliminar "${product.name}"? Esta acción no se puede deshacer.`,
-        async () => {
-            try {
-                await product.delete();
-                Application.ApplicationUIService.showToast(
-                    'Producto eliminado correctamente',
-                    ToastType.SUCCESS
-                );
-                Application.changeViewToListView(Product);
-            } catch (error) {
-                // El error ya se maneja en BaseEntity.delete()
+        // Auto-remove después de duration
+        setTimeout(() => {
+            const index = Application.ToastList.value.findIndex(t => t.id === this.id);
+            if (index > -1) {
+                Application.ToastList.value.splice(index, 1);
             }
-        },
-        'Eliminar',
-        'Cancelar'
-    );
-};
+        }, duration);
+    }
+}
 ```
 
-### Ejemplo 3: Modal de Selección (Lookup)
+### 10.2 Modal with onCloseFunction Pattern
 
 ```typescript
-// En un formulario de Order
-const selectProduct = () => {
+// Ejemplo: Selector de producto en modal
+selectProduct() {
     Application.ApplicationUIService.showModalOnFunction(
-        Product,
-        (selectedProduct: Product) => {
-            // Callback al seleccionar producto
-            order.product = selectedProduct;
-            order.productId = selectedProduct.id;
-            
-            Application.ApplicationUIService.showToast(
-                `Producto "${selectedProduct.name}" seleccionado`,
-                ToastType.INFO
-            );
+        Products,
+        (selectedProduct) => {
+            // Callback ejecutado cuando modal cierra con resultado
+            this.order.productId = selectedProduct.id;
+            this.order.productName = selectedProduct.name;
         },
         ViewTypes.LISTVIEW
     );
-};
+}
+
+// En ListView dentro del modal, usuario click en producto
+selectRow(product) {
+    Application.ApplicationUIService.closeModalOnFunction(product);
+    // closeModalOnFunction ejecuta callback pasando product
+}
 ```
 
-### Ejemplo 4: Dropdown Menu Contextual
+### 10.3 Confirmation Menu with Dirty State
+
+```typescript
+// En Application.changeView()
+changeView(entityClass, component, viewType, entity) {
+    if (this.View.value.entityObject?.getDirtyState()) {
+        this.ApplicationUIService.openConfirmationMenu(
+            confMenuType.WARNING,
+            'Unsaved Changes',
+            'You have unsaved changes. Discard them?',
+            () => {
+                // Usuario confirmó, continuar navegación
+                this.setViewChanges(entityClass, component, viewType, entity);
+            },
+            'Discard',
+            'Cancel'
+        );
+        return; // No continua navegación hasta confirmación
+    }
+    
+    // Sin cambios, navegar directamente
+    this.setViewChanges(entityClass, component, viewType, entity);
+}
+```
+
+### 10.4 Dropdown Menu Positioning
+
+```typescript
+// Ejemplo: Dropdown actions en ListView row
+openActionsDropdown(event: MouseEvent) {
+    const buttonElement = event.target as HTMLElement;
+    
+    Application.ApplicationUIService.openDropdownMenu(
+        buttonElement,
+        'Actions',
+        ActionsMenuComponent,
+        '200px'
+    );
+}
+
+// ActionsMenuComponent renderiza opciones
+<ul class="actions-menu">
+    <li @click="edit">Edit</li>
+    <li @click="duplicate">Duplicate</li>
+    <li @click="delete">Delete</li>
+</ul>
+```
+
+### 10.5 Loading Screen with Error Handling
+
+```typescript
+async loadData() {
+    try {
+        Application.ApplicationUIService.showLoadingScreen();
+        
+        const products = await Products.getElementList();
+        this.products = products;
+        
+        Application.ApplicationUIService.showToast(
+            'Data loaded successfully',
+            ToastType.SUCCESS
+        );
+    } catch (error) {
+        console.error('Failed to load data:', error);
+        
+        Application.ApplicationUIService.showToast(
+            'Failed to load data',
+            ToastType.ERROR
+        );
+    } finally {
+        // CRÍTICO: Siempre ocultar loading, incluso si error
+        Application.ApplicationUIService.hideLoadingScreen();
+    }
+}
+```
+
+### 10.6 Dark Mode with CSS Variables
 
 ```vue
+<!-- App.vue -->
 <template>
-    <button ref="optionsButton" @click="showOptions">
-        ⋮ Opciones
-    </button>
+    <div :data-theme="theme">
+        <TopBarComponent />
+        <SideBarComponent />
+        <ComponentContainerComponent />
+    </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed } from 'vue';
 import Application from '@/models/application';
-import ProductOptionsMenu from './ProductOptionsMenu.vue';
 
-const optionsButton = ref<HTMLElement>();
-
-const showOptions = () => {
-    Application.ApplicationUIService.openDropdownMenu(
-        optionsButton.value!,
-        'Opciones del Producto',
-        ProductOptionsMenu,
-        '200px'
-    );
-};
+const theme = computed(() => 
+    Application.AppConfiguration.value.isDarkMode ? 'dark' : 'light'
+);
 </script>
+
+<style>
+:root {
+    --background-color: #ffffff;
+    --text-color: #000000;
+}
+
+[data-theme="dark"] {
+    --background-color: #1a1a1a;
+    --text-color: #ffffff;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+</style>
 ```
 
----
+### 10.7 Testing ApplicationUIService
 
-## 🔗 Referencias
+**Unit Test - showToast**
+```typescript
+test('showToast adds toast to ToastList', () => {
+    const initialCount = Application.ToastList.value.length;
+    
+    Application.ApplicationUIService.showToast('Test message', ToastType.SUCCESS);
+    
+    expect(Application.ToastList.value.length).toBe(initialCount + 1);
+    expect(Application.ToastList.value[initialCount].message).toBe('Test message');
+    expect(Application.ToastList.value[initialCount].type).toBe(ToastType.SUCCESS);
+});
+```
 
-- **Application Singleton:** `application-singleton.md`
-- **Event Bus:** `event-bus.md`
-- **Arquitectura:** `../../02-FLOW-ARCHITECTURE.md`
-- **Componentes UI:** `../../layers/04-components/`
+**Integration Test - Modal**
+```typescript
+test('showModal emits show-modal event', () => {
+    const emitSpy = vi.spyOn(Application.eventBus, 'emit');
+    
+    Application.ApplicationUIService.showModal(Products, ViewTypes.DETAILVIEW);
+    
+    expect(emitSpy).toHaveBeenCalledWith('show-modal');
+    expect(Application.modal.value.modalView).toBe(Products);
+});
+```
 
----
+## 11. Referencias Cruzadas
 
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo
+### 11.1 Application Layer
+
+**copilot/layers/03-application/application-singleton.md**
+- Instanciación: ApplicationUIService creado en Application constructor
+- Acceso: Application.ApplicationUIService
+- Línea: 121 (this.ApplicationUIService = new ApplicationUIService(this))
+
+**copilot/layers/03-application/event-bus.md**
+- Eventos emitidos: show-modal, hide-modal, show-confirmation, hide-confirmation, show-loading, hide-loading, toggle-sidebar
+- Patrón: ApplicationUIService emite, componentes escuchan
+
+### 11.2 Componentes UI
+
+**copilot/layers/04-components/ToastComponents.md**
+- Escucha: ToastList.value cambios
+- Renderiza: Toasts agregados por showToast()
+
+**copilot/layers/04-components/modal-components.md**
+- Escucha: 'show-modal', 'hide-modal' eventos
+- Renderiza: Modal basado en modal.value
+
+**copilot/layers/04-components/LoadingScreenComponent.md**
+- Escucha: 'show-loading', 'hide-loading' eventos
+- Renderiza: Full-screen overlay
+
+**copilot/layers/04-components/SideBarComponent.md**
+- Escucha: 'toggle-sidebar' evento
+- Acción: Expande/colapsa sidebar
+
+### 11.3 Models y Types
+
+**src/models/application_ui_service.ts**
+- Líneas 1-138: Implementación completa ApplicationUIService
+
+**src/models/application_ui_context.ts**
+- Interface: ApplicationUIContext definiendo propiedades reactivas
+
+**src/models/Toast.ts**
+- Class: Toast con auto-remove logic
+
+**src/models/modal.ts**
+- Interface: Modal con modalView, viewType, onCloseFunction
+
+**src/models/confirmation_menu.ts**
+- Interface: confirmationMenu con type, title, message, confirmationAction
+
+**src/models/dropdown_menu.ts**
+- Interface: DropdownMenu con positioning properties
+
+### 11.4 Enums
+
+**src/enums/ToastType.ts**
+- Values: SUCCESS, ERROR, WARNING, INFO
+
+**src/enums/conf_menu_type.ts**
+- Values: INFO, WARNING, ERROR, SUCCESS
+
+**src/enums/view_type.ts**
+- Values: LISTVIEW, DETAILVIEW, DEFAULTVIEW
+
+### 11.5 Types
+
+**src/types/events.ts**
+- Event definitions: show-modal, hide-modal, show-confirmation, hide-confirmation, show-loading, hide-loading, toggle-sidebar
+
+### 11.6 Contratos y Arquitectura
+
+**copilot/00-CONTRACT.md**
+- Sección 9: ApplicationUIService como abstracción de UI operations
+- Principio: Centralizar lógica UI en servicio compartido
+
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Application Layer con UIService
+- Contexto: Toasts, modales, confirmaciones coordinados
+
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: UI Service Event Flow
+- Flujo: Service emit event → Component listen → UI update

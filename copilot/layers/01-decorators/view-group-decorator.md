@@ -1,748 +1,893 @@
-# 📐 ViewGroup Decorator
+# ViewGroup Decorator
 
-**Referencias:**
-- `view-group-row-decorator.md` - ViewGroupRow
-- `property-index-decorator.md` - PropertyIndex
-- `property-name-decorator.md` - PropertyName
-- `../04-components/detail-view-table.md` - Tabla de detalles
+## 1. Propósito
 
----
+Agrupar propiedades relacionadas de entidades en secciones visuales organizadas dentro de formularios generados automáticamente, permitiendo categorización lógica de campos mediante nombres de grupo que estructuran interfaces de usuario complejas.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/view_group_decorator.ts`
+### 2.1 Responsabilidades
 
----
+- Asignar nombre de grupo visual a propiedades específicas de entidad
+- Permitir agrupación lógica de campos relacionados en formularios
+- Proporcionar método getViewGroups() para acceso a metadata de agrupación
+- Facilitar renderizado de secciones colapsables o tabs en interfaces
+- Habilitar organización semántica de formularios con múltiples categorías de datos
+- Soportar agrupación combinada con @PropertyIndex para ordenamiento dentro de grupos
 
-## 🎯 Propósito
+### 2.2 Límites
 
-Organiza propiedades en **grupos lógicos** en la vista de detalle, creando secciones colapsables que agrupan campos relacionados. Mejora la organización visual y UX cuando una entidad tiene muchas propiedades.
+- No controla el layout visual específico de grupos (responsabilidad de componentes)
+- No determina si grupos son tabs, accordions, o fieldsets (decisión de UI)
+- No ordena grupos entre sí (responsabilidad de componente renderizador)
+- No valida que groupName sea único o predefinido
+- No afecta serialización, persistencia ni validación de propiedades
+- No crea relaciones funcionales entre propiedades del mismo grupo
 
-Sin ViewGroup: todos los campos aparecen en una lista plana.  
-Con ViewGroup: campos organizados en pestañas o secciones temáticas (Info General, Dirección, Contacto, etc.).
+## 3. Definiciones Clave
 
----
+**ViewGroup**: Nombre de categoría visual que agrupa propiedades relacionadas en sección específica de formulario.
 
-## 🔑 Símbolo de Metadatos
+**GroupName**: String identificador de grupo usado para categorización de propiedades, típicamente descriptivo (Personal Information, Address, Payment Details).
+
+**ViewGroup Map**: Estructura Record<string, string> que mapea nombres de propiedades a sus groupNames asignados.
+
+**Ungrouped Properties**: Propiedades sin decorador @ViewGroup que se renderizan en sección default o primera del formulario.
+
+**Group-Based Layout**: Patrón de UI donde formulario se divide en secciones etiquetadas, cada sección conteniendo propiedades del mismo ViewGroup.
+
+**Collapsible Groups**: Implementación común donde cada ViewGroup es sección expandible/colapsable independientemente.
+
+## 4. Descripción Técnica
+
+### 4.1 Implementación del Decorador
 
 ```typescript
 export const VIEW_GROUP_KEY = Symbol('view_group');
-```
 
-### Almacenamiento
-
-```typescript
-proto[VIEW_GROUP_KEY] = {
-    'firstName': 'Personal Information',
-    'lastName': 'Personal Information',
-    'email': 'Contact',
-    'phone': 'Contact',
-    'street': 'Address',
-    'city': 'Address',
-    'zipCode': 'Address'
+export function ViewGroup(groupName: string): PropertyDecorator {
+    return function (target: any, propertyKey: string | symbol) {
+        const proto = target.constructor.prototype;
+        if (!proto[VIEW_GROUP_KEY]) {
+            proto[VIEW_GROUP_KEY] = {};
+        }
+        proto[VIEW_GROUP_KEY][propertyKey] = groupName;
+    };
 }
 ```
 
----
+Decorador simple que almacena string de groupName en prototype usando Symbol-based key. No valida formato ni existencia de groupName, acepta cualquier string proporcionado.
 
-## 💻 Firma del Decorador
+### 4.2 Método de Acceso en BaseEntity
 
 ```typescript
-function ViewGroup(groupName: string): PropertyDecorator
+public getViewGroups(): Record<string, string> {
+    const proto = (this.constructor as any).prototype;
+    return proto[VIEW_GROUP_KEY] || {};
+}
 ```
 
-### Tipos
+Método que recupera mapa completo de ViewGroups desde prototype. Retorna objeto vacío cuando no existen configurados. No incluye propiedades sin grupo (aplicación debe manejar caso default).
 
-```typescript
-export type ViewGroupName = string;
+### 4.3 Almacenamiento de Metadata
+
+El metadata se almacena en:
+- Ubicación: Constructor.prototype[VIEW_GROUP_KEY]
+- Estructura: Record<string | symbol, string>
+- Vida útil: Permanente durante lifecycle de aplicación
+- Herencia: Compartida entre instancias de clase
+- Serialización: No incluida en toDictionary() ni persistencia
+
+## 5. Flujo de Funcionamiento
+
+### 5.1 Fase de Declaración
+
+```
+Developer diseña entidad con múltiples categorías de datos
+    ↓
+Aplica @ViewGroup("GroupName") a propiedades relacionadas
+    ↓
+TypeScript ejecuta decoradores en definición de clase
+    ↓
+ViewGroup() almacena {propertyKey: "GroupName"} en prototype
+    ↓
+Metadata disponible para renderizado de formulario
 ```
 
----
+### 5.2 Fase de Renderizado de Formulario
 
-## 📖 Uso Básico
+```
+DetailView component necesita renderizar formulario
+    ↓
+Llama entity.getViewGroups() para obtener mapa de grupos
+    ↓
+Obtiene lista de propiedades vía entity.getKeys()
+    ↓
+Agrupa propiedades por ViewGroup:
+    Map<GroupName, PropertyKey[]>
+    ↓
+Para cada grupo, renderiza sección con título GroupName
+    ↓
+Dentro de cada sección, renderiza FormInputs de propiedades del grupo
+    ↓
+Propiedades sin grupo se renderizan en sección "General" o primera
+```
 
-### Agrupar Campos Relacionados
+### 5.3 Algoritmo de Agrupación en UI
 
 ```typescript
-export class Customer extends BaseEntity {
-    // Grupo: Información Personal
+function groupProperties(entity: BaseEntity): Map<string, string[]> {
+    const viewGroups = entity.getViewGroups();
+    const allKeys = entity.getKeys();
+    const grouped = new Map<string, string[]>();
+    
+    // Inicializar grupo default
+    grouped.set('General', []);
+    
+    for (const key of allKeys) {
+        const groupName = viewGroups[key] || 'General';
+        
+        if (!grouped.has(groupName)) {
+            grouped.set(groupName, []);
+        }
+        
+        grouped.get(groupName)!.push(key);
+    }
+    
+    // Eliminar grupo General si está vacío
+    if (grouped.get('General')!.length === 0) {
+        grouped.delete('General');
+    }
+    
+    return grouped;
+}
+```
+
+### 5.4 Ejemplo de Uso Completo
+
+```typescript
+class Employee extends BaseEntity {
+    // Personal Information Group
+    @ViewGroup("Personal Information")
     @PropertyIndex(1)
-    @PropertyName('First Name', String)
-    @ViewGroup('Personal Information')
-    @Required(true)
-    firstName!: string;
+    firstName: string;
     
+    @ViewGroup("Personal Information")
     @PropertyIndex(2)
-    @PropertyName('Last Name', String)
-    @ViewGroup('Personal Information')
-    @Required(true)
-    lastName!: string;
+    lastName: string;
     
+    @ViewGroup("Personal Information")
     @PropertyIndex(3)
-    @PropertyName('Date of Birth', Date)
-    @ViewGroup('Personal Information')
-    dateOfBirth?: Date;
+    email: string;
     
-    // Grupo: Contacto
-    @PropertyIndex(4)
-    @PropertyName('Email', String)
-    @ViewGroup('Contact')
-    @Required(true)
-    email!: string;
+    // Employment Details Group
+    @ViewGroup("Employment Details")
+    @PropertyIndex(10)
+    position: string;
     
-    @PropertyIndex(5)
-    @PropertyName('Phone', String)
-    @ViewGroup('Contact')
-    phone?: string;
+    @ViewGroup("Employment Details")
+    @PropertyIndex(11)
+    department: string;
     
-    // Grupo: Dirección
-    @PropertyIndex(6)
-    @PropertyName('Street', String)
-    @ViewGroup('Address')
-    street?: string;
+    @ViewGroup("Employment Details")
+    @PropertyIndex(12)
+    salary: number;
     
-    @PropertyIndex(7)
-    @PropertyName('City', String)
-    @ViewGroup('Address')
-    city?: string;
-    
-    @PropertyIndex(8)
-    @PropertyName('Postal Code', String)
-    @ViewGroup('Address')
-    postalCode?: string;
+    // Propiedades sin grupo (renderizadas en "General")
+    id: number;
+    createdAt: Date;
 }
+
+const employee = new Employee();
+const groups = employee.getViewGroups();
+// {
+//   firstName: "Personal Information",
+//   lastName: "Personal Information",
+//   email: "Personal Information",
+//   position: "Employment Details",
+//   department: "Employment Details",
+//   salary: "Employment Details"
+// }
 ```
 
-### Resultado en UI
-
+Resultado en UI:
 ```
-╔═══════════════════════════════════════════════════╗
-║                    Customer Details               ║
-╠═══════════════════════════════════════════════════╣
-║                                                   ║
-║  📋 Personal Information  [-]                     ║
-║  ┌─────────────────────────────────────────────┐ ║
-║  │ First Name:    [John                    ]  │ ║
-║  │ Last Name:     [Doe                     ]  │ ║
-║  │ Date of Birth: [1990-05-15              ]  │ ║
-║  └─────────────────────────────────────────────┘ ║
-║                                                   ║
-║  📞 Contact  [-]                                  ║
-║  ┌─────────────────────────────────────────────┐ ║
-║  │ Email: [john.doe@example.com            ]  │ ║
-║  │ Phone: [+1-555-123-4567                 ]  │ ║
-║  └─────────────────────────────────────────────┘ ║
-║                                                   ║
-║  🏠 Address  [-]                                  ║
-║  ┌─────────────────────────────────────────────┐ ║
-║  │ Street:      [123 Main St               ]  │ ║
-║  │ City:        [New York                  ]  │ ║
-║  │ Postal Code: [10001                     ]  │ ║
-║  └─────────────────────────────────────────────┘ ║
-║                                                   ║
-╚═══════════════════════════════════════════════════╝
+[Personal Information]
+  - First Name: [____]
+  - Last Name:  [____]
+  - Email:      [____]
+
+[Employment Details]
+  - Position:   [____]
+  - Department: [____]
+  - Salary:     [____]
+
+[General]
+  - ID:         [____]
+  - Created At: [____]
 ```
 
----
+## 6. Reglas Obligatorias
 
-## 🔍 Funciones Accesoras en BaseEntity
+### 6.1 Aplicación del Decorador
 
-### Métodos de Instancia
+1. @ViewGroup debe aplicarse a propiedades de clase, nunca a clase completa
+2. groupName debe ser string descriptivo legible por usuarios
+3. Usar mismo groupName para todas las propiedades de grupo
+4. groupName case-sensitive ("Address" ≠ "address")
+5. groupName puede contener espacios y caracteres especiales
 
-#### `getViewGroup(key: string): string | undefined`
-Obtiene el nombre del grupo de una propiedad.
+### 6.2 Nombrado de Grupos
 
+6. Nombres de grupo deben ser descriptivos ("Contact Information", no "Group1")
+7. Usar Title Case para nombres de grupo ("Personal Details")
+8. Mantener nombres consistentes en toda la aplicación
+9. Evitar nombres técnicos, usar términos de negocio
+10. Considerar internacionalización (i18n) para nombres de grupo
+
+### 6.3 Organización de Propiedades
+
+11. Agrupar propiedades relacionadas semánticamente
+12. Limitar grupos a 3-7 propiedades para usabilidad óptima
+13. Usar @PropertyIndex dentro de grupos para ordenamiento explícito
+14. Propiedades sin @ViewGroup se agrupan en sección default
+15. No duplicar propiedades entre múltiples grupos (cada propiedad un solo grupo)
+
+### 6.4 Interacción con Otros Decoradores
+
+16. @ViewGroup y @PropertyIndex son compatibles, PropertyIndex ordena dentro de grupo
+17. @ViewGroup no afecta @HideInDetailView (propiedades ocultas no renderizan)
+18. @ViewGroup independiente de @Required, @Validation, @ReadOnly
+19. Usar @ViewGroupRow para control de layout dentro de grupo
+20. @TabOrder puede diferir de orden visual dentro de ViewGroup
+
+### 6.5 Renderizado en UI
+
+21. Componente de UI determina representación visual (tabs, accordions, fieldsets)
+22. Orden de grupos en UI determinado por componente, no por decorador
+23. Grupos pueden ser colapsables para mejorar navegación en formularios largos
+24. Grupos vacíos (todas propiedades ocultas) no deben renderizarse
+25. Responsive design: considerar stacking vertical de grupos en móviles
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Implementación
+
+1. PROHIBIDO aplicar @ViewGroup a clase (es property decorator)
+2. PROHIBIDO usar null, undefined o string vacío como groupName
+3. PROHIBIDO usar números como groupName ("1", "2"), usar nombres descriptivos
+4. PROHIBIDO aplicar múltiples @ViewGroup a misma propiedad
+5. PROHIBIDO asumir orden de renderizado de grupos sin control explícito
+
+### 7.2 Prohibiciones de Nombrado
+
+6. PROHIBIDO usar nombres técnicos de código como groupName
+7. PROHIBIDO usar abreviaturas oscuras (usar nombres completos)
+8. PROHIBIDO inconsistencia de case ("Personal Info" vs "personal info")
+9. PROHIBIDO nombres excesivamente largos (>50 caracteres)
+10. PROHIBIDO caracteres especiales problemáticos (@, #, $, %)
+
+### 7.3 Prohibiciones de Uso
+
+11. PROHIBIDO usar ViewGroup para controlar lógica de validación
+12. PROHIBIDO asumir que propiedades del mismo grupo se validan juntas
+13. PROHIBIDO usar groupName para identificar propiedades programáticamente
+14. PROHIBIDO serializar ViewGroup metadata en APIs
+15. PROHIBIDO depender de ViewGroup para funcionalidad backend
+
+### 7.4 Prohibiciones de Lógica
+
+16. PROHIBIDO implementar lógica de negocio basada en ViewGroup
+17. PROHIBIDO usar ViewGroup para relaciones entre entidades
+18. PROHIBIDO modificar valores de propiedades basado en grupo
+19. PROHIBIDO usar ViewGroup para control de acceso o permisos
+20. PROHIBIDO asumir que ViewGroup crea dependencias entre propiedades
+
+## 8. Dependencias
+
+### 8.1 Dependencias Directas
+
+**Symbol (JavaScript Nativo)**
+- Propósito: Crear VIEW_GROUP_KEY único para storage
+- Uso: Almacenar metadata sin colisiones de namespace
+- Crítico: Sí, sin Symbol podría sobrescribir propiedades
+
+**PropertyDecorator (TypeScript)**
+- Propósito: Tipado de decorador de propiedad
+- Uso: Garantizar firma correcta de función ViewGroup()
+- Crítico: Sí, TypeScript rechazará decorador incorrecto
+
+**BaseEntity.prototype**
+- Propósito: Almacenamiento de metadata compartida
+- Uso: Contiene Record<string, string> con ViewGroups
+- Crítico: Sí, instancias acceden a metadata vía prototype
+
+### 8.2 Dependencias de BaseEntity
+
+**getViewGroups() Method**
+- Propósito: Recuperar mapa completo de ViewGroups
+- Retorno: Record<string, string>
+- Crítico: Sí, sin este método no se puede acceder a metadata
+
+**getKeys() Method**
+- Propósito: Obtener lista ordenada de propiedades
+- Uso: Fuente de propiedades para agrupar
+- Crítico: Sí, necesario para iterar propiedades y agrupar
+
+### 8.3 Dependencias de UI Components
+
+**DetailView Components**
+- Propósito: Renderizar formulario con secciones agrupadas
+- Uso: Consulta getViewGroups() y renderiza grupos
+- Crítico: Sí, sin componente ViewGroup no tiene efecto visible
+
+**Group Container Components**
+- Tipos: FieldsetComponent, AccordionComponent, TabsComponent
+- Propósito: Renderizar grupos como secciones visuales
+- Crítico: Sí, diferentes implementaciones para diferentes UX
+
+### 8.4 Dependencias Opcionales
+
+**@PropertyIndex Decorator**
+- Relación: Ordena propiedades dentro de cada grupo
+- Uso: Aplicar PropertyIndex dentro de mismo ViewGroup
+- Patrón: ViewGroup agrupa, PropertyIndex ordena
+
+**@ViewGroupRow Decorator**
+- Relación: Controla layout de columnas dentro de grupo
+- Uso: Determina si propiedades se renderizan single, pair, triple
+- Patrón: ViewGroup crea sección, ViewGroupRow controla columnas
+
+**@HideInDetailView Decorator**
+- Relación: Propiedades ocultas no aparecen en grupos
+- Efecto: Grupo puede quedar vacío si todas propiedades ocultas
+- Manejo: No renderizar grupos vacíos
+
+## 9. Relaciones
+
+### 9.1 Decoradores de Layout
+
+**@PropertyIndex**
+- Naturaleza: Complementario, ambos controlan organización visual
+- Diferencia: ViewGroup agrupa secciones, PropertyIndex ordena dentro de sección
+- Uso conjunto: @ViewGroup("Contact") @PropertyIndex(1)
+- Recomendación: Usar índices secuenciales dentro de cada grupo
+
+**@ViewGroupRow**
+- Naturaleza: Complementario, controla columnas dentro de grupo
+- Diferencia: ViewGroup crea sección, ViewGroupRow define layout de columnas
+- Uso conjunto: @ViewGroup("Address") @ViewGroupRow(ViewGroupRow.PAIR)
+- Patrón: Dos propiedades lado a lado dentro de grupo Address
+
+**@TabOrder**
+- Relación: Independiente, controla navegación no visualización
+- Uso: TabOrder puede diferir de orden visual en ViewGroup
+- Ejemplo: Navegación lógica diferente de agrupación visual
+
+### 9.2 Decoradores de Visibilidad
+
+**@HideInDetailView**
+- Interacción: Propiedades con ViewGroup pueden ocultarse
+- Efecto: Grupo puede quedar vacío si todas ocultas
+- Manejo: Componente no renderiza grupos vacíos
+
+**@HideInListView**
+- Interacción: No afecta ViewGroup (ListView no agrupa por defecto)
+- Uso: ViewGroup solo relevante en DetailView (formularios)
+
+### 9.3 BaseEntity Methods
+
+**getViewGroups()**
+- Retorno: Record<string, string> (propertyKey → groupName)
+- Uso: Consulta de metadata para agrupación en UI
+- Invocado por: DetailView, FormLayoutComponent
+
+**getKeys()**
+- Relación: Fuente de propiedades para iterar y agrupar
+- Uso: getKeys() + getViewGroups() = agrupación completa
+- Algoritmo: Iterar keys, agrupar según viewGroups map
+
+### 9.4 Componentes de UI
+
+**DetailView Component**
+- Consumo: Llama getViewGroups() y agrupa propiedades
+- Renderizado: Crea secciones visuales por grupo
+- Layout: Fieldsets, accordions, tabs según implementación
+
+**FieldsetComponent**
+- Propósito: Renderizar grupo como <fieldset> HTML
+- Uso: Sección con borde y legend (nombre de grupo)
+- UX: Simple, todos los grupos visibles simultáneamente
+
+**AccordionComponent**
+- Propósito: Renderizar grupos como acordeón colapsable
+- Uso: Solo un grupo expandido a la vez
+- UX: Ideal para formularios largos con muchos grupos
+
+**TabsComponent**
+- Propósito: Renderizar grupos como tabs horizontales
+- Uso: Navegación entre grupos mediante tabs
+- UX: Ideal para formularios muy largos, claramente separados
+
+### 9.5 Patrones de Agrupación
+
+**Personal vs Professional**
 ```typescript
-// Uso
-const customer = new Customer();
-customer.getViewGroup('firstName');
-// Retorna: "Personal Information"
-
-customer.getViewGroup('email');
-// Retorna: "Contact"
-
-// Ubicación en BaseEntity (línea ~280)
-public getViewGroup(key: string): string | undefined {
-    const viewGroup = (this.constructor as any).prototype[VIEW_GROUP_KEY];
-    return viewGroup?.[key];
-}
+@ViewGroup("Personal Information") firstName: string;
+@ViewGroup("Personal Information") email: string;
+@ViewGroup("Professional Details") position: string;
+@ViewGroup("Professional Details") department: string;
 ```
 
-#### `getPropertiesByViewGroup(groupName: string): string[]`
-Obtiene todas las propiedades de un grupo específico.
-
+**Address Grouping**
 ```typescript
-// Uso
-const customer = new Customer();
-customer.getPropertiesByViewGroup('Contact');
-// Retorna: ['email', 'phone']
-
-customer.getPropertiesByViewGroup('Address');
-// Retorna: ['street', 'city', 'postalCode']
-
-// Ubicación en BaseEntity (línea ~295)
-public getPropertiesByViewGroup(groupName: string): string[] {
-    const viewGroup = (this.constructor as any).prototype[VIEW_GROUP_KEY];
-    if (!viewGroup) return [];
-    
-    return Object.entries(viewGroup)
-        .filter(([_, group]) => group === groupName)
-        .map(([property]) => property);
-}
+@ViewGroup("Billing Address") billingStreet: string;
+@ViewGroup("Billing Address") billingCity: string;
+@ViewGroup("Shipping Address") shippingStreet: string;
+@ViewGroup("Shipping Address") shippingCity: string;
 ```
 
-#### `getAllViewGroups(): string[]`
-Obtiene lista de nombres de todos los grupos (únicos).
-
+**Temporal Grouping**
 ```typescript
-// Uso
-const customer = new Customer();
-customer.getAllViewGroups();
-// Retorna: ['Personal Information', 'Contact', 'Address']
+@ViewGroup("Creation Info") createdAt: Date;
+@ViewGroup("Creation Info") createdBy: string;
+@ViewGroup("Modification Info") updatedAt: Date;
+@ViewGroup("Modification Info") updatedBy: string;
+```
 
-// Ubicación en BaseEntity (línea ~310)
-public getAllViewGroups(): string[] {
-    const viewGroup = (this.constructor as any).prototype[VIEW_GROUP_KEY];
-    if (!viewGroup) return [];
+## 10. Notas de Implementación
+
+### 10.1 Patrones de Uso Comunes
+
+**Formulario de Empleado con Grupos**
+```typescript
+class Employee extends BaseEntity {
+    // Personal Information
+    @ViewGroup("Personal Information")
+    @PropertyIndex(1)
+    firstName: string;
     
-    const groups = Object.values(viewGroup) as string[];
-    return [...new Set(groups)];  // Únicos
+    @ViewGroup("Personal Information")
+    @PropertyIndex(2)
+    lastName: string;
+    
+    @ViewGroup("Personal Information")
+    @PropertyIndex(3)
+    @StringTypeDef(StringType.EMAIL)
+    email: string;
+    
+    // Employment Details
+    @ViewGroup("Employment Details")
+    @PropertyIndex(10)
+    position: string;
+    
+    @ViewGroup("Employment Details")
+    @PropertyIndex(11)
+    department: string;
+    
+    @ViewGroup("Employment Details")
+    @PropertyIndex(12)
+    startDate: Date;
+    
+    // Compensation
+    @ViewGroup("Compensation")
+    @PropertyIndex(20)
+    salary: number;
+    
+    @ViewGroup("Compensation")
+    @PropertyIndex(21)
+    bonus: number;
 }
 ```
 
----
+**Address Form con Múltiples Direcciones**
+```typescript
+class Order extends BaseEntity {
+    @ViewGroup("Billing Address")
+    billingStreet: string;
+    
+    @ViewGroup("Billing Address")
+    billingCity: string;
+    
+    @ViewGroup("Billing Address")
+    billingZipCode: string;
+    
+    @ViewGroup("Shipping Address")
+    shippingStreet: string;
+    
+    @ViewGroup("Shipping Address")
+    shippingCity: string;
+    
+    @ViewGroup("Shipping Address")
+    shippingZipCode: string;
+    
+    @ViewGroup("Order Details")
+    orderNumber: string;
+    
+    @ViewGroup("Order Details")
+    orderDate: Date;
+}
+```
 
-## 🎨 Impacto en UI
+### 10.2 Implementación en Componentes
 
-### Vista de Detalle Agrupada
-
-El componente `default_detailview.vue` lee los ViewGroups y genera secciones:
-
+**DetailView con Fieldsets**
 ```vue
 <template>
-  <div class="detail-view">
-    <!-- Si hay grupos, mostrar en secciones -->
-    <div v-if="hasViewGroups" class="grouped-view">
-      <div 
-        v-for="groupName in viewGroups" 
-        :key="groupName"
-        class="view-group"
-      >
-        <div class="group-header" @click="toggleGroup(groupName)">
-          <h3>{{ groupName }}</h3>
-          <span class="toggle-icon">{{ isExpanded(groupName) ? '[-]' : '[+]' }}</span>
-        </div>
-        
-        <div v-show="isExpanded(groupName)" class="group-content">
-          <div 
-            v-for="propertyKey in getPropertiesInGroup(groupName)"
-            :key="propertyKey"
-            class="form-field"
-          >
-            <label>{{ entity.getPropertyName(propertyKey) }}</label>
-            <component 
-              :is="getInputComponent(propertyKey)"
-              v-model="entity[propertyKey]"
-              :entity="entity"
-              :propertyKey="propertyKey"
+    <form class="detail-view">
+        <fieldset v-for="(properties, groupName) in groupedProperties" :key="groupName">
+            <legend>{{ groupName }}</legend>
+            <FormInput
+                v-for="propertyKey in properties"
+                :key="propertyKey"
+                :entity="entity"
+                :propertyKey="propertyKey"
             />
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Si NO hay grupos, mostrar lista plana -->
-    <div v-else class="flat-view">
-      <div 
-        v-for="propertyKey in entity.getProperties()"
-        :key="propertyKey"
-        class="form-field"
-      >
-        <!-- Inputs normales -->
-      </div>
-    </div>
-  </div>
+        </fieldset>
+    </form>
 </template>
 
 <script>
 export default {
     computed: {
-        hasViewGroups() {
-            return this.entity.getAllViewGroups().length > 0;
-        },
-        viewGroups() {
-            return this.entity.getAllViewGroups();
-        }
-    },
-    methods: {
-        getPropertiesInGroup(groupName) {
-            return this.entity.getPropertiesByViewGroup(groupName);
-        },
-        toggleGroup(groupName) {
-            this.expandedGroups[groupName] = !this.expandedGroups[groupName];
-        },
-        isExpanded(groupName) {
-            return this.expandedGroups[groupName] !== false;  // Default: expanded
+        groupedProperties() {
+            const viewGroups = this.entity.getViewGroups();
+            const allKeys = this.entity.getKeys();
+            const grouped = new Map();
+            
+            grouped.set('General', []);
+            
+            for (const key of allKeys) {
+                const groupName = viewGroups[key] || 'General';
+                if (!grouped.has(groupName)) {
+                    grouped.set(groupName, []);
+                }
+                grouped.get(groupName).push(key);
+            }
+            
+            if (grouped.get('General').length === 0) {
+                grouped.delete('General');
+            }
+            
+            return grouped;
         }
     }
+};
+</script>
+
+<style>
+fieldset {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
 }
+
+legend {
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 0 8px;
+}
+</style>
+```
+
+**DetailView con Accordion Colapsable**
+```vue
+<template>
+    <div class="accordion-form">
+        <div v-for="(properties, groupName, index) in groupedProperties" :key="groupName" class="accordion-item">
+            <div class="accordion-header" @click="toggleGroup(groupName)">
+                <h3>{{ groupName }}</h3>
+                <span class="icon">{{ expandedGroups.has(groupName) ? '▼' : '▶' }}</span>
+            </div>
+            <div v-show="expandedGroups.has(groupName)" class="accordion-content">
+                <FormInput
+                    v-for="propertyKey in properties"
+                    :key="propertyKey"
+                    :entity="entity"
+                    :propertyKey="propertyKey"
+                />
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            expandedGroups: new Set(['General']) // Primer grupo expandido por defecto
+        };
+    },
+    methods: {
+        toggleGroup(groupName) {
+            if (this.expandedGroups.has(groupName)) {
+                this.expandedGroups.delete(groupName);
+            } else {
+                this.expandedGroups.add(groupName);
+            }
+            this.$forceUpdate(); // Force reactivity
+        }
+    }
+};
 </script>
 ```
 
-**Ubicación:** `src/views/default_detailview.vue` (línea ~120)
-
----
-
-## 🔗 Decoradores Relacionados
-
-### Combinar con ViewGroupRow
-
-Para organización más compleja (columnas dentro de grupos):
-
-```typescript
-export class Employee extends BaseEntity {
-    // Grupo: Personal - Fila 1 (2 columnas)
-    @PropertyIndex(1)
-    @PropertyName('First Name', String)
-    @ViewGroup('Personal Information')
-    @ViewGroupRow(1)
-    @CSSColumnClass('col-md-6')
-    firstName!: string;
-    
-    @PropertyIndex(2)
-    @PropertyName('Last Name', String)
-    @ViewGroup('Personal Information')
-    @ViewGroupRow(1)
-    @CSSColumnClass('col-md-6')
-    lastName!: string;
-    
-    // Grupo: Personal - Fila 2 (1 columna completa)
-    @PropertyIndex(3)
-    @PropertyName('Email', String)
-    @ViewGroup('Personal Information')
-    @ViewGroupRow(2)
-    @CSSColumnClass('col-md-12')
-    email!: string;
-    
-    // Grupo: Employment - Fila 1
-    @PropertyIndex(4)
-    @PropertyName('Position', String)
-    @ViewGroup('Employment')
-    @ViewGroupRow(1)
-    position!: string;
-}
-```
-
-### Resultado Visual
-
-```
-╔═══════════════════════════════════════════════════════╗
-║ 📋 Personal Information  [-]                          ║
-║ ┌───────────────────────────────────────────────────┐ ║
-║ │ Row 1:                                            │ ║
-║ │  [First Name: John    ] [Last Name: Doe        ] │ ║
-║ │                                                   │ ║
-║ │ Row 2:                                            │ ║
-║ │  [Email: john.doe@company.com                  ] │ ║
-║ └───────────────────────────────────────────────────┘ ║
-║                                                       ║
-║ 💼 Employment  [-]                                    ║
-║ ┌───────────────────────────────────────────────────┐ ║
-║ │ Row 1:                                            │ ║
-║ │  [Position: Senior Developer                   ] │ ║
-║ └───────────────────────────────────────────────────┘ ║
-╚═══════════════════════════════════════════════════════╝
-```
-
----
-
-## 🧪 Ejemplos Avanzados
-
-### 1. Entidad de Producto con Múltiples Grupos
-
-```typescript
-export class Product extends BaseEntity {
-    // Grupo: Información Básica
-    @PropertyIndex(1)
-    @PropertyName('Product Name', String)
-    @ViewGroup('Basic Information')
-    @Required(true)
-    name!: string;
-    
-    @PropertyIndex(2)
-    @PropertyName('SKU', String)
-    @ViewGroup('Basic Information')
-    @Required(true)
-    sku!: string;
-    
-    @PropertyIndex(3)
-    @PropertyName('Description', String)
-    @ViewGroup('Basic Information')
-    @StringTypeDef(StringType.TEXTAREA)
-    description?: string;
-    
-    // Grupo: Pricing
-    @PropertyIndex(4)
-    @PropertyName('Base Price', Number)
-    @ViewGroup('Pricing')
-    @Required(true)
-    basePrice!: number;
-    
-    @PropertyIndex(5)
-    @PropertyName('Sale Price', Number)
-    @ViewGroup('Pricing')
-    salePrice?: number;
-    
-    @PropertyIndex(6)
-    @PropertyName('Tax Rate', Number)
-    @ViewGroup('Pricing')
-    taxRate?: number;
-    
-    // Grupo: Inventory
-    @PropertyIndex(7)
-    @PropertyName('Current Stock', Number)
-    @ViewGroup('Inventory')
-    @ReadOnly(true)
-    currentStock!: number;
-    
-    @PropertyIndex(8)
-    @PropertyName('Minimum Stock', Number)
-    @ViewGroup('Inventory')
-    minimumStock!: number;
-    
-    @PropertyIndex(9)
-    @PropertyName('Warehouse Location', String)
-    @ViewGroup('Inventory')
-    warehouseLocation?: string;
-    
-    // Grupo: Supplier Information
-    @PropertyIndex(10)
-    @PropertyName('Supplier', Supplier)
-    @ViewGroup('Supplier Information')
-    supplier?: Supplier;
-    
-    @PropertyIndex(11)
-    @PropertyName('Supplier Code', String)
-    @ViewGroup('Supplier Information')
-    supplierCode?: string;
-    
-    // Grupo: Metadata
-    @PropertyIndex(12)
-    @PropertyName('Created At', Date)
-    @ViewGroup('Metadata')
-    @ReadOnly(true)
-    createdAt!: Date;
-    
-    @PropertyIndex(13)
-    @PropertyName('Updated At', Date)
-    @ViewGroup('Metadata')
-    @ReadOnly(true)
-    updatedAt!: Date;
-}
-```
-
-### 2. Grupos Condicionales (Mostrar Según Rol)
-
-```typescript
-export class User extends BaseEntity {
-    // Visible para todos
-    @PropertyName('Full Name', String)
-    @ViewGroup('Profile')
-    fullName!: string;
-    
-    // Solo visible para administradores
-    @PropertyName('Role', String)
-    @ViewGroup('Security')  // Este grupo se oculta si no admin
-    role!: string;
-    
-    @PropertyName('Permissions', Array)
-    @ArrayOf(String)
-    @ViewGroup('Security')
-    permissions!: string[];
-}
-
-// En el componente:
-computed: {
-    visibleGroups() {
-        const allGroups = this.entity.getAllViewGroups();
+**DetailView con Tabs**
+```vue
+<template>
+    <div class="tabbed-form">
+        <div class="tabs">
+            <button
+                v-for="(properties, groupName) in groupedProperties"
+                :key="groupName"
+                @click="activeTab = groupName"
+                :class="{ active: activeTab === groupName }"
+            >
+                {{ groupName }}
+            </button>
+        </div>
         
-        // Filtrar grupos según permisos
-        return allGroups.filter(group => {
-            if (group === 'Security') {
-                return this.currentUser.isAdmin;
-            }
-            return true;
-        });
-    }
-}
-```
+        <div class="tab-content">
+            <div v-for="(properties, groupName) in groupedProperties" :key="groupName">
+                <div v-show="activeTab === groupName">
+                    <FormInput
+                        v-for="propertyKey in properties"
+                        :key="propertyKey"
+                        :entity="entity"
+                        :propertyKey="propertyKey"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
-### 3. Grupos Anidados (Pestañas dentro de Secciones)
-
-```typescript
-export class Invoice extends BaseEntity {
-    // Pestaña: General → Sección: Basic Info
-    @PropertyName('Invoice Number', String)
-    @ViewGroup('General > Basic Info')
-    invoiceNumber!: string;
-    
-    // Pestaña: General → Sección: Dates
-    @PropertyName('Issue Date', Date)
-    @ViewGroup('General > Dates')
-    issueDate!: Date;
-    
-    // Pestaña: Customer → Sección: Contact
-    @PropertyName('Customer Name', String)
-    @ViewGroup('Customer > Contact')
-    customerName!: string;
-    
-    // Pestaña: Items
-    @PropertyName('Line Items', Array)
-    @ArrayOf(InvoiceItem)
-    @ViewGroup('Items')
-    items!: InvoiceItem[];
-}
-
-// El componente puede parsear ">" para crear pestañas anidadas
-```
-
-### 4. Grupos con Iconos y Colores
-
-```typescript
-// Extender metadata con configuración visual
-export const VIEW_GROUP_CONFIG_KEY = Symbol('view_group_config');
-
-function ViewGroupWithStyle(
-    groupName: string, 
-    icon: string, 
-    color: string
-): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
-        const proto = target.constructor.prototype;
-        
-        // Registrar grupo normal
-        if (!proto[VIEW_GROUP_KEY]) {
-            proto[VIEW_GROUP_KEY] = {};
-        }
-        proto[VIEW_GROUP_KEY][propertyKey] = groupName;
-        
-        // Registrar configuración visual
-        if (!proto[VIEW_GROUP_CONFIG_KEY]) {
-            proto[VIEW_GROUP_CONFIG_KEY] = {};
-        }
-        proto[VIEW_GROUP_CONFIG_KEY][groupName] = { icon, color };
-    };
-}
-
-// Uso
-export class Customer extends BaseEntity {
-    @PropertyName('First Name', String)
-    @ViewGroupWithStyle('Personal', '👤', '#3498db')
-    firstName!: string;
-    
-    @PropertyName('Email', String)
-    @ViewGroupWithStyle('Contact', '📧', '#2ecc71')
-    email!: string;
-}
-```
-
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. Orden de Propiedades Dentro de Grupos
-
-El orden dentro de un grupo se define con `@PropertyIndex`:
-
-```typescript
-@PropertyIndex(1)  // Aparece primero
-@ViewGroup('Address')
-street!: string;
-
-@PropertyIndex(2)  // Aparece segundo
-@ViewGroup('Address')
-city!: string;
-
-@PropertyIndex(3)  // Aparece tercero
-@ViewGroup('Address')
-postalCode!: string;
-```
-
-### 2. Propiedades Sin Grupo
-
-Las propiedades sin `@ViewGroup` aparecen en una sección "sin agrupar" al final:
-
-```typescript
-@PropertyName('ID', Number)
-id!: number;  // Sin grupo → va al final
-
-@PropertyName('Name', String)
-@ViewGroup('Info')
-name!: string;  // Con grupo → va en sección "Info"
-```
-
-### 3. Nombres de Grupos Consistentes
-
-Usa constantes para evitar typos:
-
-```typescript
-// ❌ MAL: Typos en nombres
-@ViewGroup('Addres')  // ← Typo
-street!: string;
-
-@ViewGroup('Address')
-city!: string;
-
-// ✅ BIEN: Usar constantes
-export const VIEW_GROUPS = {
-    ADDRESS: 'Address',
-    CONTACT: 'Contact',
-    PERSONAL: 'Personal Information'
-} as const;
-
-@ViewGroup(VIEW_GROUPS.ADDRESS)
-street!: string;
-
-@ViewGroup(VIEW_GROUPS.ADDRESS)
-city!: string;
-```
-
-### 4. Grupos Vacíos
-
-Si un grupo no tiene propiedades, no se muestra:
-
-```typescript
-// Solo tiene grupo "Address"
-export class Location extends BaseEntity {
-    @PropertyName('Street', String)
-    @ViewGroup('Address')
-    street!: string;
-}
-
-// getAllViewGroups() retorna ["Address"]
-// No hay grupos vacíos
-```
-
-### 5. Estado de Expansión Persistente
-
-Guardar estado de grupos colapsados/expandidos:
-
-```typescript
-// En componente
-data() {
-    return {
-        expandedGroups: this.loadExpandedState()
-    }
-},
-methods: {
-    toggleGroup(groupName) {
-        this.expandedGroups[groupName] = !this.expandedGroups[groupName];
-        this.saveExpandedState();
+<script>
+export default {
+    data() {
+        return {
+            activeTab: 'General'
+        };
     },
-    saveExpandedState() {
-        localStorage.setItem(
-            `view-groups-${this.entity.constructor.name}`,
-            JSON.stringify(this.expandedGroups)
-        );
-    },
-    loadExpandedState() {
-        const saved = localStorage.getItem(
-            `view-groups-${this.entity.constructor.name}`
-        );
-        return saved ? JSON.parse(saved) : {};
-    }
-}
-```
-
----
-
-## 🔧 Implementación Interna
-
-### Código del Decorador
-
-```typescript
-export function ViewGroup(groupName: string): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
-        const proto = target.constructor.prototype;
-        
-        if (!proto[VIEW_GROUP_KEY]) {
-            proto[VIEW_GROUP_KEY] = {};
+    mounted() {
+        // Set first group as active
+        const firstGroup = Object.keys(this.groupedProperties)[0];
+        if (firstGroup) {
+            this.activeTab = firstGroup;
         }
-        
-        proto[VIEW_GROUP_KEY][propertyKey] = groupName;
-    };
+    }
+};
+</script>
+
+<style>
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #ddd;
+}
+
+.tabs button {
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.tabs button.active {
+    border-bottom: 3px solid #4CAF50;
+    font-weight: bold;
+}
+</style>
+```
+
+### 10.3 Testing y Validación
+
+**Unit Test de ViewGroup**
+```typescript
+test('getViewGroups returns configured groups', () => {
+    class TestEntity extends BaseEntity {
+        @ViewGroup("Group A") propA: string;
+        @ViewGroup("Group A") propB: string;
+        @ViewGroup("Group B") propC: string;
+    }
+    
+    const entity = new TestEntity();
+    const groups = entity.getViewGroups();
+    
+    expect(groups.propA).toBe("Group A");
+    expect(groups.propB).toBe("Group A");
+    expect(groups.propC).toBe("Group B");
+});
+
+test('properties without ViewGroup not in map', () => {
+    class TestEntity extends BaseEntity {
+        @ViewGroup("Grouped") grouped: string;
+        ungrouped: string;
+    }
+    
+    const entity = new TestEntity();
+    const groups = entity.getViewGroups();
+    
+    expect(groups.grouped).toBe("Grouped");
+    expect(groups.ungrouped).toBeUndefined();
+});
+```
+
+**Integration Test de Agrupación UI**
+```typescript
+test('DetailView groups properties correctly', () => {
+    class User extends BaseEntity {
+        @ViewGroup("Personal") firstName: string;
+        @ViewGroup("Personal") lastName: string;
+        @ViewGroup("Contact") email: string;
+        @ViewGroup("Contact") phone: string;
+    }
+    
+    const user = new User();
+    const wrapper = mount(DetailView, { props: { entity: user } });
+    
+    const fieldsets = wrapper.findAll('fieldset');
+    expect(fieldsets).toHaveLength(2); // Personal y Contact
+    
+    const personalLegend = wrapper.find('legend:contains("Personal")');
+    expect(personalLegend.exists()).toBe(true);
+    
+    const contactLegend = wrapper.find('legend:contains("Contact")');
+    expect(contactLegend.exists()).toBe(true);
+});
+```
+
+### 10.4 Debugging y Diagnóstico
+
+**Inspeccionar Grupos**
+```typescript
+const employee = new Employee();
+const viewGroups = employee.getViewGroups();
+console.log('ViewGroups:', viewGroups);
+// {
+//   firstName: "Personal Information",
+//   lastName: "Personal Information",
+//   position: "Employment Details",
+//   ...
+// }
+
+// Agrupar propiedades
+const grouped = new Map();
+const keys = employee.getKeys();
+for (const key of keys) {
+    const group = viewGroups[key] || 'General';
+    if (!grouped.has(group)) {
+        grouped.set(group, []);
+    }
+    grouped.get(group).push(key);
+}
+console.log('Grouped properties:', Object.fromEntries(grouped));
+// {
+//   "Personal Information": ["firstName", "lastName", "email"],
+//   "Employment Details": ["position", "department"],
+//   "General": ["id", "createdAt"]
+// }
+```
+
+### 10.5 Migraciones y Refactoring
+
+**Agregar ViewGroup a Entidad Existente**
+```typescript
+// Antes - Sin agrupación
+class Employee extends BaseEntity {
+    firstName: string;
+    lastName: string;
+    position: string;
+    department: string;
+}
+
+// Después - Con agrupación
+class Employee extends BaseEntity {
+    @ViewGroup("Personal Information") firstName: string;
+    @ViewGroup("Personal Information") lastName: string;
+    @ViewGroup("Employment Details") position: string;
+    @ViewGroup("Employment Details") department: string;
 }
 ```
 
-**Ubicación:** `src/decorations/view_group_decorator.ts` (línea ~10)
+Verificar que DetailView implementa lógica de agrupación.
 
----
-
-## 📊 Flujo de Renderizado
-
-```
-1. Usuario abre vista de detalle (DetailView)
-        ↓
-2. Componente obtiene entity.getAllViewGroups()
-        ↓
-3. Si hay grupos:
-        ↓
-4. Para cada grupo:
-    a. Crear sección con header (grupo name + toggle)
-    b. Obtener propiedades: entity.getPropertiesByViewGroup(group)
-    c. Ordenar propiedades por PropertyIndex
-    d. Renderizar inputs para cada propiedad
-        ↓
-5. Si NO hay grupos:
-        ↓
-6. Renderizar lista plana con todas las propiedades
-```
-
----
-
-## 🎓 Patrones de Uso
-
-### 1. Grupos por Función
+**Cambiar Nombre de Grupo**
 ```typescript
-ViewGroup('Contact Information')
-ViewGroup('Shipping Address')
-ViewGroup('Billing Address')
-ViewGroup('Payment Details')
+// Antes
+@ViewGroup("Contact Info") email: string;
+
+// Después
+@ViewGroup("Contact Information") email: string; // Nombre más formal
 ```
 
-### 2. Grupos por Visibilidad/Permisos
-```typescript
-ViewGroup('Public Profile')
-ViewGroup('Private Information')
-ViewGroup('Admin Only')
-```
+Buscar y reemplazar todas las ocurrencias del groupName antiguo.
 
-### 3. Grupos por Etapa de Proceso
-```typescript
-ViewGroup('Step 1: Basic Information')
-ViewGroup('Step 2: Additional Details')
-ViewGroup('Step 3: Confirmation')
-```
+## 11. Referencias Cruzadas
 
-### 4. Grupos por Categoría
-```typescript
-ViewGroup('Product Specifications')
-ViewGroup('Pricing')
-ViewGroup('Inventory')
-ViewGroup('Media & Assets')
-```
+### 11.1 Documentación Relacionada
 
----
+**copilot/layers/02-base-entity/metadata-access.md**
+- Sección: Métodos de Acceso a Metadata de Layout
+- Contenido: Implementación de getViewGroups()
+- Relevancia: Único método de acceso a ViewGroup metadata
 
-## 📚 Referencias Adicionales
+**copilot/layers/01-decorators/property-index-decorator.md**
+- Relación: Ordenamiento de propiedades dentro de grupos
+- Uso conjunto: ViewGroup agrupa, PropertyIndex ordena
+- Patrón: Índices secuenciales dentro de cada grupo
 
-- `view-group-row-decorator.md` - Organizar dentro de grupos
-- `css-column-class-decorator.md` - Layout de columnas
-- `property-index-decorator.md` - Orden de propiedades
-- `../04-components/detail-view-table.md` - Renderizado
-- `../../02-FLOW-ARCHITECTURE.md` - Arquitectura de vistas
+**copilot/layers/01-decorators/view-group-row-decorator.md**
+- Relación: Layout de columnas dentro de grupos
+- Uso conjunto: ViewGroup crea sección, ViewGroupRow controla columnas
+- Patrón: PAIR para propiedades lado a lado dentro de grupo
 
----
+**copilot/layers/01-decorators/tab-order-decorator.md**
+- Relación: Navegación puede diferir de agrupación visual
+- Independencia: TabOrder y ViewGroup son ortogonales
+- Ejemplo: Navegación cruzando grupos
 
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/decorations/view_group_decorator.ts`
+**copilot/layers/01-decorators/hide-in-detail-view-decorator.md**
+- Interacción: Propiedades ocultas no aparecen en grupos
+- Manejo: Grupos vacíos no se renderizan
+- Validación: Verificar que grupo tiene propiedades visibles
+
+### 11.2 BaseEntity Core
+
+**copilot/layers/02-base-entity/base-entity-core.md**
+- Método: getViewGroups()
+- Almacenamiento: prototype[VIEW_GROUP_KEY]
+
+**copilot/layers/02-base-entity/metadata-access.md**
+- Sección: Métodos de Layout y Presentación
+- Contenido: getViewGroups() implementation details
+
+### 11.3 Componentes de UI
+
+**copilot/layers/04-components/DetailViewTable.md**
+- Consumo: Usa getViewGroups() para agrupar formulario
+- Renderizado: Crea secciones visuales por grupo
+- Implementación: Fieldsets, accordions, o tabs
+
+**copilot/layers/04-components/FormLayoutComponents.md**
+- Relación: Componentes de layout que respetan ViewGroup
+- Tipos: FieldsetComponent, AccordionComponent, TabsComponent
+
+### 11.4 Código Fuente
+
+**src/decorations/view_group_decorator.ts**
+- Líneas: 1-12
+- Exports: VIEW_GROUP_KEY, ViewGroup
+
+**src/entities/base_entity.ts**
+- Líneas 277-280: Método getViewGroups()
+- Dependencias: Importa VIEW_GROUP_KEY
+
+### 11.5 Tutoriales y Ejemplos
+
+**copilot/tutorials/01-basic-crud.md**
+- Sección: Organización de Formularios
+- Ejemplo: Employee con grupos Personal y Employment
+- Patrón: Agrupación lógica de campos relacionados
+
+**copilot/examples/advanced-module-example.md**
+- Sección: Formularios Complejos con Múltiples Secciones
+- Patrón: Accordion colapsable para formularios largos
+- Técnica: ViewGroup + ViewGroupRow para layout avanzado
+
+### 11.6 Contratos y Arquitectura
+
+**copilot/00-CONTRACT.md**
+- Sección 4.2: Metadata de Layout
+- Principio: ViewGroup define organización visual de formularios
+- Sección 8.1: Decoradores como configuración de UI
+
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Sistema de Agrupación Visual
+- Contexto: ViewGroup dentro del ecosistema de decoradores de layout
+- Flujo: Entity → ViewGroup → Secciones UI
+
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: Renderizado de Formularios Agrupados
+- Flujo: getViewGroups() → Agrupación → Sección rendering
+- Garantía: Propiedades agrupadas renderizadas juntas

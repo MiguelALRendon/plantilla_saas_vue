@@ -1,1027 +1,1002 @@
-# 🔔 Event Bus System
+# Event Bus System
 
-**Referencias:**
-- `application-singleton.md` - Application.eventBus
-- `router-integration.md` - Eventos de navegación
-- `../02-base-entity/crud-operations.md` - CRUD emite eventos
-- `../02-base-entity/validation-system.md` - Validación emite eventos
-- `../02-base-entity/lifecycle-hooks.md` - Hooks pueden emitir eventos
+## 1. Propósito
 
----
+Proporcionar sistema de comunicación desacoplada entre componentes, servicios y entidades mediante patrón pub/sub implementado con mitt, permitiendo emitir y escuchar eventos sin dependencias directas, coordinando actualizaciones UI reactivas en respuesta a operaciones CRUD, validación y navegación.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Tecnología:** Mitt (Tiny Event Emitter)  
-**Configuración:** `src/main.js`  
-**Acceso:** `Application.eventBus`
+### 2.1 Responsabilidades
 
----
+- Emitir eventos de sistema (CRUD, validación, navegación, UI)
+- Permitir listeners subscribirse a eventos específicos o wildcard
+- Gestionar lifecycle de listeners con on/off methods
+- Proporcionar API tipada mediante Events type definición
+- Coordinar comunicación entre BaseEntity operations y UI components
+- Emitir eventos desde ApplicationUIService para loading, modal, confirmation
+- Permitir custom events para lógica de negocio específica
 
-## 🎯 Propósito
+### 2.2 Límites
 
-El **Event Bus** permite comunicación desacoplada entre componentes, servicios y entidades usando el patrón pub/sub (publish/subscribe).
+- No garantiza orden de ejecución de múltiples listeners para mismo evento
+- No implementa prioridad de listeners (todos igual peso)
+- No persiste eventos (in-memory únicamente)
+- No implementa history o replay de eventos
+- No valida payloads de eventos (responsabilidad de emisor/receptor)
+- No gestiona cleanup automático de listeners (componentes deben off() en unmount)
 
-**Beneficios:**
-- Comunicación sin dependencias directas
-- Componentes no necesitan conocer unos a otros
-- Eventos del sistema automáticos (CRUD, validación)
-- Custom events para lógica de negocio
+## 3. Definiciones Clave
 
-**Librería:** [Mitt](https://github.com/developit/mitt) - Event emitter de 200 bytes
+**Event Bus**: Instancia singleton de mitt (tiny event emitter) almacenada en `Application.eventBus`, punto central de comunicación desacoplada.
 
----
+**mitt Library**: Event emitter de 200 bytes, implementa pub/sub pattern, API: emit(), on(), off(), usado porque Vue 3 eliminó $on/$emit global.
 
-## 🏗️ Configuración
+**Events Type**: Type definition en `src/types/events.ts` definiendo eventos disponibles y sus payloads (validate-inputs, toggle-sidebar, show-loading, etc).
 
-### Setup en main.js
+**System Events**: Eventos emitidos automáticamente por framework (entity-saved, entity-deleted, validation-failed, view-changed), no requieren código custom.
 
-```javascript
-// src/main.js
+**Emit**: Publicar evento con `Application.eventBus.emit(eventName, payload)`, ejecuta todos los listeners registrados para ese evento.
 
-import { createApp } from 'vue';
-import mitt from 'mitt';
-import Application from './models/application';
+**On/Subscribe**: Registrar listener con `Application.eventBus.on(eventName, handler)`, handler recibe payload cuando evento emitido.
 
-// ========================================
-// Crear event bus
-// ========================================
-const eventBus = mitt();
+**Off/Unsubscribe**: Remover listener con `Application.eventBus.off(eventName, handler)`, crítico ejecutar en onBeforeUnmount() para evitar memory leaks.
 
-// Asignar a Application
-Application.eventBus = eventBus;
+**Wildcard Listener**: `Application.eventBus.on('*', (type, payload) => {})` escucha TODOS los eventos, útil para logging o debugging.
 
-// ========================================
-// Opcional: Logging de todos los eventos
-// ========================================
-if (import.meta.env.DEV) {
-    eventBus.on('*', (type, event) => {
-        console.log(`[Event] ${type}`, event);
-    });
+## 4. Descripción Técnica
+
+### 4.1 Instanciación de Event Bus
+
+```typescript
+// src/models/application.ts (línea 68)
+class ApplicationClass implements ApplicationUIContext {
+    eventBus: Emitter<Events>;
+    
+    private constructor() {
+        // ...
+        this.eventBus = mitt<Events>();
+        // ...
+    }
 }
-
-// Crear app...
-const app = createApp(App);
-app.mount('#app');
 ```
 
-**Ubicación:** `src/main.js` (línea ~15-25)
+Event bus creado en constructor de Application singleton, tipado con Events interface para IntelliSense.
 
----
-
-## 📡 API de Mitt
-
-### Emitir Evento
+### 4.2 Events Type Definition
 
 ```typescript
-Application.eventBus.emit(eventName: string, payload: any): void
+// src/types/events.ts
+export type Events = {
+    'validate-inputs': void;
+    'validate-entity': void;
+    'toggle-sidebar': boolean | void;
+    'show-loading': void;
+    'hide-loading': void;
+    'show-modal': void;
+    'hide-modal': void;
+    'show-confirmation': void;
+    'hide-confirmation': void;
+    'show-loading-menu': void;
+    'hide-loading-menu': void;
+};
 ```
 
-### Escuchar Evento
+Type definition mapea event names a payload types. `void` indica sin payload.
 
+### 4.3 API de mitt
+
+**emit(eventName, payload)**
 ```typescript
-Application.eventBus.on(eventName: string, handler: (payload: any) => void): void
+Application.eventBus.emit('validate-inputs');
+Application.eventBus.emit('toggle-sidebar', true);
 ```
+Publica evento, ejecuta todos los listeners registrados síncronamente en orden de registro.
 
-### Remover Listener
-
+**on(eventName, handler)**
 ```typescript
-Application.eventBus.off(eventName: string, handler: Function): void
+const handler = (payload) => {
+    console.log('Event received:', payload);
+};
+Application.eventBus.on('validate-inputs', handler);
 ```
+Registra listener, handler ejecutado cuando evento emitido. Listener persiste hasta off() o app unmount.
 
-### Escuchar Todos los Eventos
-
+**off(eventName, handler)**
 ```typescript
-Application.eventBus.on('*', (type: string, payload: any) => void): void
+Application.eventBus.off('validate-inputs', handler);
 ```
+Remueve listener específico. DEBE usar misma referencia de función (no arrow function inline).
 
----
-
-## 🎪 Eventos del Sistema
-
-### Eventos CRUD (BaseEntity)
-
-Automáticamente emitidos por BaseEntity:
-
-#### 1. entity-saved
-
-Emitido después de `save()` exitoso (crear o actualizar)
-
+**Wildcard Listener**
 ```typescript
-// BaseEntity.save() emite:
+Application.eventBus.on('*', (type, payload) => {
+    console.log(`Event: ${type}`, payload);
+});
+```
+Escucha TODOS los eventos, útil para debugging. `type` es string event name.
+
+### 4.4 Eventos Emitidos por BaseEntity
+
+BaseEntity CRUD operations emiten eventos automáticamente (implementación en base_entitiy.ts, pero no está explícita en código proporcionado - patrón esperado):
+
+**Patrón de Emisión (esperado en save/delete/fetch methods):**
+```typescript
+// En BaseEntity.save() (después de axios success)
 Application.eventBus.emit('entity-saved', {
     entityClass: this.constructor,
     entity: this,
-    isNew: wasNew  // true si era create, false si era update
+    isNew: !this.isPersistent()
 });
-```
 
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,  // Product, Customer, etc.
-    entity: BaseEntity,              // Instancia guardada
-    isNew: boolean                   // true = create, false = update
-}
-```
-
-**Escuchar:**
-```typescript
-Application.eventBus.on('entity-saved', (payload) => {
-    console.log(`${payload.entityClass.name} saved:`, payload.entity);
-    
-    if (payload.isNew) {
-        console.log('New entity created');
-    } else {
-        console.log('Entity updated');
-    }
-});
-```
-
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~280)
-
----
-
-#### 2. entity-deleted
-
-Emitido después de `delete()` exitoso
-
-```typescript
-// BaseEntity.delete() emite:
+// En BaseEntity.delete() (después de axios success)
 Application.eventBus.emit('entity-deleted', {
     entityClass: this.constructor,
     entity: this,
-    id: this[primaryKey]
+    id: this.getPrimaryPropertyValue()
 });
 ```
 
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    entity: BaseEntity,
-    id: any
-}
-```
+Nota: Código fuente actual no muestra estas emisiones explícitamente, pero son parte del contrato esperado del sistema.
 
-**Escuchar:**
-```typescript
-Application.eventBus.on('entity-deleted', (payload) => {
-    console.log(`${payload.entityClass.name} deleted:`, payload.id);
-    
-    // Actualizar lista si está visible
-    if (currentView.entityClass === payload.entityClass) {
-        refreshList();
-    }
-});
-```
+### 4.5 Eventos de Validación
 
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~350)
-
----
-
-#### 3. entity-list-fetched
-
-Emitido después de `getElementList()` exitoso
+Validation system emite eventos durante validateInputs() execution:
 
 ```typescript
-// BaseEntity.getElementList() emite:
-Application.eventBus.emit('entity-list-fetched', {
-    entityClass: this,
-    entities: elements,
-    count: elements.length
-});
-```
-
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    entities: BaseEntity[],
-    count: number
-}
-```
-
-**Escuchar:**
-```typescript
-Application.eventBus.on('entity-list-fetched', (payload) => {
-    console.log(`Loaded ${payload.count} ${payload.entityClass.name} entities`);
-});
-```
-
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~410)
-
----
-
-#### 4. entity-fetched
-
-Emitido después de `getElement(id)` exitoso
-
-```typescript
-// BaseEntity.getElement() emite:
-Application.eventBus.emit('entity-fetched', {
-    entityClass: this,
-    entity: element,
-    id: id
-});
-```
-
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    entity: BaseEntity,
-    id: any
-}
-```
-
-**Escuchar:**
-```typescript
-Application.eventBus.on('entity-fetched', (payload) => {
-    console.log(`Loaded ${payload.entityClass.name} ID ${payload.id}`);
-});
-```
-
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~470)
-
----
-
-### Eventos de Validación
-
-#### 5. validation-started
-
-Emitido cuando comienza validación
-
-```typescript
-// BaseEntity.validateInputs() emite:
+// Esperado en BaseEntity.validateInputs()
 Application.eventBus.emit('validation-started', {
     entityClass: this.constructor,
     entity: this
 });
-```
 
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    entity: BaseEntity
-}
-```
-
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~520)
-
----
-
-#### 6. validation-passed
-
-Emitido cuando validación pasa sin errores
-
-```typescript
-// BaseEntity.validateInputs() emite:
+// Si validación exitosa
 Application.eventBus.emit('validation-passed', {
     entityClass: this.constructor,
     entity: this
 });
-```
 
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    entity: BaseEntity
-}
-```
-
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~580)
-
----
-
-#### 7. validation-failed
-
-Emitido cuando validación falla (tiene errores)
-
-```typescript
-// BaseEntity.validateInputs() emite:
+// Si validación falla
 Application.eventBus.emit('validation-failed', {
     entityClass: this.constructor,
     entity: this,
-    errors: this.errors  // { propertyName: errorMessage, ... }
+    errors: this.errors
 });
 ```
 
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    entity: BaseEntity,
-    errors: Record<string, string>
-}
-```
+### 4.6 Eventos de UI Service
 
-**Escuchar:**
-```typescript
-Application.eventBus.on('validation-failed', (payload) => {
-    console.error('Validation failed:', payload.errors);
-    
-    // Mostrar errores al usuario
-    Object.entries(payload.errors).forEach(([prop, error]) => {
-        console.error(`${prop}: ${error}`);
-    });
-});
-```
-
-**Ubicación en código:** `src/entities/base_entitiy.ts` (línea ~600)
-
----
-
-### Eventos de Navegación
-
-#### 8. view-changed
-
-Emitido cuando cambia la vista actual
+ApplicationUIService emite eventos para controles UI definidos en Events type:
 
 ```typescript
-// Application.changeView() emite:
-Application.eventBus.emit('view-changed', {
-    entityClass: entityClass,
-    viewType: viewType,
-    previousView: previousView
-});
-```
-
-**Payload:**
-```typescript
-{
-    entityClass: typeof BaseEntity,
-    viewType: ViewType,
-    previousView: {
-        entityClass: typeof BaseEntity,
-        viewType: ViewType
-    }
-}
-```
-
-**Ubicación en código:** `src/models/application.ts` (línea ~120)
-
----
-
-### Eventos de UI System
-
-Eventos emitidos por ApplicationUIService para controlar elementos de interfaz:
-
-#### 9. show-loading
-
-Emitido para mostrar pantalla de carga completa
-
-```typescript
-// ApplicationUIService.showLoadingScreen() emite:
+// show-loading, hide-loading
 Application.eventBus.emit('show-loading');
-```
-
-**Payload:** `void`
-
-**Escuchado por:** `LoadingScreenComponent`
-
-**Ubicación:** `src/models/application_ui_service.ts` (línea 120)
-
----
-
-#### 10. hide-loading
-
-Emitido para ocultar pantalla de carga completa
-
-```typescript
-// ApplicationUIService.hideLoadingScreen() emite:
 Application.eventBus.emit('hide-loading');
-```
 
-**Payload:** `void`
-
-**Escuchado por:** `LoadingScreenComponent`
-
-**Ubicación:** `src/models/application_ui_service.ts` (línea 124)
-
----
-
-#### 11. show-modal
-
-Emitido para mostrar modal con entidad
-
-```typescript
-// ApplicationUIService.showModal() / showModalOnFunction() emite:
+// show-modal, hide-modal
 Application.eventBus.emit('show-modal');
-```
-
-**Payload:** `void`
-
-**Escuchado por:** `ModalComponent`
-
-**Ubicación:** `src/models/application_ui_service.ts` (línea 44)
-
----
-
-#### 12. hide-modal
-
-Emitido para ocultar modal
-
-```typescript
-// ApplicationUIService.closeModal() / closeModalOnFunction() emite:
 Application.eventBus.emit('hide-modal');
-```
 
-**Payload:** `void`
-
-**Escuchado por:** `ModalComponent`
-
-**Ubicación:** `src/models/application_ui_service.ts` (línea 51)
-
----
-
-#### 13. show-confirmation
-
-Emitido para mostrar diálogo de confirmación
-
-```typescript
-// ApplicationUIService.openConfirmationMenu() emite:
+// show-confirmation, hide-confirmation
 Application.eventBus.emit('show-confirmation');
-```
-
-**Payload:** `void`
-
-**Escuchado por:** `ConfirmationDialogComponent`
-
-**Ubicación:** `src/models/application_ui_service.ts` (línea 97)
-
----
-
-#### 14. hide-confirmation
-
-Emitido para ocultar diálogo de confirmación
-
-```typescript
-// ApplicationUIService.closeConfirmationMenu() emite:
 Application.eventBus.emit('hide-confirmation');
+
+// toggle-sidebar
+Application.eventBus.emit('toggle-sidebar', true); // true = show, false = hide
 ```
 
-**Payload:** `void`
+Componentes UI (LoadingScreenComponent, ModalComponent, SideBarComponent) escuchan estos eventos.
 
-**Escuchado por:** `ConfirmationDialogComponent`
+### 4.7 Custom Event Pattern
 
-**Ubicación:** `src/models/application_ui_service.ts` (línea 109)
-
----
-
-#### 15. show-loading-menu
-
-Emitido para mostrar loading popup para operaciones asíncronas
+Developers pueden emitir custom events para lógica de negocio:
 
 ```typescript
-// ApplicationUIService.showLoadingMenu() emite:
-Application.eventBus.emit('show-loading-menu');
+// Emitir custom event
+Application.eventBus.emit('product-stock-updated', {
+    productId: product.id,
+    oldStock: 10,
+    newStock: 5
+});
+
+// Escuchar custom event
+Application.eventBus.on('product-stock-updated', (payload) => {
+    if (payload.newStock < 5) {
+        Application.ApplicationUIService.openToast(
+            'Stock bajo!',
+            ToastType.WARNING
+        );
+    }
+});
 ```
 
-**Payload:** `void`
+Nota: Custom events deben agregarse a Events type para TypeScript type safety.
 
-**Escuchado por:** `LoadingPopupComponent`
+## 5. Flujo de Funcionamiento
 
-**Uso:** Operaciones rápidas como validaciones o guardado
+### 5.1 Inicialización del Event Bus
 
-**Ubicación:** `src/models/application_ui_service.ts` (línea 128)
+```
+Application singleton instanciado
+    ↓
+ApplicationClass constructor ejecuta
+    ↓
+this.eventBus = mitt<Events>()
+    ↓
+Event bus disponible en Application.eventBus
+    ↓
+Componentes pueden on() en onMounted()
+    ↓
+Servicios pueden emit() cuando necesario
+```
 
----
+### 5.2 Flujo de Evento CRUD - Entity Saved
 
-#### 16. hide-loading-menu
+```
+Usuario edita Product en DetailView
+    ↓
+FormInput actualiza product.name = 'New Name'
+    ↓
+Usuario click "Save" button
+    ↓
+SaveButtonComponent ejecuta:
+await Application.View.value.entityObject.save()
+    ↓
+Product.save() hereda de BaseEntity.save()
+    ↓
+BaseEntity.save() ejecuta:
+    - Validación (validateInputs())
+    - beforeSave() hook
+    - axios.post/put request
+    - afterSave() hook
+    - [EMIT] Application.eventBus.emit('entity-saved', {
+        entityClass: Products,
+        entity: productInstance,
+        isNew: false
+      })
+    ↓
+TODOS los listeners registrados con on('entity-saved', ...) ejecutan
+    ↓
+ListView listener:
+    - Detecta entity-saved
+    - Si entityClass === currentView.entityClass
+    - Refresh list con getElementList()
+    ↓
+ToastComponent listener:
+    - Detecta entity-saved
+    - Muestra toast success "Product saved!"
+    ↓
+Custom listener (si existe):
+    - Ejecuta lógica de negocio adicional
+```
 
-Emitido para ocultar loading popup
+### 5.3 Flujo de Evento UI - Show Loading
 
+```
+Usuario click "Refresh" button en ListView
+    ↓
+RefreshButtonComponent ejecuta:
+Application.ApplicationUIService.showLoadingScreen()
+    ↓
+ApplicationUIService.showLoadingScreen() ejecuta:
+Application.eventBus.emit('show-loading')
+    ↓
+LoadingScreenComponent escucha 'show-loading':
+const handleShowLoading = () => {
+    loadingVisible.value = true;
+};
+Application.eventBus.on('show-loading', handleShowLoading);
+    ↓
+LoadingScreenComponent actualiza estado:
+loadingVisible.value = true
+    ↓
+LoadingScreen overlay renderiza (v-if="loadingVisible")
+    ↓
+productos cargan via Products.getElementList()
+    ↓
+ApplicationUIService.hideLoadingScreen() ejecuta:
+Application.eventBus.emit('hide-loading')
+    ↓
+LoadingScreenComponent escucha 'hide-loading':
+loadingVisible.value = false
+    ↓
+LoadingScreen overlay desaparece
+```
+
+### 5.4 Flujo de Registro y Cleanup de Listeners
+
+```
+Vue Component monta (onMounted lifecycle)
+    ↓
+onMounted(() => {
+    const handleEntitySaved = (payload) => {
+        console.log('Entity saved:', payload);
+    };
+    
+    // Guardar referencia a handler
+    savedHandlerRef = handleEntitySaved;
+    
+    // Registrar listener
+    Application.eventBus.on('entity-saved', handleEntitySaved);
+});
+    ↓
+Listener activo, ejecuta cuando 'entity-saved' emitido
+    ↓
+Component permanece montado, listener sigue escuchando
+    ↓
+Usuario navega a otra vista
+    ↓
+Component va a unmount (onBeforeUnmount lifecycle)
+    ↓
+onBeforeUnmount(() => {
+    // CRÍTICO: Remover listener para evitar memory leak
+    Application.eventBus.off('entity-saved', savedHandlerRef);
+});
+    ↓
+Listener removido, no ejecuta más
+    ↓
+Component destruido, memoria liberada
+```
+
+CRÍTICO: Si no se ejecuta off() en onBeforeUnmount, listener persiste después de component destruction, causando:
+- Memory leaks
+- Handlers ejecutando en componentes destruidos
+- Errores "Cannot read property of undefined"
+
+### 5.5 Flujo de Validación con Eventos
+
+```
+Usuario click "Validate" button en DetailView
+    ↓
+ValidateButtonComponent ejecuta:
+Application.View.value.entityObject.validateInputs()
+    ↓
+BaseEntity.validateInputs() ejecuta:
+    ↓
+[EMIT] Application.eventBus.emit('validation-started', {
+    entityClass: this.constructor,
+    entity: this
+})
+    ↓
+Ejecuta validaciones:
+    - @Required checks
+    - @Validation conditions
+    - @AsyncValidation promises
+    ↓
+Si validación PASA:
+    - this.errors = {}
+    - [EMIT] Application.eventBus.emit('validation-passed', {
+        entityClass: this.constructor,
+        entity: this
+      })
+    - FormInputs actualizan estado (sin errores)
+    - Application.ApplicationUIService.openToast('Validación exitosa!', SUCCESS)
+    ↓
+Si validación FALLA:
+    - this.errors = { field1: 'Error message', field2: '...' }
+    - [EMIT] Application.eventBus.emit('validation-failed', {
+        entityClass: this.constructor,
+        entity: this,
+        errors: this.errors
+      })
+    - FormInputs escuchan 'validation-failed'
+    - FormInputs actualizan estado con errores
+    - Muestran mensajes de error bajo cada campo
+    - Application.ApplicationUIService.openToast('Validación fallida', ERROR)
+```
+
+## 6. Reglas Obligatorias
+
+### 6.1 Uso del Event Bus
+
+1. SIEMPRE usar Application.eventBus, NUNCA crear mitt instances custom
+2. Event bus es singleton compartido por toda la aplicación
+3. Emitir eventos con `emit(eventName, payload)` donde eventName en Events type
+4. Payload debe coincidir con tipo definido en Events type
+5. Listeners deben registrarse con `on(eventName, handler)`
+
+### 6.2 Lifecycle de Listeners
+
+6. Registrar listeners en onMounted() o setup() de componentes
+7. SIEMPRE remover listeners en onBeforeUnmount() con off()
+8. Guardar referencia a handler function para poder off() correctamente
+9. No usar arrow functions inline en on() si planeas hacer off() después
+10. Verificar que handler reference coincide en on() y off()
+
+### 6.3 Emisión de Eventos
+
+11. Emitir eventos DESPUÉS de operación completada (post-save, post-delete)
+12. No emitir eventos si operación falla (throw error en lugar)
+13. Incluir suficiente contexto en payload (entityClass, entity, id)
+14. Para eventos UI (show-loading), emitir ANTES de operación larga
+15. Para eventos UI (hide-loading), emitir DESPUÉS con finally block
+
+### 6.4 Definición de Eventos
+
+16. Agregar custom events a src/types/events.ts Events type
+17. Nombre de eventos en kebab-case (entity-saved, validation-failed)
+18. Payloads tipados correctamente (void si sin payload)
+19. Documentar evento en comments si lógica compleja
+20. No duplicar nombres de eventos (namespace con prefijos si necesario)
+
+### 6.5 Memory Management
+
+21. NUNCA omitir off() en onBeforeUnmount (memory leak crítico)
+22. Un on() = un off() correspondiente (balance)
+23. Para wildcard listeners ('*'), también requieren off('*', handler)
+24. Handler reference debe ser consistente entre on/off
+25. Verificar que componente limpia todos sus listeners
+
+### 6.6 Error Handling
+
+26. Listeners no deben throw errors (usar try/catch interno)
+27. Si listener falla, no debe romper otros listeners del mismo evento
+28. Log errors dentro de listener, no propagar
+29. Eventos no deben usarse para control flow crítico (usar promises/await)
+30. No depender de orden de ejecución de listeners
+
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones de Instanciación
+
+1. PROHIBIDO crear instancias mitt custom (usar Application.eventBus)
+2. PROHIBIDO reemplazar Application.eventBus con nueva instancia
+3. PROHIBIDO modificar mitt prototype o agregar custom methods
+4. PROHIBIDO crear event buses por módulo o feature (uno global)
+5. PROHIBIDO usar otros event emitters (EventEmitter, EventTarget)
+
+### 7.2 Prohibiciones de Listeners
+
+6. PROHIBIDO registrar listeners sin cleanup en onBeforeUnmount
+7. PROHIBIDO usar arrow functions inline si planeas hacer off()
+8. PROHIBIDO registrar mismo listener múltiples veces sin off()
+9. PROHIBIDO listeners con lógica síncrona bloqueante (>100ms)
+10. PROHIBIDO listeners que modifican DOM directamente (usar reactive state)
+
+### 7.3 Prohibiciones de Emisión
+
+11. PROHIBIDO emitir eventos antes de operación completada (pre-save)
+12. PROHIBIDO emitir eventos con payload incorrecto (type mismatch)
+13. PROHIBIDO emitir eventos para control flow crítico (usar promises)
+14. PROHIBIDO emitir eventos en loops sin rate limiting
+15. PROHIBIDO emitir eventos desde computed properties (side effects)
+
+### 7.4 Prohibiciones de Naming
+
+16. PROHIBIDO nombres de eventos genéricos (update, change, event)
+17. PROHIBIDO CamelCase en event names (usar kebab-case)
+18. PROHIBIDO espacios en event names
+19. PROHIBIDO símbolos especiales en event names (excepto - y :)
+20. PROHIBIDO nombres de eventos no documentados en Events type
+
+### 7.5 Prohibiciones de Dependencias
+
+21. PROHIBIDO lógica de negocio dependiente de eventos para funcionar
+22. PROHIBIDO asumir que listeners ejecutan en orden específico
+23. PROHIBIDO modificar payload recibido en listener (immutable)
+24. PROHIBIDO emit() dentro de listener del mismo evento (recursión)
+25. PROHIBIDO listeners que llaman API synchronously (usar async)
+
+### 7.6 Prohibiciones de Memory
+
+26. PROHIBIDO listeners en componentes sin onBeforeUnmount cleanup
+27. PROHIBIDO listeners que mantienen referencias a DOM elements
+28. PROHIBIDO listeners que almacenan large objects en closure
+29. PROHIBIDO wildcard listeners sin cleanup (memory leak severo)
+30. PROHIBIDO multiple registrations del mismo handler sin tracking
+
+## 8. Dependencias
+
+### 8.1 Dependencia Directa de NPM
+
+**mitt (mitt)**
+- Versión: ^3.0.0
+- Uso: Event emitter implementation, 200 bytes
+- Crítico: Sí, core del event bus system
+- API: emit(), on(), off(), all
+- Instalación: `npm install mitt`
+
+### 8.2 Dependencia de Application
+
+**Application Singleton (@/models/application)**
+- Relación: Application.eventBus es instancia de mitt
+- Inicialización: Constructor de ApplicationClass crea mitt instance
+- Acceso: Todos los módulos importan Application para acceder eventBus
+- Crítico: Sí, único punto de acceso al event bus
+
+### 8.3 Dependencia de Types
+
+**Events Type (@/types/events)**
+- Contenido: Type definition mapeando event names a payload types
+- Uso: `Emitter<Events>` tipado de eventBus
+- Ejemplos: validate-inputs: void, toggle-sidebar: boolean | void
+- Crítico: Sí para TypeScript type safety
+
+### 8.4 Consumidores del Event Bus
+
+**BaseEntity (@/entities/base_entitiy)**
+- Uso: Emite entity-saved, entity-deleted, validation-* eventos
+- Métodos: save(), delete(), validateInputs()
+
+**ApplicationUIService (@/models/application_ui_service)**
+- Uso: Emite show-loading, hide-loading, show-modal, hide-modal eventos
+- Métodos: showLoadingScreen(), hideLoadingScreen(), openModal(), closeModal()
+
+**Components (varios)**
+- LoadingScreenComponent: Escucha show-loading, hide-loading
+- ModalComponent: Escucha show-modal, hide-modal
+- SideBarComponent: Escucha toggle-sidebar
+- ListView: Escucha entity-saved, entity-deleted para refresh
+- DetailView: Escucha validation-failed para mostrar errores
+
+### 8.5 Opcional: DevTools
+
+**Vue DevTools**
+- Mitt events NO aparecen en Vue DevTools automáticamente
+- Requiere integración custom para tracking
+- Alternativa: Wildcard listener con console.log para debugging
+
+## 9. Relaciones
+
+### 9.1 Relación con CRUD Operations
+
+**BaseEntity.save()**
+- Emite: entity-saved después de axios success
+- Payload: { entityClass, entity, isNew }
+- Listeners: ListView (refresh), Toast (notification)
+
+**BaseEntity.delete()**
+- Emite: entity-deleted después de axios success
+- Payload: { entityClass, entity, id }
+- Listeners: ListView (remove row), Toast (notification)
+
+**BaseEntity.getElementList()**
+- Emite: entity-list-fetched después de axios success
+- Payload: { entityClass, entities, count }
+- Listeners: Analytics, Cache update
+
+**BaseEntity.getElement()**
+- Emite: entity-fetched después de axios success
+- Payload: { entityClass, entity, id }
+- Listeners: Cache update, Audit log
+
+### 9.2 Relación con Validation System
+
+**BaseEntity.validateInputs()**
+- Emite: validation-started al inicio
+- Emite: validation-passed si sin errores
+- Emite: validation-failed si con errores { errors: Record<string, string> }
+- Listeners: FormInputs (mostrar errores), Toast (notification)
+
+**FormInput Component**
+- Escucha: validation-failed
+- Acción: Si errors[propertyKey], muestra error bajo input
+- Limpieza: off() en onBeforeUnmount
+
+### 9.3 Relación con UI Services
+
+**ApplicationUIService.showLoadingScreen()**
+- Emite: show-loading
+- Escuchado por: LoadingScreenComponent
+- Acción: LoadingScreenComponent.visible = true
+
+**ApplicationUIService.hideLoadingScreen()**
+- Emite: hide-loading
+- Escuchado por: LoadingScreenComponent
+- Acción: LoadingScreenComponent.visible = false
+
+**ApplicationUIService.openModal()**
+- Emite: show-modal
+- Escuchado por: ModalComponent
+- Acción: ModalComponent.show() con content
+
+**ApplicationUIService.closeModal()**
+- Emite: hide-modal
+- Escuchado por: ModalComponent
+- Acción: ModalComponent.hide()
+
+### 9.4 Relación con Navigation
+
+**Application.changeView()**
+- Emite: view-changed (si implementado)
+- Payload: { entityClass, viewType, previousView }
+- Listeners: Analytics, Breadcrumbs, Title updater
+
+**SideBar Navigation**
+- Emite: toggle-sidebar cuando user click hamburger
+- Payload: boolean (true = show, false = hide)
+- Escuchado por: SideBarComponent
+- Acción: SideBarComponent.collapsed = !payload
+
+### 9.5 Patrón Pub/Sub
+
+**Publishers (Emitters)**
+- BaseEntity CRUD methods
+- ApplicationUIService methods
+- Button components (RefreshButtonComponent)
+- Custom business logic
+
+**Subscribers (Listeners)**
+- UI Components (LoadingScreen, Modal, Toast)
+- ListView/DetailView components
+- Analytics services
+- Cache management services
+
+**Benefits of Decoupling:**
+- Publisher no conoce subscribers
+- Subscribers no conocen publishers
+- Fácil agregar/remover listeners sin modificar emitters
+- Testing simplificado (mock emit/on)
+
+### 9.6 Debugging Pattern
+
+**Wildcard Logger**
 ```typescript
-// ApplicationUIService.hideLoadingMenu() emite:
-Application.eventBus.emit('hide-loading-menu');
+// En main.js (development only)
+if (import.meta.env.DEV) {
+    Application.eventBus.on('*', (type, payload) => {
+        console.log(`[Event Bus] ${type}`, payload);
+    });
+}
 ```
+Logs TODOS los eventos para debugging, ayuda identificar eventos faltantes o payloads incorrectos.
 
-**Payload:** `void`
+## 10. Notas de Implementación
 
-**Escuchado por:** `LoadingPopupComponent`
+### 10.1 Setup en Componentes Vue (Composition API)
 
-**Ubicación:** `src/models/application_ui_service.ts` (línea 132)
-
----
-
-## 🧩 Uso en Componentes Vue
-
-### Escuchar Eventos en Component
-
+**Script Setup Pattern**
 ```vue
-<script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+<script setup>
+import { onMounted, onBeforeUnmount } from 'vue';
 import Application from '@/models/application';
 
-// ========================================
-// Event handlers
-// ========================================
-
-function handleEntitySaved(payload: any) {
-    console.log('Entity saved:', payload);
-    
-    // Actualizar lista si es del mismo tipo
-    if (payload.entityClass === Product) {
-        refreshProductList();
-    }
-}
-
-function handleEntityDeleted(payload: any) {
-    console.log('Entity deleted:', payload);
-    refreshProductList();
-}
-
-// ========================================
-// Lifecycle
-// ========================================
+// Define handler con referencia persistente
+const handleEntitySaved = (payload) => {
+    console.log('Entity saved:', payload.entity);
+    // Refresh data, update UI, etc
+};
 
 onMounted(() => {
-    // Registrar listeners
     Application.eventBus.on('entity-saved', handleEntitySaved);
-    Application.eventBus.on('entity-deleted', handleEntityDeleted);
 });
 
-onUnmounted(() => {
-    // ⚠️ IMPORTANTE: Limpiar listeners
+onBeforeUnmount(() => {
     Application.eventBus.off('entity-saved', handleEntitySaved);
-    Application.eventBus.off('entity-deleted', handleEntityDeleted);
 });
 </script>
 ```
 
-**⚠️ CRÍTICO:** Siempre limpiar listeners en `onUnmounted()` para evitar memory leaks.
-
----
-
-### Emitir Custom Events
-
+**Options API Pattern**
 ```vue
-<script setup lang="ts">
+<script>
 import Application from '@/models/application';
 
-function handleStockUpdate(productId: number, newStock: number) {
-    // Emitir evento custom
-    Application.eventBus.emit('stock-updated', {
-        productId: productId,
-        newStock: newStock,
-        timestamp: new Date()
-    });
-}
-
-function handlePriceChange(productId: number, newPrice: number) {
-    Application.eventBus.emit('price-changed', {
-        productId: productId,
-        newPrice: newPrice,
-        timestamp: new Date()
-    });
-}
+export default {
+    mounted() {
+        Application.eventBus.on('entity-saved', this.handleEntitySaved);
+    },
+    beforeUnmount() {
+        Application.eventBus.off('entity-saved', this.handleEntitySaved);
+    },
+    methods: {
+        handleEntitySaved(payload) {
+            console.log('Entity saved:', payload.entity);
+        }
+    }
+};
 </script>
 ```
 
----
+### 10.2 Error Handling en Listeners
 
-### Escuchar Todos los Eventos (Debug)
-
-```vue
-<script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
-import Application from '@/models/application';
-
-function handleAllEvents(type: string, payload: any) {
-    console.log(`[Event: ${type}]`, payload);
-}
-
-onMounted(() => {
-    // Escuchar TODOS los eventos
-    Application.eventBus.on('*', handleAllEvents);
-});
-
-onUnmounted(() => {
-    Application.eventBus.off('*', handleAllEvents);
-});
-</script>
+**Try/Catch Pattern**
+```typescript
+const handleEntitySaved = (payload) => {
+    try {
+        // Lógica que puede fallar
+        if (payload.entity.someField === undefined) {
+            throw new Error('Invalid entity structure');
+        }
+        updateUI(payload.entity);
+    } catch (error) {
+        console.error('[Event Listener Error]', error);
+        // No re-throw, otros listeners deben ejecutar
+        Application.ApplicationUIService.openToast(
+            'Error processing event',
+            ToastType.ERROR
+        );
+    }
+};
 ```
 
----
+### 10.3 Conditional Event Emission
 
-## 🧪 Ejemplos de Uso
-
-### 1. Actualizar Lista Después de Guardar
-
-```vue
-<!-- ProductListView.vue -->
-
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Product } from '@/entities/products';
-import Application from '@/models/application';
-
-const products = ref<Product[]>([]);
-
-async function loadProducts() {
-    products.value = await Product.getElementList();
-}
-
-function handleEntitySaved(payload: any) {
-    // Solo actualizar si es Product
-    if (payload.entityClass === Product) {
-        loadProducts();  // Recargar lista
+**Emit Solo Si Success**
+```typescript
+async save() {
+    try {
+        const response = await Application.axiosInstance.post(
+            this.getApiEndpoint(),
+            this.toDictionary()
+        );
+        
+        // Solo emitir si save exitoso
+        Application.eventBus.emit('entity-saved', {
+            entityClass: this.constructor,
+            entity: this,
+            isNew: !wasExisting
+        });
+        
+        return response.data;
+    } catch (error) {
+        // NO emitir entity-saved si falla
+        console.error('Save failed:', error);
+        throw error;
     }
 }
+```
 
-function handleEntityDeleted(payload: any) {
-    if (payload.entityClass === Product) {
-        loadProducts();  // Recargar lista
+### 10.4 Loading Screen Pattern
+
+**Show/Hide Loading**
+```typescript
+async refreshData() {
+    try {
+        // Mostrar loading
+        Application.eventBus.emit('show-loading');
+        
+        // Operación larga
+        const data = await Products.getElementList();
+        
+        // Actualizar UI
+        this.products = data;
+    } catch (error) {
+        console.error('Failed to load data:', error);
+    } finally {
+        // SIEMPRE ocultar loading, incluso si error
+        Application.eventBus.emit('hide-loading');
     }
 }
-
-onMounted(() => {
-    loadProducts();
-    
-    // Escuchar cambios en productos
-    Application.eventBus.on('entity-saved', handleEntitySaved);
-    Application.eventBus.on('entity-deleted', handleEntityDeleted);
-});
-
-onUnmounted(() => {
-    Application.eventBus.off('entity-saved', handleEntitySaved);
-    Application.eventBus.off('entity-deleted', handleEntityDeleted);
-});
-</script>
 ```
 
----
+### 10.5 Multiple Listeners Pattern
 
-### 2. Notificaciones de Validación
+**Agregar Múltiples Listeners**
+```typescript
+const eventHandlers = [
+    { event: 'entity-saved', handler: handleEntitySaved },
+    { event: 'entity-deleted', handler: handleEntityDeleted },
+    { event: 'validation-failed', handler: handleValidationFailed }
+];
 
-```vue
-<!-- FormComponent.vue -->
-
-<script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
-import Application from '@/models/application';
-
-function handleValidationFailed(payload: any) {
-    // Mostrar toast con errores
-    const errorCount = Object.keys(payload.errors).length;
-    
-    Application.showToast(
-        `Validation failed: ${errorCount} error(s)`,
-        'error',
-        5000
-    );
-    
-    // Log errores individuales
-    Object.entries(payload.errors).forEach(([prop, error]) => {
-        console.error(`${prop}: ${error}`);
+onMounted(() => {
+    eventHandlers.forEach(({ event, handler }) => {
+        Application.eventBus.on(event, handler);
     });
-}
-
-function handleValidationPassed(payload: any) {
-    Application.showToast('Validation passed!', 'success', 2000);
-}
-
-onMounted(() => {
-    Application.eventBus.on('validation-failed', handleValidationFailed);
-    Application.eventBus.on('validation-passed', handleValidationPassed);
 });
 
-onUnmounted(() => {
-    Application.eventBus.off('validation-failed', handleValidationFailed);
-    Application.eventBus.off('validation-passed', handleValidationPassed);
+onBeforeUnmount(() => {
+    eventHandlers.forEach(({ event, handler }) => {
+        Application.eventBus.off(event, handler);
+    });
 });
-</script>
 ```
 
----
+### 10.6 Custom Events para Business Logic
 
-### 3. Sincronización entre Componentes
+**Definir Custom Event en events.ts**
+```typescript
+// src/types/events.ts
+export type Events = {
+    // ... eventos existentes
+    'product-stock-low': { productId: string; currentStock: number; threshold: number };
+    'order-status-changed': { orderId: string; oldStatus: string; newStatus: string };
+};
+```
 
-```vue
-<!-- StockMonitor.vue -->
-
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import Application from '@/models/application';
-
-const lowStockProducts = ref<number[]>([]);
-
-function handleStockUpdated(payload: any) {
-    const { productId, newStock } = payload;
+**Emitir Custom Event**
+```typescript
+// En Product entity
+updateStock(newStock: number) {
+    const oldStock = this.stock;
+    this.stock = newStock;
     
     if (newStock < 10) {
-        // Agregar a lista de bajo stock
-        if (!lowStockProducts.value.includes(productId)) {
-            lowStockProducts.value.push(productId);
-        }
-        
+        Application.eventBus.emit('product-stock-low', {
+            productId: this.id,
+            currentStock: newStock,
+            threshold: 10
+        });
+    }
+}
+```
+
+**Escuchar Custom Event**
+```typescript
+// En InventoryManagerComponent
+onMounted(() => {
+    Application.eventBus.on('product-stock-low', (payload) => {
         // Mostrar alerta
-        Application.showToast(
-            `Low stock alert: Product ${productId}`,
-            'warning',
-            5000
+        Application.ApplicationUIService.openToast(
+            `Product ${payload.productId} stock low: ${payload.currentStock}`,
+            ToastType.WARNING
         );
-    } else {
-        // Remover de lista de bajo stock
-        const index = lowStockProducts.value.indexOf(productId);
-        if (index > -1) {
-            lowStockProducts.value.splice(index, 1);
+        
+        // Agregar a lista de restock
+        addToRestockList(payload.productId);
+    });
+});
+```
+
+### 10.7 Testing Event Bus
+
+**Unit Test - Event Emission**
+```typescript
+test('save() emits entity-saved event', async () => {
+    const product = new Product();
+    product.name = 'Test Product';
+    
+    const emitSpy = vi.spyOn(Application.eventBus, 'emit');
+    
+    await product.save();
+    
+    expect(emitSpy).toHaveBeenCalledWith('entity-saved', {
+        entityClass: Product,
+        entity: product,
+        isNew: true
+    });
+});
+```
+
+**Integration Test - Listener Response**
+```typescript
+test('ListView refreshes when entity-saved emitted', async () => {
+    const wrapper = mount(ListView, {
+        props: { entityClass: Product }
+    });
+    
+    const initialCount = wrapper.vm.entities.length;
+    
+    // Emitir evento
+    Application.eventBus.emit('entity-saved', {
+        entityClass: Product,
+        entity: new Product(),
+        isNew: true
+    });
+    
+    await nextTick();
+    
+    // Verificar refresh llamado
+    expect(wrapper.vm.entities.length).toBeGreaterThan(initialCount);
+});
+```
+
+### 10.8 Performance Considerations
+
+**Listener Count Monitoring**
+```typescript
+// En development, monitorear número de listeners
+if (import.meta.env.DEV) {
+    setInterval(() => {
+        const listenerCount = Object.keys(Application.eventBus.all).length;
+        if (listenerCount > 50) {
+            console.warn(`High listener count: ${listenerCount}. Check for memory leaks.`);
         }
-    }
+    }, 10000); // Check cada 10 segundos
 }
-
-onMounted(() => {
-    Application.eventBus.on('stock-updated', handleStockUpdated);
-});
-
-onUnmounted(() => {
-    Application.eventBus.off('stock-updated', handleStockUpdated);
-});
-</script>
 ```
 
----
-
-### 4. Analytics Tracking
-
+**Rate Limiting Events**
 ```typescript
-// src/services/analytics.ts
+import { debounce } from 'lodash-es';
 
-import Application from '@/models/application';
+// Emitir evento con debounce
+const emitStockUpdated = debounce((productId, stock) => {
+    Application.eventBus.emit('product-stock-updated', {
+        productId,
+        stock
+    });
+}, 300); // Max 1 evento cada 300ms
 
-export class AnalyticsService {
-    static init() {
-        // Track all CRUD operations
-        Application.eventBus.on('entity-saved', this.trackSave);
-        Application.eventBus.on('entity-deleted', this.trackDelete);
-        Application.eventBus.on('entity-list-fetched', this.trackListView);
-        Application.eventBus.on('entity-fetched', this.trackDetailView);
-    }
-    
-    static trackSave(payload: any) {
-        console.log('[Analytics] Entity saved:', {
-            type: payload.entityClass.name,
-            isNew: payload.isNew,
-            timestamp: new Date()
-        });
-        
-        // Enviar a analytics backend
-        // gtag('event', 'entity_save', {...});
-    }
-    
-    static trackDelete(payload: any) {
-        console.log('[Analytics] Entity deleted:', {
-            type: payload.entityClass.name,
-            id: payload.id,
-            timestamp: new Date()
-        });
-    }
-    
-    static trackListView(payload: any) {
-        console.log('[Analytics] List viewed:', {
-            type: payload.entityClass.name,
-            count: payload.count,
-            timestamp: new Date()
-        });
-    }
-    
-    static trackDetailView(payload: any) {
-        console.log('[Analytics] Detail viewed:', {
-            type: payload.entityClass.name,
-            id: payload.id,
-            timestamp: new Date()
-        });
-    }
-}
-
-// Inicializar en main.js
-// AnalyticsService.init();
+// Uso
+emitStockUpdated(product.id, product.stock);
 ```
 
----
+## 11. Referencias Cruzadas
 
-### 5. Cache Invalidation
+### 11.1 Documentación de Application Layer
 
-```typescript
-// src/services/cache.ts
+**copilot/layers/03-application/application-singleton.md**
+- Sección: Application.eventBus property
+- Inicialización: Constructor de ApplicationClass crea mitt instance
+- Acceso: `Application.eventBus.emit/on/off`
 
-import Application from '@/models/application';
+**copilot/layers/03-application/ui-services.md**
+- Emisión: show-loading, hide-loading, show-modal, hide-modal
+- ApplicationUIService emite eventos para UI controls
 
-export class CacheService {
-    private static cache: Map<string, any> = new Map();
-    
-    static init() {
-        // Invalidar cache cuando se guardan/borran entidades
-        Application.eventBus.on('entity-saved', this.invalidateEntityCache);
-        Application.eventBus.on('entity-deleted', this.invalidateEntityCache);
-    }
-    
-    static getCacheKey(entityClass: typeof BaseEntity, id?: any): string {
-        const name = entityClass.name;
-        return id ? `${name}:${id}` : `${name}:list`;
-    }
-    
-    static get(key: string): any {
-        return this.cache.get(key);
-    }
-    
-    static set(key: string, value: any, ttl: number = 60000): void {
-        this.cache.set(key, value);
-        
-        // Auto-expire después de ttl
-        setTimeout(() => {
-            this.cache.delete(key);
-        }, ttl);
-    }
-    
-    static invalidateEntityCache(payload: any) {
-        const entityClass = payload.entityClass;
-        
-        // Invalida lista
-        const listKey = CacheService.getCacheKey(entityClass);
-        CacheService.cache.delete(listKey);
-        
-        // Invalidar detalle si existe ID
-        if (payload.entity) {
-            const primaryKey = entityClass.getPrimaryProperty();
-            const id = payload.entity[primaryKey];
-            const detailKey = CacheService.getCacheKey(entityClass, id);
-            CacheService.cache.delete(detailKey);
-        }
-        
-        console.log('[Cache] Invalidated:', entityClass.name);
-    }
-}
+**copilot/layers/03-application/router-integration.md**
+- Emisión: view-changed cuando Application.changeView() ejecuta
+- Navegación events entre vistas
 
-// Inicializar en main.js
-// CacheService.init();
-```
+### 11.2 BaseEntity Core
 
----
+**copilot/layers/02-base-entity/crud-operations.md**
+- Eventos: entity-saved (post-save), entity-deleted (post-delete)
+- Payload: { entityClass, entity, id, isNew }
 
-### 6. WebSocket Sync
+**copilot/layers/02-base-entity/validation-system.md**
+- Eventos: validation-started, validation-passed, validation-failed
+- Payload: { entityClass, entity, errors }
 
-```typescript
-// src/services/websocket.ts
+**copilot/layers/02-base-entity/lifecycle-hooks.md**
+- Hooks: beforeSave(), afterSave() pueden emitir custom events
+- Pattern: Hook ejecuta, luego emite evento de notificación
 
-import Application from '@/models/application';
+### 11.3 Componentes UI
 
-export class WebSocketService {
-    private static ws: WebSocket | null = null;
-    
-    static connect(url: string) {
-        this.ws = new WebSocket(url);
-        
-        this.ws.onopen = () => {
-            console.log('[WebSocket] Connected');
-            this.setupEventListeners();
-        };
-        
-        this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            this.handleServerEvent(data);
-        };
-    }
-    
-    static setupEventListeners() {
-        // Enviar eventos locales al servidor
-        Application.eventBus.on('entity-saved', (payload) => {
-            this.sendToServer('entity-saved', payload);
-        });
-        
-        Application.eventBus.on('entity-deleted', (payload) => {
-            this.sendToServer('entity-deleted', payload);
-        });
-    }
-    
-    static sendToServer(type: string, payload: any) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({
-                type: type,
-                payload: payload,
-                timestamp: new Date()
-            }));
-        }
-    }
-    
-    static handleServerEvent(data: any) {
-        // Recibir eventos del servidor y emitirlos localmente
-        console.log('[WebSocket] Received:', data.type);
-        
-        // Emitir evento con sufijo :remote para distinguir
-        Application.eventBus.emit(`${data.type}:remote`, data.payload);
-    }
-}
+**copilot/layers/04-components/LoadingScreenComponent.md**
+- Escucha: show-loading, hide-loading
+- Acción: Muestra/oculta overlay de loading
 
-// Inicializar en main.js
-// WebSocketService.connect('ws://localhost:3000');
-```
+**copilot/layers/04-components/modal-components.md**
+- Escucha: show-modal, hide-modal
+- Acción: Muestra/oculta modal dialog
 
----
+**copilot/layers/04-components/ToastComponents.md**
+- Escucha: entity-saved, validation-failed para mostrar toasts
+- Acción: Agrega toast a ToastList
 
-## ⚠️ Consideraciones Importantes
+**copilot/layers/04-components/SideBarComponent.md**
+- Escucha: toggle-sidebar
+- Acción: Expande/colapsa sidebar
 
-### 1. Siempre Limpiar Listeners
+**copilot/layers/04-components/ListViewComponent.md**
+- Escucha: entity-saved, entity-deleted
+- Acción: Refresh lista con getElementList()
 
-```typescript
-// ✅ CORRECTO: Cleanup
-onMounted(() => {
-    Application.eventBus.on('my-event', handler);
-});
+**copilot/layers/04-components/DetailViewTable.md**
+- Escucha: validation-failed
+- Acción: Muestra errores en FormInputs
 
-onUnmounted(() => {
-    Application.eventBus.off('my-event', handler);  // ← Importante
-});
+### 11.4 Código Fuente
 
-// ❌ INCORRECTO: No cleanup (memory leak)
-onMounted(() => {
-    Application.eventBus.on('my-event', handler);
-});
-// ← Falta cleanup
-```
+**src/models/application.ts**
+- Línea 68: `this.eventBus = mitt<Events>()`
+- Línea 27: `eventBus: Emitter<Events>` property declaration
 
-### 2. Usar Funciones Nombradas
+**src/types/events.ts**
+- Líneas 1-13: Events type definition completa
+- Event names: validate-inputs, toggle-sidebar, show-loading, etc
 
-```typescript
-// ✅ CORRECTO: Función nombrada (se puede remover)
-function handler(payload) {
-    console.log(payload);
-}
+**src/entities/base_entitiy.ts**
+- Eventos CRUD emitidos en save(), delete(), getElementList()
+- Eventos validation emitidos en validateInputs()
 
-Application.eventBus.on('event', handler);
-Application.eventBus.off('event', handler);  // ✓ Funciona
+**src/models/application_ui_service.ts**
+- Eventos UI emitidos en showLoadingScreen(), openModal(), etc
 
-// ❌ INCORRECTO: Arrow function inline (no se puede remover)
-Application.eventBus.on('event', (payload) => {
-    console.log(payload);
-});
+### 11.5 Tutoriales
 
-Application.eventBus.off('event', ???);  // ← No hay referencia
-```
+**copilot/tutorials/01-basic-crud.md**
+- Sección: Escuchar entity-saved para refresh automático
+- Pattern: ListView refresh on CRUD events
 
-### 3. Event Names Consistentes
+**copilot/tutorials/02-validations.md**
+- Sección: Escuchar validation-failed para mostrar errores
+- Pattern: FormInput error display
 
-```typescript
-// ✅ CORRECTO: Usar constantes
-const EVENT_PRODUCT_SAVED = 'product-saved';
-Application.eventBus.emit(EVENT_PRODUCT_SAVED, payload);
-Application.eventBus.on(EVENT_PRODUCT_SAVED, handler);
+### 11.6 Contratos y Arquitectura
 
-// ❌ INCORRECTO: Strings hardcodeados (typos)
-Application.eventBus.emit('product-saved', payload);
-Application.eventBus.on('product-save', handler);  // ← Typo
-```
+**copilot/00-CONTRACT.md**
+- Sección 6: Event Bus como mecanismo de comunicación desacoplada
+- Principio: Pub/Sub pattern para reactividad
 
-### 4. Payload Type Safety
+**copilot/01-FRAMEWORK-OVERVIEW.md**
+- Sección: Event Bus en Application Layer
+- Contexto: mitt como reemplazo de Vue 2 $on/$emit
 
-```typescript
-// ✅ CORRECTO: Tipos para payloads
-interface EntitySavedPayload {
-    entityClass: typeof BaseEntity;
-    entity: BaseEntity;
-    isNew: boolean;
-}
-
-Application.eventBus.on('entity-saved', (payload: EntitySavedPayload) => {
-    // payload tiene tipos
-    console.log(payload.isNew);
-});
-```
-
-### 5. Evitar Ciclos de Eventos
-
-```typescript
-// ❌ PELIGRO: Ciclo infinito
-Application.eventBus.on('entity-saved', (payload) => {
-    // Guardar otra entidad...
-    anotherEntity.save();  // ← Emite 'entity-saved' otra vez
-    // → Ciclo infinito
-});
-
-// ✅ MEJOR: Verificar antes de actuar
-Application.eventBus.on('entity-saved', (payload) => {
-    if (payload.entityClass === Product) {
-        // Solo para productos...
-    }
-});
-```
-
----
-
-## 📚 Referencias Adicionales
-
-- `application-singleton.md` - Application.eventBus configuración
-- `../02-base-entity/crud-operations.md` - save(), delete() emiten eventos
-- `../02-base-entity/validation-system.md` - validateInputs() emite eventos
-- `../02-base-entity/lifecycle-hooks.md` - Hooks pueden emitir custom events
-- `../../02-FLOW-ARCHITECTURE.md` - Event flow diagrams
-- [Mitt Documentation](https://github.com/developit/mitt)
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
-**Librería:** Mitt 3.0.1  
-**Archivo config:** `src/main.js` (línea ~15-25)  
-**Archivo acceso:** `src/models/application.ts`
+**copilot/02-FLOW-ARCHITECTURE.md**
+- Sección: Event Flow entre BaseEntity y UI Components
+- Flujo: CRUD operation → emit event → listeners update UI
+- Garantía: Event bus coordina actualizaciones reactivas sin coupling

@@ -275,7 +275,7 @@ Obligatorio:
 
 ### 8.4 Obligación de Iteración Completa
 
-Toda reestructur ación documental debe procesar el 100% de archivos .md del repositorio.
+Toda reestructur acción documental debe procesar el 100% de archivos .md del repositorio.
 
 Prohibido:
 - Finalizar con archivos pendientes
@@ -359,6 +359,40 @@ En caso de conflicto interpretativo:
 1. MI LÓGICA tiene prioridad absoluta
 2. Artículos 1-7 tienen prioridad sobre Artículo 8
 3. Artículo 8 regula CÓMO documentar, no QUÉ documentar
+
+### 8.10 Principio de Proporcionalidad y Prohibición de Reescritura Total Innecesaria
+
+Durante cualquier proceso de reestructuración documental, las modificaciones deben ser estrictamente proporcionales al objetivo estructural definido.
+
+Prohibido:
+- Reemplazar completamente un archivo cuando la adaptación pueda realizarse mediante transformación estructural incremental.
+- Reescribir contenido íntegro por razones de eficiencia.
+- Sustituir redacción válida que ya cumple con MI LÓGICA y el contrato.
+- Introducir variaciones estilísticas innecesarias.
+
+Obligatorio:
+- Preservar el contenido original siempre que no contradiga la estructura obligatoria.
+- Aplicar cambios mínimos necesarios para cumplir el formato unificado.
+- Mantener redacción original cuando sea técnicamente válida y coherente.
+
+La reestructuración no constituye autorización para recreación del contenido.
+
+### 8.11 Separación Obligatoria entre Detección y Corrección
+
+Durante procesos de auditoría, verificación o análisis documental:
+
+Prohibido:
+- Corregir inconsistencias en el mismo paso en que se detectan.
+- Modificar archivos sin registro previo de la inconsistencia.
+- Ejecutar cambios correctivos sin validación explícita cuando el proceso esté bajo supervisión humana.
+
+Obligatorio:
+- Registrar toda inconsistencia detectada en un archivo persistente de control antes de realizar cualquier modificación.
+- Describir objetivamente la inconsistencia.
+- Especificar cláusula contractual afectada, si aplica.
+- Esperar autorización explícita para proceder con la corrección cuando el flujo de trabajo lo requiera.
+
+La detección y la corrección constituyen fases distintas y no intercambiables del proceso documental.
 
 ## 9. Dependencias
 

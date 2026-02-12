@@ -1,51 +1,699 @@
-# 🎨 DisplayFormat Decorator
+# DisplayFormat Decorator
 
-**Referencias:**
-- `property-name-decorator.md` - PropertyName
-- `string-type-decorator.md` - StringType
-- `mask-decorator.md` - Mask
-- `../04-components/list-view-component.md` - ListView rendering
+## 1. Propósito
 
----
+El decorator DisplayFormat define función de formateo para transformar valor de propiedad al mostrarlo en ListView (tabla) y contextos de solo lectura. NO afecta valor almacenado ni input de edición. Critical para presentación visual de datos sin alterar data source: formatear moneda (1234.5 → $1,234.50), fechas (2024-01-15 → January 15, 2024), booleanos (true → ✅ Yes, false → ❌ No), truncar texto (Very long description... → Very long desc...), números (1234567 → 1,234,567), estados con badges (pending → ⏳ Pending), porcentajes (0.15 → 15%), tamaños de archivo (1048576 → 1.00 MB), duraciones (1.5 → 1h 30min), y relaciones de objects (Product object → Laptop (SKU: LAP-001)). Formateo aplicado exclusivamente en rendering de UI mediante getFormattedValue() accessor en BaseEntity, NO modifica valor real de propiedad ni afecta save()/toDictionary() output. Soporta formatters estáticos (simple functions) y dinámicos con this binding para acceder a entity instance (multimoneda según currency field). Framework separa completamente presentación visual de data storage, permitiendo cambiar formatting logic sin impactar backend contracts o validation rules.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/display_format_decorator.ts`
+**Responsabilidades cubiertas:**
+- Definir función de formateo que transforma valor raw a string formateado para display
+- Aplicar formateo en ListView (tabla) mediante getFormattedValue() para todas las celdas
+- Aplicar formateo en DetailView en modo readonly (no editable)
+- Proveer getDisplayFormat(propertyKey) accessor que retorna formatter function o undefined
+- Proveer getFormattedValue(propertyKey) accessor que ejecuta formatter y retorna string formateado
+- Soportar formatters con this binding para acceder a otras propiedades de entity (multimoneda, contexto)
+- Manejar valores null/undefined retornando '-' por defecto si formatter no los maneja
+- Formatear tipos básicos sin formatter: Date → toLocaleDateString(), null → '-', otros → String(value)
+- Permitir reutilización de formatters mediante factory functions o objeto común de formatters
 
----
+**Límites del alcance:**
+- Decorator NO modifica valor almacenado en propiedad (solo afecta visualización)
+- NO aplica formateo en inputs editables (input muestra valor raw directamente)
+- NO afecta toDictionary() output (backend recibe valores raw sin formatear)
+- NO afecta validation (validaciones operan sobre valores raw)
+- formatter NO debe tener side effects (no modificar state, no API calls, no logging)
+- formatter function DEBE retornar string siempre (NO number, boolean, u otros tipos)
+- Formateo ejecutado en cada render de UI (debe ser rápido, evitar cálculos costosos)
+- NO valida que formatter retorne string (developer responsable de type correctness)
+- getDisplayFormat() retorna undefined si NO hay formatter definido para propertyKey
+- NO crea computed properties ni reactive values (solo transforma valor existente)
 
-## 🎯 Propósito
+## 3. Definiciones Clave
 
-Define una **función de formateo** para transformar el valor de una propiedad al mostrarlo en la **ListView (tabla)** y otros contextos de solo lectura. No afecta el valor almacenado ni el input de edición.
+**DISPLAY_FORMAT_KEY Symbol:** Identificador único usado como property key en prototype para almacenar object map de formatter functions. Definido como `export const DISPLAY_FORMAT_KEY = Symbol('display_format')`. Estructura: `{ [propertyKey: string]: (value: any) => string }`.
 
-Casos de uso:
-- Formatear moneda: `1234.5` → `$1,234.50`
-- Formatear fechas: `2024-01-15` → `15/01/2024` o `January 15, 2024`
-- Formatear booleanos: `true` → `✅ Yes` / `false` → `❌ No`
-- Truncar texto: `"Very long description..."` → `"Very long desc..."`
-- Formatear números: `1234567` → `1,234,567`
+**DisplayFormatter Type:** Type alias `type DisplayFormatter = (value: any) => string`. Function que recibe valor de cualquier tipo y retorna string formateado. DEBE ser pure function sin side effects.
 
----
+**Decorator Signature:** `function DisplayFormat(formatter: (value: any) => string): PropertyDecorator`. Parámetro único formatter es function que transforma valor.
 
-## 🔑 Símbolo de Metadatos
+**Formatter Function:** Function almacenada en metadata que ejecuta transformación de valor. Recibe valor raw como parámetro, opcionalmente puede usar this binding para acceder a entity instance. DEBE retornar string.
+
+**getDisplayFormat(propertyKey) Accessor:** Método de instancia en BaseEntity que retorna formatter function o undefined. Ubicado en línea ~200 de base_entitiy.ts.
+
+**getFormattedValue(propertyKey) Accessor:** Método de instancia en BaseEntity que ejecuta formatter si existe o aplica formateo por defecto, siempre retorna string. Ubicado en línea ~210 de base_entitiy.ts.
+
+**Static Formatter:** Formatter function sin this binding, recibe solo value parameter. Ejemplo: `(value: number) => '$' + value.toFixed(2)`.
+
+**Dynamic Formatter con this Binding:** Formatter function que usa this context para acceder a entity instance y otras propiedades. Ejemplo: `function(this: Invoice, value: number) { return this.currency + value; }`.
+
+**Default Formatting:** Formateo aplicado por getFormattedValue() cuando NO hay DisplayFormat definido: null/undefined → '-', Date → toLocaleDateString(), otros → String(value).
+
+## 4. Descripción Técnica
+
+### Implementación del Decorator
 
 ```typescript
+// src/decorations/display_format_decorator.ts
+
+import { DISPLAY_FORMAT_KEY } from './index';
+
+/**
+ * Define función de formateo para transformar valor de propiedad en visualización
+ * 
+ * @param formatter - Function que recibe valor y retorna string formateado
+ * @returns PropertyDecorator
+ */
+export function DisplayFormat(
+    formatter: (value: any) => string
+): PropertyDecorator {
+    return function (target: any, propertyKey: string | symbol) {
+        const proto = target.constructor.prototype;
+        const propKey = propertyKey.toString();
+        
+        if (!proto[DISPLAY_FORMAT_KEY]) {
+            proto[DISPLAY_FORMAT_KEY] = {};
+        }
+        
+        proto[DISPLAY_FORMAT_KEY][propKey] = formatter;
+    };
+}
+
+export type DisplayFormatter = (value: any) => string;
 export const DISPLAY_FORMAT_KEY = Symbol('display_format');
 ```
 
-### Almacenamiento
+Ubicación: `src/decorations/display_format_decorator.ts` (líneas 1-30)
+
+### Metadata Storage en Prototype
 
 ```typescript
-proto[DISPLAY_FORMAT_KEY] = {
-    'price': (value: number) => `$${value.toFixed(2)}`,
-    'isActive': (value: boolean) => value ? '✅ Active' : '❌ Inactive',
-    'createdAt': (value: Date) => value.toLocaleDateString('en-US')
+// Estructura en prototype después de aplicar decorators
+Product.prototype[DISPLAY_FORMAT_KEY] = {
+    'price': (value: number) => {
+        if (value == null) return '-';
+        return `$${value.toFixed(2)}`;
+    },
+    'isActive': (value: boolean) => value ? 'Active' : 'Inactive',
+    'createdAt': (value: Date) => {
+        if (!value) return '-';
+        return new Date(value).toLocaleDateString('en-US');
+    },
+    'discount': (value: number) => {
+        if (value == null) return '-';
+        return `${(value * 100).toFixed(0)}%`;
+    }
 }
 ```
 
----
+### Accessor Método getDisplayFormat() en BaseEntity
 
-## 💻 Firma del Decorador
+```typescript
+// src/entities/base_entitiy.ts
+
+/**
+ * Obtiene la función de formateo de una propiedad
+ * 
+ * @param key - Nombre de la propiedad
+ * @returns Formatter function o undefined si no existe
+ */
+public getDisplayFormat(key: string): DisplayFormatter | undefined {
+    const constructor = this.constructor as typeof BaseEntity;
+    const displayFormats = constructor.prototype[DISPLAY_FORMAT_KEY];
+    
+    if (!displayFormats) {
+        return undefined;
+    }
+    
+    return displayFormats[key];
+}
+```
+
+Ubicación: `src/entities/base_entitiy.ts` (líneas ~200-215)
+
+### Accessor Método getFormattedValue() en BaseEntity
+
+```typescript
+// src/entities/base_entitiy.ts
+
+/**
+ * Obtiene el valor formateado de una propiedad aplicando DisplayFormat si existe
+ * 
+ * @param key - Nombre de la propiedad
+ * @returns String formateado
+ */
+public getFormattedValue(key: string): string {
+    const value = (this as any)[key];
+    
+    // Intentar obtener formatter
+    const formatter = this.getDisplayFormat(key);
+    
+    if (formatter) {
+        try {
+            return formatter.call(this, value);
+        } catch (error) {
+            console.error(`Error formatting ${key}:`, error);
+            return String(value);
+        }
+    }
+    
+    // Sin formatter, aplicar formateo por defecto
+    if (value == null) {
+        return '-';
+    }
+    
+    if (value instanceof Date) {
+        return value.toLocaleDateString();
+    }
+    
+    if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+    }
+    
+    if (Array.isArray(value)) {
+        return value.join(', ');
+    }
+    
+    return String(value);
+}
+```
+
+Ubicación: `src/entities/base_entitiy.ts` (líneas ~220-255)
+
+### Integración en ListView Component
+
+```vue
+<!-- src/views/default_listview.vue -->
+
+<template>
+  <table class="list-table">
+    <thead>
+      <tr>
+        <th v-for="prop in properties" :key="prop">
+          {{ entityClass.getPropertyName(prop) }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="entity in entities" :key="entity.getPrimaryPropertyValue()">
+        <td v-for="prop in properties" :key="prop">
+          <!-- Usa getFormattedValue() para aplicar DisplayFormat -->
+          {{ entity.getFormattedValue(prop) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import type BaseEntity from '@/entities/base_entitiy';
+
+const props = defineProps<{
+    entities: BaseEntity[];
+    entityClass: typeof BaseEntity;
+}>();
+
+const properties = computed(() => {
+    return props.entityClass.getProperties();
+});
+</script>
+```
+
+Ubicación: `src/views/default_listview.vue` (líneas ~80-115)
+
+### Integración en DetailView ReadOnly
+
+```vue
+<!-- src/views/default_detailview.vue -->
+
+<template>
+  <div class="detail-view" :class="{ 'readonly': isReadOnly }">
+    <div v-for="prop in entity.getProperties()" :key="prop" class="field">
+      <label>{{ entity.getPropertyName(prop) }}</label>
+      
+      <!-- Modo ReadOnly: Usar formato -->
+      <span v-if="isReadOnly" class="readonly-value">
+        {{ entity.getFormattedValue(prop) }}
+      </span>
+      
+      <!-- Modo Editable: Usar input sin formato -->
+      <component
+        v-else
+        :is="getInputComponent(prop)"
+        v-model="entity[prop]"
+        :property="prop"
+        :entity="entity"
+      />
+    </div>
+  </div>
+</template>
+```
+
+Ubicación: `src/views/default_detailview.vue` (líneas ~50-75)
+
+## 5. Flujo de Funcionamiento
+
+### Fase 1: Aplicación del Decorator
+
+```typescript
+export class Product extends BaseEntity {
+    @PropertyName('Price', Number)
+    @DisplayFormat((value: number) => {
+        if (value == null) return '-';
+        return `$${value.toFixed(2)}`;
+    })  // ← Decorator ejecutado aquí
+    price!: number;
+}
+
+// Resultado en prototype:
+Product.prototype[DISPLAY_FORMAT_KEY] = {
+    'price': (value: number) => {
+        if (value == null) return '-';
+        return `$${value.toFixed(2)}`;
+    }
+}
+```
+
+### Fase 2: Constructor y Asignación de Valores
+
+```typescript
+const product = new Product();
+product.price = 1299.99;
+
+// Valor raw almacenado:
+console.log(product.price);  // 1299.99 (number)
+
+// Metadata de formatter disponible en prototype
+console.log(product.getDisplayFormat('price'));  // function
+```
+
+### Fase 3: Renderizado en ListView
+
+```vue
+<template>
+  <!-- ListView itera entities y properties -->
+  <tr v-for="entity in products">
+    <td v-for="prop in properties">
+      {{ entity.getFormattedValue(prop) }}
+      <!-- ↑ Llama a BaseEntity.getFormattedValue() -->
+    </td>
+  </tr>
+</template>
+```
+
+Flujo interno de getFormattedValue():
+
+1. Obtiene valor raw: `value = entity['price']` → 1299.99
+2. Llama getDisplayFormat('price') → retorna formatter function
+3. Ejecuta formatter: `formatter.call(entity, 1299.99)` → "$1,299.99"
+4. Retorna string formateado
+5. Vue renderiza string en celda de tabla
+
+### Fase 4: Formateo con this Binding (Multimoneda)
+
+```typescript
+export class Invoice extends BaseEntity {
+    @PropertyName('Currency', String)
+    currency!: string;  // 'USD', 'EUR', 'GBP'
+    
+    @PropertyName('Total Amount', Number)
+    @DisplayFormat(function(this: Invoice, value: number) {
+        if (value == null) return '-';
+        
+        const symbols: Record<string, string> = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£'
+        };
+        
+        const symbol = symbols[this.currency] || '';
+        return `${symbol}${value.toFixed(2)}`;
+    })
+    totalAmount!: number;
+}
+
+// Uso:
+const invoice = new Invoice();
+invoice.currency = 'EUR';
+invoice.totalAmount = 1500;
+
+// getFormattedValue() ejecuta formatter con this = invoice
+invoice.getFormattedValue('totalAmount');  // "€1500.00"
+```
+
+### Fase 5: Guardado al Backend (Formateo NO Afecta)
+
+```typescript
+const product = new Product();
+product.price = 1299.99;
+
+// Display en UI:
+console.log(product.getFormattedValue('price'));  // "$1,299.99"
+
+// Guardar al backend:
+await product.save();
+
+// toDictionary() usa valor raw:
+const payload = product.toDictionary();
+console.log(payload);
+// {
+//   price: 1299.99  // ← Valor raw, NO formateado
+// }
+```
+
+## 6. Reglas Obligatorias
+
+### Regla 1: Formatter DEBE Retornar String Siempre
+
+```typescript
+// CORRECTO:
+@DisplayFormat((value: number) => `$${value}`)   // Retorna string
+
+// INCORRECTO:
+@DisplayFormat((value: number) => value * 2)     // ← ERROR: Retorna number
+```
+
+### Regla 2: Formatter DEBE Manejar null/undefined
+
+```typescript
+// CORRECTO:
+@DisplayFormat((value: number) => {
+    if (value == null) return '-';  // ← Manejo de null/undefined
+    return `$${value.toFixed(2)}`;
+})
+
+// INCORRECTO (crash si value es null):
+@DisplayFormat((value: number) => `$${value.toFixed(2)}`)  // ← Error si value null
+```
+
+### Regla 3: Formatter NO DEBE Tener Side Effects
+
+```typescript
+// CORRECTO (pure function):
+@DisplayFormat((value: number) => {
+    return `$${value.toFixed(2)}`;  // Solo transformación
+})
+
+// INCORRECTO (side effects):
+@DisplayFormat((value: number) => {
+    console.log('Formatting');  // ← Side effect
+    return `$${value}`;
+})
+```
+
+### Regla 4: Extraer Formatters Reutilizables
+
+```typescript
+// Crear utils/formatters.ts
+export const Formatters = {
+    currency: (value: number) => {
+        if (value == null) return '-';
+        return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    }
+};
+
+// Usar en entities
+@DisplayFormat(Formatters.currency)
+price!: number;
+```
+
+## 7. Prohibiciones
+
+### Prohibición 1: NO Modificar Valor Original
+
+```typescript
+// PROHIBIDO (mutación):
+@DisplayFormat((value: Product) => {
+    value.name = value.name.toUpperCase();  // ← PROHIBIDO
+    return value.name;
+})
+
+// CORRECTO:
+@DisplayFormat((value: Product) => {
+    return value.name.toUpperCase();  // ← Solo lectura
+})
+```
+
+### Prohibición 2: NO Retornar Tipos Diferentes a String
+
+```typescript
+// PROHIBIDO:
+@DisplayFormat((value: number) => value * 2)    // ← Retorna number
+
+// CORRECTO:
+@DisplayFormat((value: number) => String(value * 2))  // ← Retorna string
+```
+
+### Prohibición 3: NO Hacer API Calls
+
+```typescript
+// PROHIBIDO:
+@DisplayFormat(async (value: number) => {  // ← async PROHIBIDO
+    const rate = await fetch('/api/rate');
+    return `$${value * rate}`;
+})
+```
+
+### Prohibición 4: NO Confundir con @Mask
+
+```typescript
+// @DisplayFormat: Para visualización en tablas
+@DisplayFormat((value: string) => value.toUpperCase())
+sku!: string;
+
+// @Mask: Para input mask durante edición
+@Mask('(###) ###-####')
+phone!: string;
+```
+
+## 8. Dependencias e Integraciones
+
+### Dependencia 1: BaseEntity Core
+
+```typescript
+// BaseEntity provee getDisplayFormat() y getFormattedValue()
+import BaseEntity from '@/entities/base_entitiy';
+
+export class Product extends BaseEntity {
+    @DisplayFormat((v) => `$${v}`)
+    price!: number;
+}
+```
+
+Archivo: [base-entity-core.md](../02-base-entity/base-entity-core.md)
+
+### Dependencia 2: PropertyName Decorator
+
+```typescript
+// PropertyName debe aplicarse ANTES de DisplayFormat
+@PropertyName('Price', Number)    // ← PRIMERO
+@DisplayFormat((v) => `$${v}`)    // ← SEGUNDO
+price!: number;
+```
+
+Archivo: [property-name-decorator.md](property-name-decorator.md)
+
+### Dependencia 3: ListView Component
+
+```vue
+<!-- ListView usa getFormattedValue() -->
+<td>{{ entity.getFormattedValue(prop) }}</td>
+```
+
+Archivo: `src/views/default_listview.vue`
+
+### Dependencia 4: DetailView Component
+
+```vue
+<!-- DetailView usa getFormattedValue() en readonly -->
+<span v-if="isReadOnly">
+    {{ entity.getFormattedValue(prop) }}
+</span>
+```
+
+Archivo: `src/views/default_detailview.vue`
+
+## 9. Relaciones con Otros Elementos
+
+### Relación con @StringType
+
+**Diferencia:** @StringType define subtipo, @DisplayFormat define visualización
+
+```typescript
+@PropertyName('Email', String)
+@StringType('email')        // ← Tipo
+@DisplayFormat((v) => v.toLowerCase())  // ← Visualización
+email!: string;
+```
+
+Archivo: [string-type-decorator.md](string-type-decorator.md)
+
+### Relación con @Mask
+
+**Diferencia:** @Mask para input, @DisplayFormat para visualización
+
+```typescript
+@Mask('(###) ###-####')      // ← Input mask
+phone!: string;
+
+@DisplayFormat((v) => `formatted`)  // ← Display format
+otherField!: string;
+```
+
+Archivo: [mask-decorator.md](mask-decorator.md)
+
+### Relación con @HideInListView
+
+**Interacción:** Si hidden, DisplayFormat NO ejecutado
+
+```typescript
+@HideInListView()            // ← NO renderizado
+@DisplayFormat((v) => v.toUpperCase())  // ← NO ejecutado
+internalNotes!: string;
+```
+
+Archivo: [hide-in-list-view-decorator.md](hide-in-list-view-decorator.md)
+
+## 10. Notas de Implementación
+
+### Nota 1: Formatters Son Ejecutados en Cada Render
+
+```typescript
+@DisplayFormat((value: number) => {
+    console.log('FORMATTING!');  // ← Ejecutado múltiples veces
+    return `$${value}`;
+})
+price!: number;
+```
+
+### Nota 2: this Binding Requiere Function Declaration
+
+```typescript
+// CORRECTO con this:
+@DisplayFormat(function(this: Invoice, value: number) {
+    return this.currency + value;  // ← this accesible
+})
+
+// INCORRECTO (arrow function):
+@DisplayFormat((value: number) => {
+    return this.currency + value;  // ← ERROR: this undefined
+})
+```
+
+### Nota 3: getFormattedValue() Maneja Errores
+
+```typescript
+public getFormattedValue(key: string): string {
+    const formatter = this.getDisplayFormat(key);
+    
+    if (formatter) {
+        try {
+            return formatter.call(this, value);
+        } catch (error) {
+            console.error(`Error formatting ${key}:`, error);
+            return String(value);  // ← Fallback
+        }
+    }
+    // ...
+}
+```
+
+### Nota 4: Ejemplos Avanzados
+
+#### Formateo de Moneda Multimoneda
+
+```typescript
+export class Invoice extends BaseEntity {
+    @PropertyName('Currency', String)
+    currency!: string;
+    
+    @PropertyName('Total', Number)
+    @DisplayFormat(function(this: Invoice, value: number) {
+        const symbols = { USD: '$', EUR: '€', GBP: '£' };
+        return `${symbols[this.currency] || ''}${value.toFixed(2)}`;
+    })
+    total!: number;
+}
+```
+
+#### Truncar Texto
+
+```typescript
+@DisplayFormat((value: string) => {
+    if (!value) return '-';
+    const maxLength = 50;
+    return value.length > maxLength 
+        ? value.substring(0, maxLength) + '...' 
+        : value;
+})
+content!: string;
+```
+
+#### Formatear Porcentaje
+
+```typescript
+@DisplayFormat((value: number) => {
+    if (value == null) return '-';
+    return `${(value * 100).toFixed(0)}%`;
+})
+discount!: number;  // 0.15 → "15%"
+```
+
+#### Formatear Tamaño de Archivo
+
+```typescript
+@DisplayFormat((value: number) => {
+    if (value == null) return '-';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = value;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(2)} ${units[unitIndex]}`;
+})
+fileSize!: number;  // 1048576 → "1.00 MB"
+```
+
+## 11. Referencias Cruzadas
+
+### Documentación de Framework
+
+- [BaseEntity Core](../02-base-entity/base-entity-core.md) - getDisplayFormat() y getFormattedValue()
+- [Additional Metadata](../02-base-entity/additional-metadata.md) - Acceso a metadata de formateo
+- [State and Conversion](../02-base-entity/state-and-conversion.md) - toDictionary() NO aplica DisplayFormat
+
+### Decorators Relacionados
+
+- [property-name-decorator.md](property-name-decorator.md) - Definición de propiedades
+- [string-type-decorator.md](string-type-decorator.md) - Subtipo de string
+- [mask-decorator.md](mask-decorator.md) - Máscara en inputs
+- [hide-in-list-view-decorator.md](hide-in-list-view-decorator.md) - Ocultar en lista
+- [default-property-decorator.md](default-property-decorator.md) - Valor inicial
+- [validation-decorator.md](validation-decorator.md) - Validación opera sobre raw value
+
+### Components
+
+- `src/views/default_listview.vue` - ListView usa getFormattedValue()
+- `src/views/default_detailview.vue` - DetailView usa getFormattedValue()
+
+### Código Fuente
+
+- `src/decorations/display_format_decorator.ts` - Implementación decorator
+- `src/decorations/index.ts` - Export DISPLAY_FORMAT_KEY Symbol
+- `src/entities/base_entitiy.ts` - getDisplayFormat() y getFormattedValue()
+
+### Utilities
+
+- `src/utils/formatters.ts` - Formatters reutilizables (currency, percentage, date)
+
+Última actualización: 11 de Febrero, 2026  
+Archivo fuente: `src/decorations/display_format_decorator.ts`  
+Líneas: 30
 
 ```typescript
 function DisplayFormat(formatter: (value: any) => string): PropertyDecorator
