@@ -66,17 +66,17 @@ El framework implementa un patrón de arquitectura basado en metadatos donde los
 
 **Capa de Entidad**
 ```typescript
-@ModuleName('Book', 'Books')
+@ModuleName('Books')
 @ModuleIcon('book')
 @ApiEndpoint('/api/books')
-@Persistent(true, 'id')
+@Persistent()
 export class Book extends BaseEntity {
     // Propiedades con decoradores
 }
 ```
 
 Los decoradores de clase configuran:
-- Nombres singular y plural para UI
+- Nombre del módulo para UI
 - Icono del módulo en menú lateral
 - Endpoint base para operaciones HTTP
 - Persistencia habilitada con clave primaria
@@ -416,10 +416,10 @@ import {
     Persistent
 } from '@/decorations';
 
-@ModuleName('Book', 'Books')           // Nombres singular y plural
+@ModuleName('Books')                   // Nombre del módulo
 @ModuleIcon('book')                    // Icono en menú (MDI icon name)
 @ApiEndpoint('/api/books')             // URL para CRUD
-@Persistent(true, 'id')                // Habilitar persistencia, PK = 'id'
+@Persistent()                          // Habilitar persistencia
 export class Book extends BaseEntity {
     // Propiedad 1: ID (autogenerado)
     @PropertyIndex(1)
@@ -463,13 +463,13 @@ export class Book extends BaseEntity {
 
 **Análisis de Decoradores de Clase:**
 
-`@ModuleName('Book', 'Books')`: Define nomenclatura para UI y menú. Primer parámetro: singular para formulario. Segundo parámetro: plural para lista y menú.
+`@ModuleName('Books')`: Define nombre del módulo que aparecerá en UI y menú de navegación.
 
 `@ModuleIcon('book')`: Especifica icono Material Design para menú lateral. Referencia MDI icon name sin prefijo.
 
 `@ApiEndpoint('/api/books')`: Define URL base para operaciones CRUD. Todas las peticiones HTTP usarán este endpoint como prefijo.
 
-`@Persistent(true, 'id')`: Activa sistema de persistencia. Primer parámetro: habilitar/deshabilitar. Segundo parámetro: nombre de propiedad que actúa como clave primaria.
+`@Persistent()`: Activa sistema de persistencia habilitando operaciones CRUD con backend mediante API REST.
 
 **Análisis de Decoradores de Propiedades:**
 
@@ -859,10 +859,10 @@ import {
     Persistent
 } from '@/decorations';
 
-@ModuleName('Book', 'Books')
+@ModuleName('Books')
 @ModuleIcon('book')
 @ApiEndpoint('/api/books')
-@Persistent(true, 'id')
+@Persistent()
 export class Book extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('ID', Number)

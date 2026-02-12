@@ -12,7 +12,7 @@ BaseEntity implementa el patrón Active Record proporcionando métodos CRUD comp
 - Método delete() para eliminación de registros
 - Método estático getElementList() para obtención de colecciones con filtros opcionales
 - Método estático getElement() para obtención de registro individual por ID
-- Serialización vía toDictionary() con manejo de relaciones y tipos complejos
+- Serialización vía toObject() con manejo de relaciones y tipos complejos
 - Deserialización vía fromDictionary() con transformación de tipos
 - Validación automática pre-guardado (required, sync, async)
 - Emisión de eventos al eventBus tras operaciones exitosas
@@ -28,7 +28,7 @@ BaseEntity implementa el patrón Active Record proporcionando métodos CRUD comp
 
 **Active Record Pattern:** Patrón de diseño donde objetos de dominio encapsulan tanto datos como comportamiento de persistencia. La entidad misma sabe cómo guardarse, actualizarse y eliminarse.
 
-**toDictionary():** Método de serialización que convierte instancia BaseEntity a objeto plano Record<string, any>, manejando relaciones (extrae solo IDs), arrays (serializa recursivamente) y tipos primitivos.
+**toObject():** Método de serialización que convierte instancia BaseEntity a objeto plano Record<string, any>, usado para transmitir datos a la API.
 
 **fromDictionary():** Método estático de deserialización que construye instancia BaseEntity desde objeto plano, aplicando transformaciones de tipo (ISO strings a Date, etc.).
 
@@ -66,7 +66,7 @@ if (isNew) {
 3. Si validación falla: muestra toast, retorna instancia sin cambios
 4. Verifica isPersistent() - lanza error si entity no tiene @Persistent()
 5. Obtiene endpoint vía getApiEndpoint()
-6. Serializa instancia con toDictionary()
+6. Serializa instancia con toObject()
 7. Discrimina entre POST (isNew = true) o PUT (isNew = false)
 8. Construye URL: POST usa `${endpoint}`, PUT usa `${endpoint}/${pkValue}`
 9. Ejecuta request HTTP con Application.axiosInstance
@@ -86,38 +86,36 @@ catch (error: any) {
 
 ### 4.2. Método update()
 
-**Firma:** `public async update(data?: Partial<this>): Promise<this>`
+**Firma:** `public async update(): Promise<this>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~780)
+**Ubicación:** `src/entities/base_entitiy.ts` (línea ~767)
 
 **Implementación:**
 ```typescript
-public async update(data?: Partial<this>): Promise<this> {
-    if (data) {
-        Object.assign(this, data);
-    }
+public async update(): Promise<this> {
     return this.save();
 }
 ```
 
-Método de conveniencia que opcionalmente merge datos parciales antes de delegar a save(). Permite actualización fluida: `await product.update({ price: 999 })`.
+Método de conveniencia que delega a save(). Es un alias semántico que hace explícito que se está actualizando una entidad existente, aunque save() ya discrimina automáticamente entre creación y actualización.
 
 ### 4.3. Método delete()
 
-**Firma:** `public async delete(): Promise<boolean>`
+**Firma:** `public async delete(): Promise<void>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~790)
+**Ubicación:** `src/entities/base_entitiy.ts` (línea ~819)
 
 **Flujo de ejecución:**
 1. Ejecuta hook beforeDelete()
 2. Obtiene pkValue con getPrimaryPropertyValue()
-3. Si pkValue es null/undefined: lanza error "Cannot delete entity without ID"
-4. Verifica isPersistent() - lanza error si no es persistente
+3. Si pkValue es null/undefined: muestra error y retorna early
+4. Verifica isPersistent() - retorna early si no es persistente
 5. Obtiene endpoint vía getApiEndpoint()
 6. Ejecuta DELETE request: `Application.axiosInstance.delete(\`${endpoint}/${pkValue}\`)`
 7. Si éxito:
    - Ejecuta hook afterDelete()
    - Muestra toast de éxito
+   - Retorna sin valor (void)
    - Emite evento 'deleted' con { entityClass, entity }
    - Retorna true
 8. Si error:
@@ -170,44 +168,30 @@ if (error.response?.status === 404) {
 return null;
 ```
 
-### 4.6. Método toDictionary()
+### 4.6. Método toObject()
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~520)
+**Ubicación:** `src/entities/base_entitiy.ts` (línea ~74)
 
 **Algoritmo de serialización:**
 ```typescript
-public toDictionary(): Record<string, any> {
-    const dict: Record<string, any> = {};
+public toObject(): Record<string, any> {
     const properties = this.getProperties();
+    const obj: Record<string, any> = {};
     
-    properties.forEach(key => {
-        const value = (this as any)[key];
-        
-        if (value instanceof BaseEntity) {
-            dict[key] = value.getPrimaryPropertyValue();  // Solo ID
-        } else if (Array.isArray(value)) {
-            dict[key] = value.map(item => 
-                item instanceof BaseEntity ? item.toDictionary() : item
-            );
-        } else if (value instanceof Date) {
-            dict[key] = value.toISOString();
-        } else {
-            dict[key] = value;
-        }
+    properties.forEach((propertyName) => {
+        obj[propertyName] = (this as any)[propertyName];
     });
     
-    return dict;
+    return obj;
 }
 ```
 
-**Reglas de transformación:**
-- **BaseEntity:** Extrae solo primary key value (evita serializar objeto completo)
-- **Array:** Mapea cada elemento; si es BaseEntity llama recursivamente toDictionary()
-- **Date:** Convierte a ISO 8601 string
-- **Primitivos:** Se copian directamente
-
-### 4.7. Método fromDictionary()
-
+**Comportamiento:**
+- Itera sobre todas las propiedades obtenidas por getProperties()
+- Copia cada propiedad al objeto resultante
+- Retorna un objeto plano Record<string, any>
+- No hace transformaciones especiales de tipos
+- El backend es responsable de parsear correctamente los valores
 **Método estático de construcción:**
 ```typescript
 public static fromDictionary<T extends BaseEntity>(
@@ -254,7 +238,7 @@ Usuario: entity.save()
   ↓
 5. endpoint = getApiEndpoint()
   ↓
-6. data = toDictionary()
+6. data = toObject()
   ↓
 7. pkValue = getPrimaryPropertyValue()
   ↓
@@ -325,19 +309,19 @@ Usuario: Product.getElementList(filters)
 7. return array de instancias
 ```
 
-### 5.4. Flujo de Serialización (toDictionary)
+### 5.4. Flujo de Serialización (toObject)
 
 ```
-Usuario: entity.toDictionary()
+Usuario: entity.toObject()
   ↓
-1. dict = {}
+1. obj = {}
   ↓
 2. properties = getProperties()
   ↓
 3. Para cada propiedad:
-   valor = this[propiedad]
-   ↓
-   ¿Es BaseEntity?
+   obj[propertyName] = this[propertyName]
+  ↓
+4. Retornar obj
      SÍ → dict[propiedad] = valor.getPrimaryPropertyValue()
    ¿Es Array?
      SÍ → dict[propiedad] = valor.map(...)
@@ -369,7 +353,7 @@ Usuario: entity.toDictionary()
 
 9. **Instance methods vs static:** save(), update(), delete() son métodos de instancia. getElementList(), getElement(), fromDictionary() son métodos estáticos. NO intercambiar.
 
-10. **toDictionary for persistence:** Datos enviados a API DEBEN usar toDictionary(), no toObject(). toDictionary() excluye propiedades internas y serializa correctamente relaciones.
+10. **toObject for persistence:** Datos enviados a API usan toObject() para serializar la entidad a objeto plano antes de transmitir por HTTP.
 
 ## 7. Prohibiciones
 
@@ -377,21 +361,17 @@ Usuario: entity.toDictionary()
 
 2. **NO modificar response.data:** Object.assign(this, response.data) debe recibir datos sin mutación previa. Backend debe enviar estructura correcta.
 
-3. **NO usar toObject() para persistencia:** toObject() incluye propiedades internas (_isLoading, _originalState) que NO deben enviarse a API.
+3. **NO asumir éxito sin verificar:** getElement() y getElementList() pueden retornar null o array vacío. SIEMPRE verificar resultado antes de usar.
 
-4. **NO asumir éxito sin verificar:** getElement() y getElementList() pueden retornar null o array vacío. SIEMPRE verificar resultado antes de usar.
+4. **NO omitir manejo de errores:** Código que llama métodos CRUD NO DEBE asumir éxito. Usar try/catch o verificar retorno.
 
-5. **NO omitir manejo de errores:** Código que llama métodos CRUD NO DEBE asumir éxito. Usar try/catch o verificar retorno.
+5. **NO crear instancias manualmente en getElement/getElementList:** Usar constructores de clase (`new this()`) para garantizar correcta inicialización.
 
-6. **NO crear instancias manualmente en getElement/getElementList:** Usar constructores de clase (`new this()`) para garantizar correcta inicialización.
+6. **NO mutar entity durante toObject():** Método DEBE ser operación read-only que retorna nuevo objeto, sin efectos secundarios.
 
-7. **NO mutar entity durante toDictionary():** Método DEBE ser operación read-only que retorna nuevo objeto, sin efectos secundarios.
+7. **NO ignorar hooks vacíos:** Si subclase NO necesita hook, simplemente omitir sobrescritura. NO llamar super.hook() ya que implementación base está vacía.
 
-8. **NO ignorar hooks vacíos:** Si subclase NO necesita hook, simplemente omitir sobrescritura. NO llamar super.hook() ya que implementación base está vacía.
-
-9. **NO usar delete() para soft delete sin override:** Si se requiere soft delete, sobrescribir delete() en subclase y preservar hardDelete() llamando super.delete().
-
-10. **NO enviar entity completa en relaciones:** toDictionary() DEBE extraer solo IDs para relaciones BaseEntity. Enviar objeto completo causa payload innecesariamente grande.
+8. **NO usar delete() para soft delete sin override:** Si se requiere soft delete, sobrescribir delete() en subclase y preservar hardDelete() llamando super.delete().
 
 ## 8. Dependencias
 
@@ -477,8 +457,8 @@ try {
 }
 ```
 
-**Relaciones anidadas:**  
-toDictionary() solo maneja un nivel de profundidad para relaciones. Arrays de BaseEntity se serializan recursivamente, pero objetos anidados complejos pueden requerir lógica custom.
+**Serialización de objetos complejos:**  
+toObject() serializa todas las propiedades tal cual están. Si una propiedad es un objeto complejo o una instancia de BaseEntity, se transmitirá el objeto completo al backend.
 
 **HTTP status codes:**  
 Sistema asume convenciones REST estándar: 200/201 para éxito, 404 para not found, 422 para validation, 500 para server error. Ajustar si backend usa códigos diferentes.
@@ -489,10 +469,9 @@ Si se usan UUIDs generados en cliente, sobrescribir isNew() para usar flag inter
 **Soft delete implementation:**  
 Para soft delete (marcar registro como deleted en lugar de eliminarlo), sobrescribir delete():
 ```typescript
-async delete(): Promise<boolean> {
+async delete(): Promise<void> {
     this.deletedAt = new Date();
     await this.save();
-    return true;
 }
 ```
 Preservar hardDelete() que llama super.delete() para eliminación física.

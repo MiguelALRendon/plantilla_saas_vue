@@ -169,14 +169,19 @@ await product.save();
 Ejecutado inmediatamente antes de HTTP DELETE request:
 
 ```typescript
-public async delete(): Promise<boolean> {
+public async delete(): Promise<void> {
     // beforeDelete ejecuta AQUÍ
     this.beforeDelete();
     
     // Verificar ID
     const pkValue = this.getPrimaryPropertyValue();
     if (!pkValue) {
-        throw new Error('Cannot delete without ID');
+        Application.ApplicationUIService.openConfirmationMenu(
+            confMenuType.ERROR,
+            'Error',
+            'Cannot delete without ID'
+        );
+        return;  // Early return
     }
     
     // ... HTTP DELETE ...
@@ -221,7 +226,7 @@ await category.delete();
 Ejecutado después de HTTP DELETE request exitoso:
 
 ```typescript
-public async delete(): Promise<boolean> {
+public async delete(): Promise<void> {
     // ... beforeDelete, HTTP DELETE exitoso ...
     
     // afterDelete ejecuta AQUÍ
@@ -342,7 +347,7 @@ Usuario llama entity.save()
          ├─ NO → Retorna entity con errores
          └─ SÍ ↓
 ┌───────────────────────────┐
-│   toDictionary()          │  (Serializar)
+│   toObject()              │  (Serializar)
 └───────────┬───────────────┘
             ↓
 ┌───────────────────────────┐
@@ -467,7 +472,7 @@ Retorna isValid
 - save(): Método que invoca beforeSave() y afterSave()
 - delete(): Método que invoca beforeDelete() y afterDelete()
 - validateInputs(): Método que invoca onValidated()
-- toDictionary(): Para serialización en save()
+- toObject(): Para serialización en save()
 - getPrimaryPropertyValue(): Para verificar ID en delete()
 
 **Application Singleton:**
@@ -581,7 +586,7 @@ export class Product extends BaseEntity {
     deletedBy?: string;
     
     // Override delete para soft delete
-    async delete(): Promise<boolean> {
+    async delete(): Promise<void> {
         // Ejecutar beforeDelete
         this.beforeDelete();
         
@@ -596,12 +601,10 @@ export class Product extends BaseEntity {
         this.afterDelete();
         
         Application.showToast('Product archived', 'success');
-        
-        return true;
     }
     
     // Método para hard delete
-    async hardDelete(): Promise<boolean> {
+    async hardDelete(): Promise<void> {
         return super.delete();  // Llama al delete real
     }
     
@@ -800,7 +803,7 @@ await product.delete();
 export class BaseEntity {
     protected beforeSave(): void {
         // Log en consola (desarrollo)
-        console.log(`[beforeSave] ${this.constructor.name}`, this.toDictionary());
+        console.log(`[beforeSave] ${this.constructor.name}`, this.toObject());
     }
     
     protected afterSave(): void {
@@ -812,7 +815,7 @@ export class BaseEntity {
                 entityId: this.id,
                 userId: Application.currentUser?.id,
                 timestamp: new Date(),
-                data: this.toDictionary()
+                data: this.toObject()
             });
         }
     }

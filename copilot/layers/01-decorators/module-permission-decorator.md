@@ -167,7 +167,7 @@ Three methods: getModulePermission() retrieves permission string, hasPermission(
       </span>
       
       <span class="name">
-        {{ entityClass.getModuleNamePlural() }}
+        {{ entityClass.getModuleName() }}
       </span>
     </div>
   </div>

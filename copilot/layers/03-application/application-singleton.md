@@ -984,7 +984,7 @@ Si 401 Unauthorized, remueve token (auto-logout).
 **Usage en BaseEntity:**
 ```typescript
 async save() {
-    const payload = this.toDictionary();
+    const payload = this.toObject();
     const response = await Application.axiosInstance.post(this.getApiEndpoint(), payload);
     return response.data;
 }

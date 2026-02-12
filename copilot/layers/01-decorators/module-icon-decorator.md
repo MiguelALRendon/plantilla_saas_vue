@@ -133,7 +133,7 @@ Method estático accede prototype de la class (this.prototype) y retrieva icon n
       </span>
       
       <span class="name">
-        {{ entityClass.getModuleNamePlural() }}
+        {{ entityClass.getModuleName() }}
       </span>
     </div>
   </div>

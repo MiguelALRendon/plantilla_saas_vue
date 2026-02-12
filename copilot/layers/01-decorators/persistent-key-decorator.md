@@ -139,14 +139,14 @@ Ubicación: src/entities/base_entitiy.ts líneas ~250-330. Método save() usa ge
 ### Integración con delete() Method
 
 ```typescript
-public async delete(): Promise<boolean> {
+public async delete(): Promise<void> {
     this.beforeDelete();
     
     const constructor = this.constructor as typeof BaseEntity;
     
     if (!constructor.isPersistent()) {
         this.afterDelete();
-        return true;
+        return;
     }
     
     const endpoint = constructor.getApiEndpoint();

@@ -717,7 +717,7 @@ async save() {
     try {
         const response = await Application.axiosInstance.post(
             this.getApiEndpoint(),
-            this.toDictionary()
+            this.toObject()
         );
         
         // Solo emitir si save exitoso

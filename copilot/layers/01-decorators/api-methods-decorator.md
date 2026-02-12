@@ -142,7 +142,7 @@ public async save(): Promise<this> {
         console.warn(`${requiredMethod} not allowed for ${constructor.name}`);
         Application.ApplicationUIService.openConfirmationMenu(
             confMenuType.ERROR,
-            `Cannot ${isNew ? 'create' : 'update'} ${constructor.getModuleNameSingular()}`
+            `Cannot ${isNew ? 'create' : 'update'} ${constructor.getModuleName()}`
         );
         return this;  // Retornar sin ejecutar HTTP request
     }
@@ -168,8 +168,8 @@ public async save(): Promise<this> {
 ### Integración en delete()
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 790
-public async delete(): Promise<boolean> {
+// src/entities/base_entitiy.ts - Línea 819
+public async delete(): Promise<void> {
     const constructor = this.constructor as typeof BaseEntity;
     
     // Verificar si DELETE está permitido
@@ -177,7 +177,7 @@ public async delete(): Promise<boolean> {
         console.warn(`DELETE not allowed for ${constructor.name}`);
         Application.ApplicationUIService.openConfirmationMenu(
             confMenuType.ERROR,
-            `Cannot delete ${constructor.getModuleNameSingular()}`
+            `Cannot delete ${constructor.getModuleName()}`
         );
         return false;  // Bloquear eliminación
     }
@@ -610,9 +610,9 @@ export class Product extends BaseEntity {
     isDeleted: boolean = false;
     
     // Override delete para soft delete
-    public override async delete(): Promise<boolean> {
+    public override async delete(): Promise<void> {
         this.isDeleted = true;
-        return !!(await this.save());  // PUT con isDeleted=true
+        await this.save();  // PUT con isDeleted=true
         // NO ejecuta DELETE físico
     }
     

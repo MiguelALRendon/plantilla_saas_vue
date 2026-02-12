@@ -114,10 +114,10 @@ public async save(): Promise<this> {
 ### Uso en delete() - DELETE
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 790
-public async delete(): Promise<boolean> {
+// src/entities/base_entitiy.ts - Línea 819
+public async delete(): Promise<void> {
     if (!this.validateApiMethod('DELETE')) {
-        return false;
+        return;
     }
     
     const endpoint = (this.constructor as typeof BaseEntity).getApiEndpoint();

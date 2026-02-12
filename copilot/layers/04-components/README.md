@@ -116,7 +116,7 @@ Ciclo de vida componentes en contexto navegación usuario:
 4. BaseEntity save() ejecuta validation cascade: required → validation → asyncValidation
 5. Si validación falla, errores aparecen en inputs mediante validatedMessage computed
 6. Si validación pasa, ejecuta beforeSave() hooks
-7. Construye payload mediante this.toDictionary()
+7. Construye payload mediante this.toObject()
 8. Si entity.id null → POST ApiEndpoint, sino → PUT ApiEndpoint/id
 9. Recibe response, actualiza entity properties mediante updateFromDictionary(response.data)
 10. Ejecuta afterSave() hooks
