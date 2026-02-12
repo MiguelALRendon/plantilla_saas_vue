@@ -1,257 +1,51 @@
-# 🔘 Button Components Overview
+# Button Components Overview
 
-**Referencias:**
-- `../03-application/application-singleton.md` - Application gestiona botones
-- `../02-base-entity/crud-operations.md` - CRUD llamado por botones
+## 1. PROPOSITO
 
----
+Los componentes button proporcionan acciones estándar CRUD para vistas del framework gestionadas automáticamente por Application según contexto vista actual ViewType y persistencia entidad. Incluyen SaveButton guardar entidad, NewButton crear instancia, RefreshButton recargar datos, ValidateButton validar sin guardar, SaveAndNewButton guardar y crear nuevo, SendToDevice placeholder futuro, GenericButton sin acción predefinida. Application.setButtonList() determina qué botones mostrar basado en ViewTypes LISTVIEW muestra New Refresh, DETAILVIEW muestra todos buttons si persistent o subset si non-persistent.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Carpeta:** `src/components/Buttons/`  
-**Export:** `src/components/Buttons/index.ts`
+**UBICACION:** src/components/Buttons/
 
----
+**COMPONENTES BUTTON:**
+- SaveButtonComponent.vue: Ejecuta entity.save() guardando persistent entity
+- NewButtonComponent.vue: Ejecuta createNewInstance() navegando DetailView nuevo
+- RefreshButtonComponent.vue: Ejecuta entity.refresh() recargando desde servidor
+- ValidateButtonComponent.vue: Ejecuta entity.validateInputs() validando campos sin save
+- SaveAndNewButtonComponent.vue: Ejecuta save() luego createNewInstance() flujo consecutivo
+- SendToDeviceButtonComponent.vue: Placeholder sin implementación actual futuro uso
+- GenericButtonComponent.vue: Sin funcionalidad predefinida uso manual custom
 
-## 🎯 Propósito
+**ESTILOS CSS:**
+button secondary azul acciones principales Save, button info azul claro New, button success-green verde Refresh, button warning amarillo Validate, button accent morado SaveAndNew, button primary azul oscuro SendToDevice, button gris default Generic.
 
-Los **componentes de botones** proporcionan acciones estándar para las vistas del framework. Son gestionados automáticamente por Application según el contexto de vista actual.
+**INTEGRACION:**
+Application.ListButtons.value array reactive almacena components markRaw wrapped, ActionsComponent.vue v-for renderiza dinámicamente buttons, setButtonList() ejecuta setTimeout 405ms después changeView actualizando ListButtons según ViewType entityObject.isPersistent().
 
-**Concepto fundamental:**  
-> Application.setButtonList() determina qué botones mostrar según el ViewType (ListView vs DetailView) y si la entidad es persistente.
+**ICONOS:**
+Google Material Symbols desde constants/ggicons.ts GGICONS.SAVE GGICONS.ADD GGICONS.REFRESH GGICONS.CHECK GGICONS.SAVE2 GGICONS.DEVICES renderizados span con GGCLASS.
 
----
+## 3. DEFINICIONES CLAVE
 
-## 📦 Botones Disponibles
+**Application.ListButtons reactive:**
+Ref<Component[]> array almacena button components wrapped markRaw() evitando reactividad innecesaria Vue. ActionsComponent itera v-for renderizando component :is dinámicamente. Actualizado setButtonList() según Application.View.value.viewType y entityObject.isPersistent() determinando qué buttons mostrar contexto vista actual.
 
-### 1. SaveButtonComponent
-**Archivo:** `SaveButtonComponent.vue`  
-**Acción:** Guardar entidad actual  
-**Método:** `entity.save()`  
-**Estilo:** `button secondary`  
-**Icono:** SAVE  
-**Visibilidad:** Solo en DetailView con entidades persistentes
+**setButtonList() lógica:**
+Switch ViewTypes.LISTVIEW establece NewButton RefreshButton sin Save Validate no hay entity individual seleccionada. ViewTypes.DETAILVIEW verifica isPersistentEntity si true establece todos buttons New Refresh Validate Save SaveAndNew SendToDevice, si false omite Save SaveAndNew no puede persistir. Default empty array ningún button custom views.
 
-### 2. NewButtonComponent
-**Archivo:** `NewButtonComponent.vue`  
-**Acción:** Crear nueva instancia de entidad  
-**Método:** `entityClass.createNewInstance()` + `Application.changeViewToDetailView()`  
-**Estilo:** `button info`  
-**Icono:** ADD  
-**Visibilidad:** ListView y DetailView
+**markRaw() wrapper:**
+Vue 3 función previene proxy reactivo components evitando overhead performance unnecessary reactivity tracking. Todos button components wrapped markRaw() antes push ListButtons.value array. Sin markRaw Vue crearía proxies profundos component instances consuming memory triggering watchers innecesarios.
 
-### 3. RefreshButtonComponent
-**Archivo:** `RefreshButtonComponent.vue`  
-**Acción:** Recargar entidad actual desde servidor  
-**Método:** `entity.refresh()`  
-**Estilo:** `button success-green`  
-**Icono:** REFRESH  
-**Visibilidad:** ListView y DetailView
+**setTimeout 405ms delay:**
+setButtonList() ejecuta setTimeout 405ms después changeView permitiendo animaciones CSS transitions complete antes actualizar buttons. Delay sincroniza UI state evitando flicker visual buttons cambiando mid-transition. Valor 405ms ligeramente mayor 400ms transition durations CSS garantizando completion.
 
-### 4. ValidateButtonComponent
-**Archivo:** `ValidateButtonComponent.vue`  
-**Acción:** Validar campos sin guardar  
-**Método:** `entity.validateInputs()`  
-**Estilo:** `button warning`  
-**Icono:** CHECK  
-**Visibilidad:** DetailView
+**isPersistent() check:**
+BaseEntity método retorna boolean true si entity tiene @Persistent decorator o primary key populated indicating backend persisted record. False si entity in-memory only no guardada API como view models temporary data. Determina si mostrar Save SaveAndNew buttons solo entities pueden persistir backend database.
 
-### 5. SaveAndNewButtonComponent
-**Archivo:** `SaveAndNewButtonComponent.vue`  
-**Acción:** Guardar y crear nueva instancia  
-**Método:** `entity.save()` + `createNewInstance()`  
-**Estilo:** `button accent`  
-**Icono:** SAVE2  
-**Visibilidad:** Solo en DetailView con entidades persistentes
+## 4. DESCRIPCION TECNICA
 
-### 6. SendToDeviceButtonComponent
-**Archivo:** `SendToDeviceButtonComponent.vue`  
-**Acción:** Sin implementación actual (placeholder)  
-**Método:** Ninguno  
-**Estilo:** `button primary`  
-**Icono:** DEVICES  
-**Visibilidad:** DetailView
-
-### 7. GenericButtonComponent
-**Archivo:** `GenericButtonComponent.vue`  
-**Acción:** Botón genérico sin funcionalidad predefinida  
-**Método:** Ninguno  
-**Estilo:** `button`  
-**Visibilidad:** Uso manual
-
----
-
-## 🔧 Configuración Automática en Application
-
-### Lógica de setButtonList()
-
-**Ubicación:** `src/models/application.ts` (línea ~239)
-
-```typescript
-setButtonList() {
-    const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
-    
-    switch (this.View.value.viewType) {
-        case ViewTypes.LISTVIEW:
-            this.ListButtons.value = [
-                markRaw(NewButtonComponent),
-                markRaw(RefreshButtonComponent)
-            ];
-            break;
-            
-        case ViewTypes.DETAILVIEW:
-            if (isPersistentEntity) {
-                this.ListButtons.value = [
-                    markRaw(NewButtonComponent),
-                    markRaw(RefreshButtonComponent),
-                    markRaw(ValidateButtonComponent),
-                    markRaw(SaveButtonComponent),
-                    markRaw(SaveAndNewButtonComponent),
-                    markRaw(SendToDeviceButtonComponent)
-                ];
-            } else {
-                this.ListButtons.value = [
-                    markRaw(NewButtonComponent),
-                    markRaw(RefreshButtonComponent),
-                    markRaw(ValidateButtonComponent),
-                    markRaw(SendToDeviceButtonComponent)
-                ];
-            }
-            break;
-            
-        default:
-            this.ListButtons.value = [];
-            break;
-    }
-}
-```
-
-### Flujo de Actualización
-
-```
-1. Vista cambia (changeView)
-        ↓
-2. setTimeout 405ms
-        ↓
-3. setButtonList() ejecuta
-        ↓
-4. Application.ListButtons.value actualizado
-        ↓
-5. ActionsComponent reactivo renderiza botones
-```
-
----
-
-## 🎨 Uso de Iconos
-
-Todos los botones usan el sistema de iconos **Google Material Symbols**.
-
-```typescript
-import { GGICONS, GGCLASS } from '@/constants/ggicons';
-
-// En template:
-<span :class="GGCLASS">{{ GGICONS.SAVE }}</span>
-```
-
-**Ubicación constantes:** `src/constants/ggicons.ts`
-
----
-
-## 📊 Estructura Común de Botones
-
-```vue
-<template>
-    <button class="button [variant]" @click="[method]">
-        <span :class="GGCLASS">{{ GGICONS.[ICON] }}</span>
-        [Label]
-    </button>
-</template>
-
-<script lang="ts">
-import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import Application from '@/models/application';
-
-export default {
-    name: '[ComponentName]',
-    methods: {
-        async [method]() {
-            const entity = Application.View.value.entityObject;
-            // Lógica de acción
-        }
-    },
-    data() {
-        return {
-            GGCLASS,
-            GGICONS,
-        };
-    }
-}
-</script>
-
-<style scoped>
-.button.[variant] span {
-    font-size: 1.1rem;
-    margin-right: 0.15rem;
-}
-</style>
-```
-
----
-
-## 🎯 Variantes de Estilo
-
-| Clase CSS | Color | Uso |
-|-----------|-------|-----|
-| `button secondary` | Azul | Acciones principales (Save) |
-| `button info` | Azul claro | Información (New) |
-| `button success-green` | Verde | Éxito/Refrescar (Refresh) |
-| `button warning` | Amarillo | Advertencia (Validate) |
-| `button accent` | Morado | Acento (Save and New) |
-| `button primary` | Azul oscuro | Primario (Send to Device) |
-| `button` | Gris | Genérico |
-
-**CSS:** Definidos en `src/css/main.css`
-
----
-
-## 🔗 Integración con ActionsComponent
-
-Los botones se renderizan en `ActionsComponent.vue`:
-
-```vue
-<template>
-    <div class="actions-container">
-        <component
-            v-for="(button, index) in Application.ListButtons.value"
-            :key="index"
-            :is="button"
-        />
-    </div>
-</template>
-```
-
-**Ubicación:** `src/components/ActionsComponent.vue`
-
----
-
-## 📝 Notas Importantes
-
-1. **markRaw()**: Todos los componentes se envuelven en `markRaw()` para evitar reactividad innecesaria
-2. **Delay de 405ms**: El setButtonList() se ejecuta con delay para sincronizar con animaciones de transición
-3. **Entidades no persistentes**: No muestran botones Save/SaveAndNew
-4. **SendToDevice**: Botón placeholder sin funcionalidad implementada actualmente
-5. **Acceso a Application**: Todos los botones acceden directamente al singleton Application
-
----
-
----
-
-## 📝 Detalle de Componentes
-
-### SaveButtonComponent - Detalle Completo
-
-**Archivo:** `src/components/Buttons/SaveButtonComponent.vue`
-
+**SAVEBUTTON COMPONENT:**
 ```vue
 <template>
     <button class="button secondary" @click="saveItem">
@@ -275,81 +69,21 @@ export default {
         }
     },
     data() {
-        return {
-            GGCLASS,
-            GGICONS,
-        };
+        return { GGCLASS, GGICONS };
     }
 }
 </script>
 
 <style scoped>
-.button.secondary span{
+.button.secondary span {
     font-size: 1.1rem;
     margin-right: 0.15rem;
 }
 </style>
 ```
+**FUNCIONAMIENTO:** Obtiene entity desde Application.View.value.entityObject, verifica isPersistent() true, ejecuta await entity.save() llamando beforeSave() hook validateEntity() getPayload() POST o PUT API endpoint, afterSave() hook actualiza entity state, toast notification success o error displayed.
 
-**Funcionamiento:**
-1. Obtiene entidad actual de `Application.View.value.entityObject`
-2. Verifica que sea persistente con `isPersistent()`
-3. Llama a `entity.save()` (método asíncrono)
-4. `save()` ejecuta validaciones y hace POST/PUT según `isNew()`
-
----
-
-### ValidateButtonComponent - Detalle Completo
-
-**Archivo:** `src/components/Buttons/ValidateButtonComponent.vue`
-
-```vue
-<template>
-    <button class="button warning" @click="saveItem">
-        <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
-        Validate
-    </button>
-</template>
-
-<script lang="ts">
-import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import Application from '@/models/application';
-
-export default {
-    name: 'ValidateButtonComponent',
-    methods: {
-        async saveItem() {
-            const entity = Application.View.value.entityObject;
-            if (entity) {
-                await entity.validateInputs();
-            }
-        }
-    },
-    data() {
-        return {
-            GGCLASS,
-            GGICONS,
-        };
-    }
-}
-</script>
-```
-
-**Funcionamiento:**
-1. Obtiene entidad actual
-2. Llama a `validateInputs()` que emite evento `'validate-inputs'`
-3. Todos los inputs ejecutan sus validaciones
-4. NO guarda, solo valida
-
-**Uso:** Verificar validez sin guardar cambios.
-
----
-
-### NewButtonComponent
-
-**Archivo:** `src/components/Buttons/NewButtonComponent.vue`
-
-**Método:**
+**NEWBUTTON COMPONENT:**
 ```typescript
 methods: {
     createNew() {
@@ -361,42 +95,35 @@ methods: {
     }
 }
 ```
+**FUNCIONAMIENTO:** Obtiene entityClass typeof BaseEntity desde View, ejecuta static method createNewInstance() retornando new instance con defaults decorators, llama changeViewToDetailView navegando router /module/new rendering DefaultDetailView formulario vacío, botones actualizados setButtonList() mostrando Save Validate si persistent.
 
-**Funcionamiento:**
-1. Obtiene clase de entidad actual
-2. Crea nueva instancia con `createNewInstance()`
-3. Navega a DetailView con nueva instancia
+**VALIDATEBUTTON COMPONENT:**
+```typescript
+methods: {
+    async saveItem() {
+        const entity = Application.View.value.entityObject;
+        if (entity) {
+            await entity.validateInputs();
+        }
+    }
+}
+```
+**FUNCIONAMIENTO:** Ejecuta entity.validateInputs() emitiendo eventBus event 'validate-inputs', todos input components listeners ejecutan validateInput() local checkingRequired unique mask format async validators, actualiza hasError ref styling inputs red border error message display, NO guarda entity solo validation checking.
 
----
-
-### RefreshButtonComponent
-
-**Archivo:** `src/components/Buttons/RefreshButtonComponent.vue`
-
-**Método:**
+**REFRESHBUTTON COMPONENT:**
 ```typescript
 methods: {
     async refresh() {
         const entity = Application.View.value.entityObject;
         if (entity) {
-            await entity.refresh(); // Recarga desde servidor
+            await entity.refresh();
         }
     }
 }
 ```
+**FUNCIONAMIENTO:** Ejecuta entity.refresh() GET request API endpoint /module/:id recarga datos servidor, descarta local changes no guardados overwriting entity properties, útil revert cambios accidentales o fetch latest data concurrent edits otros usuarios.
 
-**Funcionamiento:**
-1. Obtiene entidad actual
-2. Llama a `refresh()` que hace GET y actualiza datos
-3. Descarta cambios locales sin guardar
-
----
-
-### SaveAndNewButtonComponent
-
-**Archivo:** `src/components/Buttons/SaveAndNewButtonComponent.vue`
-
-**Método:**
+**SAVEANDNEW COMPONENT:**
 ```typescript
 methods: {
     async saveAndNew() {
@@ -409,182 +136,24 @@ methods: {
     }
 }
 ```
+**FUNCIONAMIENTO:** Guarda entity actual await entity.save(), obtiene constructor casting typeof BaseEntity, ejecuta createNewInstance() nueva instancia vacía, navega changeViewToDetailView rendering formulario nuevo, workflow eficiente crear múltiples records consecutivos sin regresar ListView manualmente.
 
-**Funcionamiento:**
-1. Guarda entidad actual
-2. Crea nueva instancia de la misma clase
-3. Navega a DetailView con nueva instancia
-
-**Uso:** Crear múltiples registros consecutivos.
-
----
-
-### SendToDeviceButtonComponent
-
-**Archivo:** `src/components/Buttons/SendToDeviceButtonComponent.vue`
-
-**Estado:** Sin implementación funcional actual (placeholder)
-
+**SENDTODEVICE PLACEHOLDER:**
 ```typescript
 methods: {
     sendToDevice() {
-        // TODO: Implementar funcionalidad
         console.log('Send to device clicked');
+        // TODO: Implementar funcionalidad
     }
 }
 ```
+**ESTADO:** Sin implementación funcional actual, placeholder button reservado futuras features sync devices mobile tablets, actualmente renderiza button sin acción real ejecutada.
 
----
+**GENERICBUTTON COMPONENT:**
+Sin funcionalidad predefinida action method, usado manually custom views agregando buttons específicos sin crear dedicated components, props opcionales label icon click handler passed parent component.
 
-### GenericButtonComponent
-
-**Archivo:** `src/components/Buttons/GenericButtonComponent.vue`
-
-**Sin funcionalidad predefinida.** Para uso manual en componentes custom.
-
----
-
-## 🔄 Ciclo de Vida de Botones
-
-```
-Application.changeView() ejecuta
-    ↓
-setTimeout 405ms (espera animación)
-    ↓
-setButtonList() ejecuta
-    ↓
-Determina ViewType (LISTVIEW/DETAILVIEW)
-    ↓
-Verifica isPersistent()
-    ↓
-Actualiza Application.ListButtons.value
-    ↓
-ActionsComponent renderiza botones
-    ↓
-Usuario hace click
-    ↓
-Método del botón ejecuta
-    ↓
-Interactúa con entity o Application
-```
-
----
-
-## 🎯 Decisión de Botones según Contexto
-
-### ListView + Entidad Persistente
-- ✅ New
-- ✅ Refresh
-- ❌ Save (no hay entidad individual)
-- ❌ Validate (no hay formulario)
-
-### DetailView + Entidad Persistente
-- ✅ New
-- ✅ Refresh
-- ✅ Validate
-- ✅ Save
-- ✅ SaveAndNew
-- ✅ SendToDevice
-
-### DetailView + Entidad NO Persistente
-- ✅ New
-- ✅ Refresh
-- ✅ Validate
-- ❌ Save (no puede persistir)
-- ❌ SaveAndNew (no puede persistir)
-- ✅ SendToDevice
-
----
-
-## 📋 Matriz de Disponibilidad
-
-| Botón | ListView<br/>Persistente | DetailView<br/>Persistente | DetailView<br/>No Persistente |
-|-------|:------------------------:|:------------------------:|:---------------------------:|
-| New | ✅ | ✅ | ✅ |
-| Refresh | ✅ | ✅ | ✅ |
-| Validate | ❌ | ✅ | ✅ |
-| Save | ❌ | ✅ | ❌ |
-| SaveAndNew | ❌ | ✅ | ❌ |
-| SendToDevice | ❌ | ✅ | ✅ |
-
----
-
-## 🎨 CSS Classes Completas
-
-```css
-/* Base button */
-.button {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: 0.3s ease;
-}
-
-/* Variants */
-.button.secondary {
-    background-color: var(--btn-secondary);
-    color: var(--white);
-}
-
-.button.info {
-    background-color: var(--btn-info);
-    color: var(--white);
-}
-
-.button.success-green {
-    background-color: var(--green-soft);
-    color: var(--white);
-}
-
-.button.warning {
-    background-color: var(--btn-warning);
-    color: var(--dark);
-}
-
-.button.accent {
-    background-color: var(--accent);
-    color: var(--white);
-}
-
-.button.primary {
-    background-color: var(--btn-primary);
-    color: var(--white);
-}
-
-/* Icon sizing */
-.button span {
-    font-size: 1.1rem;
-}
-```
-
----
-
-## 🔗 Integración con ActionsComponent
-
-**Código en ActionsComponent.vue:**
-
-```vue
-<template>
-    <div class="floating-actions" :class="{ 'at-top': isAtTop }">
-        <component
-            v-for="(component, index) in Application.ListButtons.value"
-            :key="index"
-            :is="component"
-        />
-    </div>
-</template>
-```
-
-**Actualización:**
-
+**SETBUTTONLIST METHOD:**
 ```typescript
-// En application.ts
 setButtonList() {
     const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
     
@@ -622,20 +191,121 @@ setButtonList() {
     }
 }
 ```
+**LOGICA SWITCH:** Case LISTVIEW establece New Refresh sin entity individual no Save Validate. Case DETAILVIEW verifica isPersistentEntity true todos buttons incluye Save SaveAndNew, false omite Save SaveAndNew solo New Refresh Validate SendToDevice. Default empty array custom views no standard buttons.
 
----
+## 5. FLUJO DE FUNCIONAMIENTO
 
-## 📝 Crear Botón Custom
+**PASO 1 - ChangeView Trigger setButtonList:**
+Usuario hace clic fila tabla ListView ejecutando openDetailView(), Application.changeViewToDetailView actualiza View.value estableciendo entityClass entityObject component viewType, método ejecuta setTimeout(() => setButtonList(), 405) delay permitiendo CSS transitions complete, timer expires ejecuta setButtonList() leyendo viewType isPersistent determinando buttons.
 
-Para agregar botones personalizados:
+**PASO 2 - SetButtonList Actualiza ListButtons:**
+setButtonList() switch viewType case DETAILVIEW, obtiene isPersistentEntity con entityObject?.isPersistent() ?? false optional chaining nullish coalescing default false, verifica isPersistentEntity true estableciendo ListButtons array [New Refresh Validate Save SaveAndNew SendToDevice] wrapped markRaw(), si false omite Save SaveAndNew estableciendo [New Refresh Validate SendToDevice], Application.ListButtons.value updated triggering reactivity.
 
-### 1. Crear Componente
+**PASO 3 - ActionsComponent Reactivo Renderiza:**
+ActionsComponent v-for itera Application.ListButtons.value array, cada iteration renderiza component :is="button" :key="index" dinámicamente, Vue monta button components ejecutando lifecycle hooks onMounted data() methods, buttons aparecen floating-actions container bottom-right viewport styled CSS variables colors icons, transition smooth fade-in animation.
 
+**PASO 4 - Usuario Hace Clic SaveButton:**
+Usuario hace clic Save button triggering @click="saveItem", método saveItem() obtiene entity = Application.View.value.entityObject, verifica if entity && entity.isPersistent() true, ejecuta await entity.save() async operation, entity.save() ejecuta beforeSave() validateEntity() getPayload() construyendo request body, POST nuevo o PUT existente API endpoint, afterSave() actualiza entity state properties, toast notification success verde displayed.
+
+**PASO 5 - Validate Sin Guardar:**
+Usuario hace clic Validate button mientras edita form campos, @click="saveItem" ejecuta entity.validateInputs(), método emite Application.eventBus.emit('validate-inputs') event, todos input components listeners TextInputComponent EmailInputComponent NumberInputComponent reciben event ejecutando validateInput() local, inputs check required unique mask format async validators, errors display red border message, entity NO guardada solo validation UI feedback.
+
+**PASO 6 - SaveAndNew Workflow:**
+Usuario completa formulario hace clic SaveAndNew button, await entity.save() ejecuta saving record backend, success response recibida obtiene constructor entity.constructor typeof BaseEntity, ejecuta createNewInstance() nueva instancia vacía defaults, Application.changeViewToDetailView(newInstance) navega router /module/new rendering nuevo formulario, permite crear múltiples records consecutivos sin regresar ListView cada vez, workflow eficiente data entry.
+
+**PASO 7 - Refresh Descarta Cambios:**
+Usuario edita campos form accidentally cambia valores incorrectos, hace clic Refresh button ejecutando entity.refresh(), método GET request API endpoint /module/:id fetching latest data servidor, descarta local changes no guardados overwriting entity properties fresh data, inputs re-render con valores originales, útil revert mistakes sin recargar página entera.
+
+**PASO 8 - NewButton Desde ListView:**
+Usuario en ListView tabla records hace clic New button floating actions, createNew() obtiene entityClass desde View.value.entityClass, ejecuta createNewInstance() static method retornando new entity vacía, changeViewToDetailView navega /module/new router push, setButtonList() ejecuta delay establishing buttons Save Validate si persistent, DefaultDetailView renderiza formulario inputs vacíos ready data entry.
+
+**PASO 9 - ListView Solo New Refresh:**
+Usuario navega ListView tabla products, Application.changeViewToListView establece viewType LISTVIEW, setButtonList() ejecuta switch case LISTVIEW, establece ListButtons [NewButton RefreshButton] markRaw wrapped, ActionsComponent renderiza solo dos buttons, no Save Validate no entity individual selected table, New creates nuevo Refresh reloads table data refreshing API call.
+
+**PASO 10 - Non-Persistent Entity Buttons:**
+Entity class sin @Persistent decorator view model temporary, Application.changeViewToDetailView establece viewType DETAILVIEW, setButtonList() verifica isPersistentEntity = false, switch case DETAILVIEW else branch establece ListButtons omitting Save SaveAndNew [New Refresh Validate SendToDevice], buttons Save SaveAndNew hidden no puede persistir backend, usuario puede validate crear new discard changes no save API.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE ejecutar setButtonList() con setTimeout 405ms delay después changeView permitiendo CSS transitions complete evitando visual flicker.
+
+**REGLA 2:** SIEMPRE wrap button components con markRaw() antes push ListButtons.value array evitando proxy reactivo unnecessary Vue overhead.
+
+**REGLA 3:** SIEMPRE verificar entity.isPersistent() antes ejecutar save() saveAndNew() methods evitando errors non-persistent entities.
+
+**REGLA 4:** SIEMPRE obtener entity desde Application.View.value.entityObject NUNCA local state desync con Application singleton.
+
+**REGLA 5:** SIEMPRE usar switch case ViewTypes.LISTVIEW DETAILVIEW default en setButtonList() garantizando buttons correctos cada view type.
+
+**REGLA 6:** SIEMPRE importar GGICONS GGCLASS desde constants/ggicons.ts NUNCA hardcodear icon names strings.
+
+**REGLA 7:** SIEMPRE verificar entityClass not null antes ejecutar createNewInstance() evitando TypeError undefined.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Omitir markRaw() wrapper button components causando Vue crear proxies reactivos unnecessary overhead memory leaks.
+
+**PROHIBIDO:** Llamar setButtonList() sin setTimeout delay causando buttons update mid-CSS-transition visual glitches flicker.
+
+**PROHIBIDO:** Ejecutar save() non-persistent entities ignorando isPersistent() check causing errors backend API.
+
+**PROHIBIDO:** Almacenar entity reference local component state sin obtener desde Application.View desync con singleton state global.
+
+**PROHIBIDO:** Modificar Application.ListButtons.value directamente fuera setButtonList() method violating single responsibility principle.
+
+**PROHIBIDO:** Crear button components sin importar Application singleton causando undefined errors runtime.
+
+**PROHIBIDO:** Hardcodear button visibility logic component templates, usar setButtonList() centralized logic Application.
+
+## 8. DEPENDENCIAS
+
+**MODELS:**
+- Application: Singleton con View.value ListButtons.value router eventBus setButtonList() changeViewToListView changeViewToDetailView methods
+- BaseEntity: isPersistent() save() refresh() validateInputs() createNewInstance() isNew() methods
+
+**ENUMS:**
+- ViewTypes: LISTVIEW DETAILVIEW CUSTOMVIEW para switch case setButtonList()
+
+**CONSTANTS:**
+- ggicons.ts: GGICONS object con SAVE ADD REFRESH CHECK SAVE2 DEVICES icon names, GGCLASS string Google Material Symbols clase CSS
+
+**COMPONENTES:**
+- ActionsComponent: Renderiza dinámicamente ListButtons array v-for component :is
+
+**CSS:**
+- main.css: button secondary info success-green warning accent primary classes colors styling
+
+**DECORADORES:**
+- @Persistent: Determina isPersistent() retorno true false entity persistible backend
+
+## 9. RELACIONES
+
+**BUTTONS Y APPLICATION VIEW:**
+Buttons leen Application.View.value.entityObject accediendo entity actual executing actions save refresh validate, View.value.entityClass usado NewButton createNewInstance() method, View.value.viewType determina setButtonList() switch case deciding qué buttons mostrar, cambios View actualizados changeView methods triggering setButtonList() updating buttons reactively.
+
+**SETBUTTONLIST Y PERSISTENCIA:**
+isPersistent() boolean determina if Save SaveAndNew incluidos ListButtons, true permite persist backend mostrando save buttons, false omite save buttons entity in-memory only view model, decorator @Persistent en entity class establece metadata leída isPersistent() runtime checking primary key existence.
+
+**ACTIONSCOMPONENT DYNAMIC RENDERING:**
+ActionsComponent no hardcodea button list, itera Application.ListButtons.value v-for rendering component :is dinámicamente, markRaw wrapped components evitan proxy overhead, :key="index" garantiza Vue tracked items re-rendering correctly, cambios ListButtons trigger v-for reactivity mounting unmounting buttons smooth transitions.
+
+**SAVEANDNEW WORKFLOW ENCADENADO:**
+SaveAndNew encadena dos operations save() luego createNewInstance() changeViewToDetailView, primera operation persiste entity actual backend POST PUT, segunda operation crea nueva instancia vacía navigates DetailView nuevo formulario, permite data entry consecutivo múltiples records sin manual navigation ListView, común scenarios bulk input forms.
+
+**VALIDATEBUTTON Y EVENTBUS:**
+Validate button emite 'validate-inputs' event Application.eventBus, no ejecuta validation directa, delega input components listeners executing validateInput() local, pattern desacoplado permite inputs independiente validation logic, centraliza triggering broadcast event todos inputs simultáneamente, UI feedback red borders error messages displayed cada input failed validation.
+
+**MARKRAW PERFORMANCE OPTIMIZATION:**
+markRaw() Vue 3 function previene reactive proxy creation components, buttons son static instances no necesitan reactivity tracking internal changes, wrapping markRaw reduces memory footprint eliminates watchers unnecessary, ListButtons.value array sí reactivo pero items array no reactivos markRaw wrapped, balance performance reactivity donde necesario.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO CREAR BUTTON CUSTOM:**
 ```vue
 <template>
     <button class="button info" @click="customAction">
-        <span :class="GGCLASS">{{ GGICONS.CUSTOM }}</span>
-        Custom Action
+        <span :class="GGCLASS">{{ GGICONS.EXPORT }}</span>
+        Export
     </button>
 </template>
 
@@ -644,11 +314,21 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 
 export default {
-    name: 'CustomButtonComponent',
+    name: 'ExportButtonComponent',
     methods: {
         async customAction() {
             const entity = Application.View.value.entityObject;
-            // Tu lógica aquí
+            if (entity) {
+                const data = entity.toJSON();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { 
+                    type: 'application/json' 
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${entity.constructor.name}_${entity.id}.json`;
+                a.click();
+            }
         }
     },
     data() {
@@ -665,21 +345,163 @@ export default {
 </style>
 ```
 
-### 2. Registrar en Application
-
+**REGISTRAR BUTTON CUSTOM SETBUTTONLIST:**
 ```typescript
-import CustomButtonComponent from '@/components/Buttons/CustomButtonComponent.vue';
+import ExportButtonComponent from '@/components/Buttons/ExportButtonComponent.vue';
 
-// En setButtonList()
-this.ListButtons.value = [
-    markRaw(CustomButtonComponent),
-    // ... otros botones
-];
+setButtonList() {
+    const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
+    
+    switch (this.View.value.viewType) {
+        case ViewTypes.DETAILVIEW:
+            if (isPersistentEntity) {
+                this.ListButtons.value = [
+                    markRaw(NewButtonComponent),
+                    markRaw(RefreshButtonComponent),
+                    markRaw(ValidateButtonComponent),
+                    markRaw(SaveButtonComponent),
+                    markRaw(SaveAndNewButtonComponent),
+                    markRaw(ExportButtonComponent),  // Custom button
+                    markRaw(SendToDeviceButtonComponent)
+                ];
+            }
+            break;
+    }
+}
 ```
 
----
+**MATRIZ DISPONIBILIDAD BUTTONS:**
+```
+ListView + Persistent:
+  New ✓
+  Refresh ✓
+  Validate ✗ (no formulario)
+  Save ✗ (no entity individual)
+  SaveAndNew ✗ (no entity individual)
+  SendToDevice ✗ (DetailView only)
 
-**Total de Botones:** 7  
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo
+DetailView + Persistent:
+  New ✓
+  Refresh ✓
+  Validate ✓
+  Save ✓
+  SaveAndNew ✓
+  SendToDevice ✓
+
+DetailView + Non-Persistent:
+  New ✓
+  Refresh ✓
+  Validate ✓
+  Save ✗ (no persistible)
+  SaveAndNew ✗ (no persistible)
+  SendToDevice ✓
+```
+
+**EJEMPLO DEBUGGING BUTTONS:**
+```typescript
+// Ver buttons actuales
+console.log('Current buttons:', Application.ListButtons.value);
+// [NewButtonComponent, RefreshButtonComponent, ...]
+
+// Ver entity persistence
+console.log('Is persistent:', Application.View.value.entityObject?.isPersistent());
+
+// Ver viewType
+console.log('View type:', Application.View.value.viewType);
+// ViewTypes.DETAILVIEW
+
+// Testear setButtonList manually
+Application.setButtonList();
+console.log('Updated buttons:', Application.ListButtons.value.length);
+
+// Verificar markRaw wrapped
+console.log('Is raw:', Vue.isReactive(Application.ListButtons.value[0]));
+// false si markRaw wrapped correctamente
+```
+
+**CSS VARIANTS COMPLETOS:**
+```css
+.button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: 0.3s ease;
+}
+
+.button.secondary {
+    background-color: var(--btn-secondary);  /* Azul */
+    color: var(--white);
+}
+
+.button.info {
+    background-color: var(--btn-info);  /* Azul claro */
+    color: var(--white);
+}
+
+.button.success-green {
+    background-color: var(--green-soft);  /* Verde */
+    color: var(--white);
+}
+
+.button.warning {
+    background-color: var(--btn-warning);  /* Amarillo */
+    color: var(--dark);
+}
+
+.button.accent {
+    background-color: var(--accent);  /* Morado */
+    color: var(--white);
+}
+
+.button.primary {
+    background-color: var(--btn-primary);  /* Azul oscuro */
+    color: var(--white);
+}
+
+.button span {
+    font-size: 1.1rem;
+}
+
+.button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.button:active {
+    transform: translateY(0);
+}
+```
+
+**TIMING DELAY EXPLICACION:**
+setTimeout 405ms delay crítico timing coordinación:
+- CSS transitions duran 400ms definidas main.css
+- setButtonList() espera 405ms garantizando transitions complete
+- Premature button update mid-transition causa visual glitches
+- Extra 5ms safety margin compensating browser timing inconsistencies
+- Reduce delay 300ms buttons apareceríani mid-fade producing flicker
+- Aumentar delay 600ms buttons aparecen demasiado tarde user perceives lag
+
+**LIMITACIONES ACTUALES:**
+SendToDevice button placeholder sin funcionalidad real, no ejecuta sync devices mobile tablets, futuro implementation requiere backend API endpoints device management. GenericButton sin props system, custom buttons necesitan dedicated components no reusable generic con props label icon action. No keyboard shortcuts buttons, accessibility requiere tab navigation enter key press simulating click events.
+
+## 11. REFERENCIAS CRUZADAS
+
+**DOCUMENTOS RELACIONADOS:**
+- ActionsComponent.md: Componente renderiza buttons dinámicamente v-for ListButtons array
+- application-singleton.md: Application.View Application.ListButtons setButtonList() changeViewToListView changeViewToDetailView methods
+- base-entity-core.md: isPersistent() save() refresh() validateInputs() createNewInstance() methods ejecutados buttons
+- event-bus.md: eventBus.emit('validate-inputs') usado ValidateButton triggering input validation
+- DefaultDetailView.md: Componente renderiza formulario con ActionsComponent buttons floating
+- DefaultListView.md: Componente renderiza tabla con ActionsComponent buttons New Refresh
+- Enums.md: ViewTypes.LISTVIEW DETAILVIEW usado switch setButtonList()
+- persistent-decorator.md: Decorador @Persistent determina isPersistent() check Save buttons visibility
+
+**UBICACION:** copilot/layers/04-components/buttons-overview.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

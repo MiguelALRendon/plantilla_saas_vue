@@ -1,46 +1,47 @@
-# 🧩 Core Components - Componentes Principales del Framework
+# Core Components del Framework
 
-**Referencias:**
-- `../03-application/application-singleton.md` - Application gestiona componentes
-- `../03-application/event-bus.md` - Sistema de eventos
-- `buttons-overview.md` - Botones en ActionsComponent
-- `views-overview.md` - Vistas renderizadas por ComponentContainer
+## 1. PROPOSITO
 
----
+Los componentes core forman estructura principal aplicación proporcionando layout contenedores, navegación tabs, estados carga, menús contextuales. Incluyen ComponentContainerComponent renderiza vista actual dinámicamente con TopBar ActionsComponent LoadingScreen, ActionsComponent barra flotante sticky botones acción, TabControllerComponent y TabComponent sistema navegación pestañas clickeables, LoadingScreenComponent pantalla carga fullscreen transiciones vistas, DropdownMenu menú contextual posicionado inteligentemente viewport boundaries. Garantizan arquitectura modular reactiva framework Vue 3 con Application singleton coordinando estado global UI patterns consistentes.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Carpeta:** `src/components/`  
-**Componentes:**
-- `ComponentContainerComponent.vue`
-- `ActionsComponent.vue`
-- `TabControllerComponent.vue`
-- `TabComponent.vue`
-- `LoadingScreenComponent.vue`
-- `DropdownMenu.vue`
+**UBICACION:** src/components/
 
----
+**COMPONENTES CORE:**
+- ComponentContainerComponent.vue: Contenedor principal renderiza vista actual Application.View.component dinámicamente con watch markRaw
+- ActionsComponent.vue: Barra flotante sticky renderiza botones Application.ListButtons scroll opacity handling
+- TabControllerComponent.vue: Controlador pestañas headers clickeables setActiveTab index management slot validation
+- TabComponent.vue: Contenedor contenido tab individual display none active class CSS
+- LoadingScreenComponent.vue: Pantalla carga fullscreen opacity transition show-loading hide-loading events
+- DropdownMenu.vue: Menú contextual dropdown posicionamiento inteligente smart position click outside ESC key
 
-## 🎯 Propósito
+**RENDERIZADO DINAMICO:**
+ComponentContainerComponent usa component :is="currentComponent" renderizando DefaultListView DefaultDetailView custom views según Application.View.value.component reactive property.
 
-Los **componentes core** forman la estructura principal de la aplicación:
-- Layout y contenedores
-- Navegación por tabs
-- Estados de carga
-- Menús contextuales
+**INTEGRATION:**
+Application.View.value.component determina vista renderizada, Application.ListButtons.value array buttons ActionsComponent, Application.eventBus emite show-loading hide-loading controla LoadingScreen, Application.dropdownMenu.value estado dropdown showing position component.
 
----
+## 3. DEFINICIONES CLAVE
 
-## 📦 1. ComponentContainerComponent
+**ComponentContainerComponent layout:**
+Contenedor principal estructura ViewContainer flex column con TopBarComponent fixed top, ComponentContainer main content area max-height calc(100vh - 50px) overflow auto, ActionsComponent floating sticky buttons, component :is dinámico renderiza vista actual, LoadingScreenComponent absolute overlay. Watch Application.View.value.component detecta cambios ejecutando transition sequence showLoadingScreen delay 400ms updateComponent hideLoadingScreen.
 
-### Descripción
-Contenedor principal que renderiza la vista actual junto con TopBar, ActionsComponent y LoadingScreen.
+**ActionsComponent sticky behavior:**
+Barra flotante position sticky top 0 z-index 10, handleScroll event listener detecta scrollTop === 0 estableciendo isAtTop boolean true, class at-top CSS opacity 1 fully visible, scrolled opacity 0.3 semi-transparent menos intrusivo, hover opacity 1 easy access buttons. Renderiza Application.ListButtons.value array v-for component :is button components configured setButtonList() según ViewType entityPersistence.
 
-### Archivo
-`src/components/ComponentContainerComponent.vue`
+**TabController tabs navigation:**
+Props tabs array strings nombres pestañas renderizados v-for div.tab headers clickeables, selectedTab number index tab activo default 0, setActiveTab(index) método actualiza selectedTab itera tabElements NodeList agregando removing class active CSS display block none, slot validation computed verifica todos children vnode.type === TabComponent previniendo invalid markup, mounted querySelectorAll('.tab-component') obtiene references activating first tab.
 
-### Estructura
+**LoadingScreen fullscreen overlay:**
+Position absolute top 50px below TopBar height 100% width 100% z-index 99999 highest priority covering all content, opacity 0 pointer-events none hidden default, class active CSS opacity 1 pointer-events all visible blocking interaction, transition opacity 0.3s ease-in-out smooth fade animation. EventBus listeners show-loading hide-loading events emitted ApplicationUIService showLoadingScreen() hideLoadingScreen() methods controlling visibility state.
 
+**DropdownMenu smart positioning:**
+Computed dropdownStyle calcula position left top evitando viewport overflow, centrar horizontalmente leftPosition = posX - (dropdownWidth / 2), ajustar derecha if leftPosition + dropdownWidth mayor canvasWidth, ajustar izquierda if leftPosition menor 0, determinar mitad pantalla isInBottomHalf = posY mayor canvasHeight / 2, mostrar arriba elemento if isInBottomHalf topPosition -= elementHeight, return style object max-width left top CSS inline properties. HandleClickOutside listener closes dropdown click fuera element, handleKeydown listener closes Escape key pressed.
+
+## 4. DESCRIPCION TECNICA
+
+**COMPONENTCONTAINER STRUCTURE:**
 ```vue
 <template>
     <div class="ViewContainer">
@@ -52,63 +53,355 @@ Contenedor principal que renderiza la vista actual junto con TopBar, ActionsComp
         <LoadingScreenComponent />
     </div>
 </template>
-```
 
-### Data
-```typescript
-{
-    currentComponent: Component | null  // Vista actual a renderizar
-}
-```
-
-### Lifecycle - created()
-
-```typescript
-created() {
-    // Inicializar con vista actual de Application
-    const init = Application.View.value.component;
-    if (init) {
-        this.currentComponent = markRaw(init);
-    }
-    
-    // Observar cambios en Application.View.value.component
-    watch(() => Application.View.value.component, async (newVal) => {
-        if (newVal) {
-            Application.ApplicationUIService.showLoadingScreen();
-            await new Promise(resolve => setTimeout(resolve, 400));  // Delay UX
-            this.currentComponent = markRaw(newVal);
-            Application.ApplicationUIService.hideLoadingScreen();
+<script lang="ts">
+export default {
+    data() {
+        return {
+            currentComponent: null as Component | null
+        };
+    },
+    created() {
+        const init = Application.View.value.component;
+        if (init) {
+            this.currentComponent = markRaw(init);
         }
+        
+        watch(() => Application.View.value.component, async (newVal) => {
+            if (newVal) {
+                Application.ApplicationUIService.showLoadingScreen();
+                await new Promise(resolve => setTimeout(resolve, 400));
+                this.currentComponent = markRaw(newVal);
+                Application.ApplicationUIService.hideLoadingScreen();
+            }
+        });
+    }
+}
+</script>
+```
+**FUNCIONAMIENTO:** Created hook inicializa currentComponent desde Application.View current state markRaw wrapping evitando Vue reactive proxy overhead, watch Application.View.component detecta changes triggering transition sequence loading screen display 400ms delay component update markRaw wrapped loading screen hide, setTimeout delay UX smooth transition visual feedback user operation in progress, component :is Vue 3 dynamic component rendering actualizado reactive currentComponent ref.
+
+**ACTIONSCOMPONENT SCROLL HANDLING:**
+```vue
+<template>
+    <div class="floating-actions" :class="{ 'at-top': isAtTop }">
+        <component 
+            v-for="(component, index) in Application.ListButtons.value" 
+            :key="index"
+            :is="component" 
+        />
+    </div>
+</template>
+
+<script lang="ts">
+export default {
+    data() {
+        return {
+            isAtTop: false,
+            scrollContainer: null as HTMLElement | null
+        };
+    },
+    mounted() {
+        this.scrollContainer = this.$el.closest('.ComponentContainer');
+        if (this.scrollContainer) {
+            this.scrollContainer.addEventListener('scroll', this.handleScroll);
+            this.handleScroll();
+        }
+    },
+    beforeUnmount() {
+        if (this.scrollContainer) {
+            this.scrollContainer.removeEventListener('scroll', this.handleScroll);
+        }
+    },
+    methods: {
+        handleScroll() {
+            if (this.scrollContainer) {
+                this.isAtTop = this.scrollContainer.scrollTop === 0;
+            }
+        }
+    }
+}
+</script>
+```
+**FUNCIONAMIENTO:** Mounted hook busca closest ComponentContainer parent element obteniendo scrollContainer reference, addEventListener scroll handleScroll method monitoring scroll position, handleScroll verifica scrollTop === 0 estableciendo isAtTop true triggering at-top CSS class opacity 1 fully visible, scrolled isAtTop false class removed opacity 0.3 semi-transparent, beforeUnmount cleanup removeEventListener preventing memory leaks, v-for Application.ListButtons.value renders button components dynamically configured Application.setButtonList().
+
+**TABCONTROLLER VALIDATION:**
+```typescript
+setup() {
+    const slots = useSlots();
+    
+    const isValid = computed(() => {
+        const nodes = slots.default?.();
+        if (!nodes) return true;
+        
+        return nodes.every(vnode => vnode.type === TabComponent);
     });
+    
+    return { isValid };
+}
+
+mounted() {
+    this.tabElements = document.querySelectorAll('.tab-component');
+    this.setActiveTab(0);
+}
+
+methods: {
+    setActiveTab(index: number) {
+        this.selectedTab = index;
+        
+        this.tabElements?.forEach((el, i) => {
+            el.classList.remove('active');
+            if (i === index) {
+                el.classList.add('active');
+            }
+        });
+    }
 }
 ```
+**FUNCIONAMIENTO:** Setup composables useSlots obtiene slot references, computed isValid verifica nodes.every vnode.type === TabComponent validating all children correct type preventing incorrect usage runtime errors, mounted querySelectorAll obtiene all TabComponent elements DOM storing tabElements NodeList reference, setActiveTab initial call activates first tab index 0, setActiveTab method actualiza selectedTab property itera tabElements forEach removing active class all adding active class target index, CSS display none block controls visibility single tab time.
 
-### Flujo de Cambio de Vista
+**LOADINGSCREEN EVENTS:**
+```vue
+<template>
+    <div class="loading-screen" :class="{ active: isActive }">
+        Loading...
+    </div>
+</template>
 
+<script lang="ts">
+export default {
+    data() {
+        return {
+            isActive: false
+        };
+    },
+    mounted() {
+        Application.eventBus.on('show-loading', () => {
+            this.isActive = true;
+        });
+        
+        Application.eventBus.on('hide-loading', () => {
+            this.isActive = false;
+        });
+    },
+    beforeUnmount() {
+        Application.eventBus.off('show-loading');
+        Application.eventBus.off('hide-loading');
+    }
+}
+</script>
 ```
-1. Application.changeView() ejecuta
-        ↓
-2. Application.View.value.component actualizado
-        ↓
-3. Watch en ComponentContainer detecta cambio
-        ↓
-4. Muestra LoadingScreen (400ms)
-        ↓
-5. Actualiza currentComponent con markRaw(newComponent)
-        ↓
-6. Oculta LoadingScreen
-        ↓
-7. Nueva vista renderizada
+**FUNCIONAMIENTO:** Data isActive boolean controla visibility state default false, mounted registers eventBus listeners show-loading hide-loading events emitted ApplicationUIService methods, listener callbacks actualiza isActive true false triggering active CSS class binding, class active establece opacity 1 pointer-events all making overlay visible blocking user interaction, beforeUnmount cleanup eventBus.off removing listeners preventing memory leaks component unmount.
+
+**DROPDOWNMENU POSITIONING:**
+```typescript
+computed: {
+    dropdownStyle() {
+        const data = Application.ApplicationUIService.dropdownMenu.value;
+        const posX = parseFloat(data.position_x);
+        const posY = parseFloat(data.position_y);
+        const dropdownWidth = parseFloat(data.width);
+        const canvasWidth = parseFloat(data.canvasWidth);
+        const canvasHeight = parseFloat(data.canvasHeight);
+        const elementHeight = parseFloat(data.activeElementHeight);
+        
+        let leftPosition = posX - (dropdownWidth / 2);
+        
+        if (leftPosition + dropdownWidth > canvasWidth) {
+            leftPosition = posX - dropdownWidth;
+        }
+        
+        if (leftPosition < 0) {
+            leftPosition = posX;
+        }
+        
+        const isInBottomHalf = posY > (canvasHeight / 2);
+        let topPosition = posY;
+        
+        if (isInBottomHalf) {
+            topPosition = posY - elementHeight;
+        }
+        
+        return {
+            'max-width': data.width,
+            'left': `${leftPosition}px`,
+            'top': `${topPosition}px`
+        };
+    }
+}
+
+methods: {
+    handleClickOutside(event: MouseEvent) {
+        if (this.dropDownData.showing) {
+            const dropdown = document.getElementById('dropdown-element-in-general');
+            if (!dropdown?.contains(event.target as Node)) {
+                Application.ApplicationUIService.closeDropdownMenu();
+            }
+        }
+    },
+    
+    handleKeydown(e: KeyboardEvent) {
+        if (e.key === 'Escape' && this.dropDownData.showing) {
+            Application.ApplicationUIService.closeDropdownMenu();
+        }
+    }
+}
 ```
+**FUNCIONAMIENTO:** Computed dropdownStyle calcula position CSS properties evitando overflow viewport, centerPosition horizontal posX minus half dropdownWidth, ajustar rightOverflow leftPosition plus width mayor canvas width estableciendo leftPosition posX minus full width aligning right edge cursor, ajustar leftOverflow leftPosition menor 0 estableciendo posX aligning left edge cursor, isInBottomHalf checks if cursor lower half screen, if true topPosition adjust upwards minus elementHeight showing dropdown above trigger element, return object inline styles max-width left top pixels. HandleClickOutside mounted document listener verifies click target not contains dropdown element calling closeDropdownMenu, handleKeydown window listener checks Escape key pressed calling closeDropdownMenu closing dropdown keyboard shortcut.
 
-### Components Utilizados
-- `TopBarComponent` - Barra superior con título
-- `ActionsComponent` - Botones flotantes de acciones
-- `LoadingScreenComponent` - Pantalla de carga en transiciones
-- *Componente dinámico:* Vista actual (ListView, DetailView, etc.)
+## 5. FLUJO DE FUNCIONAMIENTO
 
-### CSS Layout
-```css
+**PASO 1 - Inicializar ComponentContainer:**
+App.vue monta ComponentContainerComponent ejecutando created hook, obtiene init component desde Application.View.value.component inicializado Application.initializeApplication(), verifica if init not null wrapping markRaw() estableciendo this.currentComponent avoiding Vue reactive proxies, watch Application.View.component registered detectando future changes triggering transition sequence, renderiza template structure TopBar ActionsComponent component :is ActionsComponent LoadingScreen hierarchy layout.
+
+**PASO 2 - ChangeView Trigger Transition:**
+Usuario hace clic SideBarItem ejecutando navigation action, Application.changeViewToListView actualiza Application.View.value.component = DefaultListView markRaw wrapped, watch ComponentContainer detecta newVal change executing async callback, ejecuta Application.ApplicationUIService.showLoadingScreen() emitiendo eventBus show-loading event, LoadingScreen listener establece isActive true clase active CSS opacity 1 fullscreen overlay visible, await setTimeout 400ms delay smooth UX transition visual feedback.
+
+**PASO 3 - Update Component Renderizado:**
+setTimeout completes 400ms elapsed, ejecuta this.currentComponent = markRaw(newVal) actualizando component ref triggering Vue re-render, component :is Vue directive detects currentComponent change unmounting old component mounting new component lifecycle hooks, DefaultListView mounted hook ejecuta fetching data calling entityClass.all() populating table, ApplicationUIService.hideLoadingScreen() emite hide-loading event, LoadingScreen listener establece isActive false removing active class opacity 0 transition fade out invisible.
+
+**PASO 4 - ActionsComponent Renderiza Buttons:**
+ActionsComponent mounted hook ejecuta buscando closest('.ComponentContainer') obteniendo scrollContainer reference, addEventListener scroll handleScroll monitoring scroll events, handleScroll inicial call checks scrollTop === 0 establishing isAtTop true, v-for Application.ListButtons.value itera button components NewButton RefreshButton configured setButtonList() según ViewType, renderiza buttons floating-actions container class at-top CSS opacity 1 fully visible no scroll yet, buttons ready click handlers executing entity actions save validate refresh new.
+
+**PASO 5 - Scroll Opacity Change:**
+Usuario scrolls down ComponentContainer main content area, scroll event fires handleScroll callback executing this.scrollContainer.scrollTop obtain current position, verifica scrollTop !== 0 not at top anymore estableciendo isAtTop false removing at-top CSS class, CSS transition opacity 0.3s ease triggers opacity change 1 to 0.3 semi-transparent less intrusive, botones siguen visible pero discretos no bloqueando visual content, usuario hover floating-actions CSS :hover opacity 1 temporarily fully visible easy access buttons, scroll top isAtTop true clase agregada opacity 1 restored.
+
+**PASO 6 - TabController Initialize Tabs:**
+DefaultDetailView renderiza TabControllerComponent pasando props :tabs="entity.getArrayKeysOrdered()" array strings tab names, TabController created execute setup composables useSlots validation verifying children TabComponents, mounted querySelectorAll('.tab-component') obteniendo NodeList references all Tab components children, ejecuta setActiveTab(0) initial activation first tab index 0, setActiveTab itera tabElements forEach removing active class all elements adding active class element index 0, tab-component CSS display block first tab display none rest tabs hidden, headers.tab-container-row renderiza v-for tabs array clickables.
+
+**PASO 7 - Tab Click Navigation:**
+Usuario hace clic segundo tab header div.tab @click="setActiveTab(1)" handler trigger, setActiveTab(1) method ejecuta updating this.selectedTab = 1 property state, itera tabElements NodeList forEach iteration index, remueve active class all elements el.classList.remove('active') hiding all tabs, verifica if i === 1 matching target index adding active class el.classList.add('active'), CSS display block second tab visible display none first tab hidden, visual transition smooth border-radius border color change active tab styling highlight selection.
+
+**PASO 8 - Dropdown Open Event:**
+Usuario hace click button trigger dropdown menu, código ejecuta ApplicationUIService.openDropdownMenu(event, title, MenuComponent, width), service calcula position desde event.clientX clientY obteniendo trigger element getBoundingClientRect(), establece dropdownMenu.value {showing: true, title, component, position_x, position_y, width, canvasWidth window.innerWidth, canvasHeight window.innerHeight, activeElementWidth height}, DropdownMenu computed dropdownStyle recalcula ejecutando smart positioning logic avoiding viewport overflow, renderiza component :is="dropDownData.component" dynamic menu content container posición absolute left top calculados.
+
+**PASO 9 - Dropdown Click Outside:**
+Usuario hace click fuera dropdown area quiere cerrar menu, document click event fires handleClickOutside listener executing, obtiene dropdown element document.getElementById('dropdown-element-in-general'), verifica if !dropdown.contains(event.target) click outside element not child, ejecuta ApplicationUIService.closeDropdownMenu() estableciendo dropdownMenu.value.showing = false, DropdownMenu :class binding adds hidden class CSS opacity 0 transition fade out invisible, pointer-events none no blocking interaction content below.
+
+**PASO 10 - Escape Key Close:**
+Usuario presiona Escape key keyboard shortcut cerrar dropdown, window keydown event fires handleKeydown listener executing, verifica if e.key === 'Escape' && dropDownData.showing menu open, ejecuta ApplicationUIService.closeDropdownMenu() mismo close logic click outside, hidden class added opacity 0 transition smooth close animation, pattern consistente close modals dropdowns any overlay ESC key universal close shortcut accessibility keyboard navigation users.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE wrap components con markRaw() en ComponentContainer currentComponent evitando Vue reactive proxy overhead performance optimization.
+
+**REGLA 2:** SIEMPRE ejecutar setTimeout 400ms delay ComponentContainer watch antes updateComponent permitiendo LoadingScreen display smooth transition UX.
+
+**REGLA 3:** SIEMPRE cleanup eventBus listeners beforeUnmount hook LoadingScreen ActionsComponent evitando memory leaks component unmounted.
+
+**REGLA 4:** SIEMPRE verificar TabController children validation setup ensuring all slots TabComponent type previniendo invalid markup runtime errors.
+
+**REGLA 5:** SIEMPRE establecer z-index hierarchy LoadingScreen 99999 highest Dropdown 888 mid ActionsComponent 10 low evitando visual conflicts stacking.
+
+**REGLA 6:** SIEMPRE handle click outside Escape key DropdownMenu proporcionando consistent close patterns user expectations accessibility.
+
+**REGLA 7:** SIEMPRE removeEventListener scrollContainer beforeUnmount ActionsComponent preventing memory leaks avoiding multiple handlers registered.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Omitir markRaw() wrapper dynamic components ComponentContainer causando Vue create reactive proxies unnecessary overhead memory consumption.
+
+**PROHIBIDO:** Actualizar currentComponent sin showLoadingScreen hideLoadingScreen sequence causing abrupt jarring transitions poor UX visual glitches.
+
+**PROHIBIDO:** Olvidar removeEventListener cleanup beforeUnmount hooks causing memory leaks event handlers accumulate component mount unmount cycles.
+
+**PROHIBIDO:** Modificar Application.ListButtons.value directamente ActionsComponent template, usar Application.setButtonList() centralized management method.
+
+**PROHIBIDO:** Hardcodear tab components hierachy TabController sin slot validation, usar setup useSlots validation ensuring correct structure runtime.
+
+**PROHIBIDO:** Ignorar click outside Escape key handlers DropdownMenu causing dropdown stuck open no close mechanism frustrating user experience.
+
+**PROHIBIDO:** Usar position fixed ActionsComponent, usar position sticky allowing scroll behavior opacity transitions at-top detection.
+
+## 8. DEPENDENCIAS
+
+**MODELS:**
+- Application: Singleton con View.value ListButtons.value eventBus ApplicationUIService dropdownMenu properties methods changeViewToListView changeViewToDetailView setButtonList
+- ApplicationUIService: showLoadingScreen hideLoadingScreen openDropdownMenu closeDropdownMenu methods managing UI states
+
+**COMPONENTS:**
+- TopBarComponent: Rendered ComponentContainer fixed top showing module title
+- DefaultListView: Dynamic component rendered ComponentContainer currentComponent
+- DefaultDetailView: Dynamic component rendered ComponentContainer currentComponent
+- Button components: NewButton SaveButton RefreshButton ValidateButton rendered ActionsComponent v-for ListButtons
+
+**ENUMS:**
+- ViewTypes: LISTVIEW DETAILVIEW determining setButtonList button configuration
+
+**VUE COMPOSABLES:**
+- useSlots: TabController validation accessing slot children vnodes
+- watch: ComponentContainer monitoring Application.View.component changes
+- markRaw: Performance optimization preventing Vue reactive proxies dynamic components
+
+**CSS VARIABLES:**
+- --white --bg-gray --sky --border-gray colors backgrounds borders
+- --border-radius --shadow-light --shadow-dark styling effects
+- --btn-secondary --btn-info button colors variants
+
+## 9. RELACIONES
+
+**COMPONENTCONTAINER Y APPLICATION VIEW:**
+ComponentContainer watch Application.View.value.component reactive property detecting changes executing transition sequence, Application.changeViewToListView changeViewToDetailView methods update View.component triggering watch callback, markRaw wrapper prevents Vue reactive tracking dynamic component instances optimizing performance memory, currentComponent ref updated triggers component :is Vue directive re-render mounting new component unmounting previous lifecycle hooks executed.
+
+**ACTIONSCOMPONENT Y LISTBUTTONS:**
+ActionsComponent v-for itera Application.ListButtons.value array rendering button components dynamically, Application.setButtonList() method updates ListButtons según ViewType entityPersistence determinando which buttons show hide, markRaw wrapped buttons no reactive proxies reducing memory overhead, scroll handling opacity changes at-top class semi-transparent scrolled fully visible top hover providing visual feedback scroll position less intrusive buttons content scrolled.
+
+**TABCONTROLLER Y TABCOMPONENT HIERARCHY:**
+TabController parent slot children TabComponent required structure, setup validation useSlots verifies all vnodes type TabComponent preventing invalid children runtime warnings, querySelectorAll tabElements NodeList references managing active state CSS classes, setActiveTab method itera NodeList adding removing active class controlling display block none single tab visible time, headers v-for tabs array string names clickable @click handlers index parameter setActiveTab method call synchronized selection.
+
+**LOADINGSCREEN Y EVENTBUS:**
+LoadingScreen componentmounted registers eventBus listeners show-loading hide-loading events, ApplicationUIService showLoadingScreen hideLoadingScreen methods emit events controlling visibility state, ComponentContainer watch callback calls showLoadingScreen before delay hideLoadingScreen after update executing transition sequence smooth UX, z-index 99999 highest priority covering all content blocking interaction during loading states, beforeUnmount eventBus.off cleanup prevent memory leaks component lifecycle management.
+
+**DROPDOWNMENU SMART POSITIONING:**
+Computed dropdownStyle reads Application.ApplicationUIService.dropdownMenu.value reactive state position width canvas dimensions, calcula left top CSS properties avoiding viewport overflow centerPosition horizontal adjustment overflow detection right left boundaries, isInBottomHalf determines vertical position above below trigger element preventing cut-off lower screen area, handleClickOutside document listener closes dropdown click outside element boundary, handleKeydown window listener closes Escape key universal keyboard shortcut consistent pattern modals overlays.
+
+**MARKRAW PERFORMANCE PATTERN:**
+ComponentContainer TabController ActionsComponent use markRaw() wrapping component instances preventing Vue create reactive proxies deep tracking, dynamic components rendered component :is directive no need reactivity internal component state only mount unmount operations, reduces memory footprint eliminates unnecessary watchers computed dependencies overhead, ListButtons array itself reactive Ref but items array markRaw wrapped balance reactivity where needed performance where unnecessary.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO COMPONENTCONTAINER USAGE:**
+```vue
+<template>
+    <div class="ViewContainer">
+        <TopBarComponent />
+        <div class="ComponentContainer">
+            <ActionsComponent />
+            <component v-if="currentComponent" :is="currentComponent" />
+        </div>
+        <LoadingScreenComponent />
+    </div>
+</template>
+
+<script lang="ts">
+import { markRaw, watch } from 'vue';
+import Application from '@/models/application';
+
+export default {
+    data() {
+        return {
+            currentComponent: null
+        };
+    },
+    created() {
+        const init = Application.View.value.component;
+        if (init) {
+            this.currentComponent = markRaw(init);
+        }
+        
+        watch(() => Application.View.value.component, async (newVal) => {
+            if (newVal) {
+                Application.ApplicationUIService.showLoadingScreen();
+                await new Promise(resolve => setTimeout(resolve, 400));
+                this.currentComponent = markRaw(newVal);
+                Application.ApplicationUIService.hideLoadingScreen();
+            }
+        });
+    }
+}
+</script>
+
+<style scoped>
 .ViewContainer {
     display: flex;
     flex-direction: column;
@@ -120,92 +413,47 @@ created() {
 .ComponentContainer {
     width: 100%;
     height: 100%;
-    max-height: calc(100vh - 50px);  /* Espacio para TopBar */
+    max-height: calc(100vh - 50px);
     overflow: auto;
     background-color: var(--bg-gray);
     border-radius: var(--border-radius);
 }
+</style>
 ```
 
-### markRaw()
-Envuelve componentes en `markRaw()` para evitar que Vue haga el componente reactivo, optimizando performance.
-
----
-
-## 📦 2. ActionsComponent
-
-### Descripción
-Barra flotante sticky que contiene los botones de acción de la vista actual.
-
-### Archivo
-`src/components/ActionsComponent.vue`
-
-### Estructura
-
-```vue
-<template>
-    <div class="floating-actions" :class="{ 'at-top': isAtTop }">
-        <component v-for="component in Application.ListButtons" :is="component" />
-    </div>
-</template>
-```
-
-### Data
+**EJEMPLO ACTIONSCOMPONENT SCROLL:**
 ```typescript
-{
-    isAtTop: boolean,                    // Si el scroll está en top
-    scrollContainer: HTMLElement | null  // Contenedor con scroll
-}
-```
+// ActionsComponent scroll handling
+data() {
+    return {
+        isAtTop: false,
+        scrollContainer: null
+    };
+},
 
-### Lifecycle Hooks
-
-```typescript
 mounted() {
-    // Obtener contenedor de scroll
     this.scrollContainer = this.$el.closest('.ComponentContainer');
-    
-    // Escuchar scroll events
     if (this.scrollContainer) {
         this.scrollContainer.addEventListener('scroll', this.handleScroll);
-        this.handleScroll();  // Check inicial
+        this.handleScroll();
     }
-}
+},
 
 beforeUnmount() {
-    // Cleanup
     if (this.scrollContainer) {
         this.scrollContainer.removeEventListener('scroll', this.handleScroll);
     }
-}
-```
+},
 
-### Methods
-
-```typescript
-handleScroll() {
-    if (this.scrollContainer) {
-        this.isAtTop = this.scrollContainer.scrollTop === 0;
+methods: {
+    handleScroll() {
+        if (this.scrollContainer) {
+            this.isAtTop = this.scrollContainer.scrollTop === 0;
+        }
     }
 }
-```
 
-### Comportamiento Visual
-
-1. **En top (scrollTop === 0):**
-   - Opacity: 1 (completamente visible)
-   - Botones claramente visibles
-
-2. **Al hacer scroll:**
-   - Opacity: 0.3 (semi-transparente)
-   - Menos intrusivo
-
-3. **Al hacer hover:**
-   - Opacity: 1 (visible)
-   - Fácil acceso a botones
-
-### CSS Classes
-```css
+// CSS
 .floating-actions {
     position: sticky;
     top: 0;
@@ -229,504 +477,232 @@ handleScroll() {
 }
 ```
 
-### Botones Renderizados
-Lee de `Application.ListButtons` que es configurado por `Application.setButtonList()`:
-- **ListView:** New, Refresh
-- **DetailView (persistente):** New, Refresh, Validate, Save, Save and New, Send to Device
-- **DetailView (no persistente):** New, Refresh, Validate, Send to Device
-
-**Ref:** Ver [buttons-overview.md](buttons-overview.md)
-
----
-
-## 📦 3. TabControllerComponent
-
-### Descripción
-Controlador de navegación por tabs. Muestra pestañas clickeables y gestiona cuál está activa.
-
-### Archivo
-`src/components/TabControllerComponent.vue`
-
-### Estructura
-
+**EJEMPLO TABCONTROLLER VALIDATION:**
 ```vue
 <template>
     <div class="tab-container">
-        <!-- Headers de tabs -->
         <div class="tab-container-row">
             <div class="tab" 
                 v-for="(tab, index) in tabs" 
+                :key="index"
                 :class="{ active: index == selectedTab }"
                 @click="setActiveTab(index)">
                 <span>{{ tab }}</span>
             </div>
         </div>
         
-        <!-- Contenido de tabs (TabComponents) -->
         <slot></slot>
     </div>
 </template>
-```
 
-### Props
-```typescript
-{
-    tabs: Array<string>  // Nombres de los tabs (requerido)
-}
-```
+<script lang="ts">
+import { computed, useSlots } from 'vue';
+import TabComponent from './TabComponent.vue';
 
-### Data
-```typescript
-{
-    selectedTab: number,                      // Index del tab activo (default: 0)
-    tabElements: NodeListOf<Element> | null   // Referencias a TabComponents
-}
-```
-
-### Methods
-
-```typescript
-setActiveTab(index: number) {
-    this.selectedTab = index;
-    
-    // Actualizar clases CSS de TabComponents
-    this.tabElements?.forEach((el, i) => {
-        el.classList.remove('active');
-        if (i === index) {
-            el.classList.add('active');
+export default {
+    props: {
+        tabs: {
+            type: Array,
+            required: true
         }
-    });
-}
-```
-
-### Setup (Validación)
-
-```typescript
-setup() {
-    const slots = useSlots();
+    },
     
-    const isValid = computed(() => {
-        const nodes = slots.default?.();
-        if (!nodes) return true;
+    setup() {
+        const slots = useSlots();
         
-        // Validar que todos los hijos sean TabComponent
-        return nodes.every(vnode => vnode.type === TabComponent);
-    });
+        const isValid = computed(() => {
+            const nodes = slots.default?.();
+            if (!nodes) return true;
+            
+            return nodes.every(vnode => vnode.type === TabComponent);
+        });
+        
+        return { isValid };
+    },
     
-    return { isValid };
+    data() {
+        return {
+            selectedTab: 0,
+            tabElements: null
+        };
+    },
+    
+    mounted() {
+        this.tabElements = document.querySelectorAll('.tab-component');
+        this.setActiveTab(0);
+    },
+    
+    methods: {
+        setActiveTab(index) {
+            this.selectedTab = index;
+            
+            this.tabElements?.forEach((el, i) => {
+                el.classList.remove('active');
+                if (i === index) {
+                    el.classList.add('active');
+                }
+            });
+        }
+    }
 }
+</script>
 ```
 
-### Mounted
-
-```typescript
-mounted() {
-    // Obtener referencias a TabComponents
-    this.tabElements = document.querySelectorAll('.tab-component');
-    
-    // Activar primer tab
-    this.setActiveTab(0);
-}
-```
-
-### Uso
-
+**EJEMPLO USAGE TABCONTROLLER:**
 ```vue
-<TabControllerComponent :tabs="['Tab 1', 'Tab 2', 'Tab 3']">
+<TabControllerComponent :tabs="['General', 'Details', 'Relations']">
     <TabComponent>
-        <!-- Contenido tab 1 -->
+        <h3>General Information</h3>
+        <TextInputComponent property-key="name" />
+        <TextInputComponent property-key="description" />
     </TabComponent>
+    
     <TabComponent>
-        <!-- Contenido tab 2 -->
+        <h3>Detailed Information</h3>
+        <NumberInputComponent property-key="price" />
+        <DateInputComponent property-key="createdAt" />
     </TabComponent>
+    
     <TabComponent>
-        <!-- Contenido tab 3 -->
+        <h3>Relations</h3>
+        <ArrayInputComponent property-key="orders" />
+        <ObjectInputComponent property-key="customer" />
     </TabComponent>
 </TabControllerComponent>
 ```
 
-### Ejemplo Real en DetailView
-
-```vue
-<TabControllerComponent :tabs="entity.getArrayKeysOrdered()">
-    <TabComponent v-for="arrayKey in entity.getArrayKeysOrdered()">
-        <ArrayInputComponent 
-            :property-key="arrayKey"
-            :type-value="entityClass.getArrayPropertyType(arrayKey)" 
-        />
-    </TabComponent>
-</TabControllerComponent>
-```
-
-### CSS
-```css
-.tab-container-row {
-    display: flex;
-    gap: .5rem;
-    border-bottom: 2px solid var(--sky);
-}
-
-.tab {
-    padding: 0.5rem 1.5rem;cursor: pointer;
-    border-radius: 1rem 1rem 0 0;
-    border: 1px solid var(--border-gray);
-    border-bottom: none;
-    transition: 0.5s ease;
-}
-
-.tab.active {
-    border: 2px solid var(--sky);
-    background-color: var(--bg-gray);
-}
-```
-
----
-
-## 📦 4. TabComponent
-
-### Descripción
-Contenedor de contenido para un tab individual. Solo visible cuando está activo.
-
-### Archivo
-`src/components/TabComponent.vue`
-
-### Estructura
-
-```vue
-<template>
-    <div class="tab-component">
-        <slot></slot>
-    </div>
-</template>
-```
-
-### Props
-Ninguno
-
-### Comportamiento
-- Por defecto: `display: none`
-- Con clase `.active`: `display: block`
-- TabControllerComponent agrega/remueve clase `.active`
-
-### CSS
-```css
-.tab-component {
-    width: 100%;
-    height: 100%;
-    padding: .5rem;
-    border-radius: 0 0 1rem 1rem;
-    border: 2px solid var(--sky);
-    border-top: none;
-    background-color: var(--bg-gray);
-    display: none;  /* Oculto por defecto */
-}
-
-.tab-component.active {
-    display: block;  /* Visible cuando activo */
-}
-```
-
----
-
-## 📦 5. LoadingScreenComponent
-
-### Descripción
-Pantalla de carga fullscreen que se muestra durante transiciones de vistas.
-
-### Archivo
-`src/components/LoadingScreenComponent.vue`
-
-### Estructura
-
-```vue
-<template>
-    <div class="loading-screen" :class="{ active: isActive }">
-        Loading...
-    </div>
-</template>
-```
-
-### Data
+**EJEMPLO DROPDOWNMENU POSITIONING:**
 ```typescript
-{
-    isActive: boolean  // Estado de visibilidad
-}
-```
-
-### Events Escuchados
-- `show-loading` - Muestra pantalla de carga
-- `hide-loading` - Oculta pantalla de carga
-
-### Lifecycle Hooks
-
-```typescript
-mounted() {
-    Application.eventBus.on('show-loading', () => {
-        this.isActive = true;
-    });
-    Application.eventBus.on('hide-loading', () => {
-        this.isActive = false;
-    });
-}
-
-beforeUnmount() {
-    Application.eventBus.off('show-loading');
-    Application.eventBus.off('hide-loading');
-}
-```
-
-### Uso
-
-```typescript
-// Mostrar
-Application.ApplicationUIService.showLoadingScreen();
-
-// Ocultar
-Application.ApplicationUIService.hideLoadingScreen();
-```
-
-### CSS
-```css
-.loading-screen {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: calc(100% - 50px);
-    width: 100%;
-    font-size: 1.5rem;
-    top: 50px;
-    z-index: 99999;
-    background-color: var(--white);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease-in-out;
-}
-
-.loading-screen.active {
-    opacity: 1;
-    pointer-events: all;
-}
-```
-
-### Z-Index
-`99999` (máxima prioridad, cubre todo)
-
-### Uso Típico en ComponentContainer
-
-```typescript
-watch(() => Application.View.value.component, async (newVal) => {
-    if (newVal) {
-        Application.ApplicationUIService.showLoadingScreen();
-        await new Promise(resolve => setTimeout(resolve, 400));
-        this.currentComponent = markRaw(newVal);
-        Application.ApplicationUIService.hideLoadingScreen();
+// DropdownMenu computed positioning
+computed: {
+    dropdownStyle() {
+        const data = Application.ApplicationUIService.dropdownMenu.value;
+        const posX = parseFloat(data.position_x);
+        const posY = parseFloat(data.position_y);
+        const dropdownWidth = parseFloat(data.width);
+        const canvasWidth = parseFloat(data.canvasWidth);
+        const canvasHeight = parseFloat(data.canvasHeight);
+        const elementHeight = parseFloat(data.activeElementHeight);
+        
+        // Center horizontally
+        let leftPosition = posX - (dropdownWidth / 2);
+        
+        // Adjust if overflow right
+        if (leftPosition + dropdownWidth > canvasWidth) {
+            leftPosition = posX - dropdownWidth;
+        }
+        
+        // Adjust if overflow left
+        if (leftPosition < 0) {
+            leftPosition = posX;
+        }
+        
+        // Determine vertical position
+        const isInBottomHalf = posY > (canvasHeight / 2);
+        let topPosition = posY;
+        
+        if (isInBottomHalf) {
+            topPosition = posY - elementHeight;
+        }
+        
+        return {
+            'max-width': data.width,
+            'left': `${leftPosition}px`,
+            'top': `${topPosition}px`
+        };
     }
-});
-```
-
----
-
-## 📦 6. DropdownMenu
-
-### Descripción
-Menú contextual dropdown posicionado dinámicamente que puede renderizar cualquier componente.
-
-### Archivo
-`src/components/DropdownMenu.vue`
-
-### Estructura
-
-```vue
-<template>
-    <div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]">
-        <div class="dropdown-menu" :style="dropdownStyle">
-            <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
-            <component v-if="dropDownData.component" :is="dropDownData.component" />
-        </div>
-    </div>
-</template>
-```
-
-### Data Source
-Lee de `Application.dropdownMenu.value`:
-
-```typescript
-{
-    showing: boolean,
-    title: string,
-    component: Component | null,
-    width: string,              // e.g., '250px'
-    position_x: string,         // e.g., '100px'
-    position_y: string,         // e.g., '200px'
-    canvasWidth: string,        // window.innerWidth
-    canvasHeight: string,       // window.innerHeight
-    activeElementWidth: string,
-    activeElementHeight: string
-}
-```
-
-### Computed: dropdownStyle
-
-Calcula posición inteligente del dropdown:
-
-```typescript
-dropdownStyle() {
-    const posX = parseFloat(data.position_x);
-    const posY = parseFloat(data.position_y);
-    const dropdownWidth = parseFloat(data.width);
-    const canvasWidth = parseFloat(data.canvasWidth);
-    const canvasHeight = parseFloat(data.canvasHeight);
-    const elementHeight = parseFloat(data.activeElementHeight);
-    
-    // Centrar horizontalmente respecto a posX
-    let leftPosition = posX - (dropdownWidth / 2);
-    
-    // Si se sale por derecha, alinear a la derecha del cursor
-    if (leftPosition + dropdownWidth > canvasWidth) {
-        leftPosition = posX - dropdownWidth;
-    }
-    
-    // Si se sale por izquierda, alinear a la izquierda del cursor
-    if (leftPosition < 0) {
-        leftPosition = posX;
-    }
-    
-    // Determinar si está en mitad inferior de pantalla
-    const isInBottomHalf = posY > (canvasHeight / 2);
-    let topPosition = posY;
-    
-    // Si está en mitad inferior, mostrar arriba del elemento
-    if (isInBottomHalf) {
-        topPosition = posY - elementHeight;
-    }
-    
-    return {
-        'max-width': data.width,
-        'left': `${leftPosition}px`,
-        'top': `${topPosition}px`
-    };
-}
-```
-
-### Event Handlers
-
-```typescript
-mounted() {
-    document.addEventListener('click', this.handleClickOutside);
-    window.addEventListener('keydown', this.handleKeydown);
 }
 
-handleClickOutside(event: MouseEvent) {
+// Usage openDropdownMenu
+function openUserMenu(event) {
+    Application.ApplicationUIService.openDropdownMenu(
+        event,
+        'User Options',
+        UserMenuComponent,
+        '250px'
+    );
+}
+
+// Close handlers
+handleClickOutside(event) {
     if (this.dropDownData.showing) {
         const dropdown = document.getElementById('dropdown-element-in-general');
-        if (!dropdown?.contains(event.target as Node)) {
+        if (!dropdown?.contains(event.target)) {
             Application.ApplicationUIService.closeDropdownMenu();
         }
     }
 }
 
-handleKeydown(e: KeyboardEvent) {
+handleKeydown(e) {
     if (e.key === 'Escape' && this.dropDownData.showing) {
         Application.ApplicationUIService.closeDropdownMenu();
     }
 }
 ```
 
-### Uso
-
-```typescript
-// Abrir dropdown
-Application.ApplicationUIService.openDropdownMenu(
-    event,              // MouseEvent con posición
-    'Menu Title',
-    MyCustomComponent,  // Componente a renderizar
-    '300px'            // Ancho opcional
-);
-
-// Cerrar
-Application.ApplicationUIService.closeDropdownMenu();
-```
-
-### Características
-1. **Posicionamiento inteligente**: Evita salirse del viewport
-2. **Click outside**: Cierra al hacer click fuera
-3. **ESC key**: Cierra con tecla Escape
-4. **Componente dinámico**: Puede renderizar cualquier Vue component
-5. **Responsive**: Se adapta a mitad superior/inferior de pantalla
-
-### CSS
+**Z-INDEX HIERARCHY:**
 ```css
+/* Z-index priority levels */
+.loading-screen {
+    z-index: 99999;  /* Highest - blocks everything */
+}
+
+.modal {
+    z-index: 1500;   /* High - modal dialogs */
+}
+
 .dropdown-menu-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 888;
-    pointer-events: none;
-    transition: opacity 0.5s ease;
+    z-index: 888;    /* Medium - contextual menus */
 }
 
-.dropdown-menu-container.hidden {
-    opacity: 0;
-}
-
-.dropdown-menu {
-    position: absolute;
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-dark);
-    padding: 1rem;
-    pointer-events: all;
+.floating-actions {
+    z-index: 10;     /* Low - sticky buttons */
 }
 ```
 
-### Z-Index
-`888` (debajo de modales pero sobre contenido normal)
+**DEBUGGING CORE COMPONENTS:**
+```typescript
+// Ver component actual renderizado
+console.log('Current component:', Application.View.value.component?.name);
 
----
+// Ver buttons actuales
+console.log('Buttons:', Application.ListButtons.value.map(b => b.name));
 
-## 🎯 Interacción Entre Componentes
+// Ver scroll position
+const container = document.querySelector('.ComponentContainer');
+console.log('Scroll top:', container?.scrollTop);
 
-### Flujo de Navegación Completo
+// Ver dropdown state
+console.log('Dropdown:', Application.ApplicationUIService.dropdownMenu.value);
 
-```
-1. Usuario click en Sidebar Item
-        ↓
-2. Application.changeView()
-        ↓
-3. Application.View.value.component actualizado
-        ↓
-4. ComponentContainer watch detecta cambio
-        ↓
-5. LoadingScreen muestra (400ms)
-        ↓
-6. currentComponent actualizado
-        ↓
-7. LoadingScreen oculta
-        ↓
-8. Nueva vista renderizada
-        ↓
-9. ActionsComponent actualiza botones
-        ↓
-10. TabController inicializa tabs (si aplica)
+// Testear loading screen
+Application.ApplicationUIService.showLoadingScreen();
+setTimeout(() => {
+    Application.ApplicationUIService.hideLoadingScreen();
+}, 2000);
+
+// Verificar tab active index
+const tabController = this.$refs.tabController;
+console.log('Active tab:', tabController.selectedTab);
 ```
 
----
+**LIMITACIONES ACTUALES:**
+ComponentContainer delay 400ms hardcoded no configurable, podría agregar prop delay customizable different transition speeds. ActionsComponent scroll detection solo verifica scrollTop === 0, no gradual opacity based scroll distance implementing progressive transparency. TabController no keyboard navigation arrows left right tab switching, solo mouse click headers accessibility limitation. DropdownMenu positioning calcula client-side JavaScript, no CSS solution limiting SSR compatibility. LoadingScreen no progress indicator spinner, solo text "Loading..." generic feedback sin visual animation.
 
-## 📝 Notas Importantes
+## 11. REFERENCIAS CRUZADAS
 
-1. **markRaw()**: ComponentContainer usa `markRaw()` para optimizar performance en componentes dinámicos
-2. **Delay de 400ms**: Todas las transiciones tienen delay mínimo para mejor UX
-3. **Event cleanup**: Todos los componentes limpian listeners en `beforeUnmount()`
-4. **Z-Index hierarchy**: LoadingScreen (99999) > Modal (1500) > Dropdown (888) > Actions (10)
-5. **Sticky positioning**: ActionsComponent es sticky y cambia opacity según scroll
-6. **Tab validation**: TabController valida que todos sus hijos sean TabComponent
-7. **Smart positioning**: DropdownMenu ajusta posición para no salirse del viewport
-8. **Keyboard support**: Dropdown cierra con ESC, Modal cierra con ESC
+**DOCUMENTOS RELACIONADOS:**
+- ActionsComponent.md: Detalle completo barra flotante buttons scroll behavior
+- LoadingScreenComponent.md: Documentación específica loading screen states transitions
+- TabComponents.md: Sistema tabs controller component hierarchy navegación
+- DropdownMenu.md: Menú contextual positioning smart boundaries click outside
+- TopBarComponent.md: Barra superior título módulo rendered ComponentContainer
+- buttons-overview.md: Buttons rendered ActionsComponent ListButtons array
+- application-singleton.md: Application.View Application.ListButtons properties changeView methods
+- event-bus.md: EventBus show-loading hide-loading events emitted consumed
+- DefaultListView.md: Vista renderizada dinámicamente ComponentContainer currentComponent
+- DefaultDetailView.md: Vista formulario renderizada ComponentContainer con tabs arrays
 
----
-
-**Total de Componentes:** 6  
-**Última actualización:** 11 de Febrero, 2026
+**UBICACION:** copilot/layers/04-components/core-components.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

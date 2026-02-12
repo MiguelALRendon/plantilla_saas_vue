@@ -1,228 +1,104 @@
 # Router del Framework
 
-## Propósito
+## 1. PROPOSITO
 
-El router maneja la navegación entre módulos y vistas del framework, sincronizándose automáticamente con el estado de `Application.View`. Utiliza Vue Router con rutas dinámicas que se mapean a módulos (entidades) y sus vistas de lista/detalle.
+El router maneja navegación entre módulos y vistas del framework sincronizándose automáticamente con estado Application.View bidireccional. Utiliza Vue Router con rutas dinámicas pattern :module y :module/:oid mapeando a entidades BaseEntity y sus vistas lista/detalle. Resuelve dependencia circular con Application mediante lazy initialization initializeRouterWithApplication() permitiendo ambos sistemas referenciar mutuamente. Garantiza URLs limpias HTML5 History API sin hash, logging navegación, detección cambios prevención loops, y redirección automática home al primer módulo.
 
----
+## 2. ALCANCE
 
-## Ubicación
-`src/router/index.ts`
+**UBICACION:** src/router/index.ts
 
----
+**RUTAS DEFINIDAS:**
+- / Home: Redirige automáticamente primer módulo ModuleList
+- /:module ModuleList: Vista lista entidad tabla registros
+- /:module/:oid ModuleDetail: Vista detalle formulario creación new o edición ID numérico
 
-## Arquitectura de Rutas
+**PARAMETROS URL:**
+- module: Nombre módulo lowercase matching @ModuleName o class.name
+- oid: Object ID siendo "new" modo creación o ID numérico edición
 
-### Esquema de URLs
+**COMPONENTE PRINCIPAL:**
+ComponentContainerComponent renderiza dinámicamente Application.View.value.component siendo DefaultListView para lista o DefaultDetailView para detalle.
 
-```
-/                           → Home (redirige al primer módulo)
-/:module                    → Vista de lista del módulo
-/:module/:oid               → Vista de detalle/edición
-```
+**NAVIGATION GUARDS:**
+- beforeEach: Sincroniza URL params con Application.View detectando cambios actualizando entityClass entityObject viewType entityOid
+- afterEach: Logging debugging navegación exitosa con path y entityOid
 
-**Ejemplos**:
-```
-/products                   → Lista de productos
-/products/new               → Crear nuevo producto
-/products/123               → Editar producto con ID 123
-/customers                  → Lista de clientes
-/customers/456              → Editar cliente con ID 456
-```
+**INTEGRACION:**
+Application.ModuleList array entidades registradas, Application.changeViewToListView changeViewToDetailView métodos navegación programática, router.push() actualiza URL browser history.
 
----
+## 3. DEFINICIONES CLAVE
 
-## Rutas Definidas
+**Esquema URLs:**
+Pattern :module representa nombre entidad lowercase como products customers orders, :module/:oid agrega object ID siendo "new" string para creación o ID numérico string "123" para edición. Ejemplos /products lista, /products/new crear, /products/123 editar. URLs limpias sin hash usando createWebHistory() HTML5 History API.
 
-### 1. Ruta Home (`/`)
+**Sincronización bidireccional:**
+Cambios URL browser address bar actualiza Application.View mediante beforeEach guard, cambios Application.View mediante changeViewToListView changeViewToDetailView actualiza URL con router.push(). Comparación estados previene loops infinitos checking currentModuleName currentOid contra URL params antes actualizar.
 
+**Lazy initialization:**
+initializeRouterWithApplication(app) función inyecta referencia Application singleton en router después ambos inicializados. Resuelve dependencia circular donde router/index.ts necesita Application.ModuleList y Application necesita router.push() para navegación. Variable global Application inicializada null luego poblada main.ts después createApp() y app.use(router).
+
+**ModuleList lookup:**
+beforeEach busca moduleClass en Application.ModuleList.value.find() comparando moduleName lowercase con mod.getModuleName() o mod.name lowercase. Si encuentra clase ejecuta changeViewToListView o changeViewToDetailView según params.oid presente. Si no encuentra imprime warning permite navegación evitando app crash.
+
+**EntityOid convenciones:**
+String "new" indica modo creación executeando moduleClass.createNewInstance() generando entidad vacía, string numérico "123" indica edición requiriendo carga desde API future implementation, string vacío "" para ListView sin entidad específica. Application.View.value.entityOid almacena valor sincronizado con URL oid parameter.
+
+## 4. DESCRIPCION TECNICA
+
+**RUTAS ARRAY:**
 ```typescript
-{
-    path: '/',
-    name: 'Home',
-    redirect: () => {
-        // Redirigir al primer módulo si existe
-        if (Application && Application.ModuleList.value.length > 0) {
-            const firstModule = Application.ModuleList.value[0];
-            const moduleName = firstModule.getModuleName() || firstModule.name;
-            return `/${moduleName.toLowerCase()}`;
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+
+const routes: Array<RouteRecordRaw> = [
+    {
+        path: '/',
+        name: 'Home',
+        redirect: () => {
+            if (Application && Application.ModuleList.value.length > 0) {
+                const firstModule = Application.ModuleList.value[0];
+                const moduleName = firstModule.getModuleName() || firstModule.name;
+                return `/${moduleName.toLowerCase()}`;
+            }
+            return '/';
         }
-        return '/';
+    },
+    {
+        path: '/:module',
+        name: 'ModuleList',
+        component: { template: '<component-container-component />' },
+        meta: { viewType: 'list' }
+    },
+    {
+        path: '/:module/:oid',
+        name: 'ModuleDetail',
+        component: { template: '<component-container-component />' },
+        meta: { viewType: 'detail' }
     }
-}
+];
 ```
+**HOME REDIRECT:** Función redirect ejecuta al navegar / verificando Application.ModuleList.value no vacío, obtiene firstModule [0] extrae moduleName con getModuleName() decorator o name fallback, retorna template string `/${moduleName.toLowerCase()}` ejemplo "/products". Si ModuleList vacío retorna "/" permaneciendo home sin redirect.
 
-**Comportamiento**:
-- Redirige automáticamente al primer módulo de `Application.ModuleList`
-- Si `ModuleList` está vacío, permanece en `/`
-- Usa `@ModuleName()` si está definido, sino usa el nombre de la clase
+**MODULELIST ROUTE:** Path /:module captura cualquier segment después / como param module, component inline template renderiza ComponentContainerComponent tag, meta viewType list usado logging identification. ComponentContainerComponent lee Application.View.value.component renderizando DefaultListView con DetailViewTableComponent tabla.
 
-**Ejemplo**:
-```typescript
-Application.ModuleList.value = [Products, Customers, Orders];
-// Navegación a / redirige a /products
-```
+**MODULEDETAIL ROUTE:** Path /:module/:oid captura dos segments module y oid, component inline template ComponentContainerComponent igual ModuleList, meta viewType detail identifica vista detalle. Oid "new" renderiza formulario vacío, oid numérico "123" renderiza formulario con datos entity loaded API future.
 
----
-
-### 2. Ruta ModuleList (`/:module`)
-
-```typescript
-{
-    path: '/:module',
-    name: 'ModuleList',
-    component: { template: '<component-container-component />' },
-    meta: { viewType: 'list' }
-}
-```
-
-**Parámetros**:
-- `module`: Nombre del módulo en lowercase (ej: `products`, `customers`)
-
-**Componente Renderizado**: `ComponentContainerComponent`
-- Lee `Application.View.value.component` para determinar qué vista renderizar
-- Típicamente: `DefaultListView` → `DetailViewTableComponent`
-
-**Metadata**:
-- `viewType: 'list'` - Indica que es una vista de listado
-
-**Flujo de Navegación**:
-```
-Usuario navega a /products
-    ↓
-Router busca módulo "products" en Application.ModuleList
-    ↓
-Encuentra clase Products
-    ↓
-Application.changeViewToListView(Products)
-    ↓
-Application.View.value = {
-    entityClass: Products,
-    entityObject: null,
-    component: DefaultListView,
-    viewType: ViewTypes.LISTVIEW,
-    entityOid: ""
-}
-    ↓
-ComponentContainerComponent renderiza DefaultListView
-    ↓
-DefaultListView renderiza DetailViewTableComponent con tabla de productos
-```
-
----
-
-### 3. Ruta ModuleDetail (`/:module/:oid`)
-
-```typescript
-{
-    path: '/:module/:oid',
-    name: 'ModuleDetail',
-    component: { template: '<component-container-component />' },
-    meta: { viewType: 'detail' }
-}
-```
-
-**Parámetros**:
-- `module`: Nombre del módulo en lowercase (ej: `products`)
-- `oid`: Object ID - `"new"` para crear, o ID numérico para editar
-
-**Componente Renderizado**: `ComponentContainerComponent`
-- Renderiza `Application.View.value.component`
-- Típicamente: `DefaultDetailView` con formulario dinámico
-
-**Metadata**:
-- `viewType: 'detail'` - Indica vista de detalle/edición
-
-**Flujo de Navegación - Crear Nuevo**:
-```
-Usuario navega a /products/new
-    ↓
-Router detecta módulo "products" y oid "new"
-    ↓
-Application.View.value.entityOid = "new"
-    ↓
-moduleClass.createNewInstance()  // new Products()
-    ↓
-Application.changeViewToDetailView(newProduct)
-    ↓
-Application.View.value = {
-    entityClass: Products,
-    entityObject: newProduct,
-    component: DefaultDetailView,
-    viewType: ViewTypes.DETAILVIEW,
-    entityOid: "new"
-}
-    ↓
-ComponentContainerComponent renderiza DefaultDetailView
-    ↓
-Formulario vacío para crear producto
-```
-
-**Flujo de Navegación - Editar Existente**:
-```
-Usuario navega a /products/123
-    ↓
-Router detecta módulo "products" y oid "123"
-    ↓
-Application.View.value.entityOid = "123"
-    ↓
-(FUTURO: Cargar entidad desde API)
-// const product = await Products.load(123);
-    ↓
-Application.changeViewToDetailView(product)
-    ↓
-Formulario con datos del producto ID 123
-```
-
----
-
-## Inicialización del Router
-
-### initializeRouterWithApplication()
-
+**ROUTER INITIALIZATION:**
 ```typescript
 let Application: any = null;
 
 export function initializeRouterWithApplication(app: any) {
     Application = app;
 }
+
+const router: Router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes
+});
 ```
+**VARIABLE GLOBAL:** Application declarada null scope module permitiendo access beforeEach afterEach guards. initializeRouterWithApplication recibe app singleton actualizando Application = app después createApp() en main.ts. createRouter usa createWebHistory con BASE_URL env variable generando URLs clean sin hash.
 
-**Propósito**: Inyectar la referencia de `Application` singleton en el router después de que ambos se hayan inicializado.
-
-**Problema que Resuelve**: Dependencia circular
-- `router/index.ts` necesita acceso a `Application` (para sincronizar rutas)
-- `Application` necesita acceso a `router` (para navegar programáticamente)
-- No pueden importarse directamente entre sí
-
-**Solución**: Lazy initialization
-```typescript
-// main.ts
-import Application from '@/models/application';
-import router, { initializeRouterWithApplication } from '@/router';
-
-// 1. Crear app
-const app = createApp(App);
-
-// 2. Montar router
-app.use(router);
-
-// 3. Inicializar Application con router
-Application.initializeApplication(router);
-
-// 4. Inyectar Application en router
-initializeRouterWithApplication(Application);
-
-// 5. Montar app
-app.mount('#app');
-```
-
----
-
-## Navigation Guards
-
-### beforeEach - Sincronización con Application
-
+**BEFOREEACH GUARD:**
 ```typescript
 router.beforeEach((to, _from, next) => {
     if (!Application) {
@@ -233,7 +109,6 @@ router.beforeEach((to, _from, next) => {
     const moduleName = to.params.module as string;
     const oid = to.params.oid as string;
 
-    // Buscar el módulo correspondiente
     const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
         const modName = mod.getModuleName() || mod.name;
         return modName.toLowerCase() === moduleName?.toLowerCase();
@@ -245,7 +120,6 @@ router.beforeEach((to, _from, next) => {
             (currentModule.getModuleName() || currentModule.name).toLowerCase() : '';
         const currentOid = Application.View.value.entityOid;
         
-        // Solo actualizar Application si la URL es diferente
         if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
             if (oid && to.meta.viewType === 'detail') {
                 Application.View.value.entityOid = oid;
@@ -272,57 +146,19 @@ router.beforeEach((to, _from, next) => {
     }
 });
 ```
+**VALIDACION APPLICATION:** Primero verifica if (!Application) permitiendo navegación sin sync si singleton no inicializado evitando errors startup. Extrae moduleName y oid desde to.params casting string.
 
-**Funcionalidad**:
+**BUSQUEDA MODULO:** find() itera Application.ModuleList comparando mod.getModuleName() o mod.name lowercase con moduleName lowercase. getModuleName() retorna valor @ModuleName decorator o undefined usando name fallback. Match encontrado almacena moduleClass typeof BaseEntity.
 
-1. **Validación de Application**:
-   - Si `Application` no está inicializado, permite navegación sin sincronizar
-   
-2. **Extracción de Parámetros**:
-   - `moduleName` (ej: `"products"`)
-   - `oid` (ej: `"123"`, `"new"`, o `undefined` para lista)
+**DETECCION CAMBIOS:** Obtiene currentModule currentModuleName currentOid desde Application.View.value actual, compara con moduleName y oid params URL. Solo actualiza if diferentes previniendo loop infinito donde changeView trigger router.push trigger beforeEach trigger changeView recursivamente.
 
-3. **Búsqueda de Módulo**:
-   ```typescript
-   const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
-       const modName = mod.getModuleName() || mod.name;
-       return modName.toLowerCase() === moduleName?.toLowerCase();
-   });
-   ```
-   - Busca en `ModuleList` la clase que coincida con el nombre de la URL
-   - Usa `@ModuleName()` decorador si existe, sino usa nombre de clase
+**SYNC DETAIL VIEW:** Si oid presente y meta.viewType detail establece entityOid, verifica oid === "new" ejecutando createNewInstance() y changeViewToDetailView con newEntity, else imprime log "Preparando detail view" futuro implementación API load.
 
-4. **Detección de Cambios**:
-   - Compara estado actual de `Application.View` con parámetros de URL
-   - Solo actualiza si son diferentes (evita re-renders innecesarios)
+**SYNC LIST VIEW:** Si oid ausente establece entityOid empty string, verifica viewType no LISTVIEW ya ejecutando changeViewToListView con moduleClass evitando call redundante.
 
-5. **Sincronización**:
-   
-   **Para Detail View** (`/:module/:oid`):
-   ```typescript
-   Application.View.value.entityOid = oid;
-   
-   if (oid === 'new') {
-       const newEntity = moduleClass.createNewInstance();
-       Application.changeViewToDetailView(newEntity);
-   }
-   // else: cargar desde API (FUTURO)
-   ```
-   
-   **Para List View** (`/:module`):
-   ```typescript
-   Application.View.value.entityOid = '';
-   Application.changeViewToListView(moduleClass);
-   ```
+**ERROR HANDLING:** Si moduleClass no encontrado imprime console.warn "Módulo no encontrado" permite navegación next() sin crash app, útil development URL changes o typos.
 
-6. **Manejo de Errores**:
-   - Si el módulo no existe en `ModuleList`, imprime warning pero permite navegación
-   - Esto previene que la app se rompa si alguien navega a un módulo inexistente
-
----
-
-### afterEach - Logging de Navegación
-
+**AFTEREACH GUARD:**
 ```typescript
 router.afterEach((to) => {
     if (Application) {
@@ -330,32 +166,155 @@ router.afterEach((to) => {
     }
 });
 ```
+**LOGGING DEBUG:** Imprime cada navegación exitosa mostrando to.path URL y entityOid actualizado. Solo ejecuta if Application inicializado. Output ejemplo "[Router] Navegado a: /products/123 | entityOid: 123".
 
-**Propósito**: Debugging
-- Imprime cada navegación exitosa con el path y el `entityOid` actualizado
-- Solo activo cuando `Application` está inicializado
+## 5. FLUJO DE FUNCIONAMIENTO
 
-**Output Ejemplo**:
+**PASO 1 - Inicializar Router Main:**
+main.ts ejecuta const app = createApp(App) creando Vue app instance, ejecuta app.use(router) montando router plugin, ejecuta Application.initializeApplication(router) pasando router reference a singleton, ejecuta initializeRouterWithApplication(Application) inyectando Application reference en router module global variable, ejecuta app.mount('#app') renderizando app, ambos sistemas Application y router ahora referencian mutuamente resolviendo circular dependency.
+
+**PASO 2 - Navegación Home Redirect:**
+Usuario navega browser / ruta home, router ejecuta redirect function verificando Application.ModuleList.value length mayor 0, obtiene firstModule = ModuleList[0] ejemplo Products class, extrae moduleName con getModuleName() retornando "productos" o name fallback "Products", retorna `/${moduleName.toLowerCase()}` generando "/productos" o "/products", router navega automáticamente ModuleList route triggering beforeEach.
+
+**PASO 3 - Navegación ListView Programática:**
+Usuario hace clic NewButton ejecutando handleNew(), código llama Application.changeViewToListView(Products), método actualiza Application.View.value estableciendo entityClass Products entityObject null component DefaultListView viewType LISTVIEW entityOid empty, método ejecuta router.push(`/${moduleName.toLowerCase()}`) ejemplo "/products" actualizando browser URL, router beforeEach detecta navegación URL pero compara con Application.View detectando ya sincronizado no re-ejecuta changeView evitando loop, ComponentContainerComponent reacciona Application.View.component change renderizando DefaultListView.
+
+**PASO 4 - Navegación DetailView NEW Programática:**
+Usuario hace clic NewButton en ListView, código crea newProduct = new Products() vacía, llama Application.changeViewToDetailView(newProduct), método actualiza View.value estableciendo entityClass Products entityObject newProduct component DefaultDetailView viewType DETAILVIEW entityOid "new", método ejecuta router.push("/products/new") actualizando URL, beforeEach ejecuta encuentra moduleClass Products detecta oid "new" meta.viewType detail, ejecuta createNewInstance() redundante pero inmutability safe, ejecuta changeViewToDetailView triggering re-render, DefaultDetailView renderiza formulario vacío campos default values.
+
+**PASO 5 - Navegación Manual URL Browser:**
+Usuario escribe browser address bar "/customers/789" presiona Enter, browser actualiza window.location triggering router navigation, beforeEach extrae params {module: "customers", oid: "789"}, busca moduleClass en ModuleList encontrando Customer class, compara con Application.View detectando diferente module o oid, establece Application.View.value.entityOid = "789", verifica oid !== "new" imprimiendo log "Preparando detail view para OID: 789", futuro implementation ejecutará await Customer.load(789) cargar datos API, Application.changeViewToDetailView no ejecutado aquí solo entityOid set, ComponentContainerComponent detecta entityClass change rendering DefaultDetailView con entity.
+
+**PASO 6 - Prevención Loop Bidireccional:**
+Usuario hace clic SaveButton después edit ejecutando Application.changeViewToListView(Products), método actualiza View.value y ejecuta router.push("/products"), router beforeEach trigger recibe to.params {module: "products"}, obtiene currentModule Products currentModuleName "products" currentOid empty, compara moduleName === currentModuleName lowercase y currentOid === oid empty ambos matching, detecta no cambio skip actualización Application.View ejecuta next() permitiendo navegación sin re-render, evita loop infinito donde changeView push beforeEach changeView recursively indefinitely.
+
+**PASO 7 - Module Not Found Graceful:**
+Usuario navega URL typo "/prodcts" misspelling, beforeEach extrae moduleName "prodcts", busca ModuleList.find() no encuentra match retorna undefined, verifica if (!moduleClass) ejecutando console.warn "[Router] Módulo no encontrado: prodcts", ejecuta next() permitiendo navegación sin crash app, ComponentContainerComponent renderiza Application.View.component actual sin cambio, útil development permite continuar debugging sin reload app.
+
+**PASO 8 - Logging AfterEach Navigation:**
+Cada navegación exitosa afterEach dispara, verifica Application inicializado, imprime console.log "[Router] Navegado a: /products/123 | entityOid: 123" mostrando path actualizado y entityOid sincronizado, facilita debugging verificar sync correcto URL Application.View state matching.
+
+**PASO 9 - History Browser Buttons:**
+Usuario hace clic browser back button, browser pops history stack navegando previous URL ejemplo /products, router beforeEach detecta URL change extrae params module "products" sin oid, compara con Application.View detectando cambio de DetailView con oid a ListView sin oid, ejecuta changeViewToListView actualizando View.value rendering DefaultListView tabla, forward button comportamiento simétrico pushing history adelante.
+
+**PASO 10 - ModuleName Decorator Custom URL:**
+Entity class usa @ModuleName("productos") decorator customizando URL, changeViewToDetailView ejecuta getModuleName() retornando "productos" en lugar class name "Products", router.push genera "/productos/123" URL lowercase, beforeEach busca ModuleList comparing "productos" lowercase con getModuleName() lowercase find match, sincroniza Application.View correctamente con clase Products entity instance, permite URLs español inglés otros idiomas independiente class name TypeScript.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE ejecutar initializeRouterWithApplication(Application) después createApp() y app.use(router) antes app.mount() resolviendo circular dependency.
+
+**REGLA 2:** SIEMPRE usar Application.changeViewToListView changeViewToDetailView para navegación programática, NUNCA router.push() directamente sin actualizar View.value causando desync.
+
+**REGLA 3:** SIEMPRE comparar currentModuleName currentOid con URL params before actualizar Application.View previniendo loop infinito bidireccional.
+
+**REGLA 4:** SIEMPRE verificar if (!Application) en beforeEach permitiendo navegación sin crash si singleton no inicializado startup timing.
+
+**REGLA 5:** SIEMPRE usar getModuleName() o name fallback para moduleClass lookup case-insensitive lowercase comparison matching URLs.
+
+**REGLA 6:** SIEMPRE establecer entityOid = "new" string para creación, numeric string "123" para edición, empty string "" para ListView sin entity.
+
+**REGLA 7:** SIEMPRE usar createWebHistory() HTML5 mode, NUNCA createWebHashHistory() generando URLs con hash # ugly non-SEO.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Llamar router.push() directamente sin actualizar Application.View.value antes causando desync UI state URL.
+
+**PROHIBIDO:** Mutar Application.View.value properties individualmente dentro beforeEach, usar changeViewToListView changeViewToDetailView métodos atomic updates.
+
+**PROHIBIDO:** Comparar module names case-sensitive causando mismatch "Products" !== "products" no encontrando moduleClass.
+
+**PROHIBIDO:** Omitir next() callback en beforeEach causando navegación hang freeze router sin renderizar component.
+
+**PROHIBIDO:** Hardcodear rutas custom dentro /:module pattern conflicting dynamic routes, agregar custom routes separate entries routes array.
+
+**PROHIBIDO:** Asumir moduleClass siempre encontrado, verificar undefined before acceder métodos evitando TypeError crash.
+
+**PROHIBIDO:** Usar router.replace() en changeView methods perdiendo history navigation stack, usar router.push() permitiendo back button.
+
+## 8. DEPENDENCIAS
+
+**LIBRERIAS EXTERNAS:**
+- vue-router: createRouter createWebHistory RouteRecordRaw Router types
+
+**MODELS:**
+- Application: Singleton con ModuleList View router properties
+- View interface: entityClass entityObject component viewType entityOid properties
+- BaseEntity: typeof BaseEntity para entityClass moduleClass types
+
+**ENUMS:**
+- ViewTypes: LISTVIEW DETAILVIEW LOOKUPVIEW para View.viewType property
+
+**COMPONENTES:**
+- ComponentContainerComponent: Renderiza dinámicamente Application.View.component
+- DefaultListView: Component ListView rendering DetailViewTableComponent
+- DefaultDetailView: Component DetailView rendering formulario dinámico
+
+**DECORADORES:**
+- @ModuleName: Define custom module name para URLs en lugar class name
+
+**METODOS APPLICATION:**
+- Application.changeViewToListView: Actualiza View.value ejecuta router.push list
+- Application.changeViewToDetailView: Actualiza View.value ejecuta router.push detail
+- Application.initializeApplication: Recibe router reference almacena Application.router
+
+## 9. RELACIONES
+
+**ROUTER Y APPLICATION CIRCULAR:**
+Router necesita Application.ModuleList para buscar moduleClass y Application.View para comparar sync, Application necesita router.push() para navegación programática actualizar URL. Circular dependency resuelto con lazy initialization router variable global Application null inicializado luego poblado initializeRouterWithApplication() después ambos creados main.ts.
+
+**BEFOREEACH Y CHANGEVIEW BIDIRECTIONAL:**
+beforeEach detecta URL change ejecuta changeViewToListView actualizando View.value, changeViewToListView actualiza View.value ejecuta router.push() triggering beforeEach. Loop prevenido comparando currentModuleName currentOid con params solo ejecutando changeView si different, garantiza sincronización sin recursión infinita.
+
+**MODULELIST Y ROUTING:**
+Application.ModuleList.value array almacena todas entity classes Products Customer Order registradas, beforeEach itera find() comparando moduleName URL con getModuleName() class.name, match encontrado determina entityClass para View.value establishing context entire CRUD UI rendering components inputs validations based entity metadata.
+
+**ENTITYOID Y MODO CRUD:**
+entityOid string "new" indica creación ejecutando createNewInstance() rendering formulario vacío SaveButton disabled hasta valid, entityOid numeric "123" indica edición future loading await Entity.load(123) API rendering formulario populated SaveButton enabled si valid, entityOid empty "" indica ListView sin entity specific all records tabla pagination.
+
+**COMPONENTCONTAINERCOMPONENT DYNAMIC RENDERING:**
+Router routes no hardcodean DefaultListView DefaultDetailView components, usan ComponentContainerComponent inline template leyendo Application.View.component reactivo. changeViewToListView establece component = entityClass.getListComponent() retornando DefaultListView, changeViewToDetailView establece component = entityClass.getDetailComponent() retornando DefaultDetailView, permite custom components por entity overriding getListComponent() getDetailComponent() métodos.
+
+**META VIEWTYPE IDENTIFICATION:**
+routes array meta {viewType: 'list'} y {viewType: 'detail'} identify route type usado beforeEach conditional logic. meta.viewType detail verifica oid presente ejecuta createNewInstance detail flow, meta.viewType list ejecuta changeViewToListView flow, facilita guards adicionales authentication permission checks basados route type.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO MAIN.TS INITIALIZATION:**
+```typescript
+// main.ts
+import { createApp } from 'vue';
+import App from './App.vue';
+import Application from '@/models/application';
+import router, { initializeRouterWithApplication } from '@/router';
+
+// 1. Crear Vue app
+const app = createApp(App);
+
+// 2. Montar router plugin
+app.use(router);
+
+// 3. Inicializar Application con router
+Application.initializeApplication(router);
+
+// 4. Inyectar Application en router
+initializeRouterWithApplication(Application);
+
+// 5. Montar app DOM
+app.mount('#app');
 ```
-[Router] Navegado a: /products | entityOid: 
-[Router] Navegado a: /products/123 | entityOid: 123
-[Router] Navegado a: /products/new | entityOid: new
-```
 
----
-
-## Uso Programático
-
-### Navegar desde Application
-
+**EJEMPLO NAVEGACION PROGRAMATICA:**
 ```typescript
 // Application.ts - changeViewToListView
 changeViewToListView(entityClass: typeof BaseEntity) {
     const moduleName = entityClass.getModuleName() || entityClass.name;
     const moduleRoute = `/${moduleName.toLowerCase()}`;
     
-    this.router?.push(moduleRoute);  // ← Navegación programática
+    // Actualizar router URL
+    this.router?.push(moduleRoute);
     
+    // Actualizar View state
     this.View.value = {
         entityClass: entityClass,
         entityObject: null,
@@ -372,306 +331,194 @@ changeViewToDetailView(entity: BaseEntity) {
     const oid = entity.getUniquePropertyValue() || 'new';
     const detailRoute = `/${moduleName.toLowerCase()}/${oid}`;
     
-    this.router?.push(detailRoute);  // ← Navegación programática
+    // Actualizar router URL
+    this.router?.push(detailRoute);
     
+    // Actualizar View state
     this.View.value = {
         entityClass: entity.constructor as typeof BaseEntity,
         entityObject: entity,
-        component: entityClass.getDetailComponent(),
+        component: (entity.constructor as typeof BaseEntity).getDetailComponent(),
         viewType: ViewTypes.DETAILVIEW,
         isValid: entity.isEntityValid(),
         entityOid: String(oid)
     };
 }
+
+// Uso desde component
+Application.changeViewToListView(Products);
+// URL: /products
+// View: { entityClass: Products, entityObject: null, ... }
+
+const newProduct = new Products();
+Application.changeViewToDetailView(newProduct);
+// URL: /products/new
+// View: { entityClass: Products, entityObject: newProduct, entityOid: "new", ... }
 ```
 
-**Flujo Completo**:
-```
-1. SaveButton.vue hace click
-    ↓
-2. Application.changeViewToListView(Products)
-    ↓
-3. Application actualiza View state
-    ↓
-4. Application.router.push('/products')  ← Navegación programática
-    ↓
-5. Router.beforeEach detecta cambio
-    ↓
-6. beforeEach compara URL con Application.View
-    ↓
-7. Si ya coinciden, no hace nada (evita loop)
-    ↓
-8. Router renderiza ComponentContainerComponent
-    ↓
-9. ComponentContainerComponent renderiza Application.View.value.component (DefaultListView)
-```
-
----
-
-## Navegación Manual (usuario cambia URL)
-
-### Escenario: Usuario escribe `/customers/789` en la barra de direcciones
-
-```
-1. Browser cambia URL a /customers/789
-    ↓
-2. Router.beforeEach se dispara
-    ↓
-3. Extrae params: { module: "customers", oid: "789" }
-    ↓
-4. Busca módulo "customers" en Application.ModuleList
-    ↓
-5. Encuentra clase Customer
-    ↓
-6. Compara con Application.View.value actual
-    ↓
-7. Detecta que Application.View tiene módulo diferente o OID diferente
-    ↓
-8. Actualiza Application.View.value:
-   - entityClass = Customer
-   - entityOid = "789"
-   - viewType = ViewTypes.DETAILVIEW
-    ↓
-9. (FUTURO): Llama Customer.load(789) para cargar datos
-    ↓
-10. ComponentContainerComponent re-renderiza con nueva vista
-    ↓
-11. Se muestra formulario de edición de Customer 789
-```
-
----
-
-## Casos de Uso
-
-### 1. Lista de Productos
-
-**URL**: `/products`
-
-**Application.View Result**:
+**EJEMPLO NAVEGACION MANUAL URL:**
 ```typescript
-{
+// Usuario escribe browser: /customers/789
+// beforeEach dispara:
+
+to.params = { module: "customers", oid: "789" }
+
+// Buscar module
+const moduleClass = Application.ModuleList.value.find(mod => {
+    const modName = mod.getModuleName() || mod.name;
+    return modName.toLowerCase() === "customers";
+});
+// moduleClass = Customer
+
+// Comparar estado actual
+const currentModuleName = "products";  // Application.View estaba en Products
+const currentOid = "";
+
+// Detecta cambio: "products" !== "customers"
+// Actualiza:
+Application.View.value.entityOid = "789";
+
+// Futuro: cargar entity
+const customer = await Customer.load(789);
+Application.changeViewToDetailView(customer);
+
+// ComponentContainerComponent renderiza DefaultDetailView con customer
+```
+
+**EJEMPLO MODULE NOT FOUND:**
+```typescript
+// Usuario navega /typomodule
+// beforeEach:
+
+const moduleClass = Application.ModuleList.value.find(mod =>
+    (mod.getModuleName() || mod.name).toLowerCase() === "typomodule"
+);
+// moduleClass = undefined
+
+if (!moduleClass) {
+    console.warn('[Router] Módulo no encontrado: typomodule');
+    next();  // Permite navegación sin crash
+    return;
+}
+
+// Application.View permanece sin cambios
+// UI muestra vista anterior
+```
+
+**EJEMPLO PREVENCION LOOP:**
+```typescript
+// Estado actual:
+Application.View.value = {
     entityClass: Products,
-    entityObject: null,
-    component: DefaultListView,
-    viewType: ViewTypes.LISTVIEW,
-    entityOid: ""
-}
+    entityOid: "123",
+    // ...
+};
+// URL: /products/123
+
+// Usuario hace clic SaveButton ejecuta:
+Application.changeViewToListView(Products);
+
+// changeViewToListView actualiza View y ejecuta:
+router.push('/products');
+
+// beforeEach detecta navegación:
+to.params = { module: "products" }
+
+// Extrae estado actual:
+const currentModuleName = "products";  // Products.name.toLowerCase()
+const currentOid = "123";
+
+// Compara con URL target:
+const moduleName = "products";
+const oid = "";  // undefined
+
+// Detecta cambio: currentOid "123" !== oid ""
+// Ejecuta changeViewToListView actualizando to ListView
+
+// AHORA, changeViewToListView ejecuta router.push('/products') OTRA VEZ
+// beforeEach dispara NUEVAMENTE:
+
+to.params = { module: "products" }
+currentModuleName = "products"  // Ya actualizado ListView
+currentOid = ""  // Ya actualizado ListView
+
+// Compara:
+// "products" === "products" ✓
+// "" === "" ✓
+
+// NO ejecuta changeView
+next();  // Solo permite navegación sin re-actualizar
+
+// Loop prevenido!
 ```
 
-**Renderizado**:
-```
-ComponentContainerComponent
-└── DefaultListView
-    └── DetailViewTableComponent
-        └── <table> con productos
-```
-
----
-
-### 2. Crear Nuevo Producto
-
-**URL**: `/products/new`
-
-**Application.View Result**:
+**EJEMPLO MODULENAME DECORATOR:**
 ```typescript
-{
-    entityClass: Products,
-    entityObject: new Products(),  // ← Entidad vacía
-    component: DefaultDetailView,
-    viewType: ViewTypes.DETAILVIEW,
-    entityOid: "new"
-}
-```
-
-**Renderizado**:
-```
-ComponentContainerComponent
-└── DefaultDetailView
-    └── Formulario con campos vacíos
-```
-
----
-
-### 3. Editar Producto Existente
-
-**URL**: `/products/123`
-
-**Application.View Result**:
-```typescript
-{
-    entityClass: Products,
-    entityObject: product123,  // ← (FUTURO: cargado desde API)
-    component: DefaultDetailView,
-    viewType: ViewTypes.DETAILVIEW,
-    entityOid: "123"
-}
-```
-
-**Renderizado**:
-```
-ComponentContainerComponent
-└── DefaultDetailView
-    └── Formulario con datos de producto 123
-```
-
----
-
-### 4. Redirección desde Home
-
-**URL**: `/`
-
-**Redirección automática**:
-```typescript
-if (Application.ModuleList.value[0] === Products) {
-    // Redirige a /products
-}
-```
-
----
-
-## Decoradores Relacionados
-
-### @ModuleName()
-
-```typescript
+// Entity con decorator custom
 @ModuleName("productos")
 class Products extends BaseEntity {
     // ...
 }
 
-// URL generada: /productos (en lugar de /products)
-```
+// Application.changeViewToListView(Products)
+const moduleName = Products.getModuleName();  // "productos"
+const moduleRoute = `/productos`;  // URL lowercase
+router.push('/productos');
 
-**Sin `@ModuleName()`**:
-```typescript
-class Products extends BaseEntity { }
-// URL generada: /products (usa nombre de clase en lowercase)
-```
-
----
-
-## Integración con History API
-
-El router usa `createWebHistory()`:
-
-```typescript
-const router: Router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes
+// beforeEach busca:
+Application.ModuleList.value.find(mod => {
+    const modName = mod.getModuleName();  // "productos"
+    return modName.toLowerCase() === "productos";  // Match!
 });
+
+// URLs generadas:
+// /productos        → ListView
+// /productos/new    → Create
+// /productos/123    → Edit
 ```
 
-**Ventajas**:
-- URLs limpias sin `#` (ej: `/products` en lugar de `/#/products`)
-- Compatible con navegación del navegador (botones atrás/adelante)
-- SEO-friendly (URLs interpretables por buscadores)
-
-**Configuración del Servidor Requerida**:
-```nginx
-# nginx
-location / {
-    try_files $uri $uri/ /index.html;
-}
-```
-
-Sin esta configuración, navegar directamente a `/products/123` daría 404 porque el servidor no tiene ese archivo físico.
-
----
-
-## Implementación Futura - Carga desde API
-
+**EJEMPLO FUTURE API LOADING:**
 ```typescript
-// En router beforeEach
+// router beforeEach - implementación futura
 if (oid && oid !== 'new') {
-    // Cargar entidad desde backend
     try {
+        // Mostrar loading
+        Application.eventBus.emit('show-loading');
+        
+        // Cargar entidad desde backend
         const entity = await moduleClass.load(oid);
+        
+        // Actualizar vista con entidad cargada
         Application.changeViewToDetailView(entity);
+        
     } catch (error) {
         console.error('[Router] Error loading entity:', error);
+        
+        // Mostrar toast error
         Application.ApplicationUIService.pushToast({
             type: ToastType.ERROR,
             title: 'Error',
             message: 'No se pudo cargar la entidad'
         });
+        
         // Redirigir a lista
         next({ name: 'ModuleList', params: { module: moduleName } });
         return;
+        
+    } finally {
+        Application.eventBus.emit('hide-loading');
     }
 }
+
+next();
 ```
 
----
-
-## Debugging
-
-### Ver ruta actual
-```typescript
-console.log('Current route:', router.currentRoute.value);
-// { path: '/products/123', params: { module: 'products', oid: '123' }, ... }
-```
-
-### Ver historial de navegación
-```typescript
-// Navegar atrás programáticamente
-router.back();
-
-// Navegar adelante
-router.forward();
-
-// Ir a ruta específica con estado
-router.push({ 
-    name: 'ModuleDetail', 
-    params: { module: 'products', oid: '123' } 
-});
-```
-
-### Ver módulos disponibles
-```typescript
-console.log('Available modules:', Application.ModuleList.value.map(m => 
-    m.getModuleName() || m.name
-));
-// ["Products", "Customers", "Orders"]
-```
-
-### Testear navegación manual
-```typescript
-// En consola del navegador
-Application.changeViewToListView(Products);
-// O directamente:
-router.push('/products');
-```
-
-### Ver sincronización
-```typescript
-// Después de navegar
-console.log('URL:', router.currentRoute.value.path);
-console.log('Application.View.entityOid:', Application.View.value.entityOid);
-// Deben coincidir
-```
-
----
-
-## Consideraciones
-
-- ✅ **Sincronización bidireccional**: Cambios en URL actualizan Application, cambios en Application actualizan URL
-- ✅ **Prevención de loops**: beforeEach compara estados antes de actualizar
-- ⚠️ **Carga desde API pendiente**: Actualmente solo funciona con entidades ya cargadas en memoria
-- ⚠️ **Sin lazy loading**: Todas las vistas se cargan con la app (no hay code splitting por módulo)
-- ✅ **Case-insensitive**: Nombres de módulos en URL se normalizan a lowercase
-- ⚠️ **Sin validación de OID**: No valida que el OID exista en backend antes de navegar
-
----
-
-## Extensión - Rutas Custom
-
-Si necesitas rutas fuera del patrón `/:module/:oid`:
-
+**EJEMPLO CUSTOM ROUTES EXTENSION:**
 ```typescript
 const routes: Array<RouteRecordRaw> = [
     // ... rutas existentes ...
     
-    // Ruta custom
+    // Dashboard custom
     {
         path: '/dashboard',
         name: 'Dashboard',
@@ -679,7 +526,7 @@ const routes: Array<RouteRecordRaw> = [
         meta: { requiresAuth: true }
     },
     
-    // Ruta de login
+    // Login public
     {
         path: '/login',
         name: 'Login',
@@ -687,7 +534,7 @@ const routes: Array<RouteRecordRaw> = [
         meta: { public: true }
     },
     
-    // Catch-all 404
+    // 404 catch-all
     {
         path: '/:pathMatch(.*)*',
         name: 'NotFound',
@@ -695,27 +542,63 @@ const routes: Array<RouteRecordRaw> = [
     }
 ];
 
-// Guard de autenticación
+// Guard autenticación adicional
 router.beforeEach((to, from, next) => {
     if (to.meta.requiresAuth && !isAuthenticated()) {
         next({ name: 'Login' });
-    } else {
-        next();
+        return;
     }
+    
+    // ... sync logic existente ...
+    
+    next();
 });
 ```
 
----
+**DEBUGGING ROUTER:**
+```typescript
+// Ver ruta actual
+console.log('Current route:', router.currentRoute.value);
+// { path: "/products/123", params: { module: "products", oid: "123" }, ... }
 
-## Resumen
+// Ver params
+console.log('Module:', router.currentRoute.value.params.module);
+console.log('OID:', router.currentRoute.value.params.oid);
 
-| Aspecto | Descripción |
-|---------|-------------|
-| **Patrón de URLs** | `/:module` (lista), `/:module/:oid` (detalle) |
-| **Componente Principal** | `ComponentContainerComponent` (renderiza dinámicamente) |
-| **Sincronización** | Bidireccional entre URL y `Application.View` |
-| **Guards** | `beforeEach` sincroniza, `afterEach` logea |
-| **Inicialización** | `initializeRouterWithApplication()` resuelve dependencia circular |
-| **History Mode** | HTML5 History API (URLs limpias sin `#`) |
-| **Lazy Loading** | No implementado (todas las vistas se cargan con la app) |
-| **Carga de Datos** | Pendiente de implementar (actualmente solo con datos en memoria) |
+// Ver módulos disponibles
+console.log('Modules:', Application.ModuleList.value.map(m => 
+    m.getModuleName() || m.name
+));
+// ["Products", "Customers", "Orders"]
+
+// Navegar programáticamente
+router.push({ name: 'ModuleDetail', params: { module: 'products', oid: '123' } });
+
+// History navigation
+router.back();   // Botón back browser
+router.forward(); // Botón forward browser
+
+// Verificar sincronización
+console.log('URL:', router.currentRoute.value.path);
+console.log('View entityOid:', Application.View.value.entityOid);
+console.log('View entityClass:', Application.View.value.entityClass?.name);
+// Deben coincidir!
+```
+
+**LIMITACIONES ACTUALES:**
+Carga API no implementada, oid numérico no ejecuta await Entity.load(oid) solo imprime log "Preparando detail view", entity debe pre-loaded memory o created new. No lazy loading modules, todas vistas DefaultListView DefaultDetailView cargadas app bundle inicial sin code splitting. No validación OID existencia backend antes navegar, usuario puede escribir /products/999999 non-existent renderizando formulario vacío. Server configuration requerida nginx try_files $uri /index.html rewriting URLs evitando 404 HTML5 History Mode.
+
+## 11. REFERENCIAS CRUZADAS
+
+**DOCUMENTOS RELACIONADOS:**
+- application-singleton.md: Application.ModuleList Application.View Application.router properties métodos changeViewToListView changeViewToDetailView
+- ComponentContainerComponent.md: Componente lee Application.View.component renderizando dinámicamente DefaultListView DefaultDetailView
+- DefaultListView.md: Componente renderizado /:module lista con DetailViewTableComponent
+- DefaultDetailView.md: Componente renderizado /:module/:oid formulario con inputs dinámicos
+- module-name-decorator.md: Decorador @ModuleName customiza URLs módulos
+- View interface: src/models/View.ts entityClass entityObject viewType entityOid properties
+- BaseEntity.md: getModuleName() getListComponent() getDetailComponent() createNewInstance() métodos
+
+**UBICACION:** copilot/layers/05-advanced/Router.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

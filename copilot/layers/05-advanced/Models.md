@@ -1,116 +1,74 @@
 # Models del Framework
 
-## Propósito
+## 1. PROPOSITO
 
-Los models definen las estructuras de datos (interfaces y clases) que representan el estado de la aplicación. Incluyen configuración global, estado de vistas, modales, menús y notificaciones. La mayoría son interfaces TypeScript que se usan como tipos para las propiedades reactivas de `Application` y `ApplicationUIService`.
+Los models definen estructuras de datos TypeScript que representan estado de aplicación mediante interfaces y clases. Incluyen configuración global AppConfiguration, estado vistas View CRUD, estado modal Modal para lookups, menús dropdown DropdownMenu, diálogos confirmación confirmationMenu, notificaciones Toast, contexto UI completo ApplicationUIContext, y utilidades EnumAdapter para conversión enums. La mayoría son interfaces usadas como tipos para propiedades reactivas Ref de Application y ApplicationUIService garantizando type safety y reactividad Vue 3.
 
----
+## 2. ALCANCE
 
-## 1. AppConfiguration - Configuración Global
+**UBICACION:** src/models/
 
-### Ubicación
-`src/models/AppConfiguration.ts`
+**MODELS IMPLEMENTADOS:**
+- AppConfiguration.ts: Interface configuración global app
+- View.ts: Interface estado vista actual CRUD
+- modal.ts: Interface estado modal global lookups
+- dropdown_menu.ts: Interface estado menú desplegable
+- confirmation_menu.ts: Interface estado diálogo confirmación
+- Toast.ts: Class notificación toast individual con ID autogenerado
+- application_ui_context.ts: Interface agrupa todos estados UI
+- enum_adapter.ts: Class convertir enums TypeScript a key-value pairs
 
-### Código
+**PROPIEDADES REACTIVAS:**
+- Application.View: Ref<View>
+- Application.ApplicationUIService.AppConfiguration: Ref<AppConfiguration>
+- Application.ApplicationUIService.modal: Ref<Modal>
+- Application.ApplicationUIService.dropdownMenu: Ref<DropdownMenu>
+- Application.ApplicationUIService.confirmationMenu: Ref<confirmationMenu>
+- Application.ApplicationUIService.ToastList: Ref<Toast[]>
+
+**INTEGRACION:**
+ApplicationUIService implementa ApplicationUIContext interface, todos models son interfaces excepto Toast y EnumAdapter que son classes necesitando lógica constructor.
+
+## 3. DEFINICIONES CLAVE
+
+**AppConfiguration interface:**
+Define configuración global aplicación con propiedades appName appVersion apiBaseUrl apiTimeout environment logLevel authTokenKey sessionTimeout itemsPerPage maxFileSize isDarkMode. Almacenada en ApplicationUIService.AppConfiguration como Ref<AppConfiguration> reactiva. Valores inicializados desde import.meta.env variables entorno Vite, isDarkMode persiste en localStorage resto se pierde al reload.
+
+**View interface:**
+Representa estado vista actual CRUD con entityClass typeof BaseEntity clase entidad, entityObject BaseEntity instancia entidad actual, component Component Vue renderizado, viewType ViewTypes tipo vista LISTVIEW DETAILVIEW LOOKUPVIEW, isValid boolean validación, entityOid string ID entidad. Almacenado en Application.View como Ref<View> reactivo, es corazón sistema navegación CRUD framework.
+
+**Modal interface:**
+Estado modal global sistema con modalView typeof BaseEntity clase mostrar, modalOnCloseFunction callback recibe entidad seleccionada, viewType ViewTypes tipo vista modal, customViewId string opcional vistas custom no-CRUD. Usado principalmente lookups selección entidades relacionadas ObjectInputComponent. Callback ejecutado al cerrar modal con entidad seleccionada.
+
+**Toast class:**
+Única estructura es clase no interface porque necesita generar IDs únicos automáticamente. Propiedades id string generado Math.random().toString(36).substr(2,9), message string texto notificación, type ToastType visual SUCCESS ERROR INFO WARNING. Constructor recibe message y type generando id automáticamente. Instancias almacenadas en ApplicationUIService.ToastList array Ref<Toast[]>.
+
+**EnumAdapter class:**
+Clase utilitaria convierte enums TypeScript numéricos a arrays {key value} para componentes selección ListInputComponent. Resuelve problema reverse mapping donde enum ToastType genera {SUCCESS: 0, 0: "SUCCESS"} duplicando keys. Método getKeyValuePairs() filtra con isNaN(Number(key)) retornando solo keys string sin duplicados numéricos.
+
+## 4. DESCRIPCION TECNICA
+
+**APPCONFIGURATION INTERFACE:**
 ```typescript
 export interface AppConfiguration {
-    appName: string;
-    appVersion: string;
-    apiBaseUrl: string;
-    apiTimeout: number;
-    apiRetryAttempts: number;
-    environment: string;
-    logLevel: string;
-    authTokenKey: string;
-    authRefreshTokenKey: string;
-    sessionTimeout: number;
-    itemsPerPage: number;
-    maxFileSize: number;
-    isDarkMode: boolean;
+    appName: string;            // "SaaS Template Vue"
+    appVersion: string;         // "1.0.0" semver
+    apiBaseUrl: string;         // "https://api.example.com"
+    apiTimeout: number;         // 30000 ms timeout requests
+    apiRetryAttempts: number;   // 3 intentos retry
+    environment: string;        // "development" "production"
+    logLevel: string;          // "debug" "info" "warn" "error"
+    authTokenKey: string;      // "auth_token" localStorage key
+    authRefreshTokenKey: string; // "refresh_token" localStorage key
+    sessionTimeout: number;    // 3600000 ms 1 hora
+    itemsPerPage: number;      // 20 registros por página
+    maxFileSize: number;       // 5242880 bytes 5MB
+    isDarkMode: boolean;       // false tema claro default
 }
 ```
+**INICIALIZACION:** ApplicationUIService constructor usa import.meta.env.VITE_API_BASE_URL para apiBaseUrl, import.meta.env.MODE para environment, localStorage.getItem('darkMode') === 'true' para isDarkMode permitiendo persistencia tema usuario. Resto propiedades hardcodeadas valores default razonables.
 
-### Descripción
-
-Interfaz que define la configuración global de la aplicación. Se almacena en `Application.ApplicationUIService.AppConfiguration` como un `Ref<AppConfiguration>` reactivo.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción | Valor Típico |
-|-----------|------|-------------|--------------|
-| **appName** | `string` | Nombre de la aplicación | `"SaaS Template"` |
-| **appVersion** | `string` | Versión de la aplicación (semver) | `"1.0.0"` |
-| **apiBaseUrl** | `string` | URL base para todas las llamadas API | `"https://api.example.com"` |
-| **apiTimeout** | `number` | Timeout en ms para requests HTTP | `30000` (30s) |
-| **apiRetryAttempts** | `number` | Intentos de reintento en errores de red | `3` |
-| **environment** | `string` | Entorno de ejecución | `"development"`, `"production"` |
-| **logLevel** | `string` | Nivel de logging | `"debug"`, `"info"`, `"warn"`, `"error"` |
-| **authTokenKey** | `string` | Key para guardar token JWT en localStorage | `"auth_token"` |
-| **authRefreshTokenKey** | `string` | Key para guardar refresh token | `"refresh_token"` |
-| **sessionTimeout** | `number` | Timeout de sesión en ms | `3600000` (1 hora) |
-| **itemsPerPage** | `number` | Items por página en tablas | `20` |
-| **maxFileSize** | `number` | Tamaño máximo de archivo en bytes | `5242880` (5MB) |
-| **isDarkMode** | `boolean` | Si el tema oscuro está activo | `false` |
-
-### Ejemplo de Uso
-
-```typescript
-// Acceder a la configuración
-const config = Application.ApplicationUIService.AppConfiguration.value;
-
-console.log('API URL:', config.apiBaseUrl);
-console.log('Environment:', config.environment);
-
-// Cambiar dark mode
-Application.ApplicationUIService.toggleDarkMode();
-// Internamente cambia: AppConfiguration.value.isDarkMode = !isDarkMode
-
-// Usar en llamadas API
-axios.get(`${config.apiBaseUrl}/products`, {
-    timeout: config.apiTimeout
-});
-
-// Validar tamaño de archivo
-if (file.size > config.maxFileSize) {
-    throw new Error(`Archivo muy grande. Máximo ${config.maxFileSize} bytes`);
-}
-```
-
-### Inicialización
-
-```typescript
-// En application_ui_service.ts inicialización
-const AppConfiguration = ref<AppConfiguration>({
-    appName: "SaaS Template Vue",
-    appVersion: "1.0.0",
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
-    apiTimeout: 30000,
-    apiRetryAttempts: 3,
-    environment: import.meta.env.MODE,
-    logLevel: "debug",
-    authTokenKey: "auth_token",
-    authRefreshTokenKey: "refresh_token",
-    sessionTimeout: 3600000,
-    itemsPerPage: 20,
-    maxFileSize: 5242880,
-    isDarkMode: localStorage.getItem('darkMode') === 'true'
-});
-```
-
-### Consideraciones
-
-- ✅ **Reactivo**: Es un `Ref<>`, cambios actualizan la UI automáticamente
-- ⚠️ **No persiste**: Los cambios se pierden al recargar (excepto isDarkMode que usa localStorage)
-- ✅ **Variables de entorno**: Usa `import.meta.env.*` para configuración por entorno
-
----
-
-## 2. View - Estado de Vista Actual
-
-### Ubicación
-`src/models/View.ts`
-
-### Código
+**VIEW INTERFACE:**
 ```typescript
 import { BaseEntity } from "@/entities/base_entitiy";
 import { ViewTypes } from "@/enums/view_type";
@@ -119,748 +77,83 @@ import { Component } from "vue";
 type EntityCtor = typeof BaseEntity;
 
 export interface View {
-    entityClass: EntityCtor | null;
-    entityObject: BaseEntity | null;
-    component: Component | null;
-    viewType: ViewTypes;
-    isValid: boolean;
-    entityOid: string;
+    entityClass: EntityCtor | null;     // Products class
+    entityObject: BaseEntity | null;    // instance new Products()
+    component: Component | null;        // DefaultDetailView
+    viewType: ViewTypes;               // ViewTypes.DETAILVIEW
+    isValid: boolean;                  // true si validaciones pasan
+    entityOid: string;                 // "123" ID backend, "new" creación
 }
 ```
+**ESTADOS VISTA:** LISTVIEW tiene entityClass populated entityObject null component DefaultListView, DETAILVIEW NEW tiene entityClass entityObject new Entity() entityOid "new", DETAILVIEW EDIT tiene entityClass entityObject loaded entityOid con ID numérico, LOOKUPVIEW usado en modal selection sin cambiar Application.View solo modal.value.viewType.
 
-### Descripción
-
-Interfaz que representa el estado de la vista actual. Se almacena en `Application.View` como un `Ref<View>` reactivo. Es el corazón del sistema de navegación y CRUD del framework.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción | Ejemplo |
-|-----------|------|-------------|---------|
-| **entityClass** | `typeof BaseEntity \| null` | Clase de la entidad que se está visualizando/editando | `Products` |
-| **entityObject** | `BaseEntity \| null` | Instancia de la entidad actual (para DETAILVIEW) | `new Products({ id: 123 })` |
-| **component** | `Component \| null` | Componente Vue a renderizar | `DefaultDetailView` |
-| **viewType** | `ViewTypes` | Tipo de vista actual | `ViewTypes.DETAILVIEW` |
-| **isValid** | `boolean` | Si la vista/entidad actual es válida | `true` |
-| **entityOid** | `string` | ID único de la entidad (para carga desde API) | `"123"`, `"new"` |
-
-### Ciclo de Vida de View
-
-#### 1. Lista de Entidades (LISTVIEW)
-```typescript
-Application.changeViewToListView(Products);
-
-// Resultado:
-Application.View.value = {
-    entityClass: Products,
-    entityObject: null,  // ← No hay entidad específica
-    component: DefaultListView,
-    viewType: ViewTypes.LISTVIEW,
-    isValid: true,
-    entityOid: ""
-};
-```
-
-#### 2. Crear Nueva Entidad (DETAILVIEW - NEW)
-```typescript
-const newProduct = new Products();
-Application.changeViewToDetailView(newProduct);
-
-// Resultado:
-Application.View.value = {
-    entityClass: Products,
-    entityObject: newProduct,  // ← Entidad nueva vacía
-    component: DefaultDetailView,
-    viewType: ViewTypes.DETAILVIEW,
-    isValid: false,  // ← Campos requeridos vacíos
-    entityOid: "new"  // ← Indica modo creación
-};
-```
-
-#### 3. Editar Entidad Existente (DETAILVIEW - EDIT)
-```typescript
-const existingProduct = new Products({ 
-    id: 123, 
-    name: "Laptop", 
-    price: 999 
-});
-Application.changeViewToDetailView(existingProduct);
-
-// Resultado:
-Application.View.value = {
-    entityClass: Products,
-    entityObject: existingProduct,  // ← Entidad cargada
-    component: DefaultDetailView,
-    viewType: ViewTypes.DETAILVIEW,
-    isValid: true,  // ← Entidad válida
-    entityOid: "123"  // ← ID para backend
-};
-```
-
-#### 4. Lookup de Entidad (LOOKUPVIEW)
-```typescript
-// Al hacer click en ObjectInputComponent lookup button
-Application.ApplicationUIService.openModal({
-    component: DefaultLookupListView,
-    onFunction: (selectedEntity) => { /* ... */ }
-});
-
-// Resultado (implícito):
-Application.View.value.viewType = ViewTypes.LOOKUPVIEW;
-```
-
-### Uso en Componentes
-
-#### DefaultDetailView lee entityClass y entityObject
-```vue
-<script lang="ts">
-export default {
-    data() {
-        return {
-            entity: Application.View.value.entityObject as BaseEntity,
-            entityClass: Application.View.value.entityClass as typeof BaseEntity
-        };
-    }
-}
-</script>
-```
-
-#### ActionsComponent decide qué botones mostrar
-```vue
-<script setup lang="ts">
-const ListButtons = computed(() => {
-    const viewType = Application.View.value.viewType;
-    
-    if (viewType === ViewTypes.LISTVIEW) {
-        return [NewButton, RefreshButton];
-    } else if (viewType === ViewTypes.DETAILVIEW) {
-        return [SaveButton, ValidateButton, SaveAndNewButton];
-    }
-    
-    return [];
-});
-</script>
-```
-
-#### Router guarda entityOid en la URL
-```typescript
-// Al navegar a /products/123
-router.push({
-    name: 'entity-detail',
-    params: {
-        module: 'products',
-        oid: '123'  // ← Se guarda en Application.View.value.entityOid
-    }
-});
-```
-
-### Validación (isValid)
-
-```typescript
-// ValidateButton actualiza isValid
-async handleValidate() {
-    const entity = Application.View.value.entityObject;
-    
-    if (entity) {
-        const valid = await entity.validate();
-        Application.View.value.isValid = valid;
-        
-        if (valid) {
-            Application.ApplicationUIService.pushToast({
-                type: ToastType.SUCCESS,
-                title: 'Validación exitosa'
-            });
-        }
-    }
-}
-```
-
-### Consideraciones
-
-- ✅ **Reactivo**: Cambios en `View` actualizan toda la UI automáticamente
-- ⚠️ **entityOid "new"**: Convención para indicar modo creación (sin ID backend)
-- ⚠️ **entityObject null**: En LISTVIEW no hay entidad específica cargada
-- ✅ **Tipado fuerte**: `entityClass` es `typeof BaseEntity`, permite acceso a métodos estáticos
-
----
-
-## 3. Modal - Estado de Modal
-
-### Ubicación
-`src/models/modal.ts`
-
-### Código
+**MODAL INTERFACE:**
 ```typescript
 import { ViewTypes } from '@/enums/view_type';
 import { BaseEntity } from '@/entities/base_entitiy';
 
 export interface Modal {
-    modalView: typeof BaseEntity | null;
-    modalOnCloseFunction: ((param: any) => void) | null;
-    viewType: ViewTypes;
-    customViewId?: string;
+    modalView: typeof BaseEntity | null;              // Customer class lookup
+    modalOnCloseFunction: ((param: any) => void) | null; // callback selection
+    viewType: ViewTypes;                             // ViewTypes.LOOKUPVIEW
+    customViewId?: string;                           // "custom-report-view" opcional
 }
 ```
+**FLUJO LOOKUP:** ObjectInputComponent llama ApplicationUIService.openModal pasando component DefaultLookupListView y onFunction callback, service establece modal.value con datos emite show-modal evento, usuario selecciona entidad clickedItem llamando closeModalOnFunction con selected entity, service ejecuta callback pasando entity actualiza ObjectInputComponent modelValue, emite hide-modal resetea modal.value a defaults null.
 
-### Descripción
-
-Interfaz para el estado del modal global del sistema. Se usa principalmente para lookups (selección de entidades relacionadas) pero puede extenderse para modales custom. Se almacena en `Application.ApplicationUIService.modal`.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción | Ejemplo |
-|-----------|------|-------------|---------|
-| **modalView** | `typeof BaseEntity \| null` | Clase de entidad a mostrar en el modal | `Customer` (para lookup) |
-| **modalOnCloseFunction** | `((param: any) => void) \| null` | Callback que recibe la entidad seleccionada | `(entity) => { this.modelValue = entity; }` |
-| **viewType** | `ViewTypes` | Tipo de vista a renderizar en el modal | `ViewTypes.LOOKUPVIEW` |
-| **customViewId** | `string?` | ID opcional para vistas custom no-CRUD | `"custom-report-view"` |
-
-### Flujo Completo de Lookup Modal
-
-#### 1. ObjectInputComponent abre modal
-```typescript
-// En ObjectInputComponent.vue
-function openLookup() {
-    Application.ApplicationUIService.openModal({
-        component: DefaultLookupListView,  // Vista a renderizar
-        onFunction: (selectedEntity: BaseEntity) => {
-            // ← Este callback se guarda en modalOnCloseFunction
-            modelValue.value = selectedEntity;
-            emit('update:modelValue', selectedEntity);
-        }
-    });
-}
-```
-
-#### 2. ApplicationUIService configura modal
-```typescript
-// En application_ui_service.ts
-openModal({ component, onFunction }) {
-    this.modal.value = {
-        modalView: component,  // ← DefaultLookupListView
-        modalOnCloseFunction: onFunction,  // ← Callback guardado
-        viewType: ViewTypes.LOOKUPVIEW,
-        customViewId: undefined
-    };
-    
-    // Modal se hace visible automáticamente
-}
-```
-
-#### 3. Usuario selecciona entidad en DefaultLookupListView
-```vue
-<!-- DefaultLookupListView.vue -->
-<template>
-    <LookupItem 
-        v-for="item in data"
-        @click="clickedItem(item)"
-    />
-</template>
-
-<script>
-function clickedItem(item: BaseEntity) {
-    // ← Cierra modal y ejecuta callback
-    Application.ApplicationUIService.closeModalOnFunction(item);
-}
-</script>
-```
-
-#### 4. ApplicationUIService cierra modal y ejecuta callback
-```typescript
-// En application_ui_service.ts
-closeModalOnFunction(param: any) {
-    const callback = this.modal.value.modalOnCloseFunction;
-    
-    if (callback) {
-        callback(param);  // ← Ejecuta: modelValue.value = param;
-    }
-    
-    // Resetea modal
-    this.modal.value = {
-        modalView: null,
-        modalOnCloseFunction: null,
-        viewType: ViewTypes.DEFAULTVIEW,
-        customViewId: undefined
-    };
-}
-```
-
-#### 5. ObjectInputComponent actualiza con entidad seleccionada
-```typescript
-// Callback ejecutado:
-(selectedEntity: BaseEntity) => {
-    modelValue.value = selectedEntity;  // ← Campo actualizado
-    emit('update:modelValue', selectedEntity);
-}
-```
-
-### Ejemplo - Modal Custom (No Lookup)
-
-```typescript
-// Abrir modal con vista personalizada
-Application.ApplicationUIService.openModal({
-    component: CustomReportView,
-    onFunction: (reportData) => {
-        console.log('Report generated:', reportData);
-        downloadReport(reportData);
-    }
-});
-
-// Estado resultante:
-{
-    modalView: CustomReportView,
-    modalOnCloseFunction: (reportData) => { /* ... */ },
-    viewType: ViewTypes.CUSTOMVIEW,
-    customViewId: "report-generator"
-}
-```
-
-### Consideraciones
-
-- ✅ **Callback flexible**: `modalOnCloseFunction` recibe cualquier tipo (any)
-- ⚠️ **Solo un modal**: No hay stack de modales, solo uno a la vez
-- ✅ **Cierre automático**: `closeModalOnFunction` ejecuta callback y cierra
-- ⚠️ **customViewId no usado**: Propiedad definida pero sin implementación actual
-
----
-
-## 4. DropdownMenu - Estado de Menú Desplegable
-
-### Ubicación
-`src/models/dropdown_menu.ts`
-
-### Código
+**DROPDOWNMENU INTERFACE:**
 ```typescript
 import { Component } from "vue";
 
 export interface DropdownMenu {
-    showing: boolean;
-    title: string;
-    component: Component | null;
-    width: string;
-    position_x: string;
-    position_y: string;
-    activeElementWidth: string;
-    activeElementHeight: string;
-    canvasWidth: string;
-    canvasHeight: string;
+    showing: boolean;           // true visible
+    title: string;             // "Opciones Usuario"
+    component: Component | null; // UserMenuComponent renderizado
+    width: string;             // "300px"
+    position_x: string;        // "150px" left calculado
+    position_y: string;        // "200px" top calculado
+    activeElementWidth: string;  // "120px" trigger button width
+    activeElementHeight: string; // "40px" trigger button height
+    canvasWidth: string;       // "1920px" viewport width
+    canvasHeight: string;      // "1080px" viewport height
 }
 ```
+**POSICIONAMIENTO INTELIGENTE:** DropdownMenu.vue calcula position_x position_y automáticamente obteniendo triggerElement.getBoundingClientRect(), intenta abrir hacia abajo-derecha default, si se sale viewport derecha abre hacia izquierda x = triggerRect.right - menuWidth, si se sale viewport abajo abre hacia arriba y = triggerRect.top - menuHeight, garantiza dropdown siempre visible dentro viewport.
 
-### Descripción
-
-Interfaz para el estado del componente `DropdownMenu`. Controla posición, dimensiones y visibilidad del menú desplegable dinámico. Se almacena en `Application.ApplicationUIService.dropdownMenu`.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción | Ejemplo |
-|-----------|------|-------------|---------|
-| **showing** | `boolean` | Si el dropdown está visible | `true` |
-| **title** | `string` | Título mostrado en el header del dropdown | `"Opciones"` |
-| **component** | `Component \| null` | Componente Vue a renderizar en el contenido | `UserMenuComponent` |
-| **width** | `string` | Ancho del dropdown | `"300px"` |
-| **position_x** | `string` | Posición horizontal (left) | `"150px"` |
-| **position_y** | `string` | Posición vertical (top) | `"200px"` |
-| **activeElementWidth** | `string` | Ancho del elemento que disparó el dropdown | `"120px"` |
-| **activeElementHeight** | `string` | Alto del elemento que disparó el dropdown | `"40px"` |
-| **canvasWidth** | `string` | Ancho del viewport | `"1920px"` |
-| **canvasHeight** | `string` | Alto del viewport | `"1080px"` |
-
-### Lógica de Posicionamiento
-
-`DropdownMenu.vue` calcula automáticamente la mejor posición para evitar que el menú se salga de pantalla:
-
-```typescript
-// En DropdownMenu.vue
-const calculatePosition = () => {
-    const triggerRect = triggerElement.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Intentar abrir hacia abajo-derecha (default)
-    let x = triggerRect.left;
-    let y = triggerRect.bottom;
-    
-    // Si se sale por la derecha, abrir hacia la izquierda
-    if (x + menuWidth > viewportWidth) {
-        x = triggerRect.right - menuWidth;
-    }
-    
-    // Si se sale por abajo, abrir hacia arriba
-    if (y + menuHeight > viewportHeight) {
-        y = triggerRect.top - menuHeight;
-    }
-    
-    Application.ApplicationUIService.dropdownMenu.value = {
-        showing: true,
-        title: "Opciones",
-        component: MenuContent,
-        width: `${menuWidth}px`,
-        position_x: `${x}px`,
-        position_y: `${y}px`,
-        activeElementWidth: `${triggerRect.width}px`,
-        activeElementHeight: `${triggerRect.height}px`,
-        canvasWidth: `${viewportWidth}px`,
-        canvasHeight: `${viewportHeight}px`
-    };
-};
-```
-
-### Ejemplo de Uso
-
-```typescript
-// Abrir dropdown al hacer click en botón
-function openUserMenu(event: MouseEvent) {
-    const buttonRect = event.target.getBoundingClientRect();
-    
-    Application.ApplicationUIService.openDropdownMenu({
-        title: "Opciones de Usuario",
-        component: UserMenuComponent,
-        width: "250px",
-        triggerElement: event.target,  // ← Para calcular posición
-    });
-}
-
-// Estado resultante:
-{
-    showing: true,
-    title: "Opciones de Usuario",
-    component: UserMenuComponent,
-    width: "250px",
-    position_x: "400px",  // ← Calculado automáticamente
-    position_y: "150px",  // ← Calculado automáticamente
-    activeElementWidth: "120px",
-    activeElementHeight: "36px",
-    canvasWidth: "1920px",
-    canvasHeight: "1080px"
-}
-```
-
-### Cerrar Dropdown
-
-```typescript
-// Cerrar programáticamente
-Application.ApplicationUIService.closeDropdownMenu();
-
-// Cierre automático:
-// - Click fuera del dropdown
-// - Presionar tecla ESC
-// - Click en una opción del menú (responsabilidad del componente)
-```
-
-### Consideraciones
-
-- ✅ **Posicionamiento inteligente**: Calcula automáticamente para no salirse del viewport
-- ✅ **Cierre automático**: ESC y click-outside cierran el dropdown
-- ⚠️ **Solo un dropdown**: No hay stack, solo uno abierto a la vez
-- ✅ **Dimensiones dinámicas**: Se adapta al tamaño del contenido y pantalla
-
----
-
-## 5. confirmationMenu - Diálogo de Confirmación
-
-### Ubicación
-`src/models/confirmation_menu.ts`
-
-### Código
+**CONFIRMATIONMENU INTERFACE:**
 ```typescript
 import { confMenuType } from "@/enums/conf_menu_type";
 
 export interface confirmationMenu {
-    type: confMenuType;
-    title: string;
-    message: string;
-    confirmationAction?: () => void;
-    acceptButtonText?: string;
-    cancelButtonText?: string;
+    type: confMenuType;                  // WARNING ERROR INFO SUCCESS
+    title: string;                       // "Eliminar producto?"
+    message: string;                     // "Esta acción no se puede deshacer"
+    confirmationAction?: () => void;     // () => entity.delete() callback
+    acceptButtonText?: string;           // "Eliminar" custom default "Aceptar"
+    cancelButtonText?: string;           // "Cancelar" custom default "Cancelar"
 }
 ```
+**USO:** ApplicationUIService.openConfirmationMenu recibe objeto confirmationMenu estableciendo confirmationMenu.value emitiendo show-confirmation evento, ConfirmationDialogComponent renderiza modal con header color según type mapping confMenuType a backgroundColor, usuario hace clic Aceptar ejecutando confirmationAction callback o Cancelar solo cerrando, closeConfirmationMenu emite hide-confirmation resetea confirmationMenu.value.
 
-### Descripción
-
-Interfaz para el estado del componente `ConfirmationDialogComponent`. Representa un diálogo modal con botones de confirmar/cancelar. Se almacena en `Application.ApplicationUIService.confirmationMenu`.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción | Default | Ejemplo |
-|-----------|------|-------------|---------|---------|
-| **type** | `confMenuType` | Tipo visual (color de header) | - | `confMenuType.WARNING` |
-| **title** | `string` | Título del diálogo | - | `"¿Eliminar producto?"` |
-| **message** | `string` | Mensaje descriptivo | - | `"Esta acción no se puede deshacer"` |
-| **confirmationAction** | `() => void?` | Callback al confirmar | `undefined` | `() => { entity.delete(); }` |
-| **acceptButtonText** | `string?` | Texto del botón confirmar | `"Aceptar"` | `"Eliminar"` |
-| **cancelButtonText** | `string?` | Texto del botón cancelar | `"Cancelar"` | `"No, mantener"` |
-
-### Flujo de Uso
-
-#### 1. Abrir Diálogo
-```typescript
-Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.WARNING,
-    title: '¿Eliminar este producto?',
-    message: 'Esta acción no se puede deshacer. El producto será eliminado permanentemente.',
-    acceptButtonText: 'Sí, eliminar',
-    cancelButtonText: 'No, cancelar',
-    confirmationAction: () => {
-        // ← Este callback se ejecuta al hacer click en "Sí, eliminar"
-        product.delete();
-        Application.ApplicationUIService.pushToast({
-            type: ToastType.SUCCESS,
-            title: 'Producto eliminado'
-        });
-    }
-});
-```
-
-#### 2. ConfirmationDialogComponent Renderiza
-```vue
-<!-- ConfirmationDialogComponent.vue -->
-<template>
-    <div class="confirmation-dialog" v-if="menu">
-        <div class="header" :style="{ backgroundColor: getHeaderColor }">
-            <h3>{{ menu.title }}</h3>
-        </div>
-        <div class="body">
-            <p>{{ menu.message }}</p>
-        </div>
-        <div class="footer">
-            <button @click="handleCancel">
-                {{ menu.cancelButtonText || 'Cancelar' }}
-            </button>
-            <button @click="handleConfirm">
-                {{ menu.acceptButtonText || 'Aceptar' }}
-            </button>
-        </div>
-    </div>
-</template>
-
-<script setup lang="ts">
-const menu = computed(() => Application.ApplicationUIService.confirmationMenu.value);
-
-function handleConfirm() {
-    if (menu.value.confirmationAction) {
-        menu.value.confirmationAction();  // ← Ejecuta callback
-    }
-    Application.ApplicationUIService.closeConfirmationMenu();
-}
-
-function handleCancel() {
-    Application.ApplicationUIService.closeConfirmationMenu();
-}
-</script>
-```
-
-#### 3. Usuario Hace Click en "Sí, eliminar"
-```typescript
-// Se ejecuta confirmationAction():
-product.delete();
-Application.ApplicationUIService.pushToast({ /* ... */ });
-
-// Se cierra el diálogo:
-Application.ApplicationUIService.closeConfirmationMenu();
-```
-
-### Ejemplos por Tipo
-
-#### WARNING - Confirmar acción destructiva
-```typescript
-Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.WARNING,
-    title: '¿Descartar cambios?',
-    message: 'Tienes cambios sin guardar que se perderán',
-    acceptButtonText: 'Descartar',
-    cancelButtonText: 'Seguir editando',
-    confirmationAction: () => {
-        Application.changeViewToListView(entity.constructor);
-    }
-});
-```
-
-#### ERROR - Notificar error grave
-```typescript
-Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.ERROR,
-    title: 'Error de conexión',
-    message: 'No se pudo conectar con el servidor. ¿Reintentar?',
-    acceptButtonText: 'Reintentar',
-    cancelButtonText: 'Cancelar',
-    confirmationAction: async () => {
-        await retryConnection();
-    }
-});
-```
-
-#### INFO - Información que requiere confirmación
-```typescript
-Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.INFO,
-    title: 'Actualización disponible',
-    message: 'Hay una nueva versión. ¿Actualizar ahora?',
-    acceptButtonText: 'Actualizar',
-    cancelButtonText: 'Más tarde',
-    confirmationAction: () => {
-        window.location.reload();
-    }
-});
-```
-
-#### SUCCESS - Confirmar éxito
-```typescript
-Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.SUCCESS,
-    title: 'Importación completada',
-    message: 'Se importaron 150 productos correctamente',
-    acceptButtonText: 'Ver productos',
-    cancelButtonText: 'Cerrar',
-    confirmationAction: () => {
-        Application.changeViewToListView(Products);
-    }
-});
-```
-
-### Consideraciones
-
-- ✅ **Callback opcional**: Si `confirmationAction` es undefined, solo cierra el diálogo
-- ✅ **Textos personalizables**: Puedes cambiar "Aceptar"/"Cancelar" por texto contextual
-- ⚠️ **Modal bloqueante**: No se puede interactuar con el resto de la UI mientras está abierto
-- ✅ **Cierre con ESC**: Presionar ESC cierra el diálogo (equivalente a cancelar)
-
----
-
-## 6. Toast - Clase de Notificación
-
-### Ubicación
-`src/models/Toast.ts`
-
-### Código
+**TOAST CLASS:**
 ```typescript
 import { ToastType } from "@/enums/ToastType";
 
 export class Toast {
-    id: string;
-    message: string;
-    type: ToastType;
+    id: string;          // "x7k3md9w2" autogenerado único
+    message: string;     // "Producto guardado correctamente"
+    type: ToastType;     // ToastType.SUCCESS
 
     constructor(message: string, type: ToastType) {
-        this.id = Math.random().toString(36).substr(2, 9);
+        this.id = Math.random().toString(36).substr(2, 9);  // Random ID
         this.message = message;
         this.type = type;
     }
 }
 ```
+**GENERACION ID:** Math.random() genera 0.8472615, toString(36) convierte base36 "0.k3md9w2x7" usando 0-9 a-z, substr(2,9) extrae "k3md9w2x7" removiendo "0.", ID usado como :key en v-for ToastContainerComponent y identificar toast remover al cerrar. Única clase models porque necesita lógica constructor generar ID, resto interfaces sin lógica.
 
-### Descripción
-
-Clase que representa una notificación toast individual. Los toasts se almacenan en `Application.ApplicationUIService.ToastList` como un `Ref<Toast[]>`. Es la ÚNICA estructura que es una clase (no interfaz) porque necesita generar IDs únicos automáticamente.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción | Ejemplo |
-|-----------|------|-------------|---------|
-| **id** | `string` | Identificador único generado aleatoriamente | `"x7k3md9w2"` |
-| **message** | `string` | Mensaje de la notificación | `"Producto guardado correctamente"` |
-| **type** | `ToastType` | Tipo visual (SUCCESS/ERROR/INFO/WARNING) | `ToastType.SUCCESS` |
-
-### Generación de ID
-
-```typescript
-this.id = Math.random().toString(36).substr(2, 9);
-// Proceso:
-// Math.random() → 0.8472615...
-// .toString(36) → "0.k3md9w2x7"  (base 36: 0-9, a-z)
-// .substr(2, 9) → "k3md9w2x7"     (quita "0.")
-```
-
-Este ID se usa como `:key` en el `v-for` de `ToastContainerComponent` y para identificar qué toast remover cuando se cierra.
-
-### Ejemplo de Uso
-
-```typescript
-// Crear y agregar toast manualmente
-const toast = new Toast(
-    "Producto guardado correctamente",
-    ToastType.SUCCESS
-);
-
-Application.ApplicationUIService.ToastList.value.push(toast);
-
-// O usar el helper (recomendado):
-Application.ApplicationUIService.pushToast({
-    type: ToastType.SUCCESS,
-    title: "Éxito",
-    message: "Producto guardado correctamente",
-    duration: 3000
-});
-```
-
-### Ciclo de Vida de un Toast
-
-#### 1. Creación
-```typescript
-// En ApplicationUIService.pushToast()
-const newToast = new Toast(message, type);
-// newToast = { id: "x7k3md9w2", message: "...", type: ToastType.SUCCESS }
-
-this.ToastList.value.push(newToast);
-```
-
-#### 2. Renderizado
-```vue
-<!-- ToastContainerComponent.vue -->
-<template>
-    <div class="toast-container">
-        <ToastItemComponent 
-            v-for="toast in Application.ApplicationUIService.ToastList.value"
-            :key="toast.id"  <!-- ← ID único como key -->
-            :toast="toast"
-        />
-    </div>
-</template>
-```
-
-#### 3. Auto-dismiss (3000ms default)
-```vue
-<!-- ToastItemComponent.vue -->
-<script setup lang="ts">
-onMounted(() => {
-    setTimeout(() => {
-        removeToast();  // ← Se auto-elimina después de 3s
-    }, 3000);
-});
-
-function removeToast() {
-    const index = ToastList.value.findIndex(t => t.id === props.toast.id);
-    if (index !== -1) {
-        ToastList.value.splice(index, 1);
-    }
-}
-</script>
-```
-
-#### 4. Cierre manual (click en X)
-```vue
-<template>
-    <div class="toast-item">
-        <span>{{ toast.message }}</span>
-        <button @click="removeToast">×</button>  <!-- ← Cierre manual -->
-    </div>
-</template>
-```
-
-### Consideraciones
-
-- ✅ **ID automático**: No necesitas generar IDs manualmente, el constructor lo hace
-- ⚠️ **Sin título**: La clase `Toast` solo tiene `message`, no `title` (el helper `pushToast` puede recibir `title` pero lo concatena con `message`)
-- ✅ **Inmutable**: Una vez creado, un Toast no cambia (no hay setters)
-- ⚠️ **Sin duración**: La clase no almacena `duration`, eso lo maneja `ToastItemComponent`
-
----
-
-## 7. ApplicationUIContext - Contexto UI Completo
-
-### Ubicación
-`src/models/application_ui_context.ts`
-
-### Código
+**APPLICATIONUICONTEXT INTERFACE:**
 ```typescript
 import type { Ref } from 'vue';
 import type { Emitter } from 'mitt';
@@ -880,135 +173,12 @@ export interface ApplicationUIContext {
     ToastList: Ref<Toast[]>;
 }
 ```
+**PROPOSITO:** Agrupa TODOS estados reactivos UI framework sirviendo como tipo para ApplicationUIService que implementa interface. Define contrato exacto propiedades debe tener service permitiendo TypeScript validar implementación completa, sirve como documentación estructura service, facilita crear mocks testing implementando ApplicationUIContext.
 
-### Descripción
-
-Interfaz que agrupa TODOS los estados reactivos de la UI del framework. Se usa como tipo para `ApplicationUIService` que implementa esta interfaz. Es el "contrato" que define qué propiedades debe tener el servicio de UI.
-
-### Propiedades
-
-| Propiedad | Tipo | Descripción |
-|-----------|------|-------------|
-| **AppConfiguration** | `Ref<AppConfiguration>` | Configuración global de la app |
-| **eventBus** | `Emitter<Events>` | Event bus para comunicación entre componentes |
-| **modal** | `Ref<Modal>` | Estado del modal global (lookups, etc.) |
-| **dropdownMenu** | `Ref<DropdownMenu>` | Estado del dropdown menu |
-| **confirmationMenu** | `Ref<confirmationMenu>` | Estado del diálogo de confirmación |
-| **ToastList** | `Ref<Toast[]>` | Lista de toasts activos |
-
-### Implementación en ApplicationUIService
-
-```typescript
-// src/models/application_ui_service.ts
-import { ref } from 'vue';
-import mitt from 'mitt';
-import type { ApplicationUIContext } from './application_ui_context';
-import type { Events } from '@/types/events';
-
-export class ApplicationUIService implements ApplicationUIContext {
-    AppConfiguration: Ref<AppConfiguration>;
-    eventBus: Emitter<Events>;
-    modal: Ref<Modal>;
-    dropdownMenu: Ref<DropdownMenu>;
-    confirmationMenu: Ref<confirmationMenu>;
-    ToastList: Ref<Toast[]>;
-
-    constructor() {
-        this.AppConfiguration = ref<AppConfiguration>({
-            appName: "SaaS Template",
-            // ... más configuración
-        });
-        
-        this.eventBus = mitt<Events>();
-        
-        this.modal = ref<Modal>({
-            modalView: null,
-            modalOnCloseFunction: null,
-            viewType: ViewTypes.DEFAULTVIEW
-        });
-        
-        this.dropdownMenu = ref<DropdownMenu>({
-            showing: false,
-            title: "",
-            component: null,
-            width: "300px",
-            position_x: "0px",
-            position_y: "0px",
-            activeElementWidth: "0px",
-            activeElementHeight: "0px",
-            canvasWidth: "0px",
-            canvasHeight: "0px"
-        });
-        
-        this.confirmationMenu = ref<confirmationMenu>({
-            type: confMenuType.INFO,
-            title: "",
-            message: "",
-            confirmationAction: undefined,
-            acceptButtonText: "Aceptar",
-            cancelButtonText: "Cancelar"
-        });
-        
-        this.ToastList = ref<Toast[]>([]);
-    }
-    
-    // Métodos adicionales...
-    pushToast(options: { type: ToastType; title: string; message: string; duration?: number }) { /* ... */ }
-    openModal(options: { component: Component; onFunction: Function }) { /* ... */ }
-    closeModalOnFunction(param: any) { /* ... */ }
-    // etc...
-}
-```
-
-### Ventajas de Usar una Interfaz Container
-
-1. **Contrato claro**: Define exactamente qué propiedades debe tener ApplicationUIService
-2. **Tipado fuerte**: TypeScript valida que todas las propiedades estén implementadas
-3. **Documentación**: La interfaz sirve como documentación de la estructura del servicio
-4. **Testing**: Facilita crear mocks que implementen ApplicationUIContext
-
-### Ejemplo de Mock para Testing
-
-```typescript
-// En tests
-const mockUIContext: ApplicationUIContext = {
-    AppConfiguration: ref<AppConfiguration>({
-        appName: "Test App",
-        // ... configuración mínima
-    }),
-    eventBus: mitt<Events>(),
-    modal: ref<Modal>({
-        modalView: null,
-        modalOnCloseFunction: null,
-        viewType: ViewTypes.DEFAULTVIEW
-    }),
-    dropdownMenu: ref<DropdownMenu>({ /* ... */ }),
-    confirmationMenu: ref<confirmationMenu>({ /* ... */ }),
-    ToastList: ref<Toast[]>([])
-};
-
-// Inyectar en componente para testing
-provide('ApplicationUIService', mockUIContext);
-```
-
-### Consideraciones
-
-- ✅ **Solo tipado**: Esta interfaz NO tiene implementación, solo define la estructura
-- ✅ **Reactivo**: Todos los estados son `Ref<>` excepto `eventBus` (que ya es reactivo por diseño)
-- ✅ **Centralizado**: Agrupa todo el estado UI en un solo lugar conceptual
-- ⚠️ **No hay setters**: Los métodos de ApplicationUIService (pushToast, openModal, etc.) no están en esta interfaz
-
----
-
-## 8. EnumAdapter - Adaptador de Enums
-
-### Ubicación
-`src/models/enum_adapter.ts`
-
-### Código
+**ENUMADAPTER CLASS:**
 ```typescript
 export class EnumAdapter {
-    private enumRef: any;
+    private enumRef: any;  // any porque acepta cualquier enum
 
     constructor(enumRef: any) {
         this.enumRef = enumRef;
@@ -1016,237 +186,483 @@ export class EnumAdapter {
 
     getKeyValuePairs(): { key: string; value: number }[] {
         return Object.keys(this.enumRef)
-            .filter(key => isNaN(Number(key)))  // ← Filtrar keys numéricas
+            .filter(key => isNaN(Number(key)))  // Filtrar "0" "1" "2" etc
             .map(key => ({
-                key: key,
-                value: this.enumRef[key]
+                key: key,                       // "SUCCESS" "ERROR" etc
+                value: this.enumRef[key]       // 0, 1, etc
             }));
     }
 }
 ```
+**PROBLEMA REVERSE MAPPING:** Enum numérico ToastType {SUCCESS: 0, ERROR: 1} genera runtime {SUCCESS: 0, ERROR: 1, 0: "SUCCESS", 1: "ERROR"} duplicando keys, Object.keys retorna ["0", "1", "SUCCESS", "ERROR"] con duplicados. SOLUCION: isNaN(Number(key)) filtra keys numéricas "0" "1" retornando solo ["SUCCESS", "ERROR"], map genera [{key: "SUCCESS", value: 0}, {key: "ERROR", value: 1}] limpio para ListInputComponent dropdown options.
 
-### Descripción
+## 5. FLUJO DE FUNCIONAMIENTO
 
-Clase utilitaria para convertir enums de TypeScript en arrays de `{ key, value }` que pueden usarse en componentes de selección como `ListInputComponent`. Resuelve el problema de que los enums numéricos de TypeScript tienen "reverse mapping".
+**PASO 1 - Inicializar AppConfiguration:**
+ApplicationUIService constructor ejecuta creando ref<AppConfiguration> inicializando valores, lee import.meta.env.VITE_API_BASE_URL estableciendo apiBaseUrl, lee import.meta.env.MODE estableciendo environment development o production, lee localStorage.getItem('darkMode') estableciendo isDarkMode booleano, resto propiedades hardcodeadas defaults razonables, AppConfiguration reactivo changes propagate UI automáticamente.
 
-### Problema que Resuelve: Reverse Mapping de Enums
+**PASO 2 - Cambiar Vista a ListView:**
+Usuario navega /products, router ejecuta Application.changeViewToListView(Products), método establece Application.View.value con entityClass Products entityObject null component DefaultListView viewType ViewTypes.LISTVIEW isValid true entityOid empty, ActionsComponent computed ListButtons reacciona renderizando NewButton RefreshButton según viewType, DefaultListView renderiza tabla registros llamando Products.all() fetching API.
 
+**PASO 3 - Crear Nueva Entidad:**
+Usuario hace clic NewButton ejecutando handleNew(), crea instancia newProduct = new Products() con defaults vacíos, llama Application.changeViewToDetailView(newProduct), método establece View.value con entityClass Products entityObject newProduct component DefaultDetailView viewType DETAILVIEW isValid false entityOid "new", router navega /products/new, DefaultDetailView renderiza formulario inputs vacíos, ActionsComponent renderiza SaveButton ValidateButton.
+
+**PASO 4 - Abrir Modal Lookup:**
+Usuario hace clic ObjectInputComponent botón lookup seleccionar Customer relación, ejecuta openLookup() llamando ApplicationUIService.openModal({component: DefaultLookupListView, onFunction: callback}), service establece modal.value con modalView DefaultLookupListView modalOnCloseFunction callback almacenado viewType LOOKUPVIEW, emite show-modal evento, modal wrapper listener establece isModalVisible true renderizando LookupListView dentro modal backdrop, usuario ve tabla customers seleccionables.
+
+**PASO 5 - Seleccionar Entidad Modal:**
+Usuario hace clic fila customer tabla lookup, LookupItem ejecuta clickedItem(customer) llamando ApplicationUIService.closeModalOnFunction(customer), service obtiene callback desde modal.value.modalOnCloseFunction ejecutando callback(customer), callback en ObjectInputComponent actualiza modelValue.value = customer emitiendo update:modelValue, service emite hide-modal evento modal wrapper cierra, service resetea modal.value a defaults modalView null, ObjectInputComponent muestra customer.name en input readonly.
+
+**PASO 6 - Mostrar Toast Notificación:**
+Usuario hace clic SaveButton iniciando save operation, código ejecuta ApplicationUIService.pushToast({type: ToastType.SUCCESS, title: "Éxito", message: "Guardado", duration: 3000}), service crea newToast = new Toast(message, type) generando ID automático, pushea newToast a ToastList.value array, ToastContainerComponent v-for reactivo renderiza ToastItemComponent con :key="toast.id", ToastItemComponent mounted setTimeout 3000ms llamando removeToast(), timeout completa splice toast desde ToastList array desapareciendo UI con transition.
+
+**PASO 7 - Abrir Confirmation Dialog:**
+Usuario hace clic DeleteButton acción destructiva, código llama ApplicationUIService.openConfirmationMenu({type: confMenuType.WARNING, title: "Eliminar?", message: "No se puede deshacer", confirmationAction: () => entity.delete()}), service establece confirmationMenu.value con datos callback, emite show-confirmation evento, ConfirmationDialogComponent listener establece isVisible true renderizando modal header amarillo WARNING, usuario hace clic Aceptar ejecutando handleConfirm llamando confirmationAction() con entity.delete(), service emite hide-confirmation cierra modal.
+
+**PASO 8 - Posicionar Dropdown Menu:**
+Usuario hace clic botón opciones trigger dropdown, código llama ApplicationUIService.openDropdownMenu recibiendo triggerElement event.target, service calcula const triggerRect = triggerElement.getBoundingClientRect() obteniendo x y width height, calcula posición inicial x = triggerRect.left y = triggerRect.bottom intentando abrir abajo-derecha, verifica if (x + menuWidth > window.innerWidth) ajustando x = triggerRect.right - menuWidth abriendo izquierda, verifica if (y + menuHeight > window.innerHeight) ajustando y = triggerRect.top - menuHeight abriendo arriba, establece dropdownMenu.value con position_x position_y calculadas showing true, DropdownMenu.vue renderiza posición absolute correcta visible dentro viewport.
+
+**PASO 9 - Validar Vista Actual:**
+Usuario hace clic ValidateButton iniciando validation, ejecuta Application.eventBus.emit('validate-inputs') notificando todos input components, cada input ejecuta validateInput() actualizando hasError ref según metadata validations, ValidateButton espera nextTick() permitiendo DOM update, emite validate-entity evento para cross-field validations custom, obtiene entity = Application.View.value.entityObject llamando await entity.validate() ejecutando getPropertyValidations(), actualiza Application.View.value.isValid = result true o false, SaveButton reacciona computed isDisabled habilitando/deshabilitando según isValid state.
+
+**PASO 10 - Convertir Enum con EnumAdapter:**
+Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, DefaultDetailView itera properties obteniendo propertyType metadata detectando EnumAdapter instance, renderiza ListInputComponent pasando :property-enum-values="adapter", ListInputComponent computed enumOptions ejecuta adapter.getKeyValuePairs() filtrando reverse mapping, retorna [{key: "LOW", value: 0}, {key: "MEDIUM", value: 1}, {key: "HIGH", value: 2}], v-for option renderiza dropdown options value numérico label string, usuario selecciona option actualizando v-model modelValue con value numérico 0 1 2 matching enum Priority values.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE usar interfaces para structures data sin lógica, classes solo cuando necesario constructor o métodos como Toast EnumAdapter.
+
+**REGLA 2:** SIEMPRE almacenar estados UI en Ref<> permitiendo reactividad Vue 3, NUNCA usar variables plain perdiendo reactivity.
+
+**REGLA 3:** SIEMPRE establecer entityOid = "new" para entidades nuevas sin ID backend permitiendo detectar modo creación.
+
+**REGLA 4:** SIEMPRE ejecutar modalOnCloseFunction callback antes resetear modal.value a null evitando perder referencia callback.
+
+**REGLA 5:** SIEMPRE generar Toast ID automáticamente con Math.random().toString(36) garantizando uniqueness para :key v-for.
+
+**REGLA 6:** SIEMPRE usar EnumAdapter.getKeyValuePairs() para enums numéricos en dropdowns, NUNCA Object.keys directo con reverse mapping duplicados.
+
+**REGLA 7:** SIEMPRE calcular dropdownMenu position_x position_y verificando viewport boundaries evitando menú cortado fuera pantalla.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Mutar properties AppConfiguration directamente sin considerar persistencia, solo isDarkMode persiste localStorage resto volatile.
+
+**PROHIBIDO:** Establecer View.entityObject a instancia entity sin actualizar entityClass typeof correspondiente causando type mismatch.
+
+**PROHIBIDO:** Almacenar lógica business en models interfaces, son pure data structures sin métodos excepto classes Toast EnumAdapter.
+
+**PROHIBIDO:** Olvidar resetear modal.value dropdownMenu.value confirmationMenu.value a defaults después cerrar causando state leak próxima apertura.
+
+**PROHIBIDO:** Crear Toast instances manualmente sin usar ApplicationUIService.pushToast helper perdiendo toast lifecycle management auto-dismiss.
+
+**PROHIBIDO:** Usar Object.keys directamente en enums numéricos sin filtrar isNaN generando duplicate options dropdown.
+
+**PROHIBIDO:** Cambiar View.viewType sin cambiar View.component correspondiente causando renderizado componente incorrecto para vista.
+
+## 8. DEPENDENCIAS
+
+**LIBRERIAS EXTERNAS:**
+- vue: Ref computed reactive para reactividad
+- mitt: Emitter<Events> type para eventBus typings
+
+**ENUMS:**
+- ViewTypes: LISTVIEW DETAILVIEW LOOKUPVIEW para View.viewType
+- confMenuType: INFO SUCCESS WARNING ERROR para confirmationMenu.type
+- ToastType: SUCCESS ERROR INFO WARNING para Toast.type
+
+**ENTITIES:**
+- BaseEntity: typeof BaseEntity para View.entityClass y Modal.modalView
+- Entidades concretas: Products Customer Task implementando BaseEntity
+
+**COMPONENTES QUE CONSUMEN:**
+- DefaultDetailView: Lee View.entityObject entityClass
+- DefaultListView: Lee View.entityClass
+- ActionsComponent: Lee View.viewType decidiendo botones
+- ConfirmationDialogComponent: Lee confirmationMenu.value renderizando modal
+- ToastContainerComponent: Lee ToastList.value array v-for rendering
+- DropdownMenu.vue: Lee dropdownMenu.value posicionando menú
+- ListInputComponent: Recibe EnumAdapter.getKeyValuePairs() dropdown options
+
+## 9. RELACIONES
+
+**VIEW Y NAVIGATION:**
+Application.View.value conecta router con UI, router params module oid establecen entityClass entityOid, Application.changeViewToDetailView actualiza View triggering reactivity, ActionsComponent DefaultDetailView DefaultListView todos leen View properties rendering condicionalmente, View.isValid controla SaveButton disabled state.
+
+**MODAL Y OBJECTINPUTCOMPONENT:**
+ObjectInputComponent openLookup establece modal.value.modalOnCloseFunction callback, Usuario selección ejecuta closeModalOnFunction pasando selected entity, callback actualiza ObjectInputComponent modelValue, separación estado modal evento show-modal permite modal wrapper renderizar component correcto props apropiadas.
+
+**CONFIRMATIONMENU Y ACCIONES DESTRUCTIVAS:**
+Botones destructivos Delete Discard llaman openConfirmationMenu pasando confirmationAction callback, type confMenuType.WARNING renderiza header amarillo alert visual, usuario Aceptar ejecuta callback acción destructiva, Cancelar solo cierra sin ejecutar, pattern garantiza confirmación explícita usuario acciones irreversibles.
+
+**TOAST Y OPERACIONES ASYNC:**
+SaveButton fetch API muestra loading emite show-loading, success pushToast tipo SUCCESS message positivo, error pushToast tipo ERROR message descriptivo, finally emite hide-loading, ToastItemComponent auto-dismiss 3000ms splice desde ToastList, múltiples toasts simultáneos apilados verticalmente cada ID único :key.
+
+**ENUMADAPTER Y LISTINPUTCOMPONENT:**
+Decorador @PropertyType(new EnumAdapter(Priority)) almacena metadata, DefaultDetailView detecta EnumAdapter instance pasando a ListInputComponent, component llama getKeyValuePairs() obteniendo cleaned array [{key value}], v-for option renderiza dropdown, selección actualiza entity property con value numérico matching enum, pattern permite cualquier enum TypeScript en UI sin hardcode options.
+
+**APPLICATIONUICONTEXT Y SERVICE:**
+ApplicationUIContext define contrato typings ApplicationUIService debe implementar, service constructor inicializa todas propiedades Ref matching interface structure, métodos service como pushToast openModal manipulan estas propiedades triggering reactivity, interface permite testing mocks implementing ApplicationUIContext inyectando componentes.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO APPCONFIGURATION USAGE:**
 ```typescript
-enum ToastType {
-    SUCCESS,  // = 0
-    ERROR,    // = 1
-    INFO,     // = 2
-    WARNING   // = 3
-}
+// Acceder configuración
+const config = Application.ApplicationUIService.AppConfiguration.value;
 
-// TypeScript genera esto en runtime:
-ToastType = {
-    SUCCESS: 0,
-    ERROR: 1,
-    INFO: 2,
-    WARNING: 3,
-    0: "SUCCESS",  // ← Reverse mapping
-    1: "ERROR",
-    2: "INFO",
-    3: "WARNING"
-}
+console.log('API URL:', config.apiBaseUrl);
+console.log('Environment:', config.environment);
+console.log('Items per page:', config.itemsPerPage);
 
-// Object.keys(ToastType) retorna:
-// ["0", "1", "2", "3", "SUCCESS", "ERROR", "INFO", "WARNING"]
-// ← Duplicados! No queremos los numéricos
-```
-
-### Solución: Filtrar con isNaN
-
-```typescript
-const adapter = new EnumAdapter(ToastType);
-const pairs = adapter.getKeyValuePairs();
-
-// Resultado:
-[
-    { key: "SUCCESS", value: 0 },
-    { key: "ERROR", value: 1 },
-    { key: "INFO", value: 2 },
-    { key: "WARNING", value: 3 }
-]
-// ✅ Solo las keys string, sin duplicados
-```
-
-### Uso en Entidades
-
-```typescript
-// products.ts
-import { EnumAdapter } from '@/models/enum_adapter';
-import { ToastType } from '@/enums/ToastType';
-
-class Product extends BaseEntity {
-    @PropertyName("Tipo de Toast")
-    @PropertyType(new EnumAdapter(ToastType))  // ← Decorator con adapter
-    toastType: ToastType = ToastType.INFO;
-}
-```
-
-### Uso en ListInputComponent
-
-```vue
-<!-- ListInputComponent.vue -->
-<template>
-    <label>{{ getPropertyNameByKey(propertyKey) }}</label>
-    <select v-model="modelValue">
-        <option 
-            v-for="item in enumOptions" 
-            :key="item.value"
-            :value="item.value">
-            {{ item.key }}
-        </option>
-    </select>
-</template>
-
-<script setup lang="ts">
-import { EnumAdapter } from '@/models/enum_adapter';
-
-const props = defineProps<{
-    propertyEnumValues: EnumAdapter;  // ← Recibe el adapter
-}>();
-
-const enumOptions = computed(() => {
-    return props.propertyEnumValues.getKeyValuePairs();
-    // Retorna: [{ key: "SUCCESS", value: 0 }, ...]
+// Usar en axios
+axios.get(`${config.apiBaseUrl}/products`, {
+    timeout: config.apiTimeout,  // 30000ms
+    headers: {
+        'Authorization': `Bearer ${localStorage.getItem(config.authTokenKey)}`
+    }
 });
-</script>
-```
 
-### Renderizado Resultante
-
-```html
-<select v-model="modelValue">
-    <option value="0">SUCCESS</option>
-    <option value="1">ERROR</option>
-    <option value="2">INFO</option>
-    <option value="3">WARNING</option>
-</select>
-```
-
-### Ejemplo Completo
-
-```typescript
-// 1. Definir enum
-enum Priority {
-    LOW,
-    MEDIUM,
-    HIGH,
-    URGENT
+// Validar file size
+if (file.size > config.maxFileSize) {
+    throw new Error(`Archivo muy grande. Máximo ${config.maxFileSize} bytes`);
 }
 
-// 2. Usar en entidad
+// Toggle dark mode
+Application.ApplicationUIService.toggleDarkMode();
+// Internamente: AppConfiguration.value.isDarkMode = !isDarkMode;
+// localStorage.setItem('darkMode', isDarkMode.toString());
+```
+
+**EJEMPLO VIEW STATES:**
+```typescript
+// ListView state
+Application.changeViewToListView(Products);
+// Application.View.value = {
+//     entityClass: Products,
+//     entityObject: null,
+//     component: DefaultListView,
+//     viewType: ViewTypes.LISTVIEW,
+//     isValid: true,
+//     entityOid: ""
+// };
+
+// DetailView NEW state
+const newProduct = new Products();
+Application.changeViewToDetailView(newProduct);
+// Application.View.value = {
+//     entityClass: Products,
+//     entityObject: newProduct,
+//     component: DefaultDetailView,
+//     viewType: ViewTypes.DETAILVIEW,
+//     isValid: false,  // Required fields empty
+//     entityOid: "new"
+// };
+
+// DetailView EDIT state
+const existingProduct = new Products({ id: 123, name: "Laptop" });
+Application.changeViewToDetailView(existingProduct);
+// Application.View.value = {
+//     entityClass: Products,
+//     entityObject: existingProduct,
+//     component: DefaultDetailView,
+//     viewType: ViewTypes.DETAILVIEW,
+//     isValid: true,
+//     entityOid: "123"
+// };
+
+// ActionsComponent lee viewType
+const ListButtons = computed(() => {
+    if (Application.View.value.viewType === ViewTypes.LISTVIEW) {
+        return [NewButton, RefreshButton];
+    } else if (Application.View.value.viewType === ViewTypes.DETAILVIEW) {
+        return [SaveButton, ValidateButton];
+    }
+    return [];
+});
+```
+
+**EJEMPLO MODAL LOOKUP FLOW:**
+```typescript
+// 1. ObjectInputComponent abre lookup
+function openLookup() {
+    Application.ApplicationUIService.openModal({
+        component: DefaultLookupListView,
+        onFunction: (selectedCustomer: Customer) => {
+            modelValue.value = selectedCustomer;
+            emit('update:modelValue', selectedCustomer);
+        }
+    });
+}
+
+// 2. Service configura modal
+openModal({ component, onFunction }) {
+    this.modal.value = {
+        modalView: component,
+        modalOnCloseFunction: onFunction,
+        viewType: ViewTypes.LOOKUPVIEW
+    };
+    this.eventBus.emit('show-modal');
+}
+
+// 3. Usuario selecciona entidad
+function clickedItem(customer: Customer) {
+    Application.ApplicationUIService.closeModalOnFunction(customer);
+}
+
+// 4. Service ejecuta callback y cierra
+closeModalOnFunction(param: any) {
+    const callback = this.modal.value.modalOnCloseFunction;
+    if (callback) {
+        callback(param);  // Actualiza ObjectInputComponent
+    }
+    this.eventBus.emit('hide-modal');
+    this.modal.value = {
+        modalView: null,
+        modalOnCloseFunction: null,
+        viewType: ViewTypes.DEFAULTVIEW
+    };
+}
+```
+
+**EJEMPLO CONFIRMATION DIALOG:**
+```typescript
+// Confirmar eliminación
+Application.ApplicationUIService.openConfirmationMenu({
+    type: confMenuType.WARNING,
+    title: 'Eliminar producto?',
+    message: 'Esta acción no se puede deshacer',
+    acceptButtonText: 'Sí, eliminar',
+    cancelButtonText: 'No, cancelar',
+    confirmationAction: async () => {
+        Application.eventBus.emit('show-loading');
+        
+        try {
+            await product.delete();
+            
+            Application.ApplicationUIService.pushToast({
+                type: ToastType.SUCCESS,
+                title: 'Producto eliminado'
+            });
+            
+            Application.changeViewToListView(Products);
+        } catch (error) {
+            Application.ApplicationUIService.pushToast({
+                type: ToastType.ERROR,
+                title: 'Error al eliminar',
+                message: error.message
+            });
+        } finally {
+            Application.eventBus.emit('hide-loading');
+        }
+    }
+});
+
+// ConfirmationDialog renderiza
+<div class="confirmation-dialog">
+    <div class="header" :style="{ backgroundColor: getHeaderColor }">
+        <h3>{{ menu.title }}</h3>
+    </div>
+    <div class="body">
+        <p>{{ menu.message }}</p>
+    </div>
+    <div class="footer">
+        <button @click="handleCancel">{{ cancelButtonText }}</button>
+        <button @click="handleConfirm">{{ acceptButtonText }}</button>
+    </div>
+</div>
+```
+
+**EJEMPLO TOAST LIFECYCLE:**
+```typescript
+// Crear toast
+Application.ApplicationUIService.pushToast({
+    type: ToastType.SUCCESS,
+    title: 'Guardado exitoso',
+    message: 'El producto se guardó correctamente',
+    duration: 3000
+});
+
+// Internamente pushToast:
+const newToast = new Toast(
+    `${title}: ${message}`,  // Concatena title + message
+    type
+);
+// newToast = { id: "x7k3md9w2", message: "...", type: ToastType.SUCCESS }
+
+this.ToastList.value.push(newToast);
+
+// ToastContainerComponent renderiza
+<ToastItemComponent 
+    v-for="toast in ToastList.value"
+    :key="toast.id"
+    :toast="toast"
+/>
+
+// ToastItemComponent auto-dismiss
+onMounted(() => {
+    setTimeout(() => {
+        const index = ToastList.value.findIndex(t => t.id === props.toast.id);
+        if (index !== -1) {
+            ToastList.value.splice(index, 1);
+        }
+    }, 3000);
+});
+```
+
+**EJEMPLO ENUMADAPTER:**
+```typescript
+// Definir enum
+enum Priority {
+    LOW,      // 0
+    MEDIUM,   // 1
+    HIGH,     // 2
+    URGENT    // 3
+}
+
+// Problema reverse mapping
+console.log(Object.keys(Priority));
+// ["0", "1", "2", "3", "LOW", "MEDIUM", "HIGH", "URGENT"]
+// ← Duplicados! No queremos "0" "1" "2" "3"
+
+// Solución EnumAdapter
+const adapter = new EnumAdapter(Priority);
+const pairs = adapter.getKeyValuePairs();
+console.log(pairs);
+// [
+//     { key: "LOW", value: 0 },
+//     { key: "MEDIUM", value: 1 },
+//     { key: "HIGH", value: 2 },
+//     { key: "URGENT", value: 3 }
+// ]
+
+// Usar en entidad
 class Task extends BaseEntity {
     @PropertyName("Prioridad")
     @PropertyType(new EnumAdapter(Priority))
     priority: Priority = Priority.MEDIUM;
 }
 
-// 3. En DefaultDetailView, se renderiza automáticamente:
+// DefaultDetailView renderiza
 <ListInputComponent
-    :entity="task"
-    :property-key="'priority'"
     :property-enum-values="new EnumAdapter(Priority)"
     v-model="task.priority"
 />
 
-// 4. Usuario ve dropdown:
-// ┌─────────────────┐
-// │ Prioridad:      │
-// │ [MEDIUM      ▼] │ ← Selector con opciones
-// └─────────────────┘
+// ListInputComponent
+const enumOptions = computed(() => {
+    return props.propertyEnumValues.getKeyValuePairs();
+});
 
-// 5. Al abrir el dropdown:
-// ┌─────────────────┐
-// │ Prioridad:      │
-// │ ┌─────────────┐ │
-// │ │ LOW         │ │
-// │ │ MEDIUM  ✓   │ │ ← Seleccionado
-// │ │ HIGH        │ │
-// │ │ URGENT      │ │
-// │ └─────────────┘ │
-// └─────────────────┘
+<select v-model="modelValue">
+    <option 
+        v-for="item in enumOptions" 
+        :key="item.value"
+        :value="item.value">
+        {{ item.key }}
+    </option>
+</select>
+
+// Renderiza:
+// <option value="0">LOW</option>
+// <option value="1">MEDIUM</option>
+// <option value="2">HIGH</option>
+// <option value="3">URGENT</option>
 ```
 
-### Consideraciones
-
-- ✅ **Soluciona reverse mapping**: Filtra correctamente enums numéricos
-- ⚠️ **Solo enums numéricos**: No funciona con string enums (tampoco los necesita, no tienen reverse mapping)
-- ✅ **Tipado débil**: Usa `any` porque debe aceptar cualquier enum
-- ⚠️ **Sin nombres legibles**: Muestra "SUCCESS" en lugar de "Éxito" (podría extenderse con un mapa de traducciones)
-
-### String Enums (No Necesitan Adapter)
-
+**EJEMPLO DROPDOWN POSITIONING:**
 ```typescript
-// String enums NO tienen reverse mapping
-enum ViewGroupRow {
-    SINGLE = 'single',
-    PAIR = 'pair',
-    TRIPLE = 'triple'
-}
-
-// Object.keys(ViewGroupRow) retorna:
-// ["SINGLE", "PAIR", "TRIPLE"]  ← Sin duplicados, no necesita adapter
-
-ViewGroupRow = {
-    SINGLE: "single",
-    PAIR: "pair",
-    TRIPLE: "triple"
-    // ← No hay reverse mapping "single": "SINGLE"
+// Usuario hace click botón
+function openUserMenu(event: MouseEvent) {
+    const button = event.target as HTMLElement;
+    const buttonRect = button.getBoundingClientRect();
+    
+    // Dimensiones
+    const menuWidth = 250;
+    const menuHeight = 300;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Posición inicial (abajo-derecha)
+    let x = buttonRect.left;
+    let y = buttonRect.bottom;
+    
+    // Ajustar si se sale derecha
+    if (x + menuWidth > viewportWidth) {
+        x = buttonRect.right - menuWidth;  // Alinear derecha
+    }
+    
+    // Ajustar si se sale abajo
+    if (y + menuHeight > viewportHeight) {
+        y = buttonRect.top - menuHeight;  // Abrir arriba
+    }
+    
+    Application.ApplicationUIService.dropdownMenu.value = {
+        showing: true,
+        title: "Opciones Usuario",
+        component: UserMenuComponent,
+        width: `${menuWidth}px`,
+        position_x: `${x}px`,
+        position_y: `${y}px`,
+        activeElementWidth: `${buttonRect.width}px`,
+        activeElementHeight: `${buttonRect.height}px`,
+        canvasWidth: `${viewportWidth}px`,
+        canvasHeight: `${viewportHeight}px`
+    };
 }
 ```
 
----
-
-## Resumen de Models
-
-| Model | Tipo | Propósito | Usado en |
-|-------|------|-----------|----------|
-| **AppConfiguration** | Interface | Configuración global de la app | `ApplicationUIService.AppConfiguration` |
-| **View** | Interface | Estado de la vista actual (CRUD) | `Application.View` |
-| **Modal** | Interface | Estado del modal global (lookups) | `ApplicationUIService.modal` |
-| **DropdownMenu** | Interface | Estado del menú desplegable | `ApplicationUIService.dropdownMenu` |
-| **confirmationMenu** | Interface | Estado del diálogo de confirmación | `ApplicationUIService.confirmationMenu` |
-| **Toast** | Class | Notificación toast individual | `ApplicationUIService.ToastList[]` |
-| **ApplicationUIContext** | Interface | Agrupa todos los estados UI | Tipo de `ApplicationUIService` |
-| **EnumAdapter** | Class | Convertir enums a key-value pairs | `@PropertyType(new EnumAdapter(Enum))` |
-
----
-
-## Debugging
-
-### Ver estado de View actual
+**DEBUGGING MODELS:**
 ```typescript
-console.log('Current view:', Application.View.value);
+// Ver View actual
+console.log('View:', Application.View.value);
 // { entityClass: Products, entityObject: {...}, viewType: 2, ... }
-```
 
-### Ver configuración
-```typescript
+// Ver configuración
 console.log('Config:', Application.ApplicationUIService.AppConfiguration.value);
-```
 
-### Ver toasts activos
-```typescript
+// Ver toasts activos
 console.log('Toasts:', Application.ApplicationUIService.ToastList.value);
-```
+// [{ id: "x7k3md9w2", message: "...", type: 0 }]
 
-### Ver modal state
-```typescript
+// Ver modal state
 console.log('Modal:', Application.ApplicationUIService.modal.value);
-```
 
-### Ver enum pairs
-```typescript
-const adapter = new EnumAdapter(ToastType);
+// Ver enum pairs
+const adapter = new EnumAdapter(Priority);
 console.log('Enum pairs:', adapter.getKeyValuePairs());
-// [{ key: "SUCCESS", value: 0 }, ...]
+// [{ key: "LOW", value: 0 }, ...]
+
+// Testear toast ID generation
+for (let i = 0; i < 5; i++) {
+    const toast = new Toast("Test", ToastType.INFO);
+    console.log('Toast ID:', toast.id);
+}
+// x7k3md9w2
+// p4n8kj2ls
+// m9v2xc7qw
+// ... (todos diferentes)
 ```
 
-### Ver dropdown state
-```typescript
-console.log('Dropdown:', Application.ApplicationUIService.dropdownMenu.value);
-```
+**LIMITACIONES ACTUALES:**
+EnumAdapter usa any type perdiendo type safety porque debe aceptar cualquier enum, podría mejorarse con TypeScript generics pero complica decoradores. Toast class no almacena duration property, ToastItemComponent hardcodea 3000ms timeout, podría agregarse duration a constructor. Modal.customViewId definido pero no usado actualmente, reservado vistas custom futuras. DropdownMenu no soporta stack múltiples dropdowns simultáneos, solo uno abierto vez, cerrar anterior antes abrir nuevo.
+
+## 11. REFERENCIAS CRUZADAS
+
+**DOCUMENTOS RELACIONADOS:**
+- application-singleton.md: Application.View singleton y changeViewToListView changeViewToDetailView métodos
+- application-ui-service.md: ApplicationUIService implementando ApplicationUIContext con métodos pushToast openModal openConfirmationMenu
+- DefaultDetailView.md: Componente lee View.entityObject entityClass renderizando formulario
+- DefaultListView.md: Componente lee View.entityClass renderizando tabla
+- ActionsComponent.md: Componente lee View.viewType decidiendo botones renderizar
+- ObjectInputComponent.md: Componente usa Modal openModal lookup selection
+- ConfirmationDialogComponent.md: Componente lee confirmationMenu.value renderizando dialog
+- ToastComponents.md: ToastContainerComponent y ToastItemComponent renderizando Toast instances
+- DropdownMenu.md: Componente lee dropdownMenu.value posicionando menú
+- ListInputComponent.md: Componente usa EnumAdapter.getKeyValuePairs() dropdown options
+- Enums.md: ViewTypes confMenuType ToastType usados en models
+- router.md: Vue Router integración con View.entityOid params navegación
+
+**UBICACION:** copilot/layers/05-advanced/Models.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

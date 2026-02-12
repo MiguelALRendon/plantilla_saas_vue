@@ -1,519 +1,989 @@
-# 👁️ Views Overview - Vistas del Framework
+# VISTAS DEL FRAMEWORK
 
-**Referencias:**
-- `../02-base-entity/metadata-access.md` - Metadatos usados por vistas
-- `form-inputs.md` - Inputs renderizados en DetailView
-- `../03-application/application-singleton.md` - Application gestiona vistas
+## 1. Propósito
 
----
+Este documento describe las cuatro vistas principales del framework que renderizan automáticamente representaciones visuales de entidades utilizando metadatos. Las vistas incluyen: default_listview (lista tabular), default_detailview (formulario de detalle), default_lookup_listview (selección modal) y list.vue (vista de testing). Adicionalmente documenta el componente DetailViewTableComponent responsable de renderizar tablas dinámicas.
 
-## 📍 Ubicación en el Código
+Los componentes de vista son el punto de entrada principal para la interacción del usuario con las entidades, traduciendo metadatos de decoradores en interfaces funcionales y completas.
 
-**Carpeta:** `src/views/`  
-**Vistas:**
-- `default_listview.vue`
-- `default_detailview.vue`
-- `default_lookup_listview.vue`
-- `list.vue`
+## 2. Alcance
 
----
+### Incluye
+- Archivo default_listview.vue y su estructura
+- Archivo default_detailview.vue con generación automática de formularios
+- Archivo default_lookup_listview.vue para selección de entidades
+- Archivo list.vue para testing
+- Componente DetailViewTableComponent para tablas dinámicas
+- Computed groupedProperties en default_detailview
+- Métodos getRowComponent y getArrayListsTabs
+- Lógica de selección de inputs según tipo de propiedad
+- Integración con FormGroupComponent y FormRowComponents
+- Flujos de renderizado ListView y DetailView
 
-## 🎯 Propósito
+### No Incluye
+- Componentes de input individuales (TextInput, NumberInput, etc)
+- Componentes de layout (FormGroupComponent, FormRowComponents)
+- Lógica de navegación y enrutamiento
+- Sistema de validación de inputs
+- Gestión de estado global Application
 
-Las **vistas** son componentes Vue que renderizan las diferentes representaciones de una entidad:
-- Lista de registros (ListView)
-- Formulario de edición (DetailView)
-- Selección en modal (LookupView)
+## 3. Definiciones Clave
 
-**Generación automática:** Las vistas leen metadatos de la entidad para generar la UI.
+**default_listview.vue**: Vista que renderiza una tabla de registros mediante DetailViewTableComponent. Establece ViewTypes.LISTVIEW al montarse.
 
----
+**default_detailview.vue**: Vista que genera automáticamente un formulario completo a partir de metadatos de entidad, organizando inputs en grupos según decoradores @ViewGroup y @ViewGroupRow.
 
-## 📦 1. default_listview.vue
+**default_lookup_listview.vue**: Vista modal que renderiza LookupItem components para selección de entidades relacionadas.
 
-### Descripción
-Vista de lista por defecto que muestra una tabla con todos los registros de una entidad.
+**list.vue**: Vista de testing con funcionalidad básica de prueba (botón toggleDarkMode).
 
-### Archivo
-`src/views/default_listview.vue`
+**DetailViewTableComponent**: Componente de tabla dinámica que genera headers y filas desde getProperties() y renderiza valores según su tipo.
 
-### Estructura
+**groupedProperties**: Computed que lee getViewGroups() y getViewGroupRows(), filtra propiedades ocultas y agrupa chunks consecutivos con el mismo rowType.
+
+**getRowComponent**: Método que retorna dinámicamente el componente de fila apropiado según ViewGroupRow (FormRowTwoItemsComponent, FormRowThreeItemsComponent o div).
+
+**openDetailView**: Método que establece entityOid desde getUniquePropertyValue() e invoca changeViewToDetailView() para navegación.
+
+## 4. Descripción Técnica
+
+### default_listview.vue
+
+**Estructura:**
 
 ```vue
 <template>
     <DetailViewTableComponent />
 </template>
+
+<script>
+import DetailViewTableComponent from '@/components/DetailViewTableComponent.vue';
+import { Application } from '@/libs/application/application';
+import { ViewTypes } from '@/enums/view_types';
+
+export default {
+    components: {
+        DetailViewTableComponent,
+    },
+    mounted() {
+        Application.View.value.viewType = ViewTypes.LISTVIEW;
+    },
+};
+</script>
 ```
 
-### Comportamiento
-1. Renderiza `DetailViewTableComponent` que contiene la tabla
-2. Establece `ViewType` a `LISTVIEW` en `mounted()`
-3. Los datos se generan temporalmente en el componente (hardcoded para testing)
+**Comportamiento:**
+- Template delega completamente renderizado a DetailViewTableComponent
+- mounted() establece Application.View.value.viewType = ViewTypes.LISTVIEW
+- DetailViewTableComponent lee entityClass desde Application y genera tabla automáticamente
+- Click en fila tabla invoca openDetailView navegando a detail view
 
-### Components Utilizados
-- `DetailViewTableComponent` - Tabla principal con datos
+**Datos simulados:**
+- Actualmente utiliza 50 productos hardcoded para testing
+- FUTURE: Implementar carga desde API mediante entityClass.getElementList()
 
-### Notas
-- **Datos simulados**: Actualmente genera 50 productos de prueba
-- **Sin API**: No hace llamadas reales al backend aún
-- **Click en fila**: Abre la vista de detalle del registro
+### default_detailview.vue
 
-### Uso
-```typescript
-@ModuleListComponent(DefaultListview)
-export class MyEntity extends BaseEntity {
-    // ...
-}
-```
-
----
-
-## 📦 2. default_detailview.vue
-
-### Descripción
-Vista de detalle que genera automáticamente un formulario de edición/creación basado en los metadatos de la entidad.
-
-### Archivo
-`src/views/default_detailview.vue`
-
-### Estructura
+**Arquitectura completa:**
 
 ```vue
 <template>
-    <h2>{{ entity.getDefaultPropertyValue() }}</h2>
-    
-    <!-- Propiedades agrupadas -->
-    <div v-for="(group, groupName) in groupedProperties">
-        <FormGroupComponent :title="groupName">
-            <!-- Rows según ViewGroupRow -->
-            <component :is="getRowComponent(chunk.rowType)">
-                <!-- Inputs según tipo de propiedad -->
-                <NumberInputComponent v-if="tipo === Number" />
-                <TextInputComponent v-if="tipo === String && stringType === TEXT" />
-                <BooleanInputComponent v-if="tipo === Boolean" />
-                <!-- etc. -->
-            </component>
+    <div class="detail-view">
+        <h2>{{ entity.getDefaultPropertyValue() }}</h2>
+        
+        <div v-for="group in groupedProperties" :key="group.groupName">
+            <FormGroupComponent :title="group.groupName">
+                <div v-for="chunk in group.chunks" :key="chunk.index">
+                    <component :is="getRowComponent(chunk.rowType)">
+                        <div v-for="prop in chunk.properties" :key="prop.key">
+                            <!-- Selección dinámica de input -->
+                            <NumberInputComponent 
+                                v-if="prop.type === 'Number'"
+                                :entityClass="entityClass"
+                                :entity="entity"
+                                :propertyKey="prop.key"
+                            />
+                            <TextInputComponent 
+                                v-else-if="prop.type === 'String' && prop.stringType === StringType.TEXT"
+                                :entityClass="entityClass"
+                                :entity="entity"
+                                :propertyKey="prop.key"
+                            />
+                            <BooleanInputComponent 
+                                v-else-if="prop.type === 'Boolean'"
+                                :entityClass="entityClass"
+                                :entity="entity"
+                                :propertyKey="prop.key"
+                            />
+                            <DateInputComponent 
+                                v-else-if="prop.type === 'String' && prop.stringType === StringType.DATE"
+                                :entityClass="entityClass"
+                                :entity="entity"
+                                :propertyKey="prop.key"
+                            />
+                            <ObjectInputComponent 
+                                v-else-if="prop.type === 'Object'"
+                                :entityClass="entityClass"
+                                :entity="entity"
+                                :propertyKey="prop.key"
+                            />
+                            <ListInputComponent 
+                                v-else-if="prop.type === 'Enum'"
+                                :entityClass="entityClass"
+                                :entity="entity"
+                                :propertyKey="prop.key"
+                            />
+                        </div>
+                    </component>
+                </div>
+            </FormGroupComponent>
+        </div>
+        
+        <!-- Arrays separados en tabs al final -->
+        <FormGroupComponent title="Listas">
+            <TabControllerComponent>
+                <TabComponent 
+                    v-for="arrayKey in getArrayListsTabs()" 
+                    :key="arrayKey"
+                    :title="entityClass.getPropertyNameByKey(arrayKey)"
+                >
+                    <ArrayInputComponent 
+                        :entityClass="entityClass"
+                        :entity="entity"
+                        :propertyKey="arrayKey"
+                        :type-value="getArrayPropertyType(arrayKey)"
+                    />
+                </TabComponent>
+            </TabControllerComponent>
         </FormGroupComponent>
     </div>
-    
-    <!-- Arrays en tabs -->
-    <FormGroupComponent title="Listas">
-        <TabControllerComponent>
-            <TabComponent v-for="arrayKey">
-                <ArrayInputComponent />
-            </TabComponent>
-        </TabControllerComponent>
+</template>
+
+<script>
+import { computed } from 'vue';
+import { Application } from '@/libs/application/application';
+import FormGroupComponent from '@/components/FormGroupComponent.vue';
+import FormRowTwoItemsComponent from '@/components/FormRowTwoItemsComponent.vue';
+import FormRowThreeItemsComponent from '@/components/FormRowThreeItemsComponent.vue';
+import NumberInputComponent from '@/components/NumberInputComponent.vue';
+import TextInputComponent from '@/components/TextInputComponent.vue';
+import BooleanInputComponent from '@/components/BooleanInputComponent.vue';
+import DateInputComponent from '@/components/DateInputComponent.vue';
+import ObjectInputComponent from '@/components/ObjectInputComponent.vue';
+import ListInputComponent from '@/components/ListInputComponent.vue';
+import ArrayInputComponent from '@/components/ArrayInputComponent.vue';
+import TabControllerComponent from '@/components/TabControllerComponent.vue';
+import TabComponent from '@/components/TabComponent.vue';
+import { StringType } from '@/enums/string_type';
+import { ViewGroupRow } from '@/enums/view_group_row';
+
+export default {
+    components: {
+        FormGroupComponent,
+        FormRowTwoItemsComponent,
+        FormRowThreeItemsComponent,
+        NumberInputComponent,
+        TextInputComponent,
+        BooleanInputComponent,
+        DateInputComponent,
+        ObjectInputComponent,
+        ListInputComponent,
+        ArrayInputComponent,
+        TabControllerComponent,
+        TabComponent,
+    },
+    setup() {
+        const entity = Application.View.value.entityObject;
+        const entityClass = Application.View.value.entityClass;
+        
+        const groupedProperties = computed(() => {
+            const groups = entityClass.getViewGroups();
+            const result = [];
+            
+            for (const groupName in groups) {
+                const properties = groups[groupName];
+                const chunks = [];
+                let currentChunk = [];
+                let currentRowType = null;
+                
+                for (const prop of properties) {
+                    // Filtrar propiedades ocultas en DetailView
+                    if (prop.hideInDetailView) continue;
+                    
+                    const rowType = entityClass.getViewGroupRows()[prop.key];
+                    
+                    // Agrupar consecutivas con mismo rowType
+                    if (rowType === currentRowType) {
+                        currentChunk.push(prop);
+                    } else {
+                        if (currentChunk.length > 0) {
+                            chunks.push({
+                                rowType: currentRowType,
+                                properties: currentChunk,
+                            });
+                        }
+                        currentChunk = [prop];
+                        currentRowType = rowType;
+                    }
+                }
+                
+                // Agregar último chunk
+                if (currentChunk.length > 0) {
+                    chunks.push({
+                        rowType: currentRowType,
+                        properties: currentChunk,
+                    });
+                }
+                
+                result.push({
+                    groupName,
+                    chunks,
+                });
+            }
+            
+            return result;
+        });
+        
+        const getRowComponent = (rowType) => {
+            switch (rowType) {
+                case ViewGroupRow.SINGLE:
+                    return 'div';
+                case ViewGroupRow.PAIR:
+                    return FormRowTwoItemsComponent;
+                case ViewGroupRow.TRIPLE:
+                    return FormRowThreeItemsComponent;
+                default:
+                    return 'div';
+            }
+        };
+        
+        const getArrayListsTabs = () => {
+            const arrayKeys = entityClass.getArrayKeysOrdered();
+            return arrayKeys.map(key => entityClass.getPropertyNameByKey(key));
+        };
+        
+        return {
+            entity,
+            entityClass,
+            groupedProperties,
+            getRowComponent,
+            getArrayListsTabs,
+            StringType,
+        };
+    },
+    mounted() {
+        // FUTURE: Implementar carga de entidad desde API
+        // if (!this.entity && this.entityOid) {
+        //     const endpoint = this.entityClass.getApiEndpoint();
+        //     axios.get(`${endpoint}/${this.entityOid}`)
+        //         .then(response => {
+        //             this.entity = new this.entityClass(response.data);
+        //         });
+        // }
+    },
+};
+</script>
+```
+
+**Computed groupedProperties:**
+1. Lee entityClass.getViewGroups() obteniendo mapa groupName → properties[]
+2. Lee entityClass.getViewGroupRows() obteniendo mapa propertyKey → ViewGroupRow
+3. Filtra propiedades donde hideInDetailView === true
+4. Agrupa propiedades consecutivas con mismo rowType en chunks
+5. Retorna array de grupos con estructura { groupName, chunks[] }
+
+**Método getRowComponent:**
+- ViewGroupRow.SINGLE → retorna 'div' (fila completa ancho)
+- ViewGroupRow.PAIR → retorna FormRowTwoItemsComponent (2 columnas)
+- ViewGroupRow.TRIPLE → retorna FormRowThreeItemsComponent (3 columnas)
+- default → retorna 'div'
+
+**Selección dinámica de input:**
+Cadena if/else-if verificando:
+1. prop.type === 'Number' → NumberInputComponent
+2. prop.type === 'String' && stringType === StringType.TEXT → TextInputComponent
+3. prop.type === 'Boolean' → BooleanInputComponent
+4. prop.type === 'String' && stringType === StringType.DATE → DateInputComponent
+5. prop.type === 'Object' → ObjectInputComponent
+6. prop.type === 'Enum' → ListInputComponent
+
+**Arrays en tabs:**
+- getArrayKeysOrdered() obtiene keys de propiedades Array
+- Itera generando TabComponent por cada array
+- Cada tab contiene ArrayInputComponent con type-value específico
+
+**Data:**
+- entity: Application.View.value.entityObject (instancia actual)
+- entityClass: Application.View.value.entityClass (clase)
+
+**mounted FUTURE:**
+- Si entityObject es null pero entityOid existe, cargar desde API
+- Invocar entityClass.getApiEndpoint() + entityOid
+- Crear nueva instancia desde response.data
+
+### default_lookup_listview.vue
+
+**Estructura:**
+
+```vue
+<template>
+    <div class="lookup-list">
+        <LookupItem 
+            v-for="(item, index) in data" 
+            :key="index"
+            :itemFromList="item"
+            @click="clickedItem(item)"
+        />
+    </div>
+</template>
+
+<script>
+import LookupItem from '@/components/LookupItem.vue';
+import { BaseEntity } from '@/entities/base_entitiy';
+
+export default {
+    components: {
+        LookupItem,
+    },
+    data() {
+        return {
+            data: [] as BaseEntity[],
+        };
+    },
+    methods: {
+        clickedItem(item: BaseEntity) {
+            // Invocar callback closeModalOnFunction pasando item seleccionado
+            this.closeModalOnFunction(item);
+        },
+    },
+    mounted() {
+        // Hardcoded 50 productos para testing
+        // FUTURE: this.data = await this.entityClass.getElementList();
+        this.data = Array.from({ length: 50 }, (_, i) => 
+            new Product({ id: i, name: `Product ${i}` })
+        );
+    },
+};
+</script>
+```
+
+**Comportamiento:**
+- v-for renderiza LookupItem por cada elemento en data
+- @click="clickedItem(item)" invoca método con item seleccionado
+- clickedItem ejecuta closeModalOnFunction(item) cerrando modal y retornando selección
+- data hardcoded 50 productos para testing
+- FUTURE: Cargar data = await entityClass.getElementList()
+
+**Uso típico:**
+- Application.showModal(ProductEntity, ViewTypes.LOOKUPVIEW)
+- Usuario selecciona producto en lista
+- Modal cierra y retorna producto seleccionado a ObjectInputComponent
+
+### list.vue (Testing)
+
+**Estructura:**
+
+```vue
+<template>
+    <div>
+        <button @click="toggleDarkMode">Toggle Dark Mode</button>
+    </div>
+</template>
+
+<script>
+export default {
+    methods: {
+        toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        },
+    },
+};
+</script>
+```
+
+**Propósito:**
+- Vista de testing básica
+- No utilizada en producción
+- Demuestra funcionalidad simple (toggleDarkMode)
+
+### DetailViewTableComponent
+
+**Template:**
+
+```vue
+<template>
+    <table class="entity-table">
+        <thead>
+            <tr>
+                <td v-for="propertyName in entityClass.getProperties()" :key="propertyName">
+                    {{ propertyName }}
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr 
+                v-for="item in data" 
+                :key="item.getUniquePropertyValue()"
+                @click="openDetailView(item)"
+            >
+                <td 
+                    v-for="key in entityClass.getKeys()" 
+                    :key="key"
+                    :class="entityClass.getCSSClasses(key)"
+                >
+                    <span v-if="item[key] instanceof BaseEntity">
+                        {{ item[key].getDefaultPropertyValue() }}
+                    </span>
+                    <span v-else-if="typeof item[key] === 'boolean'">
+                        <i v-if="item[key]" :class="GGICONS.CHECK"></i>
+                        <i v-else :class="GGICONS.CANCEL"></i>
+                    </span>
+                    <span v-else>
+                        {{ entityClass.getFormattedValue(key, item[key]) }}
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</template>
+
+<script>
+import { Application } from '@/libs/application/application';
+import { BaseEntity } from '@/entities/base_entitiy';
+import { GGICONS } from '@/constants/ggicons';
+import { Product } from '@/entities/products';
+
+export default {
+    data() {
+        return {
+            entityClass: Application.View.value.entityClass,
+            data: [] as BaseEntity[],
+            GGICONS,
+        };
+    },
+    methods: {
+        openDetailView(item: BaseEntity) {
+            const entityOid = item.getUniquePropertyValue();
+            Application.View.value.entityOid = entityOid;
+            Application.changeViewToDetailView();
+        },
+    },
+    mounted() {
+        // Hardcoded 50 productos para testing
+        this.data = Array.from({ length: 50 }, (_, i) => 
+            new Product({ id: i, name: `Product ${i}`, price: i * 10 })
+        );
+        // FUTURE: this.data = await this.entityClass.getElementList();
+    },
+};
+</script>
+
+<style>
+/* Importado desde @/css/table.css */
+.entity-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.entity-table thead {
+    position: sticky;
+    top: 0;
+    background-color: white;
+}
+
+.entity-table tbody tr:hover {
+    background-color: var(--hover-color);
+    cursor: pointer;
+}
+
+.length-small { width: 80px; }
+.length-short { width: 120px; }
+.length-medium { width: 200px; }
+.length-large { width: 300px; }
+</style>
+```
+
+**Características:**
+
+**Headers dinámicos:**
+- thead utiliza entityClass.getProperties() obteniendo array de property names
+- v-for genera td por cada propertyName
+
+**Filas dinámicas:**
+- tbody v-for itera data (array de entidades)
+- Cada tr tiene @click="openDetailView(item)" para navegación
+- :key="item.getUniquePropertyValue()" identifica único
+
+**Renderizado de valores:**
+1. Si item[key] instanceof BaseEntity → muestra item[key].getDefaultPropertyValue()
+2. Si typeof item[key] === 'boolean' → muestra icono CHECK o CANCEL
+3. Else → muestra entityClass.getFormattedValue(key, item[key])
+
+**CSS classes:**
+- :class="entityClass.getCSSClasses(key)" aplica clases columna desde @CSSColumnClass
+- Clases disponibles: length-small (80px), length-short (120px), length-medium (200px), length-large (300px)
+
+**Método openDetailView:**
+1. Obtiene entityOid = item.getUniquePropertyValue()
+2. Establece Application.View.value.entityOid = entityOid
+3. Invoca Application.changeViewToDetailView() navegando a detail view
+
+**Datos simulados:**
+- Hardcoded 50 productos para testing
+- FUTURE: Reemplazar por this.data = await entityClass.getElementList()
+
+**Filtrado automático:**
+- Arrays no se muestran en tabla (filtrados por getProperties)
+- Propiedades con @HideInListView filtradas automáticamente
+
+**Objetos relacionados:**
+- Si propiedad es BaseEntity, muestra getDefaultPropertyValue() de objeto relacionado
+
+## 5. Flujo de Funcionamiento
+
+### Flujo ListView Completo
+
+1. Usuario navega a módulo (ej: /products)
+2. Application.changeViewToListView() invocado
+3. Router carga ComponentContainer con parámetro :module
+4. ComponentContainer renderiza default_listview.vue
+5. default_listview mounted() establece ViewTypes.LISTVIEW
+6. default_listview renderiza DetailViewTableComponent
+7. DetailViewTableComponent lee entityClass desde Application.View.value
+8. DetailViewTableComponent.mounted() genera data hardcoded (FUTURE: getElementList())
+9. Template genera headers desde entityClass.getProperties()
+10. Template genera rows desde data array
+11. Usuario visualiza tabla con todas las entidades
+12. Usuario click en fila
+13. openDetailView(item) invocado
+14. entityOid establecido desde item.getUniquePropertyValue()
+15. Application.changeViewToDetailView() navegando a detail view
+
+### Flujo DetailView Completo
+
+1. Usuario navega a /products/123 o click fila ListView
+2. Application.changeViewToDetailView() invocado
+3. Router carga ComponentContainer con :module/:oid
+4. ComponentContainer renderiza default_detailview.vue
+5. default_detailview.setup() lee entity y entityClass desde Application.View.value
+6. Computed groupedProperties ejecuta:
+   a. Lee entityClass.getViewGroups() obteniendo grupos
+   b. Lee entityClass.getViewGroupRows() obteniendo rowTypes
+   c. Filtra propiedades hideInDetailView === true
+   d. Agrupa propiedades consecutivas mismo rowType en chunks
+   e. Retorna estructura { groupName, chunks[] }
+7. Template itera groupedProperties renderizando:
+   a. FormGroupComponent por cada grupo con título groupName
+   b. component :is getRowComponent(chunk.rowType) seleccionando FormRowTwo/Three/div
+   c. Dentro de cada row, inputs dinámicos según tipo propiedad
+8. Selección input ejecuta cadena if/else-if:
+   a. Verifica prop.type (Number, String, Boolean, Object, Enum)
+   b. Verifica prop.stringType si es String (TEXT, DATE, EMAIL, etc)
+   c. Renderiza componente apropiado (NumberInput, TextInput, etc)
+9. Cada input recibe props entityClass, entity, propertyKey
+10. Al final del formulario, arrays renderizados en tabs:
+    a. getArrayKeysOrdered() obtiene array properties
+    b. TabController con TabComponent por cada array
+    c. Cada tab contiene ArrayInputComponent
+11. Usuario interactúa con inputs modificando entity[propertyKey]
+12. Cambios reflejados inmediatamente (Vue reactivity)
+13. Usuario guarda o cancela cambios
+
+### Flujo Lookup Selection
+
+1. ObjectInputComponent usuario click "Seleccionar"
+2. Application.showModal(RelatedEntityClass, ViewTypes.LOOKUPVIEW, callback)
+3. Modal renderiza default_lookup_listview.vue
+4. default_lookup_listview.mounted() carga data (hardcoded o API)
+5. Template renderiza LookupItem v-for data
+6. Usuario visualiza lista items
+7. Usuario click en LookupItem específico
+8. clickedItem(item) invocado
+9. closeModalOnFunction(item) ejecuta callback
+10. Modal cierra con animación
+11. ObjectInputComponent recibe item seleccionado
+12. ObjectInputComponent actualiza v-model con item
+
+## 6. Reglas Obligatorias
+
+1. default_listview DEBE establecer ViewTypes.LISTVIEW en mounted
+2. default_listview DEBE delegar renderizado completo a DetailViewTableComponent
+3. default_detailview DEBE usar computed groupedProperties leyendo getViewGroups y getViewGroupRows
+4. default_detailview DEBE filtrar propiedades hideInDetailView === true
+5. default_detailview DEBE agrupar propiedades consecutivas mismo rowType en chunks
+6. default_detailview DEBE usar getRowComponent para selección dinámica row component
+7. default_detailview DEBE usar cadena if/else-if para selección dinámica input component según tipo
+8. default_detailview DEBE renderizar arrays en tabs separados al final usando TabController
+9. default_lookup_listview DEBE renderizar LookupItem por cada elemento
+10. default_lookup_listview DEBE invocar closeModalOnFunction en clickedItem
+11. DetailViewTableComponent DEBE generar headers desde getProperties
+12. DetailViewTableComponent DEBE generar rows desde data array
+13. DetailViewTableComponent DEBE usar @click openDetailView en cada fila
+14. DetailViewTableComponent DEBE verificar instanceof BaseEntity para objetos relacionados
+15. DetailViewTableComponent DEBE mostrar iconos CHECK/CANCEL para booleanos
+16. DetailViewTableComponent DEBE usar getFormattedValue para valores primitivos
+17. DetailViewTableComponent DEBE aplicar getCSSClasses para clases columna
+18. DetailViewTableComponent DEBE usar getUniquePropertyValue como key único
+19. openDetailView DEBE establecer entityOid antes de invocar changeViewToDetailView
+20. Todas las vistas DEBEN leer entityClass y entity desde Application.View.value
+
+## 7. Prohibiciones
+
+1. NO renderizar arrays en DetailViewTableComponent (filtrados automáticamente)
+2. NO mostrar propiedades @HideInListView en tabla
+3. NO mostrar propiedades @HideInDetailView en formulario
+4. NO cargar entidades directamente sin usar Application.View.value
+5. NO establecer viewType manualmente excepto en mounted de vistas
+6. NO ignorar hideInDetailView en computed groupedProperties
+7. NO agrupar propiedades con diferente rowType en mismo chunk
+8. NO usar componentes de input incorrectos para tipo de propiedad
+9. NO omitir verificación instanceof BaseEntity en tabla
+10. NO mostrar valor crudo objeto relacionado sin getDefaultPropertyValue
+11. NO olvidar closeModalOnFunction en default_lookup_listview
+12. NO hardcodear nombres de propiedades en templates (usar metadatos)
+13. NO generar formularios manualmente sin usar groupedProperties
+14. NO omitir getRowComponent para selección dinámica de rows
+15. NO renderizar tabs arrays si no existen array properties
+16. NO usar selectores CSS específicos de entidad (tables deben ser genéricas)
+17. NO establecer entityOid sin invocar changeViewToDetailView después
+18. NO modificar Application.View.value fuera de métodos Application
+19. NO duplicar lógica de renderizado entre vistas (usar components)
+20. NO omitir key único en v-for loops (usar getUniquePropertyValue)
+
+## 8. Dependencias
+
+### Componentes
+- DetailViewTableComponent (tabla dinámica)
+- FormGroupComponent (agrupación visual)
+- FormRowTwoItemsComponent (2 columnas)
+- FormRowThreeItemsComponent (3 columnas)
+- LookupItem (item seleccionable)
+- TabControllerComponent (gestión tabs)
+- TabComponent (tab individual)
+- Todos los input components (TextInput, NumberInput, etc)
+
+### Servicios
+- Application singleton (View, changeViewToListView, changeViewToDetailView, showModal)
+
+### Enums
+- ViewTypes (LISTVIEW, DETAILVIEW, LOOKUPVIEW)
+- StringType (TEXT, DATE, EMAIL, etc)
+- ViewGroupRow (SINGLE, PAIR, TRIPLE)
+
+### Entidades
+- BaseEntity (clase base, métodos metadata)
+- Cualquier entidad específica (Product, Customer, etc)
+
+### Constantes
+- GGICONS (iconos CHECK, CANCEL, etc)
+
+### CSS
+- @/css/table.css (estilos tabla)
+- @/css/form.css (estilos formulario)
+
+## 9. Relaciones
+
+### Con Base Entity
+- Lee getViewGroups obteniendo mapa grupos
+- Lee getViewGroupRows obteniendo mapa rowTypes
+- Lee getProperties generando headers tabla
+- Lee getKeys obteniendo array property keys
+- Invoca getDefaultPropertyValue mostrando objetos relacionados
+- Invoca getUniquePropertyValue obteniendo key único
+- Invoca getFormattedValue formateando valores
+- Invoca getCSSClasses aplicando estilos columna
+- Invoca getArrayKeysOrdered obteniendo arrays
+- Invoca getPropertyNameByKey obteniendo nombres legibles
+
+### Con Form Components
+- default_detailview usa FormGroupComponent para agrupación visual
+- default_detailview usa FormRowTwoItemsComponent para 2 columnas
+- default_detailview usa FormRowThreeItemsComponent para 3 columnas
+- default_detailview usa todos input components dinámicamente
+- default_lookup_listview usa LookupItem para selección
+
+### Con Application Singleton
+- Todas vistas leen entityClass desde Application.View.value
+- Todas vistas leen entity desde Application.View.value.entityObject
+- default_listview establece viewType = ViewTypes.LISTVIEW
+- DetailViewTableComponent invoca Application.changeViewToDetailView
+- default_lookup_listview invoca closeModalOnFunction
+
+### Con Router
+- default_listview renderizada en ruta /:module
+- default_detailview renderizada en ruta /:module/:oid
+- ComponentContainer selecciona vista según ruta
+
+## 10. Notas de Implementación
+
+### Crear FormGroup Manual en Vista Personalizada
+
+```vue
+<template>
+    <FormGroupComponent title="Información Básica">
+        <FormRowTwoItemsComponent>
+            <TextInputComponent 
+                :entityClass="Product"
+                :entity="product"
+                propertyKey="name"
+            />
+            <NumberInputComponent 
+                :entityClass="Product"
+                :entity="product"
+                propertyKey="price"
+            />
+        </FormRowTwoItemsComponent>
     </FormGroupComponent>
 </template>
 ```
 
-### Lógica de Agrupación
-
-#### groupedProperties (computed)
-
-Agrupa propiedades según decoradores:
-1. Lee `@ViewGroup` de cada propiedad
-2. Lee `@ViewGroupRow` para determinar disposición (SINGLE, PAIR, TRIPLE)
-3. Filtra propiedades con `@HideInDetailView`
-4. Agrupa consecutivas del mismo tipo de row
-
-**Resultado:**
-```typescript
-{
-    'Basic Information': [
-        { rowType: 'PAIR', properties: ['id', 'name'] },
-        { rowType: 'SINGLE', properties: ['description'] }
-    ],
-    'Pricing': [
-        { rowType: 'TRIPLE', properties: ['price', 'cost', 'tax'] }
-    ]
-}
-```
-
-### Selección de Input Component
-
-```typescript
-// Número
-if (entityClass.getPropertyType(prop) === Number)
-    → NumberInputComponent
-
-// Boolean
-if (entityClass.getPropertyType(prop) === Boolean)
-    → BooleanInputComponent
-
-// Date
-if (entityClass.getPropertyType(prop) === Date)
-    → DateInputComponent
-
-// BaseEntity (objeto anidado)
-if (isBaseEntityType(prop))
-    → ObjectInputComponent
-
-// Enum
-if (entityClass.getPropertyType(prop) instanceof EnumAdapter)
-    → ListInputComponent
-
-// String con tipos específicos
-if (tipo === String && stringType === StringType.TEXT)
-    → TextInputComponent
-if (tipo === String && stringType === StringType.TEXTAREA)
-    → TextAreaComponent
-if (tipo === String && stringType === StringType.EMAIL)
-    → EmailInputComponent
-if (tipo === String && stringType === StringType.PASSWORD)
-    → PasswordInputComponent
-```
-
-### Selección de Row Component
-
-```typescript
-getRowComponent(rowType: string) {
-    switch (rowType) {
-        case ViewGroupRow.SINGLE:
-            return 'div';  // Ocupar toda la fila
-        case ViewGroupRow.PAIR:
-            return FormRowTwoItemsComponent;  // 2 inputs por fila
-        case ViewGroupRow.TRIPLE:
-            return FormRowThreeItemsComponent;  // 3 inputs por fila
-        default:
-            return FormRowTwoItemsComponent;
-    }
-}
-```
-
-### Arrays en Tabs
-
-Arrays se muestran en tabs separados dentro de un `TabController`:
-
-```vue
-<TabControllerComponent :tabs="getArrayListsTabs()">
-    <TabComponent v-for="arrayKey in entity.getArrayKeysOrdered()">
-        <ArrayInputComponent 
-            :property-key="arrayKey"
-            :type-value="entityClass.getArrayPropertyType(arrayKey)" 
-        />
-    </TabComponent>
-</TabControllerComponent>
-```
-
-### Data
-```typescript
-{
-    entity: BaseEntity,           // Instancia actual
-    entityClass: typeof BaseEntity, // Clase de la entidad
-    StringType,                    // Enum de tipos de string
-    EnumAdapter,                   // Adaptador de enums
-}
-```
-
-### Mounted Hook
-```typescript
-mounted() {
-    // FUTURE: Aquí se implementará la lógica para cargar la entidad desde la API
-    // usando Application.View.value.entityOid cuando entityObject sea null
-}
-```
-
-### Components Utilizados
-- `FormGroupComponent` - Agrupa secciones del formulario
-- `FormRowTwoItemsComponent` - Fila con 2 inputs
-- `FormRowThreeItemsComponent` - Fila con 3 inputs
-- `TabControllerComponent` - Controlador de tabs
-- `TabComponent` - Tab individual
-- Todos los inputs de `@/components/Form`
-
-### Uso
-```typescript
-@ModuleDetailComponent(DefaultDetailView)
-export class MyEntity extends BaseEntity {
-    // ...
-}
-```
-
----
-
-## 📦 3. default_lookup_listview.vue
-
-### Descripción
-Vista de lista simplificada para seleccionar items en un modal (tipo "lookup" o búsqueda).
-
-### Archivo
-`src/views/default_lookup_listview.vue`
-
-### Estructura
-
-```vue
-<template>
-    <LookupItem
-        v-for="item in data"
-        :itemFromList="item"
-        @click="clickedItem(item)"
-    />
-</template>
-```
-
-### Comportamiento
-1. Renderiza lista de `LookupItem` clickeables
-2. Al hacer click en un item, llama a `closeModalOnFunction(item)`
-3. El modal se cierra y retorna el item seleccionado
-
-### Methods
-```typescript
-clickedItem(item: BaseEntity) {
-    Application.ApplicationUIService.closeModalOnFunction(item);
-}
-```
-
-### Data
-```typescript
-{
-    data: BaseEntity[]  // Lista de items (hardcoded con 50 productos de prueba)
-}
-```
-
-### Components Utilizados
-- `LookupItem` - Item clickeable de la lista
-
-### Uso Típico
-
-```typescript
-// Abrir modal de lookup
-Application.ApplicationUIService.showModal(
-    ProductEntity,
-    ViewTypes.LOOKUPVIEW
-);
-
-// Modal muestra default_lookup_listview con productos
-// Usuario selecciona → closeModalOnFunction(selectedProduct)
-// Modal se cierra y retorna el producto selectedProduct
-```
-
-### Notas
-- **Datos simulados**: Genera 50 productos hardcoded
-- **Sin búsqueda**: No tiene filtrado ni búsqueda aún
-- **Modal exclusivo**: Solo se usa en modales, no como vista principal
-
----
-
-## 📦 4. list.vue
-
-### Descripción
-Vista de ejemplo básica usada para testing/demostración.
-
-### Archivo
-`src/views/list.vue`
-
-### Estructura
-
-```vue
-<template>
-    <div class="container">
-        <button @click="Application.ApplicationUIService.toggleDarkMode()">
-            Cambiar Tema
-        </button>
-    </div>
-</template>
-```
-
-### Comportamiento
-- Muestra un botón para cambiar entre modo claro/oscuro
-- Vista de demostración, no se usa en producción
-
-### Uso
-Vista de testing, no se asigna a entidades.
-
----
-
-## 🔧 DetailViewTableComponent
-
-### Descripción
-Componente de tabla utilizado por `default_listview.vue` para renderizar la lista de registros.
-
-### Archivo
-`src/components/Informative/DetailViewTableComponent.vue`
-
-### Estructura
-
-```vue
-<template>
-<table>
-    <thead>
-        <tr>
-            <td v-for="(propertyName, key) in entityClass.getProperties()">
-                {{ propertyName }}
-            </td>
-        </tr>
-    </thead>
-    
-    <tbody>
-        <tr v-for="item in data" @click="openDetailView(item)">
-            <td v-for="column in item.getKeys()">
-                <!-- Objeto relacionado -->
-                <span v-if="item[column] instanceof BaseEntity">
-                    {{ item[column].getDefaultPropertyValue() }}
-                </span>
-                
-                <!-- Boolean con iconos -->
-                <span v-else-if="tipo === Boolean" class="boolean-row">
-                    {{ item[column] ? CHECK : CANCEL }}
-                </span>
-                
-                <!-- Valor formateado -->
-                <span v-else>
-                    {{ item.getFormattedValue(column) }}
-                </span>
-            </td>
-        </tr>
-    </tbody>
-</table>
-</template>
-```
-
-### Características
-
-1. **Headers dinámicos**: Lee `getProperties()` de la entidad
-2. **CSS Classes**: Aplica `getCSSClasses()[column]` a cada celda
-3. **Filtrado de arrays**: No muestra columnas de tipo Array
-4. **Objetos relacionados**: Muestra `getDefaultPropertyValue()` de objetos BaseEntity
-5. **Booleanos**: Renderiza ✓ o ✗ con iconos
-6. **Formato**: Usa `getFormattedValue()` para formatear valores
-7. **Click handler**: Abre DetailView al hacer click en fila
-
-### Methods
-
-```typescript
-openDetailView(entity: BaseEntity) {
-    // Establecer OID para routing
-    const uniqueValue = entity.getUniquePropertyValue();
-    if (uniqueValue) {
-        Application.View.value.entityOid = String(uniqueValue);
-    } else {
-        Application.View.value.entityOid = 'new';
-    }
-    
-    Application.changeViewToDetailView(entity);
-}
-```
-
-### Data
-```typescript
-{
-    data: Products[]  // 50 productos de prueba hardcoded
-}
-```
-
-### CSS
-- **Responsive**: Usa flexbox para columnas
-- **Sticky header**: El header permanece fijo al hacer scroll
-- **Hover**: Filas tienen efecto hover
-- **Column widths**: Lee decorador `@CSSColumnClass` para anchos
-
-### CSS Classes (table.css)
+### Responsive Layout con Media Queries
 
 ```css
-.table-length-small { width: 80px; }
-.table-length-short { width: 120px; }
-.table-length-medium { width: 200px; }
-.table-length-large { width: 300px; }
-```
-
----
-
-## 🎨 Flujo de Renderizado
-
-### ListView
-
-```
-1. Application.changeViewToListView(EntityClass)
-        ↓
-2. Router → /:module
-        ↓
-3. ComponentContainer renderiza default_listview.vue
-        ↓
-4. default_listview renderiza DetailViewTableComponent
-        ↓
-5. Tabla lee EntityClass.getProperties()
-        ↓
-6. Genera headers y rows
-        ↓
-7. Click en row → openDetailView()
-```
-
-### DetailView
-
-```
-1. Application.changeViewToDetailView(entity)
-        ↓
-2. Router → /:module/:oid
-        ↓
-3. ComponentContainer renderiza default_detailview.vue
-        ↓
-4. groupedProperties computed ejecuta
-        ↓
-5. Lee @ViewGroup, @ViewGroupRow, @HideInDetailView
-        ↓
-6. Genera estructura de grupos y rows
-        ↓
-7. Para cada propiedad, determina tipo de input
-        ↓
-8. Renderiza inputs con metadatos
-        ↓
-9. Arrays se renderizan en tabs al final
-```
-
----
-
-## 📝 Notas Importantes
-
-1. **Datos temporales**: Todas las vistas usan datos hardcoded (50 productos) para testing
-2. **Sin API real**: No hay llamadas a backend aún, todo es simulado
-3. **Metadatos son clave**: Las vistas leen decoradores para generar UI
-4. **Configurables**: Se pueden crear vistas custom y asignarlas con decoradores:
-   ```typescript
-   @ModuleListComponent(MyCustomListView)
-   @ModuleDetailComponent(MyCustomDetailView)
-   ```
-5. **Responsive**: Todas las vistas usan CSS responsive
-6. **Filtrado automático**: DetailView filtra propiedades con `@HideInDetailView`
-7. **Arrays separados**: Arrays siempre se muestran en tabs al final del formulario
-
----
-
-## 🔮 Funcionalidades Futuras (FUTURE)
-
-### En default_detailview.vue (línea ~131)
-
-```typescript
-mounted() {
-    // FUTURE: Implementar carga de entidad desde API
-    // if (!this.entity && Application.View.value.entityOid) {
-    //     this.loadEntityFromAPI(Application.View.value.entityOid);
-    // }
+/* En FormRowTwoItemsComponent.vue */
+.form-row-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 1rem;
 }
 
-// async loadEntityFromAPI(oid: string) {
-//     try {
-//         const response = await Application.axiosInstance.get(
-//             `${this.entityClass.getApiEndpoint()}/${oid}`
-//         );
-//         this.entity = new this.entityClass(response.data);
-//         Application.View.value.entityObject = this.entity;
-//     } catch (error) {
-//         console.error('Error loading entity:', error);
-//     }
-// }
+@media (max-width: 768px) {
+    .form-row-2 {
+        grid-template-columns: 1fr; /* Una columna en móvil */
+    }
+}
 ```
 
-### En DetailViewTableComponent
+### FormRowFourItems Custom (4 columnas)
 
-- Reemplazar datos hardcoded por llamada a `EntityClass.getElementList()`
-- Implementar paginación
-- Implementar filtrado y búsqueda
-- Implementar ordenamiento por columna
+```vue
+<template>
+    <div class="form-row-4">
+        <slot></slot>
+    </div>
+</template>
 
----
+<style scoped>
+.form-row-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    column-gap: 1rem;
+}
+</style>
+```
 
-**Total de Vistas:** 4  
-**Vista principal de lista:** default_listview.vue  
-**Vista principal de detalle:** default_detailview.vue  
-**Última actualización:** 11 de Febrero, 2026
+### Collapse/Expand FormGroup
+
+```vue
+<template>
+    <FormGroupComponent 
+        :title="group.groupName"
+        :is-collapsed="collapsedGroups[group.groupName]"
+        @toggle="toggleGroup(group.groupName)"
+    >
+        <div v-for="chunk in group.chunks" :key="chunk.index">
+            <!-- inputs -->
+        </div>
+    </FormGroupComponent>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            collapsedGroups: {
+                'Información Básica': false,
+                'Detalles Avanzados': true,
+            },
+        };
+    },
+    methods: {
+        toggleGroup(groupName) {
+            this.collapsedGroups[groupName] = !this.collapsedGroups[groupName];
+        },
+    },
+};
+</script>
+```
+
+### Debugging Layout groupedProperties
+
+```javascript
+mounted() {
+    console.log('groupedProperties:', this.groupedProperties);
+    // Verificar estructura:
+    // [
+    //   {
+    //     groupName: 'Información Básica',
+    //     chunks: [
+    //       { rowType: ViewGroupRow.PAIR, properties: [...] },
+    //       { rowType: ViewGroupRow.SINGLE, properties: [...] },
+    //     ]
+    //   }
+    // ]
+}
+```
+
+### Vista Lookup con Búsqueda
+
+```vue
+<template>
+    <div>
+        <input v-model="searchQuery" placeholder="Buscar..." />
+        <LookupItem 
+            v-for="item in filteredData" 
+            :key="item.id"
+            :itemFromList="item"
+            @click="clickedItem(item)"
+        />
+    </div>
+</template>
+
+<script>
+import { computed, ref } from 'vue';
+
+export default {
+    setup() {
+        const searchQuery = ref('');
+        const data = ref([]);
+        
+        const filteredData = computed(() => {
+            if (!searchQuery.value) return data.value;
+            return data.value.filter(item => 
+                item.getDefaultPropertyValue()
+                    .toLowerCase()
+                    .includes(searchQuery.value.toLowerCase())
+            );
+        });
+        
+        return { searchQuery, filteredData };
+    },
+};
+</script>
+```
+
+### Testing Vistas
+
+```javascript
+import { mount } from '@vue/test-utils';
+import default_detailview from '@/views/default_detailview.vue';
+import { Product } from '@/entities/products';
+
+describe('default_detailview', () => {
+    it('renderiza FormGroups desde getViewGroups', () => {
+        const product = new Product({});
+        Application.View.value.entityObject = product;
+        Application.View.value.entityClass = Product;
+        
+        const wrapper = mount(default_detailview);
+        const groups = wrapper.findAllComponents(FormGroupComponent);
+        
+        expect(groups.length).toBeGreaterThan(0);
+    });
+    
+    it('renderiza inputs dinámicamente según tipo', () => {
+        const wrapper = mount(default_detailview);
+        
+        expect(wrapper.findComponent(NumberInputComponent).exists()).toBe(true);
+        expect(wrapper.findComponent(TextInputComponent).exists()).toBe(true);
+    });
+});
+```
+
+### FUTURE: Cargar Entidad desde API en DetailView
+
+```javascript
+async mounted() {
+    const entityOid = this.$route.params.oid;
+    if (!this.entity && entityOid) {
+        const endpoint = this.entityClass.getApiEndpoint();
+        try {
+            const response = await axios.get(`${endpoint}/${entityOid}`);
+            this.entity = new this.entityClass(response.data);
+            Application.View.value.entityObject = this.entity;
+        } catch (error) {
+            console.error('Error cargando entidad:', error);
+        }
+    }
+}
+```
+
+### FUTURE: DetailViewTableComponent con Paginación
+
+```vue
+<template>
+    <div>
+        <table class="entity-table">
+            <!-- tabla actual -->
+        </table>
+        <div class="pagination">
+            <button @click="previousPage" :disabled="currentPage === 1">
+                Anterior
+            </button>
+            <span>Página {{ currentPage }} de {{ totalPages }}</span>
+            <button @click="nextPage" :disabled="currentPage === totalPages">
+                Siguiente
+            </button>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            currentPage: 1,
+            itemsPerPage: 20,
+            totalItems: 0,
+        };
+    },
+    computed: {
+        totalPages() {
+            return Math.ceil(this.totalItems / this.itemsPerPage);
+        },
+        paginatedData() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            return this.data.slice(start, end);
+        },
+    },
+    methods: {
+        previousPage() {
+            if (this.currentPage > 1) this.currentPage--;
+        },
+        nextPage() {
+            if (this.currentPage < this.totalPages) this.currentPage++;
+        },
+    },
+};
+</script>
+```
+
+## 11. Referencias Cruzadas
+
+### Documentación Relacionada
+- [DetailViewTableComponent.md](DetailViewTableComponent.md) - Componente tabla dinámica
+- [form-inputs.md](form-inputs.md) - Sistema completo inputs
+- [FormLayoutComponents.md](FormLayoutComponents.md) - FormGroup y FormRow components
+- [LookupItem.md](LookupItem.md) - Item seleccionable lookup
+- [TabComponent.md](TabComponent.md) - Sistema tabs
+- [../../02-base-entity/metadata-access.md](../../02-base-entity/metadata-access.md) - Métodos metadata BaseEntity
+- [../../02-base-entity/view-groups.md](../../02-base-entity/view-groups.md) - Sistema ViewGroup y ViewGroupRow
+- [../../03-application/view-management.md](../../03-application/view-management.md) - Gestión vistas Application
+- [../../03-application/navigation.md](../../03-application/navigation.md) - changeViewToListView y changeViewToDetailView
+- [../../01-decorators/view-group-decorator.md](../../01-decorators/view-group-decorator.md) - @ViewGroup
+- [../../01-decorators/view-group-row-decorator.md](../../01-decorators/view-group-row-decorator.md) - @ViewGroupRow
+- [../../01-decorators/hide-in-list-view-decorator.md](../../01-decorators/hide-in-list-view-decorator.md) - @HideInListView
+- [../../01-decorators/hide-in-detail-view-decorator.md](../../01-decorators/hide-in-detail-view-decorator.md) - @HideInDetailView
+
+### Código Fuente
+- src/views/default_listview.vue
+- src/views/default_detailview.vue
+- src/views/default_lookup_listview.vue
+- src/views/list.vue
+- src/components/DetailViewTableComponent.vue
+
+### Enums Relacionados
+- src/enums/view_types.ts (ViewTypes.LISTVIEW, DETAILVIEW, LOOKUPVIEW)
+- src/enums/string_type.ts (StringType.TEXT, DATE, EMAIL, etc)
+- src/enums/view_group_row.ts (ViewGroupRow.SINGLE, PAIR, TRIPLE)

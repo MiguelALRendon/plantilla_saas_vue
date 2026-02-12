@@ -1,377 +1,279 @@
 # Enums del Framework
 
-## Propósito
+## 1. PROPOSITO
 
-Los enums definen conjuntos cerrados de valores que se usan a lo largo del framework para tipado fuerte, validación y lógica condicional. Cada enum representa un dominio específico: tipos de vistas, formatos de strings, disposición de formularios, tipos de notificaciones, etc.
+Los enums del framework definen conjuntos cerrados de valores que se usan para tipado fuerte TypeScript, validación y lógica condicional a lo largo del sistema. Cada enum representa un dominio específico: tipos de vistas para controlar navegación, formatos de strings para renderizado de inputs, disposición de formularios, tipos de notificaciones toast, y tipos de diálogos de confirmación. Proporcionan constantes type-safe que previenen valores inválidos y facilitan refactoring.
 
----
+## 2. ALCANCE
 
-## 1. ViewTypes - Tipos de Vistas
+**UBICACION GENERAL:** src/enums/
 
-### Ubicación
-`src/enums/view_type.ts`
+**ENUMS IMPLEMENTADOS:**
+- ViewTypes: src/enums/view_type.ts - Controla tipo de vista activa
+- StringType: src/enums/string_type.ts - Define tipo de input HTML para strings
+- ViewGroupRow: src/enums/view_group_row.ts - Controla diseño de filas en formularios
+- ToastType: src/enums/ToastType.ts - Tipos visuales de notificaciones toast
+- confMenuType: src/enums/conf_menu_type.ts - Tipos visuales de diálogos confirmación
 
-### Código
+**ENUMS RESERVADOS NO IMPLEMENTADOS:**
+- DetailTypes: src/enums/detail_type.ts - Modo NEW vs EDIT no usado actualmente
+- MaskSides: src/enums/mask_sides.ts - Decorador @Mask no exportado
+
+**INTEGRACION:**
+Usados por Application.View, decoradores, componentes de formulario, sistema de UI notifications.
+
+## 3. DEFINICIONES CLAVE
+
+**ViewTypes enum:**
+Define 5 tipos de vistas posibles: LISTVIEW muestra tabla de registros con botones New/Refresh, DETAILVIEW muestra formulario edición con botones Save/Validate, LOOKUPVIEW muestra modal selección sin botones acción, CUSTOMVIEW permite vistas personalizadas, DEFAULTVIEW reservado sin implementación.
+
+**StringType enum:**
+Define 6 tipos de input HTML para properties string: EMAIL input type email con validación formato, PASSWORD input type password texto oculto, TEXT input type text default, TEXTAREA textarea element multilínea, TELEPHONE y URL reservados sin componentes dedicados.
+
+**ViewGroupRow enum:**
+Define 3 disposiciones de campos por fila: SINGLE un campo ocupa 100% ancho, PAIR dos campos ocupan 50% cada uno, TRIPLE tres campos ocupan 33.33% cada uno. Default es PAIR si no especificado.
+
+**ToastType enum:**
+Define 4 tipos notificaciones temporales: SUCCESS verde con check para operaciones exitosas, ERROR rojo con X para fallos, INFO azul con i para información general, WARNING amarillo con advertencia para avisos.
+
+**confMenuType enum:**
+Define 4 tipos diálogos modales: INFO azul para confirmaciones generales, SUCCESS verde para operaciones exitosas, WARNING amarillo para acciones destructivas, ERROR rojo para errores graves.
+
+## 4. DESCRIPCION TECNICA
+
+**VIEWTYPES ENUM:**
 ```typescript
 export enum ViewTypes {
-    LISTVIEW,
-    DETAILVIEW,
-    DEFAULTVIEW,
-    CUSTOMVIEW,
-    LOOKUPVIEW
+    LISTVIEW,     // 0
+    DETAILVIEW,   // 1
+    DEFAULTVIEW,  // 2
+    CUSTOMVIEW,   // 3
+    LOOKUPVIEW    // 4
 }
 ```
+**USO:** Application.View.value.viewType determina qué botones muestra ActionsComponent y comportamiento navegación. LISTVIEW renderiza NewButton y RefreshButton, DETAILVIEW renderiza SaveButton ValidateButton SaveAndNewButton, LOOKUPVIEW no renderiza botones.
 
-### Descripción
-
-Define los diferentes tipos de vistas que puede tener `Application.View.value.viewType`. Este enum controla qué botones de acción se muestran y cómo se comporta la navegación.
-
-### Valores
-
-| Valor | Descripción | Uso Principal |
-|-------|-------------|---------------|
-| **LISTVIEW** | Vista de listado de entidades en tabla | `DefaultListView`, muestra botones: New, Refresh |
-| **DETAILVIEW** | Vista de detalle/edición de una entidad | `DefaultDetailView`, muestra botones: Save, Validate, SaveAndNew |
-| **DEFAULTVIEW** | Vista predeterminada del sistema | (No implementado actualmente, reservado) |
-| **CUSTOMVIEW** | Vista personalizada sin lógica predeterminada | Para vistas que no son CRUD estándar |
-| **LOOKUPVIEW** | Vista de selección en modal | `DefaultLookupListView`, no muestra botones de acción |
-
-### Ejemplos de Uso
-
-#### Establecer viewType al montar vista
+**STRINGTYPE ENUM:**
 ```typescript
-// En DefaultListView
+export enum StringType {
+    EMAIL,      // 0 - EmailInputComponent
+    PASSWORD,   // 1 - PasswordInputComponent
+    TEXT,       // 2 - TextInputComponent (default)
+    TELEPHONE,  // 3 - No implementado
+    URL,        // 4 - No implementado
+    TEXTAREA    // 5 - TextAreaComponent
+}
+```
+**USO:** DefaultDetailView usa entity.getStringType()[propertyName] para determinar qué componente input renderizar. Se obtiene desde metadata $BaseEntityMetadata.StringType poblada por decorador @StringTypeDef.
+
+**VIEWGROUPROW ENUM:**
+```typescript
+export enum ViewGroupRow {
+    SINGLE = 'single',  // 100% width
+    PAIR = 'pair',      // 50% + 50% width
+    TRIPLE = 'triple'   // 33% + 33% + 33% width
+}
+```
+**USO:** DefaultDetailView.groupedProperties agrupa properties consecutivas con mismo viewGroupRow value en misma fila. SINGLE renderiza div normal, PAIR renderiza FormRowTwoItemsComponent, TRIPLE renderiza FormRowThreeItemsComponent.
+
+**TOASTTYPE ENUM:**
+```typescript
+export enum ToastType {
+    SUCCESS,  // 0 - Verde #10b981
+    ERROR,    // 1 - Rojo #ef4444
+    INFO,     // 2 - Azul #3b82f6
+    WARNING   // 3 - Amarillo #f59e0b
+}
+```
+**USO:** ApplicationUIService.pushToast recibe objeto con type property ToastType, ToastItemComponent mapea type a backgroundColor con computed property getBackgroundColor.
+
+**CONFMENUTYPE ENUM:**
+```typescript
+export enum confMenuType {
+    INFO,     // 0 - Azul header
+    SUCCESS,  // 1 - Verde header
+    WARNING,  // 2 - Amarillo header
+    ERROR     // 3 - Rojo header
+}
+```
+**USO:** ApplicationUIService.openConfirmationMenu recibe objeto con type property confMenuType, ConfirmationDialogComponent mapea type a getHeaderColor computed.
+
+**DETAILTYPES ENUM NO USADO:**
+```typescript
+export enum DetailTypes {
+    NEW,   // 0
+    EDIT   // 1
+}
+```
+**ESTADO:** Definido pero no integrado en framework. Actualmente modo se determina implícitamente: entityOid === 'new' es NEW, entityOid con ID válido es EDIT.
+
+**MASKSIDES ENUM NO FUNCIONAL:**
+```typescript
+export enum MaskSides {
+    START,  // 0 - Ocultar desde inicio
+    END     // 1 - Ocultar desde final
+}
+```
+**ESTADO:** Decorador @Mask existe pero no exportado en decorations/index.ts, no puede usarse actualmente.
+
+## 5. FLUJO DE FUNCIONAMIENTO
+
+**PASO 1 - Establecer View Type al Montar:**
+Componente vista ejecuta mounted hook, establece Application.View.value.viewType = ViewTypes.LISTVIEW o DETAILVIEW según contexto, ActionsComponent reacciona a cambio con computed property ListButtons.
+
+**PASO 2 - Renderizado Condicional Componentes:**
+DefaultDetailView itera properties de entity, obtiene stringType con entity.getStringType()[propertyName], renderiza EmailInputComponent si StringType.EMAIL, PasswordInputComponent si StringType.PASSWORD, TextAreaComponent si StringType.TEXTAREA, TextInputComponent default si StringType.TEXT o undefined.
+
+**PASO 3 - Agrupación Layout Formulario:**
+DefaultDetailView.groupedProperties itera properties obteniendo viewGroupRow desde entity.getViewGroupRows(), agrupa properties consecutivas con mismo rowType value, crea chunks con rowType SINGLE/PAIR/TRIPLE y array de properties, renderiza FormRowTwoItemsComponent para PAIR con 2 fields o FormRowThreeItemsComponent para TRIPLE con 3 fields.
+
+**PASO 4 - Mostrar Toast Notification:**
+Usuario ejecuta acción como save, código llama ApplicationUIService.pushToast pasando objeto con type ToastType.SUCCESS y message, ToastItemComponent se renderiza con backgroundColor verde #10b981 desde computed getBackgroundColor, toast se auto-elimina después de duration milisegundos default 3000.
+
+**PASO 5 - Abrir Confirmation Dialog:**
+Usuario intenta acción destructiva como delete, código llama ApplicationUIService.openConfirmationMenu pasando objeto con type confMenuType.WARNING y callbacks onConfirm/onCancel, ConfirmationDialogComponent se renderiza con header amarillo, usuario hace clic Confirm ejecutando callback o Cancel cerrando modal.
+
+**PASO 6 - Navegación Entre Vistas:**
+Usuario hace clic en fila de tabla ejecutando openDetailView, Application.changeViewToDetailView actualiza Application.View.value.viewType = ViewTypes.DETAILVIEW, router navega a /module/oid, ActionsComponent re-renderiza mostrando botones SaveButton ValidateButton en lugar de NewButton RefreshButton.
+
+**PASO 7 - Debugging Enum Values:**
+Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obteniendo string legible "DETAILVIEW", o console.log ViewGroupRow.PAIR obteniendo valor "pair", facilitando debugging con nombres descriptivos en lugar de números enum.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE establecer Application.View.value.viewType al montar vista, NUNCA dejarlo undefined.
+
+**REGLA 2:** SIEMPRE usar StringType.EMAIL para properties email activando validación HTML5 nativa.
+
+**REGLA 3:** SIEMPRE agrupar properties con mismo ViewGroupRow consecutivamente para renderizado correcto en misma fila.
+
+**REGLA 4:** SIEMPRE usar ToastType.SUCCESS para operaciones exitosas, ToastType.ERROR para fallos, mantener semántica consistente.
+
+**REGLA 5:** SIEMPRE usar confMenuType.WARNING para acciones destructivas requiriendo confirmación explícita usuario.
+
+**REGLA 6:** SIEMPRE usar decorador @StringTypeDef con StringType enum, NUNCA hardcodear strings "email" "password".
+
+**REGLA 7:** SIEMPRE verificar Application.View.value.viewType antes de ejecutar lógica específica de vista.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Usar valores mágicos numéricos 0/1/2 en lugar de enum constants ViewTypes.LISTVIEW/DETAILVIEW.
+
+**PROHIBIDO:** Omitir StringType.EMAIL para properties email permitiendo input type="text" sin validación formato.
+
+**PROHIBIDO:** Mezclar properties con diferentes ViewGroupRow values esperando renderizado en misma fila.
+
+**PROHIBIDO:** Usar ToastType.SUCCESS para mostrar errores confundiendo semántica visual verde/rojo.
+
+**PROHIBIDO:** Usar confMenuType.INFO para acciones destructivas que requieren advertencia WARNING clara.
+
+**PROHIBIDO:** Usar DetailTypes o MaskSides enums que no están implementados actualmente.
+
+**PROHIBIDO:** Crear properties tipo string sin especificar StringType asumiendo comportamiento default TEXT.
+
+## 8. DEPENDENCIAS
+
+**COMPONENTES QUE CONSUMEN ENUMS:**
+- ActionsComponent: Lee ViewTypes para determinar botones renderizados
+- DefaultDetailView: Lee StringType y ViewGroupRow para renderizado formulario
+- ToastItemComponent: Lee ToastType para mapear backgroundColor
+- ConfirmationDialogComponent: Lee confMenuType para mapear headerColor
+- EmailInputComponent: Activado por StringType.EMAIL
+- PasswordInputComponent: Activado por StringType.PASSWORD
+- TextAreaComponent: Activado por StringType.TEXTAREA
+- FormRowTwoItemsComponent: Renderizado por ViewGroupRow.PAIR
+- FormRowThreeItemsComponent: Renderizado por ViewGroupRow.TRIPLE
+
+**DECORADORES RELACIONADOS:**
+- @StringTypeDef: Establece StringType en metadata
+- @ViewGroupRow: Establece ViewGroupRow en metadata
+
+**SERVICIOS:**
+- Application.View.value.viewType: Propiedad reactiva almacena ViewTypes
+- ApplicationUIService.pushToast: Recibe ToastType
+- ApplicationUIService.openConfirmationMenu: Recibe confMenuType
+
+## 9. RELACIONES
+
+**VIEWTYPES CONTROLA:**
+ActionsComponent.ListButtons computed renderiza NewButton/RefreshButton para LISTVIEW o SaveButton/ValidateButton/SaveAndNewButton para DETAILVIEW.
+
+**STRINGTYPE DETERMINA:**
+DefaultDetailView selección de componente: StringType.EMAIL → EmailInputComponent, StringType.PASSWORD → PasswordInputComponent, StringType.TEXTAREA → TextAreaComponent, StringType.TEXT o undefined → TextInputComponent.
+
+**VIEWGROUPROW AGRUPA:**
+DefaultDetailView.groupedProperties itera properties consecutivas con mismo viewGroupRow creando chunks, cada chunk renderiza FormRowTwoItemsComponent si PAIR o FormRowThreeItemsComponent si TRIPLE o div simple si SINGLE.
+
+**TOASTTYPE Y CONFMENUTYPE SIMILAR:**
+Ambos definen tipos SUCCESS/ERROR/INFO/WARNING pero para contextos diferentes: ToastType para notificaciones temporales auto-dismiss, confMenuType para modales requiriendo acción usuario explícita Confirm/Cancel.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO VIEWTYPES USAGE:**
+```typescript
 mounted() {
     Application.View.value.viewType = ViewTypes.LISTVIEW;
 }
 
-// En DefaultDetailView (implícito al usar changeViewToDetailView)
-Application.changeViewToDetailView(entity);
-// Internamente establece: Application.View.value.viewType = ViewTypes.DETAILVIEW;
-```
-
-#### Condicional basado en viewType
-```typescript
-// En ActionsComponent para decidir qué botones mostrar
-computed: {
-    ListButtons(): Array<Component> {
-        const viewType = Application.View.value.viewType;
-        
-        if (viewType === ViewTypes.LISTVIEW) {
-            return [NewButton, RefreshButton];
-        } else if (viewType === ViewTypes.DETAILVIEW) {
-            return [SaveButton, ValidateButton, SaveAndNewButton];
-        }
-        
-        return [];
-    }
-}
-```
-
-#### En custom components
-```typescript
-// Verificar si estamos en modo edición
 if (Application.View.value.viewType === ViewTypes.DETAILVIEW) {
-    console.log('Usuario está editando:', Application.View.value.entityObject);
+    console.log('Usuario editando:', Application.View.value.entityObject);
 }
 ```
 
-### Consideraciones
-
-- ⚠️ **DEFAULTVIEW no usado**: Este valor está reservado pero no tiene implementación actual
-- ⚠️ **CUSTOMVIEW flexible**: Permite vistas que no siguen el patrón CRUD estándar
-- ✅ **Control de UI**: Determina qué elementos de interfaz se muestran (botones, navegación)
-
----
-
-## 2. StringType - Tipos de Campos String
-
-### Ubicación
-`src/enums/string_type.ts`
-
-### Código
-```typescript
-export enum StringType {
-    EMAIL,
-    PASSWORD,
-    TEXT,
-    TELEPHONE,
-    URL,
-    TEXTAREA
-}
-```
-
-### Descripción
-
-Define el tipo de input HTML que debe usarse para una propiedad `string`. Se usa con el decorador `@StringType()` para que `DefaultDetailView` renderice el componente de formulario correcto.
-
-### Valores
-
-| Valor | Input HTML | Componente Renderizado | Uso |
-|-------|------------|------------------------|-----|
-| **EMAIL** | `<input type="email">` | `EmailInputComponent` | Correos electrónicos con validación de formato |
-| **PASSWORD** | `<input type="password">` | `PasswordInputComponent` | Contraseñas (texto oculto) |
-| **TEXT** | `<input type="text">` | `TextInputComponent` | Texto corto de una línea (default) |
-| **TELEPHONE** | `<input type="tel">` | (No implementado) | Números telefónicos |
-| **URL** | `<input type="url">` | (No implementado) | URLs con validación |
-| **TEXTAREA** | `<textarea>` | `TextAreaComponent` | Texto largo multi-línea |
-
-### Ejemplo de Uso
-
+**EJEMPLO STRINGTYPE USAGE:**
 ```typescript
 import { StringType } from '@/enums/string_type';
-import { StringTypeDecorator } from '@/decorations';
 
 class User extends BaseEntity {
-    @PropertyName("Nombre")
-    @StringType(StringType.TEXT)  // ← Input normal (default, puede omitirse)
-    name: string = "";
-
-    @PropertyName("Email")
-    @StringType(StringType.EMAIL)  // ← Input tipo email
-    email: string = "";
-
-    @PropertyName("Contraseña")
-    @StringType(StringType.PASSWORD)  // ← Input oculto
-    password: string = "";
-
-    @PropertyName("Biografía")
-    @StringType(StringType.TEXTAREA)  // ← Textarea multi-línea
-    bio: string = "";
-
-    @PropertyName("Sitio Web")
-    @StringType(StringType.URL)  // ← (No implementado, renderiza como TEXT)
-    website: string = "";
+    @PropertyName("Email", String)
+    @StringTypeDef(StringType.EMAIL)
+    email!: string;
+    
+    @PropertyName("Password", String)
+    @StringTypeDef(StringType.PASSWORD)
+    password!: string;
+    
+    @PropertyName("Bio", String)
+    @StringTypeDef(StringType.TEXTAREA)
+    bio!: string;
 }
 ```
 
-### Cómo se Usa en DefaultDetailView
-
-```vue
-<!-- DefaultDetailView template -->
-<TextInputComponent 
-    v-if="entityClass.getPropertyType(prop) === String && 
-          entity.getStringType()[prop] == StringType.TEXT"
-    :entity="entity"
-    :property-key="prop"
-    v-model="entity[prop]" />
-
-<EmailInputComponent
-    v-if="entityClass.getPropertyType(prop) === String && 
-          entity.getStringType()[prop] == StringType.EMAIL"
-    :entity="entity"
-    :property-key="prop"
-    v-model="entity[prop]" />
-
-<PasswordInputComponent
-    v-if="entityClass.getPropertyType(prop) === String && 
-          entity.getStringType()[prop] == StringType.PASSWORD"
-    :entity="entity"
-    :property-key="prop"
-    v-model="entity[prop]" />
-
-<TextAreaComponent
-    v-if="entityClass.getPropertyType(prop) === String && 
-          entity.getStringType()[prop] == StringType.TEXTAREA"
-    :entity="entity"
-    :property-key="prop"
-    v-model="entity[prop]" />
-```
-
-### Obtener StringType de una Propiedad
-
-```typescript
-// En BaseEntity
-getStringType(): Record<string, StringType> {
-    const metadata = this.constructor.prototype.$BaseEntityMetadata;
-    return metadata?.StringType || {};
-}
-
-// Uso
-const user = new User();
-console.log(user.getStringType());
-// { email: StringType.EMAIL, password: StringType.PASSWORD, bio: StringType.TEXTAREA }
-```
-
-### Consideraciones
-
-- ⚠️ **TELEPHONE y URL no implementados**: Existen en el enum pero no tienen componente dedicado, renderizan como TEXT
-- ⚠️ **Default es TEXT**: Si no aplicas `@StringType()`, se asume TEXT
-- ✅ **Validación automática**: EMAIL valida formato email, PASSWORD oculta caracteres
-
----
-
-## 3. ViewGroupRow - Disposición de Filas
-
-### Ubicación
-`src/enums/view_group_row.ts`
-
-### Código
-```typescript
-export enum ViewGroupRow {
-    SINGLE = 'single',
-    PAIR = 'pair',
-    TRIPLE = 'triple'
-}
-```
-
-### Descripción
-
-Define cuántos campos se muestran por fila en `DefaultDetailView`. Se usa con el decorador `@ViewGroupRow()` para controlar el layout del formulario.
-
-### Valores
-
-| Valor | Campos por Fila | Componente Renderizado | Ancho por Campo |
-|-------|----------------|------------------------|-----------------|
-| **SINGLE** | 1 campo | `<div>` | 100% |
-| **PAIR** | 2 campos | `FormRowTwoItemsComponent` | 50% cada uno |
-| **TRIPLE** | 3 campos | `FormRowThreeItemsComponent` | 33.33% cada uno |
-
-### Ejemplo de Uso
-
+**EJEMPLO VIEWGROUPROW USAGE:**
 ```typescript
 import { ViewGroupRow } from '@/enums/view_group_row';
 
 class Product extends BaseEntity {
-    @PropertyName("Título del Producto")
-    @ViewGroupRow(ViewGroupRow.SINGLE)  // ← Ancho completo
-    title: string = "";
-
-    @PropertyName("Precio")
-    @ViewGroupRow(ViewGroupRow.PAIR)  // ← Mitad izquierda
-    price: number = 0;
-
-    @PropertyName("Stock")
-    @ViewGroupRow(ViewGroupRow.PAIR)  // ← Mitad derecha (va en la misma fila que price)
-    stock: number = 0;
-
-    @PropertyName("Alto")
-    @ViewGroupRow(ViewGroupRow.TRIPLE)  // ← Tercio izquierdo
-    height: number = 0;
-
-    @PropertyName("Ancho")
-    @ViewGroupRow(ViewGroupRow.TRIPLE)  // ← Tercio centro
-    width: number = 0;
-
-    @PropertyName("Profundidad")
-    @ViewGroupRow(ViewGroupRow.TRIPLE)  // ← Tercio derecho
-    depth: number = 0;
-}
-```
-
-**Resultado visual**:
-```
-┌─────────────────────────────────────┐
-│ [Título: ___________________]       │ ← SINGLE (100%)
-└─────────────────────────────────────┘
-
-┌──────────────────┬──────────────────┐
-│ [Precio: ____]   │ [Stock: _____]   │ ← PAIR (50% + 50%)
-└──────────────────┴──────────────────┘
-
-┌───────────┬───────────┬─────────────┐
-│ [Alto: _] │ [Ancho: _]│ [Prof: ___] │ ← TRIPLE (33% + 33% + 33%)
-└───────────┴───────────┴─────────────┘
-```
-
-### Agrupación Automática en DefaultDetailView
-
-```typescript
-// DefaultDetailView agrupa propiedades consecutivas con mismo viewGroupRow
-computed: {
-    groupedProperties() {
-        const viewGroupRows = this.entity.getViewGroupRows();
-        
-        for (const prop of keys) {
-            const rowType = viewGroupRows[prop] || ViewGroupRow.PAIR;  // ← Default PAIR
-            const lastChunk = groups[currentGroup][groups[currentGroup].length - 1];
-            
-            // Si la última fila tiene el mismo tipo, agregar a esa fila
-            if (lastChunk && lastChunk.rowType === rowType) {
-                lastChunk.properties.push(prop);
-            } else {
-                // Crear nueva fila
-                groups[currentGroup].push({
-                    rowType: rowType,
-                    properties: [prop]
-                });
-            }
-        }
-    }
-}
-```
-
-**Ejemplo de agrupación**:
-```typescript
-class Example extends BaseEntity {
-    @ViewGroupRow(ViewGroupRow.PAIR)
-    field1: string = "";  // Fila 1 con 2 campos
-    
-    @ViewGroupRow(ViewGroupRow.PAIR)
-    field2: string = "";  // Va en fila 1 junto con field1
-    
-    @ViewGroupRow(ViewGroupRow.TRIPLE)
-    field3: string = "";  // Fila 2 con 3 campos
-    
-    @ViewGroupRow(ViewGroupRow.TRIPLE)
-    field4: string = "";  // Va en fila 2
-    
-    @ViewGroupRow(ViewGroupRow.TRIPLE)
-    field5: string = "";  // Va en fila 2
-    
+    @PropertyName("Title", String)
     @ViewGroupRow(ViewGroupRow.SINGLE)
-    field6: string = "";  // Fila 3 con 1 campo
-}
-
-// Resultado:
-// Fila 1: [field1] [field2]
-// Fila 2: [field3] [field4] [field5]
-// Fila 3: [field6________________]
-```
-
-### Consideraciones
-
-- ⚠️ **Default es PAIR**: Si no especificas `@ViewGroupRow()`, se asume PAIR
-- ⚠️ **Límite de campos**: Si defines TRIPLE pero solo tienes 2 campos consecutivos, no se llenan los 3 slots
-- ✅ **Responsive**: Los componentes FormRow usan CSS Grid para adaptarse a pantallas pequeñas
-
----
-
-## 4. ToastType - Tipos de Notificaciones
-
-### Ubicación
-`src/enums/ToastType.ts`
-
-### Código
-```typescript
-export enum ToastType {
-    SUCCESS,
-    ERROR,
-    INFO,
-    WARNING
+    title!: string;  // 100% width
+    
+    @PropertyName("Price", Number)
+    @ViewGroupRow(ViewGroupRow.PAIR)
+    price!: number;  // 50% width left
+    
+    @PropertyName("Stock", Number)
+    @ViewGroupRow(ViewGroupRow.PAIR)
+    stock!: number;  // 50% width right, misma fila que price
+    
+    @PropertyName("Height", Number)
+    @ViewGroupRow(ViewGroupRow.TRIPLE)
+    height!: number;  // 33% width left
+    
+    @PropertyName("Width", Number)
+    @ViewGroupRow(ViewGroupRow.TRIPLE)
+    width!: number;  // 33% width center
+    
+    @PropertyName("Depth", Number)
+    @ViewGroupRow(ViewGroupRow.TRIPLE)
+    depth!: number;  // 33% width right, misma fila que height y width
 }
 ```
 
-### Descripción
-
-Define los tipos de notificaciones toast (toasts emergentes temporales). Cada tipo tiene un color y icono específico definido en `ToastItemComponent`.
-
-### Valores
-
-| Valor | Color de Fondo | Uso Típico | Icono |
-|-------|---------------|------------|-------|
-| **SUCCESS** | Verde (`#10b981`) | Operaciones exitosas (guardado, eliminado) | ✓ Check |
-| **ERROR** | Rojo (`#ef4444`) | Errores, validaciones fallidas | ✗ Error |
-| **INFO** | Azul (`#3b82f6`) | Información general, notificaciones | ℹ Info |
-| **WARNING** | Amarillo (`#f59e0b`) | Advertencias, avisos | ⚠ Warning |
-
-### Ejemplo de Uso
-
+**EJEMPLO TOASTTYPE USAGE:**
 ```typescript
 import { ToastType } from '@/enums/ToastType';
-import Application from '@/models/application';
 
-// Toast de éxito
 Application.ApplicationUIService.pushToast({
     type: ToastType.SUCCESS,
     title: 'Guardado exitoso',
@@ -379,120 +281,20 @@ Application.ApplicationUIService.pushToast({
     duration: 3000
 });
 
-// Toast de error
 Application.ApplicationUIService.pushToast({
     type: ToastType.ERROR,
     title: 'Error al guardar',
     message: 'No se pudo conectar con el servidor',
     duration: 5000
 });
-
-// Toast de información
-Application.ApplicationUIService.pushToast({
-    type: ToastType.INFO,
-    title: 'Actualización disponible',
-    message: 'Hay una nueva versión del sistema',
-    duration: 4000
-});
-
-// Toast de advertencia
-Application.ApplicationUIService.pushToast({
-    type: ToastType.WARNING,
-    title: 'Campos incompletos',
-    message: 'Por favor completa todos los campos requeridos',
-    duration: 3000
-});
 ```
 
-### Uso en SaveButton
-
-```typescript
-// SaveButton.vue - Ejemplo real del framework
-async handleSave() {
-    const entity = Application.View.value.entityObject;
-    
-    try {
-        await entity.save();
-        
-        Application.ApplicationUIService.pushToast({
-            type: ToastType.SUCCESS,  // ← Verde, icono check
-            title: 'Guardado exitoso',
-            message: `${entity.constructor.name} guardado correctamente`
-        });
-        
-        Application.changeViewToListView(entity.constructor);
-    } catch (error) {
-        Application.ApplicationUIService.pushToast({
-            type: ToastType.ERROR,  // ← Rojo, icono error
-            title: 'Error al guardar',
-            message: error.message
-        });
-    }
-}
-```
-
-### Mapeo en ToastItemComponent
-
-```vue
-<!-- ToastItemComponent.vue -->
-<script setup lang="ts">
-const getBackgroundColor = computed(() => {
-    switch (props.toast.type) {
-        case ToastType.SUCCESS: return '#10b981';
-        case ToastType.ERROR: return '#ef4444';
-        case ToastType.INFO: return '#3b82f6';
-        case ToastType.WARNING: return '#f59e0b';
-        default: return '#6b7280';
-    }
-});
-</script>
-```
-
-### Consideraciones
-
-- ✅ **Uso consistente**: Usa SUCCESS para éxitos, ERROR para fallos, INFO para notificaciones, WARNING para advertencias
-- ✅ **Duración variable**: SUCCESS típicamente 3s, ERROR/WARNING 5s (más tiempo para leer)
-- ⚠️ **Solo visual**: El tipo solo afecta color/icono, no la función del toast
-
----
-
-## 5. confMenuType - Tipos de Menús de Confirmación
-
-### Ubicación
-`src/enums/conf_menu_type.ts`
-
-### Código
-```typescript
-export enum confMenuType {
-    INFO,
-    SUCCESS,
-    WARNING,
-    ERROR
-}
-```
-
-### Descripción
-
-Define los tipos visuales de `ConfirmationDialogComponent`. Similar a `ToastType` pero para diálogos modales de confirmación (no para toasts).
-
-### Valores
-
-| Valor | Color de Header | Uso Típico |
-|-------|----------------|------------|
-| **INFO** | Azul | Información general que requiere confirmación |
-| **SUCCESS** | Verde | Confirmar operaciones exitosas |
-| **WARNING** | Amarillo | Advertencias que requieren confirmación del usuario |
-| **ERROR** | Rojo | Errores graves que requieren confirmación para continuar |
-
-### Ejemplo de Uso
-
+**EJEMPLO CONFMENUTYPE USAGE:**
 ```typescript
 import { confMenuType } from '@/enums/conf_menu_type';
-import Application from '@/models/application';
 
-// Confirmar eliminación (WARNING)
 Application.ApplicationUIService.openConfirmationMenu({
-    title: '¿Eliminar producto?',
+    title: 'Eliminar producto?',
     message: 'Esta acción no se puede deshacer',
     type: confMenuType.WARNING,
     confirmText: 'Eliminar',
@@ -501,246 +303,52 @@ Application.ApplicationUIService.openConfirmationMenu({
         entity.delete();
     }
 });
-
-// Error que requiere confirmación (ERROR)
-Application.ApplicationUIService.openConfirmationMenu({
-    title: 'Error crítico',
-    message: 'No se pudo conectar con el servidor. Reintentar?',
-    type: confMenuType.ERROR,
-    confirmText: 'Reintentar',
-    cancelText: 'Cancelar',
-    onConfirm: () => {
-        retryConnection();
-    }
-});
-
-// Información (INFO)
-Application.ApplicationUIService.openConfirmationMenu({
-    title: 'Guardar cambios?',
-    message: 'Tienes cambios sin guardar',
-    type: confMenuType.INFO,
-    confirmText: 'Guardar',
-    cancelText: 'Descartar',
-    onConfirm: () => {
-        entity.save();
-    }
-});
-
-// Éxito (SUCCESS)
-Application.ApplicationUIService.openConfirmationMenu({
-    title: 'Proceso completado',
-    message: 'La importación se realizó correctamente',
-    type: confMenuType.SUCCESS,
-    confirmText: 'Ver resultados',
-    cancelText: 'Cerrar',
-    onConfirm: () => {
-        router.push('/results');
-    }
-});
 ```
 
-### Uso en ConfirmationDialogComponent
-
-```vue
-<!-- ConfirmationDialogComponent.vue -->
-<script setup lang="ts">
-const getHeaderColor = computed(() => {
-    switch (props.menu.type) {
-        case confMenuType.INFO: return 'var(--color-primary)';     // Azul
-        case confMenuType.SUCCESS: return 'var(--color-success)';  // Verde
-        case confMenuType.WARNING: return 'var(--color-warning)';  // Amarillo
-        case confMenuType.ERROR: return 'var(--color-error)';      // Rojo
-        default: return 'var(--color-text)';
-    }
-});
-</script>
-```
-
-### Consideraciones
-
-- ⚠️ **Diferente a ToastType**: Aunque los nombres son iguales, son enums diferentes para contextos diferentes
-- ✅ **Uso semántico**: Usa WARNING para confirmaciones de acciones destructivas, ERROR para errores graves
-- ⚠️ **No confundir con Toast**: confMenuType es para modales con botones, ToastType es para notificaciones temporales
-
----
-
-## 6. DetailTypes - Tipos de Detalle (FUTURO)
-
-### Ubicación
-`src/enums/detail_type.ts`
-
-### Código
+**DEBUGGING ENUM VALUES:**
 ```typescript
-export enum DetailTypes {
-    NEW,
-    EDIT
-}
-```
+console.log('Current view:', ViewTypes[Application.View.value.viewType]);
+// Output: "Current view: DETAILVIEW"
 
-### Descripción
-
-⚠️ **No implementado actualmente**. Este enum está definido pero no se usa en el código del framework. Su propósito aparente sería distinguir entre modos de creación (NEW) y edición (EDIT) en `DefaultDetailView`.
-
-### Uso Previsto (No Implementado)
-
-```typescript
-// Uso hipotético futuro
-if (Application.View.value.detailType === DetailTypes.NEW) {
-    // Modo creación: resetear campos, generar IDs, etc.
-    entity = new EntityClass();
-} else if (Application.View.value.detailType === DetailTypes.EDIT) {
-    // Modo edición: cargar entidad existente desde API
-    entity = await EntityClass.load(Application.View.value.entityOid);
-}
-```
-
-### Estado Actual
-
-Actualmente se determina el modo implícitamente:
-- **NEW**: Si `Application.View.value.entityOid === 'new'`
-- **EDIT**: Si `Application.View.value.entityOid` contiene un ID válido
-
-### Consideraciones
-
-- ⚠️ **No usar**: Este enum existe pero no está integrado en el framework
-- 📝 **Documentación futura**: Si se implementa, permitiría lógica condicional más explícita
-
----
-
-## 7. MaskSides - Lados de Máscara (DECORADOR NO EXPORTADO)
-
-### Ubicación
-`src/enums/mask_sides.ts`
-
-### Código
-```typescript
-export enum MaskSides {
-    START,
-    END
-}
-```
-
-### Descripción
-
-⚠️ **Decorador @Mask() no exportado**. Este enum definiría desde qué lado aplicar una máscara de formato (ej: para números de cuenta, teléfonos). El decorador `@Mask()` existe en el código pero no está exportado en `src/decorations/index.ts`.
-
-### Uso Previsto (No Implementado)
-
-```typescript
-// Uso hipotético si @Mask() estuviera exportado
-class BankAccount extends BaseEntity {
-    @Mask("****-****-****-####", MaskSides.START)  // Ocultar primeros dígitos
-    accountNumber: string = "";  // Muestra: ****-****-****-1234
-
-    @Mask("####-####-####-****", MaskSides.END)  // Ocultar últimos dígitos
-    cardNumber: string = "";  // Muestra: 4532-1234-5678-****
-}
-```
-
-### Valores
-
-| Valor | Descripción |
-|-------|-------------|
-| **START** | Aplicar máscara desde el inicio (ocultar primeros caracteres) |
-| **END** | Aplicar máscara desde el final (ocultar últimos caracteres) |
-
-### Consideraciones
-
-- ⚠️ **No funcional**: El decorador @Mask() no está exportado, no se puede usar
-- 📝 **Implementación futura**: Si se exporta @Mask(), este enum permitiría formatear datos sensibles
-
----
-
-## Resumen de Enums
-
-| Enum | Ubicación | Estado | Uso Principal |
-|------|-----------|--------|---------------|
-| **ViewTypes** | `view_type.ts` | ✅ Implementado | Controla tipo de vista activa (LISTVIEW, DETAILVIEW, etc.) |
-| **StringType** | `string_type.ts` | ✅ Implementado | Define tipo de input para strings (EMAIL, PASSWORD, TEXTAREA, etc.) |
-| **ViewGroupRow** | `view_group_row.ts` | ✅ Implementado | Controla disposición de campos (SINGLE, PAIR, TRIPLE) |
-| **ToastType** | `ToastType.ts` | ✅ Implementado | Define tipo visual de toasts (SUCCESS, ERROR, INFO, WARNING) |
-| **confMenuType** | `conf_menu_type.ts` | ✅ Implementado | Define tipo visual de diálogos de confirmación |
-| **DetailTypes** | `detail_type.ts` | ⚠️ Definido, no usado | (Futuro) Distinguiría entre NEW/EDIT en DefaultDetailView |
-| **MaskSides** | `mask_sides.ts` | ⚠️ Decorador no exportado | (Futuro) Controlaría lado de aplicación de máscara |
-
----
-
-## Patrones de Uso Comunes
-
-### 1. Definir tipo de vista al montar componente
-```typescript
-mounted() {
-    Application.View.value.viewType = ViewTypes.LISTVIEW;
-}
-```
-
-### 2. Condicional basado en tipo de vista
-```typescript
-if (Application.View.value.viewType === ViewTypes.DETAILVIEW) {
-    // Lógica específica de edición
-}
-```
-
-### 3. Aplicar decoradores de string
-```typescript
-@StringType(StringType.EMAIL)
-email: string = "";
-```
-
-### 4. Controlar layout de formulario
-```typescript
-@ViewGroupRow(ViewGroupRow.PAIR)
-field1: string = "";
-```
-
-### 5. Mostrar notificación
-```typescript
-Application.ApplicationUIService.pushToast({
-    type: ToastType.SUCCESS,
-    title: 'Éxito',
-    message: 'Operación completada'
-});
-```
-
-### 6. Mostrar diálogo de confirmación
-```typescript
-Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.WARNING,
-    title: '¿Continuar?',
-    message: 'Esta acción es irreversible',
-    onConfirm: () => { /* ... */ }
-});
-```
-
----
-
-## Debugging
-
-### Ver tipo de vista actual
-```typescript
-console.log('Current view type:', ViewTypes[Application.View.value.viewType]);
-// Output: "Current view type: DETAILVIEW"
-```
-
-### Ver string types de una entidad
-```typescript
-const entity = new MyEntity();
 console.log('String types:', entity.getStringType());
-// Output: { email: 0, password: 1, bio: 5 }  // 0=EMAIL, 1=PASSWORD, 5=TEXTAREA
-```
+// Output: { email: 0, password: 1, bio: 5 }
 
-### Ver view group rows
-```typescript
-const entity = new MyEntity();
 console.log('View group rows:', entity.getViewGroupRows());
 // Output: { field1: 'pair', field2: 'pair', field3: 'single' }
-```
 
-### Ver nombres legibles de enum
-```typescript
 console.log('Toast type name:', ToastType[ToastType.SUCCESS]);
 // Output: "Toast type name: SUCCESS"
-
-console.log('View group row value:', ViewGroupRow.PAIR);
-// Output: "View group row value: pair"
 ```
+
+**LIMITACIONES ACTUALES:**
+StringType.TELEPHONE y StringType.URL definidos pero sin componentes dedicados, renderizan como TextInputComponent default.
+DetailTypes.NEW y DetailTypes.EDIT definidos pero no integrados, modo se determina implícitamente con entityOid === 'new' check.
+MaskSides.START y MaskSides.END definidos pero decorador @Mask no exportado en decorations/index.ts.
+ViewTypes.DEFAULTVIEW reservado sin implementación actual.
+
+**MAPEO COMPONENTES:**
+StringType.EMAIL EmailInputComponent input type="email" validación HTML5
+StringType.PASSWORD PasswordInputComponent input type="password" toggle visibility
+StringType.TEXTAREA TextAreaComponent textarea element multilínea
+StringType.TEXT TextInputComponent input type="text" default
+ViewGroupRow.SINGLE div wrapper 100% width
+ViewGroupRow.PAIR FormRowTwoItemsComponent CSS Grid 2 columns 50% each
+ViewGroupRow.TRIPLE FormRowThreeItemsComponent CSS Grid 3 columns 33.33% each
+
+## 11. REFERENCIAS CRUZADAS
+
+**DOCUMENTOS RELACIONADOS:**
+- application-singleton.md: Application.View.value.viewType usage
+- string-type-decorator.md: Decorador @StringTypeDef que usa StringType enum
+- view-group-row-decorator.md: Decorador @ViewGroupRow que usa ViewGroupRow enum
+- ActionsComponent.md: Componente que renderiza botones según ViewTypes
+- email-input-component.md: Componente activado por StringType.EMAIL
+- password-input-component.md: Componente activado por StringType.PASSWORD
+- textarea-input-component.md: Componente activado por StringType.TEXTAREA
+- ToastComponents.md: Sistema toast que usa ToastType enum
+- DialogComponents.md: ConfirmationDialog que usa confMenuType enum
+- FormLayoutComponents.md: FormRowTwoItems y FormRowThreeItems para ViewGroupRow
+
+**UBICACION:** copilot/layers/05-advanced/Enums.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026
