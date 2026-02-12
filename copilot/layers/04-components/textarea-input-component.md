@@ -1,80 +1,67 @@
-# 📝 TextAreaComponent - Área de Texto Multilinea
+# TextAreaComponent
 
-**Referencias:**
-- [useInputMetadata-composable.md](useInputMetadata-composable.md) - Composable de metadatos
-- [text-input-component.md](text-input-component.md) - Input de texto base
-- `../../01-decorators/string-type-decorator.md` - Decorador StringTypeDef
-- `../../tutorials/02-validations.md` - Sistema de validaciones
+## 1. PROPOSITO
 
----
+TextAreaComponent es un componente especializado para entrada de texto multilínea mediante elemento textarea nativo HTML, diseñado para recolectar párrafos, descripciones largas y comentarios. Se activa automáticamente cuando una propiedad usa decorador @StringTypeDef(StringType.TEXTAREA), soportando auto-resize según contenido y validación de dos niveles: required y síncrona, sin soporte actual para validación asíncrona.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Archivo:** `src/components/Form/TextAreaComponent.vue`  
-**Tipo de propiedad:** `String` con `@StringTypeDef(StringType.TEXTAREA)`
+**UBICACION:** src/components/Form/TextAreaComponent.vue
 
----
+**DEPENDENCIAS TECNICAS:**
+- Vue 3 Composition API: Reactividad y v-model
+- TextInputComponent: Hereda estructura base
+- StringType.TEXTAREA enum: Determina activación
+- useInputMetadata composable: Extracción de metadata
+- HTMLTextAreaElement: Casting para manipulación DOM
 
-## 🎯 Propósito
+**ACTIVACION:**
+Se renderiza cuando property tiene decorador @StringTypeDef(StringType.TEXTAREA). Application.js detecta esta configuración y selecciona TextAreaComponent.
 
-Componente para entrada de **texto multilínea** (párrafos, descripciones largas, comentarios). Características:
+**LIMITACIONES:**
+NO soporta validación asíncrona, NO muestra help text section en template actual.
 
-- ✅ Elemento `<textarea>` nativo
-- ✅ Soporte para múltiples líneas
-- ✅ Auto-resize según contenido
-- ✅ Validación de 2 niveles (Required y Sync)
+## 3. DEFINICIONES CLAVE
 
-**Nota:** TextAreaComponent NO soporta validación asíncrona actualmente.
+**textarea element:**
+Elemento HTML nativo para entrada multilínea que permite saltos de línea con Enter, soporta scroll vertical automático cuando contenido excede altura, y preserva formato de texto con espacios y líneas.
 
----
+**Auto-resize:**
+Comportamiento donde altura del textarea se ajusta dinámicamente según cantidad de contenido, expandiéndose verticalmente al agregar líneas y contrayéndose al eliminar.
 
-## 🔧 Activación Automática
+**Validación de dos niveles:**
+Sistema reducido que solo implementa nivel 1 required con trim y nivel 2 validación síncrona, omitiendo nivel 3 validación asíncrona presente en otros input components.
 
-El componente se genera automáticamente cuando:
+**saveItem method:**
+Método con nombre inconsistente que ejecuta validación en lugar de guardar, invocado por evento validate-inputs, debería llamarse handleValidation para consistencia con otros componentes.
 
-```typescript
-@PropertyName('Description', String)
-@StringTypeDef(StringType.TEXTAREA)  // ← Activa TextAreaComponent
-description!: string;
-```
+## 4. DESCRIPCION TECNICA
 
----
-
-## 📋 Props
-
+**PROPS:**
 ```typescript
 props: {
-    entityClass: {
-        type: Function as unknown as () => typeof BaseEntity,
-        required: true,
-    },
-    entity: {
-        type: Object as () => BaseEntity,
-        required: true,
-    },
-    propertyKey: {
-        type: String,
-        required: true,
-    },
-    modelValue: {
-        type: String,
-        required: true,
-        default: '',
-    },
+    entity: Object,        // Entidad actual BaseEntity
+    propertyName: String,  // Nombre de property en entity
+    metadata: Object       // Metadata extraída por useInputMetadata
 }
 ```
 
----
+**DATA:**
+```typescript
+data() {
+    return {
+        isInputValidated: true,
+        validationMessages: [] as string[]
+    }
+}
+```
 
-## 📐 Template
-
-```vue
-<template>
+**ESTRUCTURA HTML:**
+```html
 <div class="TextInput" :class="[
     {disabled: metadata.disabled.value}, 
     {nonvalidated: !isInputValidated}
 ]">
-    <!-- Label -->
     <label 
         :for="'id-' + metadata.propertyName" 
         class="label-input"
@@ -82,7 +69,6 @@ props: {
         {{ metadata.propertyName }}
     </label>
 
-    <!-- Textarea element -->
     <textarea 
         :id="'id-' + metadata.propertyName" 
         :name="metadata.propertyName" 
@@ -93,178 +79,176 @@ props: {
         @input="$emit('update:modelValue', $event.target.value)" 
     />
     
-    <!-- Validation messages -->
     <div class="validation-messages">
         <span v-for="message in validationMessages" :key="message">
             {{ message }}
         </span>
     </div>
 </div>
-</template>
 ```
 
-**Diferencias con TextInputComponent:**
-- ✅ Usa `<textarea>` en lugar de `<input>`
-- ✅ NO tiene help text (omitido en implementación)
-- ✅ Casting a `HTMLTextAreaElement` en lugar de `HTMLInputElement`
-
----
-
-## 🎨 Características Visuales
-
-### Renderizado
-
-```
-┌─────────────────────────────────────┐
-│ Description                         │
-│ ┌─────────────────────────────────┐ │
-│ │ This is a product description   │ │
-│ │ that spans multiple lines.      │ │
-│ │ It supports paragraphs and      │ │
-│ │ line breaks.                    │ │
-│ │                                 │ │
-│ │                                 │ │
-│ └─────────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
-
-### Estados CSS
-
-```css
-/* Normal */
-.TextInput {
-    /* Estilos base */
-}
-
-/* Disabled */
-.TextInput.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Inválido */
-.TextInput.nonvalidated {
-    border-color: red;
-}
-```
-
----
-
-## ✅ Sistema de Validación (2 Niveles)
-
-**⚠️ IMPORTANTE:** TextAreaComponent actualmente **NO soporta validación asíncrona**. Solo niveles 1 y 2.
-
-### Nivel 1: Required (trim)
-
+**COMPUTED VALUE:**
 ```typescript
-if (this.metadata.required.value && 
-    (!this.modelValue || this.modelValue.trim() === '')) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.requiredMessage.value || 
-        `${this.metadata.propertyName} is required.`
-    );
+computed: {
+    value: {
+        get() {
+            return this.entity[this.propertyName];
+        },
+        set(newValue) {
+            this.$emit('update:modelValue', newValue);
+        }
+    },
+    displayName() {
+        return this.metadata.displayName || this.propertyName;
+    },
+    required() {
+        return this.metadata.required === true;
+    },
+    disabled() {
+        return this.metadata.disabled === true;
+    }
 }
 ```
 
-### Nivel 2: Validación Síncrona
-
+**METODO isValidated:**
 ```typescript
-if (!this.metadata.validated.value) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.validatedMessage.value || 
-        `${this.metadata.propertyName} is not valid.`
-    );
+isValidated(): boolean {
+    var validated = true;
+    this.validationMessages = [];
+    
+    // Nivel 1: Required con trim
+    if (this.metadata.required.value && 
+        (!this.modelValue || this.modelValue.trim() === '')) {
+        validated = false;
+        this.validationMessages.push(
+            this.metadata.requiredMessage.value || 
+            `${this.metadata.propertyName} is required.`
+        );
+    }
+    
+    // Nivel 2: Validación síncrona
+    if (!this.metadata.validated.value) {
+        validated = false;
+        this.validationMessages.push(
+            this.metadata.validatedMessage.value || 
+            `${this.metadata.propertyName} is not valid.`
+        );
+    }
+    
+    return validated;
 }
 ```
 
-**Ejemplo: Validar longitud máxima**
+**METODO saveItem:**
 ```typescript
-@Validation(
-    (entity) => entity.description.length <= 500,
-    'Description must be 500 characters or less'
-)
-description!: string;
+saveItem() {
+    this.isInputValidated = this.isValidated();
+    if (!this.isInputValidated) {
+        Application.View.value.isValid = false;
+    }
+}
 ```
 
----
-
-## 🔄 Lifecycle y Event Handling
-
-### Mounted
-
+**LIFECYCLE HOOKS:**
 ```typescript
 mounted() {
     Application.eventBus.on('validate-inputs', this.saveItem);
 }
-```
 
-**⚠️ NOTA:** El método está nombrado `saveItem` pero en realidad ejecuta validación. Es inconsistente con otros componentes que usan `handleValidation`.
-
-### BeforeUnmount
-
-```typescript
 beforeUnmount() {
     Application.eventBus.off('validate-inputs', this.saveItem);
 }
 ```
 
-### Método de Validación
+## 5. FLUJO DE FUNCIONAMIENTO
 
+**PASO 1 - Activación:**
+Sistema detecta decorador @StringTypeDef(StringType.TEXTAREA) en property, Application.js selecciona TextAreaComponent para renderizado.
+
+**PASO 2 - Renderizado:**
+Componente recibe entity, propertyName y metadata, renderiza textarea element con label, aplica class TextInput, inicializa isInputValidated en true.
+
+**PASO 3 - Input Usuario Multilínea:**
+Usuario escribe en textarea incluyendo saltos de línea con Enter, evento @input dispara setter de computed value emitiendo update:modelValue, actualiza entity[propertyName] preservando formato y líneas, textarea auto-resize ajusta altura según contenido.
+
+**PASO 4 - Validación al Guardar:**
+Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs vía EventBus, saveItem() método ejecuta invocando isValidated(), nivel 1 verifica required con trim, nivel 2 ejecuta validación síncrona de longitud/formato, NO ejecuta nivel 3 async validation.
+
+**PASO 5 - Actualización UI:**
+Si validación falla, isInputValidated se marca false aplicando CSS class nonvalidated, validationMessages div renderiza errores específicos de cada validación fallida, textarea muestra border rojo indicando estado inválido.
+
+**PASO 6 - Corrección Usuario:**
+Usuario edita contenido corrigiendo errores, próxima validación re-evalúa con isValidated(), si pasa isInputValidated vuelve a true, CSS nonvalidated se remueve, validationMessages se limpia.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE usar elemento textarea, NUNCA input type="text" para contenido multilínea.
+
+**REGLA 2:** SIEMPRE validar required con trim eliminando espacios en blanco antes de verificar.
+
+**REGLA 3:** SIEMPRE limitar longitud máxima con @Validation para prevenir contenido excesivo.
+
+**REGLA 4:** SIEMPRE usar @StringTypeDef(StringType.TEXTAREA) para activar componente, NUNCA StringType.TEXT.
+
+**REGLA 5:** SIEMPRE casting a HTMLTextAreaElement cuando manipulando elemento DOM.
+
+**REGLA 6:** SIEMPRE registrar y desregistrar evento validate-inputs en mounted/beforeUnmount.
+
+**REGLA 7:** SIEMPRE mostrar validationMessages cuando isInputValidated es false.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Usar TextAreaComponent para textos cortos de una línea, usar TextInputComponent.
+
+**PROHIBIDO:** Omitir validación de longitud máxima permitiendo contenido ilimitado.
+
+**PROHIBIDO:** Usar @AsyncValidation con TextAreaComponent, no está soportado actualmente.
+
+**PROHIBIDO:** Confiar en isValidated() para ejecutar validación asíncrona, método es síncrono.
+
+**PROHIBIDO:** Usar StringType.TEXT en properties que requieren multilínea.
+
+**PROHIBIDO:** Omitir trim en validación required permitiendo solo espacios/líneas vacías.
+
+**PROHIBIDO:** Modificar método isValidated() a async sin actualizar toda la cadena de validación.
+
+## 8. DEPENDENCIAS
+
+**DECORADORES REQUERIDOS:**
+- @StringTypeDef: Define StringType.TEXTAREA para activación
+- @PropertyName: Establece display name
+- @Required: Marca campo obligatorio
+- @Validation: Implementa validación longitud y formato
+- @HelpText: NO se muestra actualmente por limitación template
+
+**COMPONENTES RELACIONADOS:**
+- TextInputComponent: Componente base heredado
+- useInputMetadata composable: Extrae metadata de decoradores
+
+**SERVICIOS:**
+- EventBus: Comunica evento validate-inputs
+- Application.View.value.isValid: Flag global validación formulario
+
+## 9. RELACIONES
+
+**HEREDA DE:**
+TextInputComponent - Estructura base conceptual, usa textarea en lugar de input.
+
+**ACTIVADO POR:**
+@StringTypeDef(StringType.TEXTAREA) - Decorador que señala uso de textarea.
+
+**INTEGRA CON:**
+- BaseEntity.validateInputs(): Sistema centralizado de validación
+- Application.View.value.isValid: Flag global de estado de formulario
+- EventBus: Comunicación de eventos validate-inputs
+
+**FLUJO DE RENDERIZADO:**
+Application.js detecta decorador, selecciona TextAreaComponent, pasa entity/propertyName/metadata como props, componente renderiza textarea element.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO ENTITY:**
 ```typescript
-methods: {
-    isValidated(): boolean {  // ← Síncrono, NO async
-        var validated = true;
-        this.validationMessages = [];
-        
-        if (this.metadata.required.value && 
-            (!this.modelValue || this.modelValue.trim() === '')) {
-            validated = false;
-            this.validationMessages.push(
-                this.metadata.requiredMessage.value || 
-                `${this.metadata.propertyName} is required.`
-            );
-        }
-        
-        if (!this.metadata.validated.value) {
-            validated = false;
-            this.validationMessages.push(
-                this.metadata.validatedMessage.value || 
-                `${this.metadata.propertyName} is not valid.`
-            );
-        }
-        
-        return validated;
-    },
-    
-    saveItem() {  // ← Método mal nombrado
-        this.isInputValidated = this.isValidated();
-        if (!this.isInputValidated) {
-            Application.View.value.isValid = false;
-        }
-    },
-}
-```
-
----
-
-## 🎓 Ejemplo Completo
-
-### Definición de Entidad
-
-```typescript
-import { BaseEntity } from './base_entitiy';
-import {
-    PropertyName,
-    PropertyIndex,
-    Required,
-    StringTypeDef,
-    Validation,
-    ViewGroup
-} from '@/decorations';
-import { StringType } from '@/enums/string_type';
-
 export class Product extends BaseEntity {
     @ViewGroup('Basic Information')
     @PropertyIndex(1)
@@ -275,7 +259,7 @@ export class Product extends BaseEntity {
     @ViewGroup('Details')
     @PropertyIndex(2)
     @PropertyName('Description', String)
-    @StringTypeDef(StringType.TEXTAREA)  // ← Genera TextAreaComponent
+    @StringTypeDef(StringType.TEXTAREA)
     @Required(true, 'Description is required')
     @Validation(
         (entity) => entity.description.length >= 20,
@@ -296,191 +280,52 @@ export class Product extends BaseEntity {
 }
 ```
 
-### UI Generada
+**CASOS DE USO:**
+1. Descripción Producto: @Required + @Validation longitud 50-1000 chars + validar no contiene HTML tags
+2. Comentarios: @Required(false) para textarea opcional sin validaciones adicionales
+3. Dirección Postal: @Required + @Validation verificar mínimo 2 líneas separadas por salto
+4. Términos Condiciones: @Disabled(true) para textarea solo lectura con contenido predefinido
 
-```vue
-<!-- Description (Required) -->
-<div class="TextInput">
-    <label>Description</label>
-    <textarea 
-        v-model="product.description"
-        placeholder=" "
-    ></textarea>
-    
-    <div class="validation-messages" v-if="!isValid">
-        <span>Description is required</span>
-        <span>Description must be at least 20 characters</span>
-        <span>Description must be 500 characters or less</span>
-    </div>
-</div>
+**VALIDACIONES COMUNES:**
+Longitud rango: entity.description.length >= 20 && entity.description.length <= 500
+Sin HTML: !/<[^>]*>/g.test(entity.description)
+Mínimo líneas: entity.address.split('\n').length >= 2
 
-<!-- Additional Notes (Optional) -->
-<div class="TextInput">
-    <label>Additional Notes</label>
-    <textarea 
-        v-model="product.notes"
-        placeholder=" "
-    ></textarea>
-</div>
+**LAYOUT VISUAL:**
+```
+┌─────────────────────────────────────┐
+│ Description                         │
+│ ┌─────────────────────────────────┐ │
+│ │ This is a product description   │ │
+│ │ that spans multiple lines.      │ │
+│ │ It supports paragraphs and      │ │
+│ │ line breaks.                    │ │
+│ │                                 │ │
+│ └─────────────────────────────────┘ │
+└─────────────────────────────────────┘
 ```
 
----
+**CSS CLASSES:**
+.TextInput - Estilo base
+.TextInput.disabled - Opacity 0.6 cursor not-allowed
+.TextInput.nonvalidated - Border rojo para estado inválido
 
-## 💡 Buenas Prácticas
+**LIMITACIONES ACTUALES:**
+1. NO soporta validación asíncrona: @AsyncValidation no funciona porque isValidated() no es async
+2. NO muestra help text: Sección help-text omitida en template actual
+3. Método mal nombrado: saveItem debería ser handleValidation para consistencia
 
-### ✅ DO:
+**DIFERENCIAS CON TextInputComponent:**
+Elemento input vs textarea, sin multilínea vs multilínea sí, help text sí vs no omitido, validación async sí vs no, auto-resize no aplica vs sí, chars counter no vs no, activación String default vs @StringTypeDef(TEXTAREA)
 
-```typescript
-// Validar longitud mínima y máxima
-@Validation(
-    (entity) => {
-        const len = entity.description.length;
-        return len >= 20 && len <= 500;
-    },
-    'Description must be between 20 and 500 characters'
-)
-description!: string;
+## 11. REFERENCIAS CRUZADAS
 
-// Validar contenido (sin HTML)
-@Validation(
-    (entity) => !/<[^>]*>/g.test(entity.description),
-    'HTML tags are not allowed'
-)
-description!: string;
+**DOCUMENTOS RELACIONADOS:**
+- text-input-component.md: Componente base input de línea única
+- string-type-decorator.md: Decorador que activa componente
+- validation-decorator.md: Validación de longitud y formato
+- useInputMetadata-composable.md: Extracción de metadata
 
-// Usar para textos largos
-@StringTypeDef(StringType.TEXTAREA)
-comments!: string;
-```
-
-### ❌ DON'T:
-
-```typescript
-// No usar para textos cortos (usar TextInput)
-@StringTypeDef(StringType.TEXTAREA)  // ❌ Overkill
-firstName!: string;
-
-// No usar validación asíncrona (no soportada)
-@AsyncValidation(async (entity) => { ... })  // ❌ NO FUNCIONA
-description!: string;
-
-// No omitir validación de longitud máxima
-@PropertyName('Description', String)  // ❌ Sin límite
-@StringTypeDef(StringType.TEXTAREA)
-description!: string;
-```
-
----
-
-## ⚠️ Limitaciones Actuales
-
-### 1. No Soporta Validación Asíncrona
-
-```typescript
-// ❌ NO FUNCIONA
-@AsyncValidation(
-    async (entity) => await checkProfanity(entity.description),
-    'Description contains inappropriate content'
-)
-description!: string;
-```
-
-**Razón:** El método `isValidated()` no es async y no ejecuta `isAsyncValidation()`.
-
-### 2. No Tiene Help Text
-
-```typescript
-// ⚠️ NO SE MOSTRARÁ
-@HelpText('Enter a detailed product description')
-description!: string;
-```
-
-**Razón:** La sección de help text está omitida en el template.
-
-### 3. Método Mal Nombrado
-
-```typescript
-mounted() {
-    Application.eventBus.on('validate-inputs', this.saveItem);  // ← Debería ser handleValidation
-}
-```
-
-**Impacto:** Solo confusión de naming, funciona correctamente.
-
----
-
-## 🧪 Casos de Uso Comunes
-
-### 1. Descripción de Producto
-
-```typescript
-@PropertyName('Product Description', String)
-@StringTypeDef(StringType.TEXTAREA)
-@Required(true)
-@Validation(
-    (entity) => entity.description.length >= 50 && entity.description.length <= 1000,
-    'Description must be between 50 and 1000 characters'
-)
-description!: string;
-```
-
-### 2. Comentarios
-
-```typescript
-@PropertyName('Comments', String)
-@StringTypeDef(StringType.TEXTAREA)
-@Required(false)
-comments?: string;
-```
-
-### 3. Dirección Postal
-
-```typescript
-@PropertyName('Full Address', String)
-@StringTypeDef(StringType.TEXTAREA)
-@Required(true)
-@Validation(
-    (entity) => entity.address.split('\n').length >= 2,
-    'Address must include street and city'
-)
-address!: string;
-```
-
-### 4. Términos y Condiciones
-
-```typescript
-@PropertyName('Terms and Conditions', String)
-@StringTypeDef(StringType.TEXTAREA)
-@Required(true)
-@Disabled(true)  // Solo lectura
-terms!: string;
-```
-
----
-
-## 🆚 Diferencias con TextInputComponent
-
-| Aspecto | TextInputComponent | TextAreaComponent |
-|---------|-------------------|-------------------|
-| **Elemento HTML** | `<input type="text">` | `<textarea>` |
-| **Multilinea** | No | Sí |
-| **Help Text** | Sí | No (omitido) |
-| **Validación Async** | Sí | No |
-| **Auto-resize** | No aplica | Sí (según contenido) |
-| **Chars counter** | No | No |
-| **Activación** | `String` por defecto | `@StringTypeDef(StringType.TEXTAREA)` |
-
----
-
-## 🔗 Referencias
-
-- **TextInputComponent:** [text-input-component.md](text-input-component.md)
-- **StringTypeDef Decorator:** `../../01-decorators/string-type-decorator.md`
-- **Validation Decorator:** `../../01-decorators/validation-decorator.md`
-- **useInputMetadata:** [useInputMetadata-composable.md](useInputMetadata-composable.md)
-
----
-
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo (basado en código actual, con limitaciones documentadas)
+**UBICACION:** copilot/layers/04-components/textarea-input-component.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

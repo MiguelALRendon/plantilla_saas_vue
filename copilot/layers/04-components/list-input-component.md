@@ -1,129 +1,70 @@
-# 📋 ListInputComponent - Selector Dropdown de Lista
+# ListInputComponent
 
-**Referencias:**
-- [useInputMetadata-composable.md](useInputMetadata-composable.md) - Composable de metadatos
-- `../../02-base-entity/metadata-access.md` - Acceso a metadatos
-- `../../tutorials/02-validations.md` - Sistema de validaciones
+## 1. PROPOSITO
 
----
+ListInputComponent es un componente dropdown personalizado para seleccionar opciones de una lista predefinida mediante interfaz animada con transición. Permite elegir valores de enums o listas estáticas, formatea automáticamente valores snake_case a Title Case, implementa posicionamiento inteligente abriéndose hacia arriba o abajo según espacio disponible, y se cierra al hacer clic fuera del dropdown. Requiere integración manual con EnumAdapter, no se genera automáticamente desde decoradores.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Archivo:** `src/components/Form/ListInputComponent.vue`  
-**Modelo:** `EnumAdapter` - Adaptador para enums y listas de opciones  
-**Tipo de propiedad:** `String` o `Number` con opciones predefinidas
+**UBICACION:** src/components/Form/ListInputComponent.vue
 
----
+**DEPENDENCIAS TECNICAS:**
+- Vue 3 Composition API: Reactividad y v-model
+- EnumAdapter model: Adaptador para enums y listas getKeyValuePairs
+- useInputMetadata composable: Extracción de metadata
+- GGICONS constants: Icono ARROW_UP para flecha dropdown
+- Click outside handling: document.addEventListener para cerrar dropdown
 
-## 🎯 Propósito
+**ACTIVACION:**
+NO se genera automáticamente. Requiere integración manual en vistas custom o DefaultDetailView pasando prop propertyEnumValues con EnumAdapter instance.
 
-Componente dropdown personalizado para **seleccionar opciones de una lista predefinida**. Características:
+## 3. DEFINICIONES CLAVE
 
-- ✅ Dropdown animado con transición
-- ✅ Formato automático de valores (snake_case → Title Case) 
-- ✅ Posicionamiento inteligente (arriba/abajo según espacio)
-- ✅ Click fuera para cerrar
-- ✅ Opción seleccionada resaltada
-- ✅ Validación de 3 niveles del framework
+**EnumAdapter:**
+Clase modelo que envuelve TypeScript enum proporcionando método getKeyValuePairs() retornando array de objetos con key string y value string/number para popular opciones del dropdown.
 
----
+**parseValue:**
+Método que transforma strings snake_case o UPPERCASE a Title Case formato legible: ORDER_CONFIRMED se convierte en Order Confirmed, PENDING en Pending.
 
-## 🔧 Activación
+**openOptions:**
+Método que calcula posición del botón trigger con getBoundingClientRect, determina si hay espacio suficiente abajo 300px threshold, establece fromBottom flag para renderizar dropdown hacia arriba o abajo, y alterna estado droped.
 
-A diferencia de otros inputs, ListInputComponent requiere **integración manual**:
+**fromBottom flag:**
+Variable booleana que controla dirección de apertura: false dropdown aparece debajo del trigger, true dropdown aparece encima cuando espacio inferior es menor a 300px.
 
-```typescript
-// En DefaultDetailView o componente custom
-<ListInputComponent
-    :entity-class="entityClass"
-    :entity="entity"
-    property-key="status"
-    :property-enum-values="statusEnumAdapter"  // ← EnumAdapter
-    v-model="entity.status"
-/>
-```
+## 4. DESCRIPCION TECNICA
 
-**Nota:** Actualmente no se genera automáticamente desde decoradores.
-
----
-
-## 📋 Props
-
+**PROPS:**
 ```typescript
 props: {
-    entityClass: {
-        type: Function as unknown as () => typeof BaseEntity,
-        required: true,
-    },
-    entity: {
-        type: Object as () => BaseEntity,
-        required: true,
-    },
-    propertyKey: {
-        type: String,
-        required: true,
-    },
-    propertyEnumValues: {
-        type: Object as () => EnumAdapter,  // ← Específico de List
-        required: true,
-    },
-    modelValue: {
-        type: [String, Number],
-        required: true,
-        default: '',
-    },
+    entity: Object,                // Entidad actual BaseEntity
+    propertyName: String,          // Nombre de property en entity
+    metadata: Object,              // Metadata extraída por useInputMetadata
+    propertyEnumValues: Object,    // EnumAdapter instance con opciones
+    modelValue: [String, Number]   // Valor seleccionado actual
 }
 ```
 
----
-
-## 🎨 EnumAdapter
-
-### Estructura
-
+**DATA:**
 ```typescript
-class EnumAdapter {
-    getKeyValuePairs(): Array<{ key: string, value: string | number }>;
+data() {
+    return {
+        GGICONS,
+        GGCLASS,
+        droped: false,          // Estado dropdown abierto/cerrado
+        fromBottom: false,      // Dirección de apertura
+        isInputValidated: true,
+        validationMessages: [] as string[]
+    }
 }
 ```
 
-### Ejemplo de Uso
-
-```typescript
-import { EnumAdapter } from '@/models/enum_adapter';
-
-// Definir enum
-enum OrderStatus {
-    PENDING = 'PENDING',
-    CONFIRMED = 'CONFIRMED',
-    SHIPPED = 'SHIPPED',
-    DELIVERED = 'DELIVERED',
-    CANCELLED = 'CANCELLED'
-}
-
-// Crear adapter
-const statusAdapter = new EnumAdapter(OrderStatus);
-
-// Obtener pairs
-statusAdapter.getKeyValuePairs();
-// [
-//   { key: 'PENDING', value: 'PENDING' },
-//   { key: 'CONFIRMED', value: 'CONFIRMED' },
-//   ...
-// ]
-```
-
----
-
-## 📐 Template
-
-```vue
-<template>
+**ESTRUCTURA HTML:**
+```html
 <div class="ListInput" :class="[
     {disabled: metadata.disabled.value}, 
     {nonvalidated: !isInputValidated}
 ]">
-    <!-- Botón header (trigger) -->
     <button 
         class="list-input-header" 
         @click="openOptions" 
@@ -132,43 +73,25 @@ statusAdapter.getKeyValuePairs();
     >
         <div class="list-input-container">
             <div class="label-and-value">
-                <!-- Label flotante -->
-                <label 
-                    class="label" 
-                    :class="[{active: actualOption != ''}]"
-                >
+                <label class="label" :class="[{active: actualOption != ''}]">
                     {{ metadata.propertyName }}
                 </label>
-                
-                <!-- Valor seleccionado -->
-                <label 
-                    class="value" 
-                    :class="[{active: actualOption != ''}]"
-                >
+                <label class="value" :class="[{active: actualOption != ''}]">
                     {{ actualOption }}
                 </label>
             </div>
             
-            <!-- Flecha (rota al abrir) -->
-            <span 
-                class="arrow" 
-                :class="[GGCLASS, {active: droped}]"
-            >
+            <span class="arrow" :class="[GGCLASS, {active: droped}]">
                 {{ GGICONS.ARROW_UP }}
             </span>
         </div>
     </button>
     
-    <!-- Dropdown body (lista de opciones) -->
-    <div 
-        class="list-input-body" 
-        :class="[
-            {enabled: droped}, 
-            {'from-bottom': fromBottom}
-        ]"
-    >
+    <div class="list-input-body" :class="[
+        {enabled: droped}, 
+        {'from-bottom': fromBottom}
+    ]">
         <div class="list-input-items-wrapper">
-            <!-- Opción individual -->
             <div 
                 class="list-input-item" 
                 v-for="value in propertyEnumValues.getKeyValuePairs()" 
@@ -181,93 +104,53 @@ statusAdapter.getKeyValuePairs();
         </div>
     </div>
     
-    <!-- Help text -->
     <div class="help-text" v-if="metadata.helpText.value">
         <span>{{ metadata.helpText.value }}</span>
     </div>
     
-    <!-- Validation messages -->
     <div class="validation-messages">
         <span v-for="message in validationMessages" :key="message">
             {{ message }}
         </span>
     </div>
 </div>
-</template>
 ```
 
----
-
-## 🔧 Métodos Principales
-
-### parseValue() - Formato de Texto
-
+**METODO parseValue:**
 ```typescript
 parseValue(key: string): string {
     return key
-        .toLowerCase()              // 'PENDING' → 'pending'
-        .split('_')                 // 'order_status' → ['order', 'status']
+        .toLowerCase()              // PENDING → pending
+        .split('_')                 // order_status → [order, status]
         .map(word => 
             word.charAt(0).toUpperCase() + word.slice(1)
-        )  // ['Order', 'Status']
-        .join(' ');                 // 'Order Status'
+        )  // [Order, Status]
+        .join(' ');                 // Order Status
 }
 ```
 
-**Ejemplos:**
-```typescript
-parseValue('PENDING')          → 'Pending'
-parseValue('ORDER_CONFIRMED')  → 'Order Confirmed'
-parseValue('IN_PROGRESS')      → 'In Progress'
-```
-
-### openOptions() - Toggle Dropdown
-
+**METODO openOptions:**
 ```typescript
 openOptions() {
-    // Calcular posición del botón
     const rect = document
         .getElementById('id-4-click-on' + this.metadata.propertyName)
         ?.getBoundingClientRect();
     
     if (rect) {
-        // Determinar si abrair hacia arriba o abajo
         this.fromBottom = (window.innerHeight - rect.bottom) < 300;
     }
     
-    // Toggle dropdown
     this.droped = !this.droped;
 }
 ```
 
-**Lógica de posicionamiento:**
-```
-┌─────────────────────┐
-│ Espacio disponible  │
-│ arriba > 300px      │
-│ ┌─────────────────┐ │
-│ │ [Dropdown Up]   │ │  ← fromBottom = true
-│ │ Option 1        │ │
-│ │ Option 2        │ │
-│ └─────────────────┘ │
-│ ▼ Select Status ▼   │  ← Botón trigger
-│                     │
-│                     │
-├─────────────────────┤
-│ Espacio disponible  │
-│ abajo < 300px       │
-└─────────────────────┘
-```
-
-### handleClickOutside() - Cerrar al click externo
-
+**METODO handleClickOutside:**
 ```typescript
 handleClickOutside(event: MouseEvent) {
     if(this.droped) {
         const dropdown = this.$el;
         if (!dropdown) return;
 
-        // Si click fue fuera del dropdown
         if (!dropdown.contains(event.target as Node)) {
             this.droped = false;
         }
@@ -275,23 +158,7 @@ handleClickOutside(event: MouseEvent) {
 }
 ```
 
-**Lifecycle:**
-```typescript
-mounted() {
-    document.addEventListener('click', this.handleClickOutside);
-    Application.eventBus.on('validate-inputs', this.handleValidation);
-}
-
-beforeUnmount() {
-    document.removeEventListener('click', this.handleClickOutside);
-    Application.eventBus.off('validate-inputs', this.handleValidation);
-}
-```
-
----
-
-## 🔄 Computed Property: actualOption
-
+**COMPUTED actualOption:**
 ```typescript
 computed: {
     actualOption(): String | number {
@@ -304,71 +171,106 @@ computed: {
 }
 ```
 
-**Flujo:**
-```
-modelValue: 'CONFIRMED'
-    ↓
-Buscar en getKeyValuePairs()
-    ↓
-Encontrar: { key: 'CONFIRMED', value: 'CONFIRMED' }
-    ↓
-Extraer key: 'CONFIRMED'
-    ↓
-parseValue('CONFIRMED')
-    ↓
-actualOption: 'Confirmed'  ← Mostrado en UI
-```
-
----
-
-## ✅ Sistema de Validación (3 Niveles)
-
-### Nivel 1: Required
-
+**LIFECYCLE HOOKS:**
 ```typescript
-if (this.metadata.required.value && this.modelValue === '') {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.requiredMessage.value || 
-        `${this.metadata.propertyName} is required.`
-    );
+mounted() {
+    document.addEventListener('click', this.handleClickOutside);
+    Application.eventBus.on('validate-inputs', this.handleValidation);
+}
+
+beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+    Application.eventBus.off('validate-inputs', this.handleValidation);
 }
 ```
 
-### Nivel 2: Validación Síncrona
+## 5. FLUJO DE FUNCIONAMIENTO
 
+**PASO 1 - Integración Manual:**
+Desarrollador crea EnumAdapter instance en vista custom con new EnumAdapter(OrderStatus), pasa adapter como prop propertyEnumValues a ListInputComponent junto con entity, propertyName y v-model.
+
+**PASO 2 - Renderizado Cerrado:**
+Componente renderiza botón header mostrando label flotante y actualOption computed displayeando valor actual formateado, flecha ARROW_UP rotada 180 grados apuntando abajo, dropdown body oculto con grid-template-rows: 0fr.
+
+**PASO 3 - Click en Trigger:**
+Usuario hace clic en botón header, openOptions ejecuta obteniendo rect con getBoundingClientRect, calcula espacio disponible comparando window.innerHeight - rect.bottom contra threshold 300px, establece fromBottom true si espacio insuficiente abajo o false si hay espacio, alterna droped a true.
+
+**PASO 4 - Apertura Dropdown:**
+CSS class enabled se aplica expandiendo dropdown con grid-template-rows: 1fr, flecha rota a 0 grados apuntando arriba, renderiza opciones iterando propertyEnumValues.getKeyValuePairs() mostrando parseValue de cada key, option seleccionado actual muestra class selected resaltado.
+
+**PASO 5 - Selección Usuario:**
+Usuario hace clic en una opción, evento @click emite update:modelValue con value.value actualizando entity[propertyName], droped se marca false cerrando dropdown, actualOption computed se recalcula mostrando nuevo valor formateado en header.
+
+**PASO 6 - Click Fuera:**
+Usuario hace clic fuera del dropdown, handleClickOutside detecta event.target fuera de this.$el, droped se marca false cerrando dropdown automáticamente.
+
+**PASO 7 - Validación al Guardar:**
+Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs, handleValidation ejecuta validando required verificando modelValue no vacío, validación síncrona ejecuta metadata.validated, validación asíncrona ejecuta isAsyncValidation si definida.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE crear EnumAdapter instance antes de usar ListInputComponent, pasar como prop propertyEnumValues.
+
+**REGLA 2:** SIEMPRE formatear display values con parseValue transformando snake_case a Title Case.
+
+**REGLA 3:** SIEMPRE calcular fromBottom para posicionamiento inteligente antes de abrir dropdown.
+
+**REGLA 4:** SIEMPRE registrar handleClickOutside en document para cerrar dropdown al click externo.
+
+**REGLA 5:** SIEMPRE emitir update:modelValue y cerrar dropdown droped=false al seleccionar opción.
+
+**REGLA 6:** SIEMPRE resaltar opción seleccionada actual con CSS class selected.
+
+** REGLA 7:** SIEMPRE validar que valor seleccionado existe en enum con Object.values.includes.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Usar listas hardcodeadas sin EnumAdapter perdiendo type safety.
+
+**PROHIBIDO:** Omitir validación de valores permitidos contra enum original.
+
+**PROHIBIDO:** Crear dropdown sin cálculo de posicionamiento permitiendo overflow fuera de viewport.
+
+**PROHIBIDO:** No registrar removeEventListener en beforeUnmount causando memory leaks.
+
+**PROHIBIDO:** Permitir selección cuando dropdown está disabled.
+
+**PROHIBIDO:** Modificar modelValue directamente sin emitir update:modelValue.
+
+**PROHIBIDO:** Omitir parseValue mostrando valores raw UPPERCASE o snake_case en UI.
+
+## 8. DEPENDENCIAS
+
+**DECORADORES REQUERIDOS:**
+- @PropertyName: Establece display name
+- @Required: Marca campo obligatorio
+- @Validation: Valida valor contra enum values
+- @HelpText: Proporciona ayuda contextual
+
+**MODELOS RELACIONADOS:**
+- EnumAdapter: Proporciona método getKeyValuePairs
+- useInputMetadata composable: Extrae metadata de decoradores
+
+**SERVICIOS:**
+- EventBus: Comunica evento validate-inputs
+- document: Registra click outside handler
+
+## 9. RELACIONES
+
+**INTEGRA CON:**
+- EnumAdapter.getKeyValuePairs(): Proporciona opciones para dropdown
+- BaseEntity.validateInputs(): Sistema centralizado de validación
+- Application.View.value.isValid: Flag global de estado de formulario
+- EventBus: Comunicación de eventos validate-inputs
+
+**FLUJO DE INTEGRACION:**
+Desarrollador define enum OrderStatus, crea adapter en vista, pasa a ListInputComponent como prop, componente renderiza dropdown, usuario selecciona valor, entity property se actualiza vía v-model.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO ENUM Y ENTITY:**
 ```typescript
-if (!this.metadata.validated.value) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.validatedMessage.value || 
-        `${this.metadata.propertyName} is not valid.`
-    );
-}
-```
-
-### Nivel 3: Validación Asíncrona
-
-```typescript
-const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-if (!isAsyncValid) {
-    validated = false;
-    const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-    if (asyncMessage) {
-        this.validationMessages.push(asyncMessage);
-    }
-}
-```
-
----
-
-## 🎓 Ejemplo Completo
-
-### Definición de Enum y Entidad
-
-```typescript
-// enums/order_status.ts
-export enum OrderStatus {
+enum OrderStatus {
     PENDING = 'PENDING',
     CONFIRMED = 'CONFIRMED',
     PROCESSING = 'PROCESSING',
@@ -376,17 +278,6 @@ export enum OrderStatus {
     DELIVERED = 'DELIVERED',
     CANCELLED = 'CANCELLED'
 }
-
-// entities/order.ts
-import { BaseEntity } from './base_entitiy';
-import { OrderStatus } from '@/enums/order_status';
-import {
-    PropertyName,
-    PropertyIndex,
-    Required,
-    Validation,
-    HelpText
-} from '@/decorations';
 
 export class Order extends BaseEntity {
     @PropertyIndex(1)
@@ -406,31 +297,26 @@ export class Order extends BaseEntity {
 }
 ```
 
-### Uso en defaultcomponente Custom
-
+**USO EN VISTA:**
 ```vue
 <template>
 <div>
-    <!-- Input normal -->
     <TextInputComponent
-        :entity-class="Order"
         :entity="order"
-        property-key="orderNumber"
+        property-name="orderNumber"
         v-model="order.orderNumber"
     />
     
-    <!-- List Input (manual) -->
     <ListInputComponent
-        :entity-class="Order"
         :entity="order"
-        property-key="status"
+        property-name="status"
         :property-enum-values="statusEnumAdapter"
         v-model="order.status"
     />
 </div>
 </template>
 
-<script lang="ts">
+<script>
 import { EnumAdapter } from '@/models/enum_adapter';
 import { OrderStatus } from '@/enums/order_status';
 
@@ -444,204 +330,40 @@ export default {
 </script>
 ```
 
-### UI Generada
+**CASOS DE USO:**
+1. Estado Pedido: enum OrderStatus con DRAFT/SUBMITTED/APPROVED/REJECTED + @Required + adapter
+2. Prioridad: enum Priority con LOW=1/MEDIUM=2/HIGH=3/URGENT=4 usando Number values
+3. Categoría: enum ProductCategory con ELECTRONICS/CLOTHING/FOOD/BOOKS + validación
 
-**Estado Cerrado:**
-```
-┌─────────────────────────────────────┐
-│ Status                              │
-│ ┌───────────────────────────┬─────┐ │
-│ │ Confirmed                 │  ▼  │ │
-│ └───────────────────────────┴─────┘ │
-└─────────────────────────────────────┘
-```
+**PARSEVALUE EJEMPLOS:**
+PENDING → Pending, ORDER_CONFIRMED → Order Confirmed, IN_PROGRESS → In Progress, user_role → User Role
 
-**Estado Abierto:**
-```
-┌─────────────────────────────────────┐
-│ Status                              │
-│ ┌───────────────────────────┬─────┐ │
-│ │ Confirmed                 │  ▲  │ │
-│ └───────────────────────────┴─────┘ │
-│ ┌─────────────────────────────────┐ │
-│ │ Pending                         │ │
-│ │ Confirmed                    ✓  │ │  ← Seleccionado
-│ │ Processing                      │ │
-│ │ Shipped                         │ │
-│ │ Delivered                       │ │
-│ │ Cancelled                       │ │
-│ └─────────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
+**POSICIONAMIENTO:**
+Espacio disponible arriba > 300px y abajo < 300px: fromBottom=true dropdown arriba
+Espacio disponible abajo >= 300px: fromBottom=false dropdown abajo
+Threshold 300px basado en altura típica de dropdown con scroll
 
----
+**ANIMACIONES CSS:**
+Flecha rotate 180deg cerrado a 0deg abierto transition 0.3s ease
+Label flotante sube con active class transition 0.5s ease
+Dropdown expansion grid-template-rows 0fr a 1fr transition 0.3s ease
 
-## 🎨 Animaciones y Transiciones
+**LAYOUT VISUAL ESTADOS:**
+Cerrado: [Status] [Confirmed] [flecha abajo]
+Abierto: [Status] [Confirmed] [flecha arriba] con lista expandida debajo mostrando Pending/Confirmed con checkmark/Processing/Shipped/Delivered/Cancelled
 
-### Flecha Rotativa
+**LIMITACIONES ACTUALES:**
+1. NO se genera automáticamente: Requiere integración manual en cada vista
+2. Posicionamiento en scrollables: Puede fallar si dropdown está en contenedor con scroll
+3. Sin búsqueda/filtrado: UX sufre con listas > 20 items requiriendo scroll manual
 
-```css
-.list-input-container .arrow {
-    transition: transform 0.3s ease;
-    transform: rotate(180deg);  /* ▼ */
-}
-.list-input-container .arrow.active {
-    transform: rotate(0deg);    /* ▲ */
-}
-```
+## 11. REFERENCIAS CRUZADAS
 
-### Label Flotante
+**DOCUMENTOS RELACIONADOS:**
+- enum-adapter.md: Clase modelo que proporciona getKeyValuePairs
+- validation-decorator.md: Validación de valores contra enum
+- useInputMetadata-composable.md: Extracción de metadata
 
-```css
-.label-and-value .label {
-    position: absolute;
-    top: 0.9rem;
-    transition: 0.5s ease;
-}
-
-.label-and-value .label.active {
-    background-color: var(--sky);
-    font-size: 0.75rem;
-    top: -1.1rem;  /* ← Sube */
-    border-radius: 0.5rem;
-}
-```
-
-### Dropdown Expansion
-
-```css
-.list-input-body {
-    display: grid;
-    grid-template-rows: 0fr;  /* Colapsado */
-    transition: grid-template-rows 0.3s ease;
-}
-
-.list-input-body.enabled {
-    grid-template-rows: 1fr;  /* Expandido */
-}
-```
-
----
-
-## 💡 Buenas Prácticas
-
-### ✅ DO:
-
-```typescript
-// Usar enums tipados
-enum Status {
-    ACTIVE = 'ACTIVE',
-    INACTIVE = 'INACTIVE'
-}
-
-// Crear adapter
-const adapter = new EnumAdapter(Status);
-
-// Validar valor contra enum
-@Validation(
-    (entity) => Object.values(Status).includes(entity.status),
-    'Invalid status value'
-)
-status!: string;
-```
-
-### ❌ DON'T:
-
-```typescript
-// No usar listas hardcodeadas
-const statusList = ['active', 'inactive'];  // ❌ Sin type safety
-
-// No omitir validación de valores permitidos
-@PropertyName('Status', String)  // ❌ Sin validación
-status!: string;
-```
-
----
-
-## 🧪 Casos de Uso Comunes
-
-### 1. Estado de Pedido
-
-```typescript
-enum OrderStatus {
-    DRAFT = 'DRAFT',
-    SUBMITTED = 'SUBMITTED',
-    APPROVED = 'APPROVED',
-    REJECTED = 'REJECTED'
-}
-
-@PropertyName('Status', String)
-@Required(true)
-status!: string;
-
-// En componente:
-statusAdapter = new EnumAdapter(OrderStatus);
-```
-
-### 2. Prioridad
-
-```typescript
-enum Priority {
-    LOW = 1,
-    MEDIUM = 2,
-    HIGH = 3,
-    URGENT = 4
-}
-
-@PropertyName('Priority', Number)
-@Required(true)
-priority!: number;
-
-// En componente:
-priorityAdapter = new EnumAdapter(Priority);
-```
-
-### 3. Categoría
-
-```typescript
-enum ProductCategory {
-    ELECTRONICS = 'ELECTRONICS',
-    CLOTHING = 'CLOTHING',
-    FOOD = 'FOOD',
-    BOOKS = 'BOOKS'
-}
-
-@PropertyName('Category', String)
-@Required(true)
-category!: string;
-
-categoryAdapter = new EnumAdapter(ProductCategory);
-```
-
----
-
-## ⚠️ Limitaciones Actuales
-
-### 1. No se genera automáticamente
-
-**Problema:** Requiere integración manual en cada vista.
-
-**Workaround:** Crear wrapper component o modificar DefaultDetailView.
-
-### 2. Posicionamiento en scrollables
-
-**Problema:** Si el dropdown está en un contenedor con scroll, el posicionamiento puede fallar.
-
-### 3. Búsqueda/Filtrado
-
-**Problema:** No tiene búsqueda interna. Para listas largas (>20 items), la UX sufre.
-
----
-
-## 🔗 Referencias
-
-- **EnumAdapter:** `../../models/enum_adapter.md` (no documentado aún)
-- **Validation Decorator:** `../../01-decorators/validation-decorator.md`
-- **useInputMetadata:** [useInputMetadata-composable.md](useInputMetadata-composable.md)
-- **Tutorial Validaciones:** `../../tutorials/02-validations.md`
-
----
-
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo (basado en código actual, con limitaciones documentadas)
+**UBICACION:** copilot/layers/04-components/list-input-component.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

@@ -1,33 +1,42 @@
-# 📊 DetailViewTableComponent - Tabla de Lista
+# DetailViewTableComponent
 
-**Referencias:**
-- `core-components.md` - Componentes principales
-- `../../02-base-entity/metadata-access.md` - Acceso a metadatos
-- `../../01-decorators/css-column-class-decorator.md` - Ancho de columnas
+## 1. PROPOSITO
 
----
+DetailViewTableComponent es un componente de tabla que renderiza lista de registros de una entidad con columnas generadas automáticamente desde metadatos mediante sistema de decoradores. Proporciona visualización tabular con header sticky, body scrollable, click en fila para abrir DetailView, formateo de valores según DisplayFormat, y renderizado especial para boolean con iconos check/cancel. Usado por default_listview.vue para mostrar colecciones de entidades.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Archivo:** `src/components/Informative/DetailViewTableComponent.vue`
+**UBICACION:** src/components/Informative/DetailViewTableComponent.vue
 
----
+**DEPENDENCIAS TECNICAS:**
+- Application.View.entityClass: Acceso a metadata de entity
+- BaseEntity methods: getKeys, getCSSClasses, getFormattedValue, getDefaultPropertyValue
+- getProperties: Obtiene labels de columnas desde @PropertyName
+- getCSSClasses: Obtiene anchos de columnas desde @CSSColumnClass
+- GGICONS: Iconos CHECK y CANCEL para booleansgetUniquePropertyValue: Identifica registro único para navegación
+- Router integration: changeViewToDetailView para navegación
 
-## 🎯 Propósito
+**ACTIVACION:**
+Se usa en default_listview.vue como componente principal para renderizar lista de registros. Recibe data array de entities como prop.
 
-Componente de tabla que muestra **lista de registros** de una entidad con columnas generadas automáticamente desde los metadatos. Usado en `default_listview.vue`.
+## 3. DEFINICIONES CLAVE
 
-**Generación automática:**  
-- Columnas basadas en `@PropertyName`
-- Anchos basados en `@CSSColumnClass`
-- Click en fila abre DetailView
+**Header sticky:**
+Thead con position sticky top 0 z-index 1 que permanece fijo visible durante scroll vertical del tbody, permitiendo ver siempre nombres de columnas.
 
----
+**Column auto-generation:**
+Sistema que itera getProperties() method de entityClass generando td headers dinámicamente, uno por cada property con decorador @PropertyName, manteniendo orden de @PropertyIndex.
 
-## 🎨 Template
+**CSSColumnClass classes:**
+CSS classes que controlan ancho de columnas: table-length-small 10%, table-length-short 15%, table-length-medium 25%, table-length-long 35%, table-length-xlarge 50%, table-length-header fit-content.
 
-```vue
-<template>
+**openDetailView method:**
+Método que recibe entity del click de fila, obtiene uniqueValue con getUniquePropertyValue, actualiza Application.View.value.entityOid, ejecuta changeViewToDetailView navegando a detalle.
+
+## 4. DESCRIPCION TECNICA
+
+**TEMPLATE ESTRUCTURA:**
+```html
 <table>
     <thead>
         <tr>
@@ -45,14 +54,12 @@ Componente de tabla que muestra **lista de registros** de una entidad con column
                     class="table-row" 
                     v-if="Application.View.entityClass?.getPropertyType(column) !== Array">
                     
-                    <!-- Valores no-boolean -->
                     <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
                         {{ item[column] instanceof BaseEntity ? 
                            item[column].getDefaultPropertyValue() : 
                            item.getFormattedValue(column) }}
                     </span>
 
-                    <!-- Boolean con iconos -->
                     <span v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean" 
                           :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" 
                           class="boolean-row">
@@ -67,44 +74,26 @@ Componente de tabla que muestra **lista de registros** de una entidad con column
         <tr></tr>
     </tfoot>
 </table>
-</template>
 ```
 
----
-
-## 🔧 Script
-
-### Methods
-
-#### openDetailView()
-
+**METODO openDetailView:**
 ```typescript
-methods: {
-    openDetailView(entity: any) {
-        // Setear entityOid antes de cambiar la vista
-        const uniqueValue = entity.getUniquePropertyValue();
-        if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
-            Application.View.value.entityOid = 'new';
-        } else {
-            Application.View.value.entityOid = String(uniqueValue);
-        }
-        Application.changeViewToDetailView(entity as BaseEntity);
-    }  
+openDetailView(entity: any) {
+    const uniqueValue = entity.getUniquePropertyValue();
+    if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
+        Application.View.value.entityOid = 'new';
+    } else {
+        Application.View.value.entityOid = String(uniqueValue);
+    }
+    Application.changeViewToDetailView(entity as BaseEntity);
 }
 ```
 
-**Flujo:**
-1. Obtiene valor único de la entidad (`@UniquePropertyKey`)
-2. Actualiza `Application.View.value.entityOid`
-3. Navega a DetailView con la entidad
-
-### Data
-
+**DATA:**
 ```typescript
 data() {
     const data: Products[] = [];
     
-    // Generar 50 productos de prueba
     for (let i = 1; i <= 50; i++) {
         data.push(
             new Products({
@@ -112,9 +101,9 @@ data() {
                 name: `Producto ${i}`,
                 description: `Descripción del producto ${i}`,
                 stock: Math.floor(Math.random() * 50) + 1,
-                Catedral: new Products({...}),  // Objeto anidado
+                Catedral: new Products({...}),
                 bolian: i % 2 === 0,
-                listaProductos: [...]  // Array
+                listaProductos: [...]
             })
         );
     }
@@ -129,147 +118,7 @@ data() {
 }
 ```
 
-**Nota:** Actualmente usa datos simulados (hardcoded). En producción, estos vendrían de `getElementList()`.
-
----
-
-## 🎨 Generación de Columnas
-
-### Header (thead)
-
-```vue
-<td v-for="(item, key) in Application.View.entityClass?.getProperties()">
-    {{ item }}
-</td>
-```
-
-**Obtiene:**
-- `getProperties()` retorna `{ 'name': 'Product Name', 'price': 'Price', ... }`
-- Genera una columna por cada propiedad con `@PropertyName`
-
-**Ejemplo:**
-```typescript
-@PropertyName('Product Name', String)
-name!: string;
-
-@PropertyName('Price', Number)
-price!: number;
-```
-
-**Resultado:**
-```
-| Product Name | Price |
-```
-
-### Ancho de Columnas
-
-```vue
-:class="Application.View.entityClass?.getCSSClasses()[key]"
-```
-
-**Activado por:**
-```typescript
-@CSSColumnClass('table-length-medium')
-name!: string;
-
-@CSSColumnClass('table-length-small')
-id!: number;
-```
-
-**CSS Classes disponibles:**
-- `table-length-small` - 10%
-- `table-length-short` - 15%
-- `table-length-medium` - 25%
-- `table-length-long` - 35%
-- `table-length-xlarge` - 50%
-- `table-length-header` - fit-content
-
----
-
-## 📊 Renderizado de Celdas
-
-### 1. Arrays (Ocultos)
-
-```vue
-v-if="Application.View.entityClass?.getPropertyType(column) !== Array"
-```
-
-**Razón:** Arrays no se muestran en tabla, solo en DetailView con tabs.
-
-### 2. BaseEntity (Objetos Anidados)
-
-```vue
-{{ item[column] instanceof BaseEntity ? 
-   item[column].getDefaultPropertyValue() : 
-   item.getFormattedValue(column) }}
-```
-
-**Ejemplo:**
-```typescript
-@DefaultProperty('name')
-category!: Category;
-
-// En tabla muestra: category.name
-```
-
-### 3. Boolean
-
-```vue
-<span v-else-if="tipo === Boolean" 
-      :class="GGCLASS + ' ' + (valor ? 'row-check' : 'row-cancel')">
-    {{ valor ? GGICONS.CHECK : GGICONS.CANCEL }}
-</span>
-```
-
-**Resultado:**
-- `true` → ✓ verde
-- `false` → ✗ rojo
-
-### 4. Valores Formateados
-
-```vue
-{{ item.getFormattedValue(column) }}
-```
-
-**Usa `@DisplayFormat`:**
-```typescript
-@DisplayFormat((e) => `$${e.price.toFixed(2)}`)
-price!: number;
-
-// En tabla: "$99.99"
-```
-
----
-
-## 🖱️ Interacción del Usuario
-
-### Click en Fila
-
-```vue
-<tr @click="openDetailView(item)">
-```
-
-**Comportamiento:**
-1. Usuario hace click en cualquier parte de la fila
-2. `openDetailView()` se ejecuta
-3. URL actualizado con entityOid
-4. Vista cambia a DetailView
-5. Formulario se carga con datos de la entidad
-
-### Hover Effect
-
-```css
-tbody tr:hover {
-    background-color: var(--bg-gray);
-}
-```
-
----
-
-## 🎨 Estilos CSS
-
-### Estructura Flex
-
+**CSS ESTRUCTURA:**
 ```css
 table {
     width: 100%;
@@ -295,16 +144,7 @@ tbody {
     flex: 1;
     scrollbar-gutter: stable;
 }
-```
 
-**Ventajas:**
-- Header sticky (se mantiene visible al scroll)
-- Body scrollable independientemente
-- Altura adaptativa al viewport
-
-### Rows y Celdas
-
-```css
 tr {
     min-height: 3rem;
 }
@@ -320,11 +160,11 @@ td {
 tbody tr {
     cursor: pointer;
 }
-```
 
-### Boolean Icons
+tbody tr:hover {
+    background-color: var(--bg-gray);
+}
 
-```css
 .boolean-row {
     font-size: 1.75rem;
 }
@@ -338,12 +178,101 @@ tbody tr {
 }
 ```
 
----
+## 5. FLUJO DE FUNCIONAMIENTO
 
-## 🎓 Ejemplo Completo
+**PASO 1 - Navegación ListView:**
+Usuario navega a ruta /products, Router llama ListView component, ListView renderiza DetailViewTableComponent pasando data prop con entities array.
 
-### Definición de Entidad
+**PASO 2 - Generación Header:**
+Thead itera Application.View.entityClass.getProperties() obteniendo diccionario con key property name y value display label desde @PropertyName, genera td por cada property, aplica CSS class desde getCSSClasses usando @CSSColumnClass decorator.
 
+**PASO 3 - Renderizado Rows:**
+Tbody itera data array de entities, cada entity genera tr con @click="openDetailView", itera item.getKeys() obteniendo properties, valida getPropertyType excluyendo Array types de renderizado tabla.
+
+**PASO 4 - Formateo Celdas:**
+Por cada td verifica tipo property: si Array skip rendering, si BaseEntity muestra getDefaultPropertyValue del objeto relacionado, si Boolean renderiza icon check verde o cancel rojo con GGICONS, si otro tipo ejecuta getFormattedValue aplicando @DisplayFormat decorator.
+
+**PASO 5 - Click Fila:**
+Usuario hace clic en cualquier td de row, evento @click dispara openDetailView recibiendo entity instance, método obtiene uniqueValue con getUniquePropertyValue desde @UniquePropertyKey, actualiza Application.View.value.entityOid como string del unique value.
+
+**PASO 6 - Navegación Detalle:**
+openDetailView ejecuta Application.changeViewToDetailView pasando entity, sistema actualiza router navegando a /products/2, view cambia a DetailView, formulario se carga con datos de entity seleccionada.
+
+**PASO 7 - Scroll y Sticky:**
+Usuario hace scroll vertical en tbody, header thead permanece sticky visible con position top 0, body scroll independiente mantiene usabilidad viendo columnas siempre, hover effect aplica background gris en row bajo cursor.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE generar columnas desde getProperties iterando metadata, NUNCA hardcodear columnas.
+
+**REGLA 2:** SIEMPRE aplicar CSS classes desde getCSSClasses respetando @CSSColumnClass decorator.
+
+**REGLA 3:** SIEMPRE excluir properties tipo Array de renderizado tabla, mostrar solo en DetailView.
+
+**REGLA 4:** SIEMPRE renderizar BaseEntity properties con getDefaultPropertyValue mostrando display value del objeto.
+
+**REGLA 5:** SIEMPRE renderizar Boolean con icons check/cancel usando GGICONS constants, NUNCA texto true/false.
+
+**REGLA 6:** SIEMPRE aplicar formateo con getFormattedValue respetando @DisplayFormat decorator.
+
+**REGLA 7:** SIEMPRE hacer rows clickeable con @click navegando a DetailView con openDetailView method.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Hardcodear nombres de columnas ignorando metadata system.
+
+**PROHIBIDO:** Renderizar properties tipo Array en tabla causando overflow y UX pobre.
+
+**PROHIBIDO:** Mostrar Boolean como texto true/false en lugar de icons visuales.
+
+**PROHIBIDO:** Omitir getFormattedValue saltando aplicación de @DisplayFormat decorator.
+
+**PROHIBIDO:** Permitir edición inline en celdas, tabla es read-only navigation only.
+
+**PROHIBIDO:** Remover position sticky de thead perdiendo usabilidad in scroll.
+
+**PROHIBIDO:** Omitir hover effect en rows reduciendo feedback visual de clickeabilidad.
+
+## 8. DEPENDENCIAS
+
+**DECORADORES REQUERIDOS:**
+- @PropertyName: Define display label de columnas
+- @PropertyIndex: Establece orden de columnas
+- @CSSColumnClass: Define ancho de columnas
+- @DisplayFormat: Formatea valores displayed
+- @DefaultProperty: Define display value para objetos relacionados
+- @UniquePropertyKey: Identifica registro único para navegación
+
+**METODOS BaseEntity:**
+- getKeys: Lista properties de entity
+- getCSSClasses: Obtiene CSS classes por property
+- getFormattedValue: Aplica DisplayFormat
+- getDefaultPropertyValue: Obtiene default display
+- getUniquePropertyValue: Obtiene unique identifier
+- getPropertyType: Determina tipo de property
+
+**SERVICIOS:**
+- Application.View.entityClass: Acceso a metadata
+- Application.changeViewToDetailView: Navegación
+- Router: Actualiza URL con entityOid
+
+## 9. RELACIONES
+
+**USADO POR:**
+default_listview.vue - Vista principal de listado de módulos.
+
+**INTEGRA CON:**
+- Application.View.entityClass: Obtiene metadata para generación automática
+- BaseEntity instances: Renderiza data de entities
+- Router: Navega a DetailView al hacer click
+- openDetailView method: Maneja transición a vista detalle
+
+**FLUJO DE NAVEGACION:**
+usuario click fila → openDetailView ejecuta → entityOid actualizado → changeViewToDetailView → router navega → DetailView renderiza.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO ENTITY:**
 ```typescript
 @ModuleName('Products')
 @ApiEndpoint('/api/products')
@@ -377,8 +306,7 @@ export class Product extends BaseEntity {
 }
 ```
 
-### Tabla Generada
-
+**TABLA GENERADA:**
 ```
 ┌─────┬─────────────────┬─────────┬────────┐
 │ ID  │ Product Name    │ Stock   │ Active │
@@ -390,83 +318,35 @@ export class Product extends BaseEntity {
      10%      25%          10%       10%
 ```
 
----
+**RENDERIZADO TIPOS:**
+Arrays: v-if excluye Array type, NO renderizado en tabla, solo DetailView tabs
+BaseEntity: Muestra object.getDefaultPropertyValue() como string display Customer.name
+Boolean: Renderiza icon check verde si true, cancel rojo si false con GGICONS
+DisplayFormat: Aplica formato custom como price $99.99 o stock 50 units
 
-## 🔄 Flujo Completo
+**LIMITACIONES ACTUALES:**
+1. Datos simulados: Usa 50 productos hardcoded en data(), producción debe llamar Product.getElementList()
+2. Sin paginación: Muestra todos registros sin límite, problemas performance > 100 items
+3. Sin filtrado: NO hay input búsqueda ni filtros por columna
+4. Sin ordenamiento: Click header NO ordena columnas ascendente/descendente
+5. Arrays ocultos: Properties Array invisible por diseño para uso solo DetailView
 
-```
-Usuario navega a /products
-    ↓
-Router llama ListView
-    ↓
-DetailViewTableComponent se monta
-    ↓
-data() genera 50 productos simulados
-    ↓
-Header se genera desde getProperties()
-    ↓
-Rows se generan iterando data
-    ↓
-Usuario click en fila #2
-    ↓
-openDetailView(product2) ejecuta
-    ↓
-entityOid = "2"
-    ↓
-Application.changeViewToDetailView(product2)
-    ↓
-Router navega a /products/2
-    ↓
-DetailView se renderiza con product2
-```
+**ESTRUCTURA FLEX:**
+Table usa flex column para header sticky y body scrollable independiente, thead display block sticky top 0, tbody display block overflow-y auto flex 1, adaptable viewport height con calc formula.
 
----
+**FLUJO COMPLETO:**
+Usuario /products → ListView → DetailViewTableComponent monta → data genera 50 products → header desde getProperties → rows desde data iteration → usuario click row 2 → openDetailView(product2) → entityOid = "2" → changeViewToDetailView → router /products/2 → DetailView renderiza.
 
-## 📝 Limitaciones Actuales
+## 11. REFERENCIAS CRUZADAS
 
-1. **Datos simulados:** Usa 50 productos hardcoded
-   - En producción: Debe llamar `Product.getElementList()`
-   
-2. **No hay paginación:** Muestra todos los registros
-   - Considera implementar paginación para > 100 registros
-   
-3. **No hay filtrado:** No se puede buscar/filtrar
-   - Considera agregar input de búsqueda
-   
-4. **No hay ordenamiento:** Click en header no ordena
-   - Considera agregar sorting por columna
+**DOCUMENTOS RELACIONADOS:**
+- views-overview.md: Vistas ListView y DetailView
+- css-column-class-decorator.md: Ancho de columnas
+- display-format-decorator.md: Formateo de valores
+- property-name-decorator.md: Labels de columnas
+- unique-decorator.md: UniquePropertyKey para navegación
+- default-property-decorator.md: Display value objetos
 
-5. **Arrays ocultos:** Propiedades Array no se visualizan
-   - Diseño intencional (uso en DetailView con tabs)
-
----
-
-## 🎯 Mejoras Futuras (Fuera del Scope Actual)
-
-- Llamar a `getElementList()` real
-- Paginación (10, 25, 50, 100 items)
-- Búsqueda global
-- Filtros por columna
-- Ordenamiento ascendente/descendente
-- Selección múltiple con checkboxes
-- Acciones en batch (delete selected)
-- Export a CSV/Excel
-- Columnas configurables (show/hide)
-
-**Nota:** Estas features NO existen actualmente.
-
----
-
-## 🔗 Referencias
-
-- **ListView:** `views-overview.md`
-- **CSS Column Class:** `../../01-decorators/css-column-class-decorator.md`
-- **Display Format:** `../../01-decorators/display-format-decorator.md`
-- **PropertyName:** `../../01-decorators/property-name-decorator.md`
-- **UniquePropertyKey:** `../../01-decorators/unique-decorator.md`
-
----
-
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo (con limitaciones documentadas)
+**UBICACION:** copilot/layers/04-components/DetailViewTableComponent.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

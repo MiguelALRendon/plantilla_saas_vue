@@ -1,313 +1,264 @@
-# 🔗 ObjectInputComponent - Selector de Objeto con Modal Lookup
+# ObjectInputComponent
 
-**Referencias:**
-- [useInputMetadata-composable.md](useInputMetadata-composable.md) - Composable de metadatos
-- `../../tutorials/03-relations.md` - Tutorial de relaciones
-- `../../03-application/ui-services.md` - ApplicationUIService
-- `../../01-decorators/property-name-decorator.md` - PropertyName con tipos
+## 1. PROPOSITO
 
----
+ObjectInputComponent es un componente especializado para seleccionar objetos relacionados mediante modal de lookup implementando relaciones 1:1 entre entidades. Proporciona input readonly mostrando objeto seleccionado formateado con getDefaultPropertyValue, botón de búsqueda que abre modal lookup con lista de objetos disponibles, selección mediante click con callback, y validación específica para required verificando null, undefined y EmptyEntity instances.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Archivo:** `src/components/Form/ObjectInputComponent.vue`  
-**Tipo de propiedad:** `BaseEntity` (objetos anidados)  
-**Uso:** Relaciones 1:1 entre entidades
+**UBICACION:** src/components/Form/ObjectInputComponent.vue
 
----
+**DEPENDENCIAS TECNICAS:**
+- Vue 3 Composition API: Reactividad y v-model
+- ApplicationUIService: Método showModalOnFunction para modal lookup
+- ViewTypes.LOOKUPVIEW: Tipo de modal para selección
+- BaseEntity: Clase base para objetos relacionados
+- EmptyEntity: Instancia por defecto cuando no hay selección
+- getDefaultPropertyValue: Método para obtener display value del objeto
 
-## 🎯 Propósito
+**ACTIVACION:**
+Se genera automáticamente cuando property usa @PropertyName con segundo parámetro siendo clase BaseEntity en lugar de tipo primitivo String/Number/Boolean.
 
-Componente para **seleccionar objetos relacionados** mediante modal de lookup. Implementa relaciones 1:1 entre entidades. Características:
+## 3. DEFINICIONES CLAVE
 
-- ✅ Input readonly mostrando objeto seleccionado
-- ✅ Botón de búsqueda (🔍) que abre modal lookup
-- ✅ Modal con lista de objetos disponibles
-- ✅ Selección mediante click
-- ✅ Validación de required (null, undefined, EmptyEntity)
-- ✅ Validación de 3 niveles del framework
+**modelType prop:**
+Clase BaseEntity del objeto relacionado pasada como prop, ejemplo Customer class, usada por ApplicationUIService para determinar qué entidades cargar en modal lookup.
 
----
+**getDefaultPropertyValue:**
+Método de BaseEntity que retorna valor de property marcada con decorador @DefaultProperty, típicamente name o description, usado como display value en input readonly.
 
-## 🔧 Activación Automática
+**showModalOnFunction:**
+Método de ApplicationUIService que recibe modelType class, callback setNewValue, y ViewTypes.LOOKUPVIEW, creando modal con default_lookup_listview renderizando todas las instances disponibles de la entidad.
 
-El componente se genera automáticamente cuando:
+**EmptyEntity:**
+Clase especial que hereda de BaseEntity usada como valor default cuando no hay objeto seleccionado, permite distinguir entre sin selección y null/undefined en validación required.
 
-```typescript
-import { Customer } from './customer';
+## 4. DESCRIPCION TECNICA
 
-@PropertyName('Customer', Customer)  // ← Tipo BaseEntity activa ObjectInputComponent
-customer!: Customer;
-```
-
-**Clave:** El segundo parámetro de `@PropertyName` es una clase que hereda de `BaseEntity`.
-
----
-
-## 📋 Props
-
+**PROPS:**
 ```typescript
 props: {
-    entityClass: {
-        type: Function as unknown as () => typeof BaseEntity,
-        required: true,
-    },
-    entity: {
-        type: Object as () => BaseEntity,
-        required: true,
-    },
-    propertyKey: {
-        type: String,
-        required: true,
-    },
-    modelValue: {
-        type: Object as PropType<BaseEntity>,
-        required: false,
-        default: () => new EmptyEntity({}),  // ← Valor por defecto
-    },
-    modelType: {
-        type: Function as unknown as PropType<typeof BaseEntity>,
-        required: true,  // ← Clase del objeto relacionado (ej: Customer)
-    },
+    entity: Object,                    // Entidad actual BaseEntity
+    propertyName: String,              // Nombre de property en entity
+    metadata: Object,                  // Metadata extraída por useInputMetadata
+    modelValue: Object,                // Objeto relacionado actual BaseEntity
+    modelType: Function                // Clase del objeto relacionado Customer
 }
 ```
 
-**Props críticos:**
-- `modelValue` - El objeto relacionado actual (Customer instance)
-- `modelType` - La clase del objeto (Customer class)
+**DATA:**
+```typescript
+data() {
+    return {
+        GGICONS,
+        GGCLASS,
+        Application,
+        ViewTypes,
+        isInputValidated: true,
+        validationMessages: [] as string[]
+    }
+}
+```
 
----
-
-## 📐 Template
-
-```vue
-<template>
+**ESTRUCTURA HTML:**
+```html
 <div class="TextInput ObjectInput" :class="[
     {disabled: metadata.disabled.value}, 
     {nonvalidated: !isInputValidated}
 ]">
-    <!-- Label -->
     <label :for="'id-' + metadata.propertyName" class="label-input">
         {{ metadata.propertyName }}
     </label>
     
-    <!-- Input readonly (muestra objeto seleccionado) -->
     <input 
         :id="'id-' + metadata.propertyName" 
         :name="metadata.propertyName" 
         type="text" 
         class="main-input" 
         placeholder=" "
-        :value="modelValue?.getDefaultPropertyValue()"  <!-- ← Display value -->
+        :value="modelValue?.getDefaultPropertyValue()"
         :disabled="metadata.disabled.value"
-        readonly="true"  <!-- ← No editable directamente -->
+        readonly="true"
         @input="$emit('update:modelValue', modelValue)" 
     />
     
-    <!-- Botón de búsqueda (abre modal) -->
     <button 
         class="right" 
         @click="Application.ApplicationUIService.showModalOnFunction(
-            modelType,          // ← Customer class
-            setNewValue,        // ← Callback
+            modelType,          
+            setNewValue,        
             ViewTypes.LOOKUPVIEW
         )" 
         :disabled="metadata.disabled.value"
     >
         <span :class="GGCLASS">{{ GGICONS.SEARCH }}</span>
     </button>
+    
+    <div class="help-text" v-if="metadata.helpText.value">
+        <span>{{ metadata.helpText.value }}</span>
+    </div>
+    
+    <div class="validation-messages">
+        <span v-for="message in validationMessages" :key="message">
+            {{ message }}
+        </span>
+    </div>
 </div>
-
-<!-- Help text -->
-<div class="help-text" v-if="metadata.helpText.value">
-    <span>{{ metadata.helpText.value }}</span>
-</div>
-
-<!-- Validation messages -->
-<div class="validation-messages">
-    <span v-for="message in validationMessages" :key="message">
-        {{ message }}
-    </span>
-</div>
-</template>
 ```
 
----
-
-## 🔄 Flujo de Selección
-
-### 1. Display Value (getDefaultPropertyValue)
-
-```vue
-:value="modelValue?.getDefaultPropertyValue()"
-```
-
-**¿Qué muestra?**
-- Si `customer` seleccionado → Muestra `customer.name` (definido por `@DefaultProperty`)
-- Si no hay selección → Muestra vacío
-
-**Ejemplo:**
+**METODO setNewValue:**
 ```typescript
-// En Customer entity
+setNewValue(newValue: BaseEntity | undefined) {
+    this.$emit('update:modelValue', newValue);
+}
+```
+
+**METODO isValidated:**
+```typescript
+async isValidated(): Promise<boolean> {
+    var validated = true;
+    this.validationMessages = [];
+    
+    // Nivel 1: Required con verificación EmptyEntity
+    if (this.metadata.required.value && 
+        (this.modelValue === null || 
+         this.modelValue === undefined || 
+         this.modelValue instanceof EmptyEntity)) {
+        validated = false;
+        this.validationMessages.push(
+            this.metadata.requiredMessage.value || 
+            `${this.metadata.propertyName} is required.`
+        );
+    }
+    
+    // Nivel 2: Validación síncrona
+    if (!this.metadata.validated.value) {
+        validated = false;
+        this.validationMessages.push(
+            this.metadata.validatedMessage.value || 
+            `${this.metadata.propertyName} is not valid.`
+        );
+    }
+    
+    // Nivel 3: Validación asíncrona
+    const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
+    if (!isAsyncValid) {
+        validated = false;
+        const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
+        if (asyncMessage) {
+            this.validationMessages.push(asyncMessage);
+        }
+    }
+    
+    return validated;
+}
+```
+
+**LIFECYCLE HOOKS:**
+```typescript
+mounted() {
+    Application.eventBus.on('validate-inputs', this.handleValidation);
+}
+
+beforeUnmount() {
+    Application.eventBus.off('validate-inputs', this.handleValidation);
+}
+```
+
+## 5. FLUJO DE FUNCIONAMIENTO
+
+**PASO 1 - Activación Automática:**
+Sistema detecta @PropertyName('Customer', Customer) donde segundo parámetro es clase BaseEntity no String/Number/Boolean, Application.js selecciona ObjectInputComponent para renderizado, pasa modelType=Customer class como prop.
+
+**PASO 2 - Renderizado Inicial:**
+Componente renderiza input readonly mostrando modelValue?.getDefaultPropertyValue() como valor display, si modelValue es EmptyEntity o null muestra vacío, botón search con icono GGICONS.SEARCH posicionado a la derecha.
+
+**PASO 3 - Click en Botón Búsqueda:**
+Usuario hace clic en botón search, showModalOnFunction ejecuta recibiendo modelType Customer class, callback setNewValue, y ViewTypes.LOOKUPVIEW, ApplicationUIService crea modal instanciando default_lookup_listview component.
+
+**PASO 4 - Renderizado Modal:**
+Modal lookup se abre mostrando tabla con todas las Customer instances disponibles cargadas desde API o Application.ModuleList, columnas configuradas según metadata de Customer entity, cada fila clickeable con evento de selección.
+
+**PASO 5 - Selección Usuario:**
+Usuario hace clic en fila de Customer específico John Doe, modal ejecuta callback setNewValue pasando customerJohn instance, setNewValue emite update:modelValue con customerJohn, v-model actualiza entity.customer = customerJohn, modal se cierra automáticamente.
+
+**PASO 6 - Actualización Display:**
+Input readonly re-renderiza con customerJohn.getDefaultPropertyValue() mostrando John Doe name property, isInputValidated se marca true si required estaba activo, validationMessages se limpia.
+
+**PASO 7 - Validación al Guardar:**
+Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs, isValidated() ejecuta verificando nivel 1 required chequeando modelValue no es null/undefined/EmptyEntity, nivel 2 ejecuta validación síncrona como entity.customer.active === true, nivel 3 ejecuta validación asíncrona verificando crédito disponible vía API.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE usar @DefaultProperty en entity relacionada para definir display value en input.
+
+**REGLA 2:** SIEMPRE validar required verificando null, undefined Y EmptyEntity instance.
+
+**REGLA 3:** SIEMPRE registrar entidad relacionada en Application.ModuleList para que aparezca en modal lookup.
+
+**REGLA 4:** SIEMPRE usar input readonly=true, NUNCA permitir edición directa del text.
+
+**REGLA 5:** SIEMPRE pasar modelType class como prop para que modal sepa qué entidades cargar.
+
+**REGLA 6:** SIEMPRE emitir update:modelValue desde setNewValue callback al recibir selección.
+
+**REGLA 7:** SIEMPRE usar @PropertyName con segundo parámetro clase BaseEntity para activar ObjectInputComponent.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Omitir @DefaultProperty en entity relacionada causando display value undefined.
+
+**PROHIBIDO:** Usar String para relaciones almacenando solo ID sin objeto completo.
+
+**PROHIBIDO:** Permitir edición directa del input removiendo readonly attribute.
+
+**PROHIBIDO:** Olvidar registrar entidad en ModuleList causando modal lookup vacío.
+
+**PROHIBIDO:** Validar required solo contra null/undefined sin verificar EmptyEntity.
+
+**PROHIBIDO:** Crear objetos nuevos desde modal, solo seleccionar existentes.
+
+**PROHIBIDO:** Mostrar múltiples properties en display value, limitado a getDefaultPropertyValue único.
+
+## 8. DEPENDENCIAS
+
+**DECORADORES REQUERIDOS:**
+- @PropertyName: Define nombre y tipo BaseEntity class
+- @DefaultProperty: Marca property para display value
+- @Required: Marca campo obligatorio
+- @Validation: Valida propiedades del objeto relacionado
+- @AsyncValidation: Verifica condiciones vía API
+- @UniquePropertyKey: Define primary key para entidad relacionada
+
+**SERVICIOS:**
+- ApplicationUIService: Proporciona showModalOnFunction
+- EventBus: Comunica evento validate-inputs
+- Application.ModuleList: Registro de entidades disponibles
+
+**COMPONENTES RELACIONADOS:**
+- default_lookup_listview: Modal para selección de objetos
+- useInputMetadata composable: Extrae metadata de decoradores
+
+## 9. RELACIONES
+
+**ACTIVADO POR:**
+@PropertyName(name, BaseEntityClass) - Segundo parámetro clase activa ObjectInputComponent.
+
+**INTEGRA CON:**
+- ApplicationUIService.showModalOnFunction(): Crea modal lookup
+- BaseEntity.getDefaultPropertyValue(): Obtiene display value
+- Application.View.value.isValid: Flag global de estado de formulario
+- EventBus: Comunicación de eventos validate-inputs
+- default_lookup_listview: Modal para selección
+
+**FLUJO DE RENDERIZADO:**
+Application.js detecta PropertyName con BaseEntity class, selecciona ObjectInputComponent, pasa entity/propertyName/metadata/modelValue/modelType como props, componente renderiza input readonly con botón search.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO ENTITIES:**
+```typescript
 @DefaultProperty('name')
-export class Customer extends BaseEntity {
-    @PropertyName('Name', String)
-    name!: string;
-}
-
-// En Order entity
-@PropertyName('Customer', Customer)
-customer!: Customer;
-
-// Input muestra:
-order.customer.getDefaultPropertyValue()  // → "John Doe"
-```
-
-### 2. Abrir Modal de Lookup
-
-```typescript
-showModalOnFunction(
-    modelType,          // Customer class
-    setNewValue,        // Callback para recibir selección
-    ViewTypes.LOOKUPVIEW // Tipo de modal
-)
-```
-
-**¿Qué pasa?**
-1. ApplicationUIService crea modal
-2. Modal renderiza `default_lookup_listview.vue`
-3. Lista muestra todos los Customer disponibles
-4. Usuario click en un customer
-5. Modal ejecuta `setNewValue(selectedCustomer)`
-6. Modal se cierra
-
-### 3. Callback setNewValue
-
-```typescript
-methods: {
-    setNewValue(newValue: BaseEntity | undefined) {
-        this.$emit('update:modelValue', newValue);
-    }
-}
-```
-
-**Flujo completo:**
-```
-Usuario click en botón 🔍
-    ↓
-showModalOnFunction(Customer, setNewValue, LOOKUPVIEW)
-    ↓
-Modal se abre con lista de Customers
-    ↓
-Usuario selecciona "John Doe"
-    ↓
-Modal ejecuta: setNewValue(customerJohn)
-    ↓
-setNewValue emite: update:modelValue(customerJohn)
-    ↓
-v-model actualiza: order.customer = customerJohn
-    ↓
-Input actualiza display: "John Doe"
-    ↓
-Modal se cierra
-```
-
----
-
-## ✅ Sistema de Validación (3 Niveles)
-
-### Nivel 1: Required
-
-```typescript
-if (this.metadata.required.value && 
-    (this.modelValue === null || 
-     this.modelValue === undefined || 
-     this.modelValue instanceof EmptyEntity)) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.requiredMessage.value || 
-        `${this.metadata.propertyName} is required.`
-    );
-}
-```
-
-**Validación especial para objetos:**
-- `null` - No válido
-- `undefined` - No válido
-- `EmptyEntity` - No válido (valor por defecto)
-- `Customer instance` - Válido ✓
-
-### Nivel 2: Validación Síncrona
-
-```typescript
-if (!this.metadata.validated.value) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.validatedMessage.value || 
-        `${this.metadata.propertyName} is not valid.`
-    );
-}
-```
-
-**Ejemplo: Validar que customer esté activo**
-```typescript
-@Validation(
-    (entity) => entity.customer.active === true,
-    'Customer must be active'
-)
-customer!: Customer;
-```
-
-### Nivel 3: Validación Asíncrona
-
-```typescript
-const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-if (!isAsyncValid) {
-    validated = false;
-    const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-    if (asyncMessage) {
-        this.validationMessages.push(asyncMessage);
-    }
-}
-```
-
-**Ejemplo: Verificar crédito disponible**
-```typescript
-@AsyncValidation(
-    async (entity) => {
-        if (!entity.customer || entity.customer instanceof EmptyEntity) return true;
-        const response = await fetch(`/api/customers/${entity.customer.id}/credit`);
-        const { hasCredit } = await response.json();
-        return hasCredit;
-    },
-    'Customer has no available credit'
-)
-customer!: Customer;
-```
-
----
-
-## 🎓 Ejemplo Completo
-
-### Definición de Entidades
-
-```typescript
-// entities/customer.ts
-import { BaseEntity } from './base_entitiy';
-import {
-    PropertyName,
-    PropertyIndex,
-    Required,
-    ModuleName,
-    ModuleIcon,
-    ApiEndpoint,
-    Persistent,
-    DefaultProperty,
-    UniquePropertyKey
-} from '@/decorations';
-import ICONS from '@/constants/icons';
-
-@DefaultProperty('name')  // ← Define display value
 @UniquePropertyKey('id')
 @ModuleName('Customers')
 @ModuleIcon(ICONS.USERS)
@@ -322,24 +273,12 @@ export class Customer extends BaseEntity {
     @PropertyIndex(2)
     @PropertyName('Customer Name', String)
     @Required(true)
-    name!: string;  // ← Mostrado en ObjectInput
+    name!: string;
     
     @PropertyIndex(3)
     @PropertyName('Active', Boolean)
     active!: boolean;
 }
-
-// entities/order.ts
-import { BaseEntity } from './base_entitiy';
-import { Customer } from './customer';
-import {
-    PropertyName,
-    PropertyIndex,
-    Required,
-    Validation,
-    AsyncValidation,
-    HelpText
-} from '@/decorations';
 
 export class Order extends BaseEntity {
     @PropertyIndex(1)
@@ -348,7 +287,7 @@ export class Order extends BaseEntity {
     orderNumber!: string;
     
     @PropertyIndex(2)
-    @PropertyName('Customer', Customer)  // ← Genera ObjectInputComponent
+    @PropertyName('Customer', Customer)
     @Required(true, 'Customer is required')
     @HelpText('Select the customer for this order')
     @Validation(
@@ -371,171 +310,49 @@ export class Order extends BaseEntity {
 }
 ```
 
-### UI Generada
+**CASOS DE USO:**
+1. Order → Customer: @Required + @Validation customer.active + @AsyncValidation crédito disponible
+2. Employee → Department: @Required + @Validation department.isActive verificando departamento activo
+3. Product → Category: @Required(false) relación opcional sin validaciones adicionales
 
-```
-┌─────────────────────────────────────┐
-│ Order Details                       │
-│ ┌─────────────────────────────────┐ │
-│ │ Order Number: [____________]    │ │
-│ └─────────────────────────────────┘ │
-│                                     │
-│ ┌─────────────────────────────────┐ │
-│ │ Customer                        │ │
-│ │ ┌─────────────────────────┬───┐│ │
-│ │ │ John Doe                │ 🔍││ │
-│ │ └─────────────────────────┴───┘│ │
-│ │ Select the customer for...      │ │
-│ └─────────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
+**LAYOUT VISUAL:**
+Estado sin selección: [Customer] [_______________][icono lupa]
+Estado con selección: [Customer] [John Doe________][icono lupa]
+Click en lupa: Modal lookup se abre con tabla completa de customers
 
-**Click en botón 🔍:**
+**MODAL LOOKUP:**
+Header con Search input y botón X cerrar
+Tabla con columnas ID/Name/Active/Email según metadata Customer
+Filas clickeables con hover effect
+Click en fila John Doe: callback ejecuta, modal cierra, input actualiza
 
-```
-┌─────────────────────────────────────┐
-│ Select Customer                     │
-│ ┌─────────────────────────────────┐ │
-│ │ Search: [________]            X │ │
-│ ├─────────────────────────────────┤ │
-│ │ ID │ Name     │ Active │ Email │ │
-│ ├────┼──────────┼────────┼───────┤ │
-│ │ 1  │ John Doe │ ✓      │ j@... │ │  ← Click
-│ │ 2  │ Jane Smt │ ✓      │ jane@.│ │
-│ │ 3  │ Bob Jns  │ ✗      │ bob@. │ │
-│ └─────────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
+**VALIDACION ESPECIAL OBJETOS:**
+null: NO válido
+undefined: NO válido
+EmptyEntity instance: NO válido valor default
+Customer instance con id válido: Válido checkmark
+Validación síncrona: entity.customer.active debe ser true
+Validación asíncrona: API verifica crédito disponible
 
-**Después de selección:**
+**DIFERENCIAS CON OTROS INPUTS:**
+TextInput: editable vs readonly aquí, String type vs BaseEntity type
+ArrayInputComponent: relación 1:N vs 1:1 aquí, múltiples objetos vs uno solo
+ListInputComponent: enum values vs objetos completos, dropdown vs modal
 
-```
-┌─────────────────────────────────────┐
-│ Customer                            │
-│ ┌─────────────────────────┬───┐    │
-│ │ John Doe                │ 🔍 │    │  ← Actualizado
-│ └─────────────────────────┴───┘    │
-└─────────────────────────────────────┘
-```
+**LIMITACIONES ACTUALES:**
+1. NO hay filtros/paginación en modal: Muestra todos los registros causando performance issues con > 100 items
+2. NO se puede crear objeto nuevo desde modal: Usuario debe ir a módulo Customer, crear, volver a Order
+3. Display value limitado: Solo una property vía getDefaultPropertyValue, no múltiples campos como John Doe email
 
----
+## 11. REFERENCIAS CRUZADAS
 
-## 💡 Buenas Prácticas
+**DOCUMENTOS RELACIONADOS:**
+- array-input-component.md: Componente para relaciones 1:N múltiples objetos
+- property-name-decorator.md: Decorador que define tipo y activa componente
+- default-property-decorator.md: Define property para display value
+- ui-services.md: ApplicationUIService con showModalOnFunction
+- base-entity-core.md: BaseEntity y EmptyEntity clases
 
-### ✅ DO:
-
-```typescript
-// Usar @DefaultProperty para definir display
-@DefaultProperty('name')
-export class Customer extends BaseEntity {
-    name!: string;
-}
-
-// Validar que objeto no sea EmptyEntity
-@Validation(
-    (entity) => !(entity.customer instanceof EmptyEntity),
-    'Customer is required'
-)
-customer!: Customer;
-
-// Validar propiedades del objeto relacionado
-@Validation(
-    (entity) => entity.customer.active,
-    'Customer must be active'
-)
-customer!: Customer;
-
-// Registrar entidad en ModuleList
-Application.ModuleList.value.push(Customer, Order);
-```
-
-### ❌ DON'T:
-
-```typescript
-// No omitir @DefaultProperty
-export class Customer extends BaseEntity {  // ❌ No display value
-    name!: string;
-}
-
-// No olvidar registrar entidades
-// ❌ Customer no en ModuleList → Modal vacío
-
-// No usar String para relaciones
-@PropertyName('Customer', String)  // ❌ Genera TextInput
-customerId!: string;  // ❌ No es relación real
-```
-
----
-
-## 🧪 Casos de Uso Comunes
-
-### 1. Order → Customer
-
-```typescript
-@PropertyName('Customer', Customer)
-@Required(true)
-customer!: Customer;
-```
-
-### 2. Employee → Department
-
-```typescript
-@PropertyName('Department', Department)
-@Required(true)
-@Validation(
-    (entity) => entity.department.isActive,
-    'Department is inactive'
-)
-department!: Department;
-```
-
-### 3. Product → Category (Opcional)
-
-```typescript
-@PropertyName('Category', Category)
-@Required(false)
-category?: Category;
-```
-
----
-
-## ⚠️ Limitaciones Actuales
-
-### 1. No hay filtros en modal lookup
-
-**Problema:** Modal muestra todos los registros sin paginación ni filtros avanzados.
-
-**Impacto:** Problemas de performance con >100 registros.
-
-### 2. No se puede crear objeto desde modal
-
-**Problema:** Solo puedes seleccionar objetos existentes, no crear nuevos.
-
-**Workaround:** Usuario debe ir a módulo de Customer, crear, luego volver a Order.
-
-### 3. Display value limitado a una propiedad
-
-**Problema:** Solo puedes mostrar `getDefaultPropertyValue()`, no múltiples campos.
-
-**Ejemplo deseable:**
-```
-┌──────────────────────────┐
-│ John Doe (john@email.com)│  ← No soportado
-└──────────────────────────┘
-```
-
----
-
-## 🔗 Referencias
-
-- **Tutorial Relaciones:** `../../tutorials/03-relations.md`  
-- **ArrayInputComponent:** [array-input-component.md](array-input-component.md) - Para relaciones 1:N
-- **PropertyName Decorator:** `../../01-decorators/property-name-decorator.md`
-- **UI Services:** `../../03-application/ui-services.md`
-- **EmptyEntity:** `../../02-base-entity/base-entity-core.md`
-
----
-
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo (basado en código actual, con limitaciones documentadas)
+**UBICACION:** copilot/layers/04-components/object-input-component.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

@@ -1,85 +1,128 @@
-# 🎯 SideBarComponent
+# SideBarComponent
 
-**Categoría:** Core Components (Layout & Navigation)  
-**Archivo:** `src/components/SideBarComponent.vue`
+## 1. Propósito
 
-**Referencias:**
-- `TopBarComponent.md` - TopBar que controla toggle del sidebar
-- `SideBarItemComponent.md` - Item individual de módulo en sidebar
-- `../03-application/application-ui-service.md` - Servicios de UI
-- `../03-application/application.md` - Application.ModuleList
+SideBarComponent es la barra lateral de navegación principal del framework que renderiza dinámicamente todos los módulos registrados en Application.ModuleList, proporcionando navegación entre módulos mediante items clicables. El componente implementa funcionalidad de expansión/colapso controlada por EventBus, sincronizando estado visual con TopBarComponent y manteniendo persistencia durante toda la sesión de usuario. Actúa como interface única de acceso a todos los módulos CRUD del sistema, generando automáticamente items de navegación desde metadata de decoradores ModuleName y ModuleIcon de cada entidad registrada.
 
----
+**Ubicación del código fuente:** src/components/SideBarComponent.vue
 
-## 📋 Descripción
+**Patrón de diseño:** Collapsible Navigation Sidebar + EventBus Subscription
 
-`SideBarComponent` es la **barra lateral de navegación** que muestra todos los módulos registrados en la aplicación. Se expande y contrae con animación, mostrando/ocultando los nombres de los módulos.
+## 2. Alcance
 
----
+### Responsabilidades
 
-## 🎯 Utilidad
+1. **Renderizado Dinámico de Módulos:**
+   - Iterar sobre Application.ModuleList.values() mediante v-for
+   - Renderizar SideBarItemComponent por cada módulo registrado
+   - Actualizar reactivamente cuando ModuleList cambia
+   - Mantener orden de módulos según inserción en Map
 
-- **Navegación entre módulos**: Lista todos los módulos disponibles
-- **UI colapsable**: Expande/colapsa para maximizar espacio de contenido
-- **Integración con Application**: Render automático de módulos registrados
-- **Persistente**: Siempre visible (excepto cuando está colapsado)
+2. **Gestión de Estado de Expansión:**
+   - Mantener data property toggled (boolean) para estado expandido/colapsado
+   - Aplicar clase CSS toggled condicionalmente para transiciones
+   - Inicializar en estado expandido (toggled: true por default)
+   - Sincronizar estado con eventos de EventBus
 
----
+3. **Integración con EventBus:**
+   - Subscribirse a evento toggle-sidebar en mounted()
+   - Procesar payload del evento: boolean para estado forzado, void para toggle
+   - Actualizar toggled según payload recibido
+   - Limpiar subscription en beforeUnmount() para prevenir memory leaks
 
-## 📦 Props
+4. **Estructura de Layout:**
+   - Proporcionar tres secciones: header (logo/título), body (módulos), footer (acciones/info)
+   - Aplicar scroll vertical en body cuando número de módulos excede altura disponible
+   - Mantener posicionamiento fijo durante navegación entre vistas
+   - Proporcionar ancho consistente: 68px colapsado, 250px expandido
 
-| Prop | Tipo | Requerido | Default | Descripción |
-|------|------|-----------|---------|-------------|
-| *(Ninguna)* | - | - | - | Este componente no recibe props |
+### Límites
 
----
+1. **NO gestiona lógica de navegación** - SideBarItemComponent ejecuta Application.changeView() al click
+2. **NO registra módulos** - Application.ModuleList debe poblarse externamente en configuración
+3. **NO valida permisos de módulos** - Renderiza todos los módulos registrados sin filtrado
+4. **NO mantiene estado de módulo activo** - Application.View.value.viewType gestiona vista actual
+5. **NO emite eventos propios** - Solo escucha eventos de EventBus, no produce
+6. **NO acepta props** - Estado completamente gestionado por Application singleton
+7. **NO contiene lógica de autenticación** - Módulos visibles independiente de usuario logueado
+8. **NO customiza renderizado de items** - SideBarItemComponent tiene presentación fija
 
-## 📤 Events
+## 3. Definiciones Clave
 
-| Evento | Payload | Descripción |
-|--------|---------|-------------|
-| *(Ninguno)* | - | Este componente no emite eventos propios |
+**SideBarComponent**: Componente Vue de clase core layout que proporciona navegación persistente lateral mediante lista de módulos registrados en Application.ModuleList.
 
----
+**toggled**: Data property booleana que controla estado de expansión del sidebar, aplicando clase CSS toggled para transiciones animadas entre estados colapsado (68px) y expandido (250px).
 
-## 🎰 Slots
+**toggle-sidebar**: Evento de EventBus que recibe payload opcional (boolean | void) para controlar estado del sidebar, emitido típicamente por TopBarComponent al click en botón de toggle.
 
-| Slot | Descripción |
-|------|-------------|
-| *(Ninguno)* | Este componente no tiene slots |
+**Application.ModuleList**: Map<string, typeof BaseEntity> que almacena todas las entidades registradas como módulos navegables, iterada por SideBarComponent para generar lista de SideBarItemComponent.
 
----
+**SideBarItemComponent**: Componente hijo que renderiza representación individual de módulo con icono y nombre, ejecutando Application.changeView() al click para navegación.
 
-## 📊 Data Properties
+**EventBus Subscription**: Patrón de escucha de eventos mediante Application.eventBus.on() en mounted() con obligatoria limpieza mediante .off() en beforeUnmount() para prevenir memory leaks.
 
-| Propiedad | Tipo | Default | Descripción |
-|-----------|------|---------|-------------|
-| `Application` | `object` | `import Application` | Instancia de Application |
-| `toggled` | `boolean` | `true` | Estado del sidebar (expandido/colapsado) |
+**Collapsible Sidebar**: Patrón de UI que permite expandir/colapsar panel lateral para maximizar espacio de contenido, aplicando transiciones CSS suaves y ocultación progresiva de texto.
 
----
+## 4. Descripción Técnica
 
-## 📡 Lifecycle & EventBus
+SideBarComponent implementa arquitectura de componente stateful que mantiene data property toggled para controlar expansión/colapso mediante clase CSS condicional. El template estructura sidebar en tres secciones verticales: header (actualmente placeholder, reservado para logo/título), body (contenedor scrollable de SideBarItemComponent generados dinámicamente), y footer (actualmente placeholder, reservado para acciones usuario). El body utiliza v-for iterando sobre Application.ModuleList.values() para renderizar SideBarItemComponent por cada módulo, pasando module como prop.
 
-### `mounted()`
+El componente implementa Lifecycle Hook mounted() que registra listener en EventBus para evento toggle-sidebar, ejecutando callback que procesa payload opcional: si payload es boolean, establece toggled a ese valor; si payload es void, invierte toggled. El Lifecycle Hook beforeUnmount() limpia listener mediante Application.eventBus.off('toggle-sidebar') para prevenir memory leaks por subscripciones huérfanas.
 
-Escucha el evento `'toggle-sidebar'` del EventBus para sincronizar el estado de expansión/colapso.
+Los estilos CSS implementan transiciones animadas basadas en clase toggled: max-width transiciona de 68px (colapsado) a 250px (expandido) con ease 0.5s, opacity de span transiciona de 0 (invisible) a 1 (visible) con delay 0.2s para sincronizar con expansión, header transiciona padding y opacity para aparecer solo cuando expandido. El body aplica overflow-y: auto con max-height: calc(100vh - 160px) para scroll vertical cuando lista de módulos excede espacio disponible.
 
-```typescript
-mounted() {
-    Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
-        this.toggled = state !== undefined ? state : !this.toggled;
-    });
-}
-```
+La integración con Application singleton proporciona reactividad automática: cambios en Application.ModuleList se reflejan inmediatamente en renderizado de sidebar mediante sistema de reactividad de Vue 3. El componente no mantiene estado de módulo activo, delegando esa responsabilidad a Application.View.value que gestiona vista actual.
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~35-38)
+## 5. Flujo de Funcionamiento
 
----
+**Inicialización en App.vue:**
+1. App.vue monta SideBarComponent en layout principal
+2. Componente renderiza con toggled: true (expandido por default)
+3. mounted() ejecuta y registra listener para toggle-sidebar en EventBus
+4. v-for itera Application.ModuleList.values()
+5. Por cada módulo, renderiza SideBarItemComponent con prop module
+6. Items muestran icono y nombre obtenidos de decoradores ModuleName/ModuleIcon
+7. CSS aplica max-width: 250px y opacity: 1 en spans por clase toggled
 
-### `beforeUnmount()`
+**Toggle desde TopBarComponent:**
+1. Usuario click en botón toggle en TopBarComponent
+2. TopBarComponent ejecuta Application.ApplicationUIService.toggleSidebar()
+3. ApplicationUIService emite evento toggle-sidebar via EventBus sin payload (void)
+4. Listener en SideBarComponent recibe evento con payload void
+5. Callback ejecuta: this.toggled = !this.toggled (invierte estado)
+6. Vue reactividad actualiza clase toggled en template
+7. CSS transiciona max-width a 68px, opacity de text a 0, padding de header a 0
+8. Animación se completa en 0.5s, sidebar queda colapsado
+9. Usuario ve solo iconos de módulos, nombres ocultos
 
-Limpia el listener del evento.
+**Toggle Programático con Estado Forzado:**
+1. Código ejecuta Application.ApplicationUIService.toggleSidebar(false)
+2. EventBus emite toggle-sidebar con payload boolean false
+3. Listener en SideBarComponent recibe evento con payload false
+4. Callback ejecuta: this.toggled = false (establece estado explícito)
+5. Vue reactividad aplica clase condicional
+6. CSS transiciona a estado colapsado
+
+**Navegación a Módulo:**
+1. Usuario click en SideBarItemComponent de módulo Products
+2. SideBarItemComponent ejecuta Application.changeView(Products, ViewType.LIST)
+3. Application actualiza View.value y ejecuta router navigation
+4. Router renderiza DefaultListView para Products
+5. SideBarComponent permanece montado y visible durante transición
+6. Estado toggled se mantiene sin cambios durante navegación
+
+**Desmontaje del Componente:**
+1. Componente entra en fase de unmount (navegación fuera de layout principal)
+2. beforeUnmount() ejecuta
+3. Application.eventBus.off('toggle-sidebar') limpia listener
+4. Subscription es removida de EventBus
+5. Componente se desmonta sin memory leaks
+
+## 6. Reglas Obligatorias
+
+### 6.1 Gestión de EventBus Obligatoria
+
+SIEMPRE limpiar listeners en beforeUnmount():
 
 ```typescript
 beforeUnmount() {
@@ -87,46 +130,136 @@ beforeUnmount() {
 }
 ```
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~39-41)
+Subscription sin limpieza causa memory leaks y handlers duplicados en re-montajes.
 
----
+### 6.2 Iteración sobre ModuleList
 
-## 🏗️ Estructura del Template
+SIEMPRE usar Application.ModuleList.values() en v-for, NO ModuleList.entries() o keys():
 
 ```vue
-<template>
-    <div :class="['sidebar', { toggled }]">
-        <div class="header">
-            Header
-        </div>
-
-        <div class="body">
-            <SideBarItemComponent 
-                v-for="module in Application.ModuleList.values()" 
-                :module="module"
-            />
-        </div>
-
-        <div class="footer">
-            footer
-        </div>
-    </div>
-</template>
+<SideBarItemComponent 
+    v-for="module in Application.ModuleList.values()" 
+    :module="module"
+/>
 ```
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~1-18)
+### 6.3 Data Property toggled
 
-### Secciones:
+SIEMPRE mantener toggled como boolean puro, NO string o number:
 
-1. **Header**: Espacio para logo o título (actualmente placeholder)
-2. **Body**: Lista de `SideBarItemComponent` por cada módulo en `Application.ModuleList`
-3. **Footer**: Espacio para acciones o info adicional (actualmente placeholder)
+```typescript
+data() {
+    return {
+        toggled: true  // boolean, NOT 'true' o 1
+    };
+}
+```
 
----
+### 6.4 Payload del Evento Opcional
 
-## 🧪 Ejemplos de Uso
+Callback de toggle-sidebar DEBE procesar payload opcional correctamente:
 
-### 1. Uso Básico en App.vue
+```typescript
+Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
+    this.toggled = state !== undefined ? state : !this.toggled;
+});
+```
+
+### 6.5 Sin Props
+
+SideBarComponent NO acepta props, toda configuración via Application singleton.
+
+### 6.6 Estructura de Template Fija
+
+Header, body, footer DEBEN mantenerse en orden y estructura:
+
+```vue
+<div :class="['sidebar', { toggled }]">
+    <div class="header">...</div>
+    <div class="body">...</div>
+    <div class="footer">...</div>
+</div>
+```
+
+## 7. Prohibiciones
+
+1. NO modificar Application.ModuleList desde SideBarComponent - Solo lectura reactiva
+2. NO ejecutar Application.changeView() directamente - SideBarItemComponent lo maneja
+3. NO emitir eventos propios para comunicación con padre - EventBus es canal único
+4. NO aplicar estilos inline via :style para toggled - Usar clase CSS condicional
+5. NO mantener estado de módulo activo en data - Application.View.value es fuente de verdad
+6. NO renderizar módulos condicionalmente por permisos - Filtrado debe ser externo
+7. NO usar v-show para toggle - Usar clase CSS con transiciones para performance
+8. NO hardcodear lista de módulos - Siempre iterar desde Application.ModuleList
+9. NO almacenar referencia a EventBus en data - Usar Application.eventBus directamente
+10. NO modificar toggled desde template - Solo desde callback de EventBus
+
+## 8. Dependencias
+
+### Dependencias Directas
+
+**Application Singleton:**
+- Application.ModuleList.values() - Iterable de módulos registrados
+- Application.eventBus.on() - Subscription a eventos de toggle
+- Application.eventBus.off() - Limpieza de subscriptions
+
+**SideBarItemComponent:**
+- Renderizado por v-for, recibe prop module
+- Ejecuta navegación al click
+
+**TopBarComponent:**
+- Emite eventos toggle-sidebar via ApplicationUIService
+
+**ApplicationUIService:**
+- toggleSidebar(state?: boolean) - Emite evento toggle-sidebar
+
+### Dependencias de Vue
+
+- Composition API: data(), mounted(), beforeUnmount()
+- Directivas: v-for, :class
+- Reactividad: Actualizaciones automáticas desde Application.ModuleList
+
+### Dependencias de CSS
+
+- Variables CSS: --white, --bg-gray, --sky
+- Transiciones: ease, opacity, max-width
+- Clases condicionales: toggled
+
+### Dependencias de Decoradores
+
+- ModuleName - Nombre mostrado en SideBarItemComponent
+- ModuleIcon - Icono renderizado en SideBarItemComponent
+
+## 9. Relaciones
+
+**Componentes Relacionados:**
+
+SideBarComponent → SideBarItemComponent (padre-hijo, renderiza N items)
+SideBarComponent ← TopBarComponent (comunicación via EventBus)
+SideBarComponent ← ApplicationUIService (control de estado via eventos)
+SideBarItemComponent → Application (ejecuta changeView() al click)
+
+**Flujo de Comunicación:**
+
+TopBarComponent → ApplicationUIService.toggleSidebar() → EventBus.emit('toggle-sidebar') → SideBarComponent.listener → actualiza toggled → Vue reactividad → actualiza DOM
+
+SideBarComponent.v-for → Application.ModuleList.values() → N SideBarItemComponent → click → Application.changeView() → Router → DefaultListView
+
+**Documentos Relacionados:**
+
+- SideBarItemComponent.md - Componente hijo para items individuales
+- TopBarComponent.md - Componente que controla toggle del sidebar
+- application-singleton.md - Application.ModuleList y changeView()
+- ui-services.md - ApplicationUIService.toggleSidebar()
+- event-bus.md - Sistema de eventos mitt
+- module-name-decorator.md - Decorador @ModuleName para nombres
+- module-icon-decorator.md - Decorador @ModuleIcon para iconos
+
+## 10. Notas de Implementación
+
+### Integración en App.vue
+
+Layout típico con SideBarComponent:
 
 ```vue
 <template>
@@ -167,11 +300,9 @@ import SideBarComponent from '@/components/SideBarComponent.vue';
 </style>
 ```
 
----
+### Registro de Módulos
 
-### 2. Registrar Módulos en Application
-
-Los módulos mostrados en el sidebar deben estar registrados en `Application.ModuleList`:
+Módulos mostrados en sidebar deben registrarse en Application.ModuleList:
 
 ```typescript
 // src/models/application.ts
@@ -189,38 +320,7 @@ class Application {
 }
 ```
 
-El sidebar itera sobre `Application.ModuleList.values()` y renderiza un `SideBarItemComponent` por cada módulo.
-
----
-
-### 3. Control de Toggle desde TopBar
-
-```vue
-<!-- TopBarComponent.vue -->
-<template>
-    <button @click="toggleSidebar">
-        Toggle Sidebar
-    </button>
-</template>
-
-<script lang="ts">
-import { Application } from '@/models/application';
-
-export default {
-    methods: {
-        toggleSidebar() {
-            Application.ApplicationUIService.toggleSidebar();
-        }
-    }
-}
-</script>
-```
-
-Esto emite el evento `'toggle-sidebar'` que el `SideBarComponent` escucha y actualiza `this.toggled`.
-
----
-
-### 4. Control Programático del Estado
+### Control Programático
 
 ```typescript
 import { Application } from '@/models/application';
@@ -235,89 +335,76 @@ Application.ApplicationUIService.toggleSidebar(true);
 Application.ApplicationUIService.toggleSidebar();
 ```
 
----
+### Customización de Header y Footer
 
-### 5. Sidebar Item con Click Handler
-
-Cada item del sidebar usa `SideBarItemComponent` que maneja el click para cambiar de módulo:
+Actualmente placeholders, customizar según necesidades:
 
 ```vue
-<!-- SideBarItemComponent.vue -->
-<template>
-    <div class="sidebar-item" @click="navigateToModule">
-        <img :src="module.getModuleIcon()" alt="" />
-        <span>{{ module.getModuleName() }}</span>
-    </div>
-</template>
+<div class="header">
+    <img src="@/assets/logo.png" alt="Logo" class="logo" />
+    <h2>My App</h2>
+</div>
 
-<script lang="ts">
-import { Application } from '@/models/application';
-import { ViewType } from '@/enums/view_type';
-
-export default {
-    props: {
-        module: {
-            type: Function,  // EntityClass
-            required: true
-        }
-    },
-    methods: {
-        navigateToModule() {
-            Application.changeView(this.module, ViewType.LIST);
-        }
-    }
-}
-</script>
+<div class="footer">
+    <button @click="logout" class="logout-button">
+        Logout
+    </button>
+</div>
 ```
 
----
+### Responsive Design
 
-## 🎨 Estilos Importantes
+Para pantallas pequeñas, considerar sidebar absolute con slide-in:
 
-### Animación de Expansión
+```css
+@media (max-width: 768px) {
+    .sidebar {
+        position: absolute;
+        left: -250px;
+        transition: left 0.3s ease;
+        z-index: 200;
+    }
+    
+    .sidebar.toggled {
+        left: 0;
+    }
+}
+```
+
+### Estilos Críticos
+
+**Transición de Expansión:**
 
 ```css
 .sidebar {
     display: flex;
     flex-direction: column;
-    max-width: 68px;  /* Colapsado */
+    max-width: 68px;
     width: 100%;
     transition: 0.5s ease;
     overflow: hidden;
 }
 
 .sidebar.toggled {
-    max-width: 250px;  /* Expandido */
+    max-width: 250px;
 }
 ```
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~45-56)
-
-Transición suave de 0.5s entre los estados.
-
----
-
-### Fade de Texto
+**Fade de Texto con Delay:**
 
 ```css
 .sidebar span {
-    opacity: 0;  /* Oculto cuando colapsado */
+    opacity: 0;
     font-weight: 500;
-    transition: opacity 0.3s ease 0.2s;  /* Delay para sincronizar con expansión */
+    transition: opacity 0.3s ease 0.2s;
 }
 
 .sidebar.toggled span {
-    opacity: 1;  /* Visible cuando expandido */
+    opacity: 1;
 }
 ```
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~57-62)
-
-El texto aparece con delay de 0.2s después de que el sidebar se expande.
-
----
-
-### Header Responsive
+**Header Responsive:**
 
 ```css
 .sidebar .header {
@@ -336,13 +423,7 @@ El texto aparece con delay de 0.2s después de que el sidebar se expande.
 }
 ```
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~64-76)
-
-El header solo es visible cuando el sidebar está expandido.
-
----
-
-### Body Scrollable
+**Body Scrollable:**
 
 ```css
 .sidebar .body {
@@ -353,121 +434,56 @@ El header solo es visible cuando el sidebar está expandido.
 }
 ```
 
-**Fuente:** `src/components/SideBarComponent.vue` (línea ~78-83)
+### Z-Index Layering
 
-El body tiene scroll vertical si hay muchos módulos.
+```css
+.sidebar {
+    position: relative;
+    z-index: 100;
+    background-color: var(--white);
+}
+```
 
----
+Sidebar debe estar encima de content (z-index: 1) pero debajo de modales (z-index: 1000).
 
-## ⚠️ Consideraciones Importantes
-
-### 1. Módulos Dinámicos
-
-El sidebar renderiza automáticamente todos los módulos en `Application.ModuleList`. Para agregar un nuevo módulo:
+### Agregar Nuevo Módulo
 
 ```typescript
-// 1. Crear entidad
+// 1. Crear entidad con decoradores
 @ModuleName('Inventory')
 @ModuleIcon('📦')
 export class Inventory extends BaseEntity {
-    // ...
+    // propiedades...
 }
 
 // 2. Registrar en Application.ModuleList
 Application.ModuleList.set('inventory', Inventory);
 
-// 3. Sidebar lo muestra automáticamente
+// 3. Sidebar renderiza automáticamente nuevo item
 ```
 
----
+## 11. Referencias Cruzadas
 
-### 2. EventBus Memory Leaks
+**Componentes:**
+- [SideBarItemComponent](SideBarItemComponent.md) - Item individual de módulo en sidebar
+- [TopBarComponent](TopBarComponent.md) - Controla toggle del sidebar
+- [ComponentContainerComponent](ComponentContainerComponent.md) - Contenedor principal de vistas
 
-**CRÍTICO**: Siempre limpiar event listeners en `beforeUnmount()`:
+**Application Layer:**
+- [application-singleton.md](../03-application/application-singleton.md) - Application.ModuleList y changeView()
+- [ui-services.md](../03-application/ui-services.md) - ApplicationUIService.toggleSidebar()
+- [event-bus.md](../03-application/event-bus.md) - Sistema de eventos mitt
 
-```typescript
-beforeUnmount() {
-    Application.eventBus.off('toggle-sidebar');
-}
-```
+**Decoradores:**
+- [module-name-decorator.md](../01-decorators/module-name-decorator.md) - @ModuleName para nombres de módulos
+- [module-icon-decorator.md](../01-decorators/module-icon-decorator.md) - @ModuleIcon para iconos de módulos
 
----
+**Enums:**
+- ViewTypes - Tipos de vistas para navigación (LISTVIEW, DETAILVIEW, etc.)
 
-### 3. Z-Index Layering
+**Arquitectura:**
+- [02-FLOW-ARCHITECTURE.md](../../02-FLOW-ARCHITECTURE.md) - Flujo de navegación y renderizado de UI
+- [01-FRAMEWORK-OVERVIEW.md](../../01-FRAMEWORK-OVERVIEW.md) - Visión general de componentes core
 
-```css
-.sidebar {
-    position: relative;
-    z-index: 100;  /* Encima de content (z-index: 1) pero debajo de modals (z-index: 1000) */
-    background-color: var(--white);
-}
-```
-
-El sidebar debe estar encima del contenido pero debajo de modales y dropdowns.
-
----
-
-### 4. Responsive Design
-
-Para pantallas pequeñas, considerar un sidebar colapsable por defecto o un drawer modal:
-
-```css
-@media (max-width: 768px) {
-    .sidebar {
-        position: absolute;
-        left: -250px;  /* Fuera de pantalla */
-        transition: left 0.3s ease;
-    }
-    
-    .sidebar.toggled {
-        left: 0;  /* Slide in */
-    }
-}
-```
-
----
-
-### 5. Header y Footer Customization
-
-Actualmente el header y footer son placeholders. Para customizarlos:
-
-```vue
-<template>
-    <div :class="['sidebar', { toggled }]">
-        <div class="header">
-            <img src="@/assets/logo.png" alt="Logo" class="logo" />
-            <h2>My App</h2>
-        </div>
-
-        <div class="body">
-            <SideBarItemComponent 
-                v-for="module in Application.ModuleList.values()" 
-                :module="module"
-            />
-        </div>
-
-        <div class="footer">
-            <button @click="logout" class="logout-button">
-                Logout
-            </button>
-        </div>
-    </div>
-</template>
-```
-
----
-
-## 🔗 Referencias Adicionales
-
-- `TopBarComponent.md` - Controla toggle del sidebar
-- `SideBarItemComponent.md` - Item individual de módulo
-- `../03-application/application-ui-service.md` - toggleSidebar()
-- `../03-application/application.md` - ModuleList
-- `../01-decorators/module-name-decorator.md` - @ModuleName()
-- `../01-decorators/module-icon-decorator.md` - @ModuleIcon()
-
----
-
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/components/SideBarComponent.vue`  
-**Líneas:** 107
+**Ubicación del código fuente:** src/components/SideBarComponent.vue  
+**Líneas de código:** 107

@@ -1,87 +1,75 @@
-# 🔐 PasswordInputComponent - Input de Contraseña con Toggle de Visibilidad
+# PasswordInputComponent
 
-**Referencias:**
-- [useInputMetadata-composable.md](useInputMetadata-composable.md) - Composable de metadatos
-- [text-input-component.md](text-input-component.md) - Input de texto base
-- `../../01-decorators/string-type-decorator.md` - Decorador StringTypeDef
-- `../../tutorials/02-validations.md` - Sistema de validaciones
+## 1. PROPOSITO
 
----
+PasswordInputComponent es un componente especializado para entrada de contraseñas que incluye funcionalidad de mostrar/ocultar contraseña mediante toggle dinámico entre type="password" y type="text". Se activa automáticamente para properties con decorador @StringTypeDef(StringType.PASSWORD), proporcionando seguridad visual con contraseña oculta por defecto y botón con icono de ojo para alternar visibilidad.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Archivo:** `src/components/Form/PasswordInputComponent.vue`  
-**Tipo de propiedad:** `String` con `@StringTypeDef(StringType.PASSWORD)`
+**UBICACION:** src/components/Form/PasswordInputComponent.vue
 
----
+**DEPENDENCIAS TECNICAS:**
+- Vue 3 Composition API: Reactividad y v-model
+- TextInputComponent: Hereda estructura base
+- StringType.PASSWORD enum: Determina activación
+- GGICONS constants: Iconos VISIBILITY y VISIBILITY_OFF
+- useInputMetadata composable: Extracción de metadata
 
-## 🎯 Propósito
+**ACTIVACION:**
+Se renderiza cuando property tiene decorador @StringTypeDef(StringType.PASSWORD). Application.js detecta esta configuración y selecciona PasswordInputComponent.
 
-Componente especializado para entrada de contraseñas con funcionalidad de **mostrar/ocultar contraseña**. Características:
+## 3. DEFINICIONES CLAVE
 
-- ✅ Toggle entre `type="password"` y `type="text"`
-- ✅ Botón con icono de ojo (👁️ / 🙈)
-- ✅ Validación de 3 niveles del framework
-- ✅ Seguridad: Oculta contraseña por defecto
+**type toggle:**
+Alternancia dinámica entre type="password" que muestra puntos negros ocultando texto y type="text" que muestra caracteres reales, controlada por variable reactiva showPassword.
 
----
+**showPassword:**
+Variable booleana reactiva que controla estado de visibilidad. false por defecto muestra password oculto, true muestra texto plano.
 
-## 🔧 Activación Automática
+**togglePasswordVisibility:**
+Método que invierte valor de showPassword alternando entre estados visible/oculto al hacer clic en botón con icono de ojo.
 
-El componente se genera automáticamente cuando:
+**Botón de visibilidad:**
+Elemento button con clase right posicionado al lado derecho del input, muestra icono VISIBILITY cuando password está oculto, VISIBILITY_OFF cuando está visible.
 
-```typescript
-@PropertyName('Password', String)
-@StringTypeDef(StringType.PASSWORD)  // ← Activa PasswordInputComponent
-password!: string;
-```
+## 4. DESCRIPCION TECNICA
 
----
-
-## 📋 Props
-
+**PROPS:**
 ```typescript
 props: {
-    entityClass: {
-        type: Function as unknown as () => typeof BaseEntity,
-        required: true,
-    },
-    entity: {
-        type: Object as () => BaseEntity,
-        required: true,
-    },
-    propertyKey: {
-        type: String,
-        required: true,
-    },
-    modelValue: {
-        type: String,
-        required: true,
-        default: '',
-    },
+    entity: Object,        // Entidad actual BaseEntity
+    propertyName: String,  // Nombre de property en entity
+    metadata: Object       // Metadata extraída por useInputMetadata
 }
 ```
 
----
+**DATA:**
+```typescript
+data() {
+    return {
+        GGICONS,
+        GGCLASS,
+        showPassword: false,          // Estado inicial: oculto
+        isInputValidated: true,
+        validationMessages: [] as string[]
+    }
+}
+```
 
-## 📐 Template
-
-```vue
-<template>
+**ESTRUCTURA HTML:**
+```html
 <div class="TextInput PasswordInput" :class="[
     {disabled: metadata.disabled.value}, 
     {nonvalidated: !isInputValidated}
 ]">
-    <!-- Label -->
     <label :for="'id-' + metadata.propertyName" class="label-input">
         {{ metadata.propertyName }}
     </label>
     
-    <!-- Input con tipo dinámico -->
     <input 
         :id="'id-' + metadata.propertyName" 
         :name="metadata.propertyName" 
-        :type="showPassword ? 'text' : 'password'"  <!-- ← Toggle dinámico -->
+        :type="showPassword ? 'text' : 'password'"
         class="main-input" 
         placeholder=" "
         :value="modelValue"
@@ -89,7 +77,6 @@ props: {
         @input="$emit('update:modelValue', $event.target.value)" 
     />
     
-    <!-- Botón toggle visibilidad -->
     <button 
         class="right" 
         @click="togglePasswordVisibility" 
@@ -99,194 +86,186 @@ props: {
             {{ showPassword ? GGICONS.VISIBILITY_OFF : GGICONS.VISIBILITY }}
         </span>
     </button>
+    
+    <div class="help-text" v-if="metadata.helpText.value">
+        <span>{{ metadata.helpText.value }}</span>
+    </div>
+    
+    <div class="validation-messages">
+        <span v-for="message in validationMessages" :key="message">
+            {{ message }}
+        </span>
+    </div>
 </div>
-
-<!-- Help text -->
-<div class="help-text" v-if="metadata.helpText.value">
-    <span>{{ metadata.helpText.value }}</span>
-</div>
-
-<!-- Validation messages -->
-<div class="validation-messages">
-    <span v-for="message in validationMessages" :key="message">
-        {{ message }}
-    </span>
-</div>
-</template>
 ```
 
----
-
-## 🎨 Características Visuales
-
-### Estado Oculto (Por Defecto)
-
-```
-┌─────────────────────────────────────┐
-│ Password                            │
-│ ┌───────────────────────────┬─────┐ │
-│ │ ••••••••                  │ 👁️  │ │
-│ └───────────────────────────┴─────┘ │
-└─────────────────────────────────────┘
-```
-
-### Estado Visible (Click en botón)
-
-```
-┌─────────────────────────────────────┐
-│ Password                            │
-│ ┌───────────────────────────┬─────┐ │
-│ │ myPassword123             │ 🙈  │ │
-│ └───────────────────────────┴─────┘ │
-└─────────────────────────────────────┘
-```
-
----
-
-## 🔄 Lógica de Toggle
-
-### Data
-
+**COMPUTED VALUE:**
 ```typescript
-data() {
-    return {
-        GGICONS,
-        GGCLASS,
-        showPassword: false,  // ← Estado inicial: oculto
-        isInputValidated: true,
-        validationMessages: [] as string[],
-    }
-}
-```
-
-### Método Toggle
-
-```typescript
-methods: {
-    togglePasswordVisibility() {
-        this.showPassword = !this.showPassword;
-    }
-}
-```
-
-### Binding Dinámico del Tipo
-
-```vue
-<input :type="showPassword ? 'text' : 'password'" />
-```
-
-**Flujo:**
-```
-Estado inicial: showPassword = false
-    ↓
-Input renderiza: type="password" (••••)
-    ↓
-Usuario click en botón 👁️
-    ↓
-togglePasswordVisibility() ejecuta
-    ↓
-showPassword = true
-    ↓
-Input cambia a: type="text" (texto visible)
-    ↓
-Icono cambia: VISIBILITY → VISIBILITY_OFF (🙈)
-```
-
----
-
-## ✅ Sistema de Validación (3 Niveles)
-
-### Nivel 1: Required (trim)
-
-```typescript
-if (this.metadata.required.value && 
-    (!this.modelValue || this.modelValue.trim() === '')) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.requiredMessage.value || 
-        `${this.metadata.propertyName} is required.`
-    );
-}
-```
-
-### Nivel 2: Validación Síncrona
-
-```typescript
-if (!this.metadata.validated.value) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.validatedMessage.value || 
-        `${this.metadata.propertyName} is not valid.`
-    );
-}
-```
-
-**Ejemplo de validación de complejidad:**
-```typescript
-@Validation(
-    (entity) => {
-        const pwd = entity.password;
-        return pwd.length >= 8 && 
-               /[A-Z]/.test(pwd) && 
-               /[a-z]/.test(pwd) && 
-               /[0-9]/.test(pwd);
+computed: {
+    value: {
+        get() {
+            return this.entity[this.propertyName];
+        },
+        set(newValue) {
+            this.$emit('update:modelValue', newValue);
+        }
     },
-    'Password must be 8+ chars with uppercase, lowercase, and number'
-)
-password!: string;
-```
-
-### Nivel 3: Validación Asíncrona
-
-```typescript
-const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-if (!isAsyncValid) {
-    validated = false;
-    const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-    if (asyncMessage) {
-        this.validationMessages.push(asyncMessage);
+    displayName() {
+        return this.metadata.displayName || this.propertyName;
+    },
+    required() {
+        return this.metadata.required === true;
+    },
+    disabled() {
+        return this.metadata.disabled === true;
     }
 }
 ```
 
-**Ejemplo: Verificar contraseña comprometida (Have I Been Pwned)**
+**METODO togglePasswordVisibility:**
 ```typescript
-@AsyncValidation(
-    async (entity) => {
-        const hash = await sha1(entity.password);
-        const response = await fetch(`https://api.pwnedpasswords.com/range/${hash.substring(0, 5)}`);
-        const data = await response.text();
-        return !data.includes(hash.substring(5));
-    },
-    'This password has been compromised in a data breach'
-)
-password!: string;
+togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+}
 ```
 
----
-
-## 🎓 Ejemplo Completo
-
-### Definición de Entidad
-
+**METODO isValidated:**
 ```typescript
-import { BaseEntity } from './base_entitiy';
-import {
-    PropertyName,
-    PropertyIndex,
-    Required,
-    StringTypeDef,
-    Validation,
-    HelpText,
-    ViewGroup
-} from '@/decorations';
-import { StringType } from '@/enums/string_type';
+isValidated(): boolean {
+    var validated = true;
+    this.validationMessages = [];
+    
+    // Nivel 1: Required con trim
+    if (this.metadata.required.value && 
+        (!this.modelValue || this.modelValue.trim() === '')) {
+        validated = false;
+        this.validationMessages.push(
+            this.metadata.requiredMessage.value || 
+            `${this.metadata.propertyName} is required.`
+        );
+    }
+    
+    // Nivel 2: Validación síncrona
+    if (!this.metadata.validated.value) {
+        validated = false;
+        this.validationMessages.push(
+            this.metadata.validatedMessage.value || 
+            `${this.metadata.propertyName} is not valid.`
+        );
+    }
+    
+    // Nivel 3: Validación asíncrona
+    const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
+    if (!isAsyncValid) {
+        validated = false;
+        const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
+        if (asyncMessage) {
+            this.validationMessages.push(asyncMessage);
+        }
+    }
+    
+    return validated;
+}
+```
 
+## 5. FLUJO DE FUNCIONAMIENTO
+
+**PASO 1 - Activación:**
+Sistema detecta decorador @StringTypeDef(StringType.PASSWORD) en property, Application.js selecciona PasswordInputComponent para renderizado.
+
+**PASO 2 - Renderizado Inicial:**
+Componente recibe entity, propertyName y metadata, showPassword inicializa en false, input renderiza con type="password" mostrando puntos negros, botón muestra icono VISIBILITY indicando que password está oculto.
+
+**PASO 3 - Input Usuario:**
+Usuario escribe en input, caracteres aparecen momentáneamente y se convierten en puntos negros, evento @input dispara setter de computed value, emite update:modelValue, actualiza entity[propertyName] directamente.
+
+**PASO 4 - Click en Botón Toggle:**
+Usuario hace clic en botón con icono de ojo, togglePasswordVisibility ejecuta invirtiendo showPassword a true, binding dinámico :type cambia de "password" a "text", input ahora muestra caracteres reales, icono cambia de VISIBILITY a VISIBILITY_OFF.
+
+**PASO 5 - Segundo Click Toggle:**
+Usuario hace clic nuevamente en botón, showPassword vuelve a false, type regresa a "password", caracteres se ocultan nuevamente mostrando puntos, icono vuelve a VISIBILITY.
+
+**PASO 6 - Validación al Guardar:**
+Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs, isValidated() ejecuta aplicando nivel 1 required con trim, nivel 2 validación síncrona de complejidad regex, nivel 3 validación asíncrona verificando password comprometido en API.
+
+**PASO 7 - Actualización UI:**
+Si validación falla, isInputValidated se marca false, CSS class nonvalidated se aplica al input, validationMessages div renderiza errores específicos de cada nivel fallido.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE inicializar showPassword en false para ocultar password por defecto.
+
+**REGLA 2:** SIEMPRE usar binding dinámico :type="showPassword ? 'text' : 'password'", NUNCA hardcodear type.
+
+**REGLA 3:** SIEMPRE alternar icono entre VISIBILITY y VISIBILITY_OFF según estado showPassword.
+
+**REGLA 4:** SIEMPRE usar @StringTypeDef(StringType.PASSWORD) para activar este componente, NUNCA StringType.TEXT.
+
+**REGLA 5:** SIEMPRE validar complejidad de password con regex uppercase, lowercase, digits, special chars.
+
+**REGLA 6:** SIEMPRE deshabilitar botón toggle cuando input está disabled.
+
+**REGLA 7:** SIEMPRE validar required con trim eliminando espacios en blanco.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Usar StringType.TEXT para properties de password exponiendo texto por defecto.
+
+**PROHIBIDO:** Inicializar showPassword en true mostrando password visible al cargar.
+
+**PROHIBIDO:** Omitir validación de complejidad confiando solo en required.
+
+**PROHIBIDO:** Permitir espacios en valores de password sin trim.
+
+**PROHIBIDO:** Usar type="text" fijo sin toggle de visibilidad.
+
+**PROHIBIDO:** Permitir click en botón toggle cuando input está disabled.
+
+**PROHIBIDO:** Guardar passwords en texto plano en servidor, SIEMPRE hashear con bcrypt/argon2.
+
+## 8. DEPENDENCIAS
+
+**DECORADORES REQUERIDOS:**
+- @StringTypeDef: Define StringType.PASSWORD para activación
+- @PropertyName: Establece display name
+- @Required: Marca campo obligatorio
+- @Validation: Implementa regex de complejidad
+- @AsyncValidation: Verifica password comprometido vía API
+- @HelpText: Proporciona ayuda contextual
+
+**COMPONENTES RELACIONADOS:**
+- TextInputComponent: Componente base heredado
+- useInputMetadata composable: Extrae metadata de decoradores
+
+**SERVICIOS:**
+- EventBus: Comunica evento validate-inputs
+- GGICONS: Proporciona iconos VISIBILITY y VISIBILITY_OFF
+
+## 9. RELACIONES
+
+**HEREDA DE:**
+TextInputComponent - Estructura base, props, computed properties, métodos comunes.
+
+**ACTIVADO POR:**
+@StringTypeDef(StringType.PASSWORD) - Decorador que señala uso de password input.
+
+**INTEGRA CON:**
+- BaseEntity.validateInputs(): Sistema centralizado de validación
+- Application.View.value.isValid: Flag global de estado de formulario
+- EventBus: Comunicación de eventos validate-inputs
+
+**FLUJO DE RENDERIZADO:**
+Application.js detecta decorador, selecciona PasswordInputComponent, pasa entity/propertyName/metadata como props, componente renderiza input type="password" con botón toggle.
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**EJEMPLO ENTITY:**
+```typescript
 export class User extends BaseEntity {
     @ViewGroup('Credentials')
     @PropertyIndex(1)
     @PropertyName('Password', String)
-    @StringTypeDef(StringType.PASSWORD)  // ← Genera PasswordInputComponent
+    @StringTypeDef(StringType.PASSWORD)
     @Required(true, 'Password is required')
     @HelpText('Must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number')
     @Validation(
@@ -315,194 +294,36 @@ export class User extends BaseEntity {
 }
 ```
 
-### UI Generada
+**CASOS DE USO:**
+1. Registro Usuario: @Required + @Validation complejidad 12+ chars + @AsyncValidation verificar no comprometido
+2. Cambio Password: @Required + @AsyncValidation verificar current password correcto + @Validation new password diferente de current
+3. PIN Numérico: @StringTypeDef(PASSWORD) + @Validation regex 4-6 dígitos
 
-```vue
-<!-- Password -->
-<div class="TextInput PasswordInput">
-    <label>Password</label>
-    <input 
-        type="password" 
-        v-model="user.password"
-    />
-    <button @click="togglePasswordVisibility">👁️</button>
-    
-    <div class="help-text">
-        Must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number
-    </div>
-    
-    <div class="validation-messages" v-if="!isValid">
-        <span>Password is required</span>
-        <span>Password does not meet complexity requirements</span>
-    </div>
-</div>
+**VALIDACION COMPLEJIDAD:**
+Regex típico: pwd.length >= 8 && /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /[0-9]/.test(pwd) && /[!@#$%^&*]/.test(pwd)
+Válido: MyP@ssw0rd, Secure123!, Admin#2024
+Inválido: password (sin uppercase/digits), 12345678 (sin letras), Password (sin digits/special)
 
-<!-- Confirm Password -->
-<div class="TextInput PasswordInput">
-    <label>Confirm Password</label>
-    <input 
-        type="password" 
-        v-model="user.confirmPassword"
-    />
-    <button @click="togglePasswordVisibility">👁️</button>
-    
-    <div class="validation-messages" v-if="!isValid">
-        <span>Please confirm your password</span>
-        <span>Passwords do not match</span>
-    </div>
-</div>
-```
+**LAYOUT VISUAL:**
+Estado oculto: [Password] [••••••••][icono ojo]
+Estado visible: [Password] [myPassword123][icono ojo tachado]
 
----
+**CONSIDERACIONES SEGURIDAD:**
+Cliente: Ocultar por defecto, validar complejidad, NO guardar en localStorage, toggle visibilidad solo UX no seguridad
+Servidor: Hashear bcrypt/argon2, salt única, NUNCA retornar password en API, rate limiting login endpoints
 
-## 💡 Buenas Prácticas
+**DIFERENCIAS CON TextInputComponent:**
+type="text" vs type="password"/toggle, siempre visible vs oculto por defecto, sin botón vs botón toggle, sin icono vs icono VISIBILITY, autocomplete sí vs depende navegador, activación String default vs @StringTypeDef(PASSWORD)
 
-### ✅ DO:
+## 11. REFERENCIAS CRUZADAS
 
-```typescript
-// Validar complejidad de contraseña
-@Validation(
-    (entity) => {
-        const pwd = entity.password;
-        return pwd.length >= 8 && 
-               /[A-Z]/.test(pwd) && 
-               /[a-z]/.test(pwd) && 
-               /[0-9]/.test(pwd) &&
-               /[!@#$%^&*]/.test(pwd);
-    },
-    'Password must contain uppercase, lowercase, number, and special character'
-)
-password!: string;
+**DOCUMENTOS RELACIONADOS:**
+- text-input-component.md: Componente base heredado
+- string-type-decorator.md: Decorador que activa componente
+- validation-decorator.md: Validación de complejidad
+- async-validation-decorator.md: Validación asíncrona API
+- useInputMetadata-composable.md: Extracción de metadata
 
-// Confirmar contraseña
-@Validation(
-    (entity) => entity.password === entity.confirmPassword,
-    'Passwords must match'
-)
-confirmPassword!: string;
-
-// Usar help text descriptivo
-@HelpText('Choose a strong password to protect your account')
-password!: string;
-```
-
-### ❌ DON'T:
-
-```typescript
-// No usar StringType.TEXT para passwords
-@StringTypeDef(StringType.TEXT)  // ❌ Inseguro
-password!: string;
-
-// No omitir validación de complejidad
-@PropertyName('Password', String)  // ❌ Sin validación
-@StringTypeDef(StringType.PASSWORD)
-password!: string;
-
-// No guardar contraseñas en texto plano (lado servidor)
-// Siempre hashear con bcrypt/argon2
-```
-
----
-
-## 🧪 Casos de Uso Comunes
-
-### 1. Registro de Usuario
-
-```typescript
-@PropertyName('Password', String)
-@StringTypeDef(StringType.PASSWORD)
-@Required(true, 'Password is required')
-@Validation(
-    (entity) => entity.password.length >= 12,
-    'Password must be at least 12 characters'
-)
-password!: string;
-
-@PropertyName('Confirm Password', String)
-@StringTypeDef(StringType.PASSWORD)
-@Required(true)
-@Validation(
-    (entity) => entity.password === entity.confirmPassword,
-    'Passwords do not match'
-)
-confirmPassword!: string;
-```
-
-### 2. Cambio de Contraseña
-
-```typescript
-@PropertyName('Current Password', String)
-@StringTypeDef(StringType.PASSWORD)
-@Required(true)
-@AsyncValidation(
-    async (entity) => await verifyCurrentPassword(entity.currentPassword),
-    'Current password is incorrect'
-)
-currentPassword!: string;
-
-@PropertyName('New Password', String)
-@StringTypeDef(StringType.PASSWORD)
-@Required(true)
-@Validation(
-    (entity) => entity.newPassword !== entity.currentPassword,
-    'New password must be different from current password'
-)
-newPassword!: string;
-```
-
-### 3. PIN Numérico
-
-```typescript
-@PropertyName('PIN Code', String)
-@StringTypeDef(StringType.PASSWORD)
-@Required(true)
-@Validation(
-    (entity) => /^\d{4,6}$/.test(entity.pin),
-    'PIN must be 4-6 digits'
-)
-pin!: string;
-```
-
----
-
-## 🔒 Consideraciones de Seguridad
-
-### En el Cliente (Este Componente)
-- ✅ Oculta contraseña por defecto
-- ✅ Valida complejidad
-- ✅ No guarda en localStorage
-- ⚠️ Toggle visibilidad es para UX, no seguridad
-
-### En el Servidor (NO implementado aquí)
-- ✅ Hashear con bcrypt/argon2
-- ✅ Salt única por usuario
-- ✅ Nunca retornar password en respuestas API
-- ✅ Rate limiting en endpoints de login
-
----
-
-## 🆚 Diferencias con TextInputComponent
-
-| Aspecto | TextInputComponent | PasswordInputComponent |
-|---------|-------------------|------------------------|
-| **type** | `text` | `password` / `text` (toggle) |
-| **Visibilidad** | Siempre visible | Oculta por defecto |
-| **Botón extra** | No | Sí (toggle visibility) |
-| **Icono** | No | Sí (👁️ / 🙈) |
-| **Autocomplete** | Sí | Depende del navegador |
-| **Activación** | `String` por defecto | `@StringTypeDef(StringType.PASSWORD)` |
-
----
-
-## 🔗 Referencias
-
-- **TextInputComponent:** [text-input-component.md](text-input-component.md)
-- **StringTypeDef Decorator:** `../../01-decorators/string-type-decorator.md`
-- **Validation Decorator:** `../../01-decorators/validation-decorator.md`
-- **useInputMetadata:** [useInputMetadata-composable.md](useInputMetadata-composable.md)
-
----
-
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo (basado en código actual)
+**UBICACION:** copilot/layers/04-components/password-input-component.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026

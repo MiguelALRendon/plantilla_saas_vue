@@ -1,246 +1,315 @@
-# 📋 DropdownMenu
+# DropdownMenu
 
-**Referencias:**
-- `core-components.md` - Componentes core del framework
-- `../03-application/application-singleton.md` - Application
-- `../03-application/ui-services.md` - UI Services
+## 1. Propósito
 
----
+DropdownMenu es un menú desplegable posicionable dinámicamente que aparece como overlay en respuesta a clicks en elementos de UI, renderizando componentes Vue arbitrarios como contenido contextual. El componente implementa posicionamiento inteligente que calcula automáticamente la mejor ubicación para evitar salirse de pantalla, ajustando posición horizontal y vertical según dimensiones de ventana y elemento trigger. Proporciona cierre mediante tecla ESC o click fuera del menú, gestionando listeners globales para detección de eventos. Se integra con Application.dropdownMenu.value como fuente reactiva de estado y utiliza ApplicationUIService para control centralizado de apertura/cierre.
 
-## 📍 Ubicación en el Código
+**Ubicación del código fuente:** src/components/DropdownMenu.vue
 
-**Archivo:** `src/components/DropdownMenu.vue`
+**Patrón de diseño:** Dynamic Component Renderer + Smart Positioning + Global Event Handling
 
----
+## 2. Alcance
 
-## 🎯 Propósito
+### Responsabilidades
 
-`DropdownMenu` es un **menú desplegable posicionable** que aparece en respuesta a clicks en elementos de la UI. Se utiliza para mostrar opciones, formularios pequeños, o contenido contextual.
+1. **Renderizado de Contenido Dinámico:**
+   - Renderizar component dinámico mediante directiva :is desde Application.dropdownMenu.value.component
+   - Mostrar título dinámico desde Application.dropdownMenu.value.title
+   - Aplicar visibilidad mediante clase hidden basada en dropDownData.showing
+   - Utilizar markRaw() para componentes para prevenir proxy reactivo innecesario
 
-**Características:**
-- 🎯 Posicionamiento dinámico (calcula mejor ubicación)
-- 🎨 Renderiza componentes dinámicos
-- ⌨️ Cierre con ESC o click fuera
-- 📐 Ajuste automático a bordes de pantalla
+2. **Posicionamiento Inteligente:**
+   - Calcular posición horizontal intentando centrar respecto a elemento trigger
+   - Ajustar leftPosition si dropdown excede canvasWidth por la derecha
+   - Ajustar leftPosition si dropdown es negativo (se sale por izquierda)
+   - Calcular posición vertical: arriba del trigger si está en mitad inferior de pantalla, abajo si está en mitad superior
+   - Generar objeto de estilos dinámicos con max-width, left y top calculados
 
----
+3. **Gestión de Eventos Globales:**
+   - Registrar listener de click en document para detectar click fuera del dropdown
+   - Registrar listener de keydown en window para detectar tecla ESC
+   - Verificar si click fue dentro o fuera del elemento #dropdown-element-in-general
+   - Ejecutar ApplicationUIService.closeDropdownMenu() cuando corresponda
+   - Limpiar ambos listeners en beforeUnmount() para prevenir memory leaks
 
-## 🏗️ Estructura
+4. **Integración con Application:**
+   - Leer estado desde computed dropDownData que retorna Application.dropdownMenu.value
+   - Reaccionar a cambios en Application.dropdownMenu.value mediante reactividad Vue
+   - No modificar Application.dropdownMenu.value directamente, solo leer
+   - Delegar control de estado a ApplicationUIService
 
-### Template
+### Límites
 
-```vue
-<div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]">
-    <div class="dropdown-menu" 
-         id="dropdown-element-in-general" 
-         :style="dropdownStyle">
-        <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
-        <component v-if="dropDownData.component" :is="dropDownData.component">
-        </component>
-    </div>
-</div>
-```
+1. **NO gestiona lógica de contenido** - El componente renderizado tiene su propia lógica
+2. **NO valida tipo de componente** - Asume que component es válido Vue component
+3. **NO previene apertura múltiple** - ApplicationUIService debe gestionar exclusividad
+4. **NO ajusta tamaño del componente hijo** - width es fixed desde Application.dropdownMenu.value.width
+5. **NO persiste estado entre aperturas** - component se limpia en cierre con setTimeout
+6. **NO renderiza múltiples dropdowns simultáneos** - Solo uno activo a la vez
+7. **NO implementa transiciones de entrada personalizadas** - Solo opacity via clase hidden
+8. **NO proporciona scroll interno** - Componente hijo debe manejar overflow si necesario
 
-**Elementos:**
-- `dropdown-menu-container`: Overlay de fondo
-- `dropdown-menu`: Card del menú
-- Título dinámico
-- Componente dinámico (contenido)
+## 3. Definiciones Clave
 
----
+**DropdownMenu**: Componente Vue de overlay que renderiza contenido dinámico posicionado absolutamente respecto a elemento trigger, con cierre automático via ESC o click outside.
 
-## 📊 Data Structure
+**dropDownData**: Computed property que retorna Application.dropdownMenu.value, conteniendo: showing (boolean), title (string), component (Component | null), width (string), position_x (string), position_y (string), canvasWidth (string), canvasHeight (string), activeElementWidth (string), activeElementHeight (string).
 
-### Data Properties
+**dropdownStyle**: Computed property que calcula objeto de estilos CSS dinámicos con max-width, left y top, aplicando algoritmo de posicionamiento inteligente para evitar salirse de viewport.
 
-```typescript
-{
-    Application: ApplicationClass  // Referencia a Application
-}
-```
+**handleClickOutside**: Method que recibe MouseEvent, verifica si click fue fuera del elemento #dropdown-element-in-general mediante contains(), y ejecuta closeDropdownMenu() si corresponde.
 
-### Computed: dropDownData
+**handleKeydown**: Method que recibe KeyboardEvent, verifica si tecla presionada fue Escape y dropDownData.showing es true, ejecutando closeDropdownMenu().
 
-```typescript
-computed: {
-    dropDownData() {
-        return Application.dropdownMenu.value;
-    }
-}
-```
+**Smart Positioning Algorithm**: Lógica que calcula posición óptima: centrado horizontal con ajustes para evitar overflow, posición vertical arriba del trigger si está en mitad inferior de pantalla, abajo si está en superior.
 
-**Estructura de dropdownMenu:**
-```typescript
-{
-    showing: boolean              // Visible/oculto
-    title: string                 // Título del menú
-    component: Component | null   // Componente a renderizar
-    width: string                 // Ancho (ej: '250px')
-    position_x: string            // Posición X (ej: '100px')
-    position_y: string            // Posición Y (ej: '200px')
-    canvasWidth: string           // Ancho de ventana
-    canvasHeight: string          // Alto de ventana
-    activeElementWidth: string    // Ancho del elemento trigger
-    activeElementHeight: string   // Alto del elemento trigger
-}
-```
+**markRaw()**: Función de Vue 3 que previene que objeto sea convertido en proxy reactivo, requerida para componentes dinámicos almacenados en reactive state para prevenir warnings y overhead.
 
----
+## 4. Descripción Técnica
 
-## 🎯 Posicionamiento Inteligente
+DropdownMenu implementa template con estructura de dos divs anidados: dropdown-menu-container (overlay full-screen con pointer-events: none para no bloquear fondo) y dropdown-menu (card posicionado absolutamente con pointer-events: all para interceptar clicks). El container aplica clase hidden condicionalmente basada en !dropDownData.showing para transición de opacity. El menu card contiene span con título dinámico y component tag con :is directive bindeado a dropDownData.component.
 
-### Computed: dropdownStyle
+El computed dropDownData retorna Application.dropdownMenu.value, estableciendo reactive dependency que causa re-render cuando Application actualiza dropdownMenu. El computed dropdownStyle ejecuta algoritmo de posicionamiento: parsea values de position_x, position_y, width, canvasWidth, canvasHeight y activeElementHeight desde dropDownData, calcula leftPosition inicial como posX - (dropdownWidth / 2) para centrado, ajusta si leftPosition + dropdownWidth > canvasWidth (alinea derecha), ajusta si leftPosition < 0 (alinea izquierda), calcula topPosition como posY por default, verifica si posY > canvasHeight / 2 para determinar isInBottomHalf, si true ajusta topPosition como posY - elementHeight (aparece arriba), retorna objeto con max-width, left y top.
 
-```typescript
-computed: {
-    dropdownStyle() {
-        const data = this.dropDownData;
-        
-        const posX = parseFloat(data.position_x);
-        const posY = parseFloat(data.position_y);
-        const dropdownWidth = parseFloat(data.width);
-        const canvasWidth = parseFloat(data.canvasWidth);
-        const canvasHeight = parseFloat(data.canvasHeight);
-        const elementHeight = parseFloat(data.activeElementHeight);
-        
-        // PASO 1: Calcular posición horizontal
-        let leftPosition = posX - (dropdownWidth / 2);  // Centrado por defecto
-        
-        // Ajustar si se sale por la derecha
-        if (leftPosition + dropdownWidth > canvasWidth) {
-            leftPosition = posX - dropdownWidth;  // Alinear a la derecha
-        }
-        
-        // Ajustar si se sale por la izquierda
-        if (leftPosition < 0) {
-            leftPosition = posX;  // Alinear a la izquierda
-        }
-        
-        // PASO 2: Calcular posición vertical
-        let topPosition = posY;
-        const isInBottomHalf = posY > (canvasHeight / 2);
-        
-        if (isInBottomHalf) {
-            // Aparecer arriba del elemento
-            topPosition = posY - elementHeight;
-        }
-        
-        return {
-            'max-width': data.width,
-            'left': `${leftPosition}px`,
-            'top': `${topPosition}px`
-        };
-    }
-}
-```
+Los methods handleClickOutside y handleKeydown implementan lógica de cierre: handleClickOutside obtiene referencia a #dropdown-element-in-general, verifica si event.target está contenido usando contains(), si no está contenido ejecuta ApplicationUIService.closeDropdownMenu(); handleKeydown verifica si e.key === 'Escape' y dropDownData.showing, ejecutando closeDropdownMenu().
 
-**Lógica:**
-1. Intenta centrar horizontalmente respecto al trigger
-2. Si se sale de la ventana, ajusta posición
-3. Decide si aparece arriba o abajo según mitad de pantalla
+El lifecycle hook mounted() registra listeners: document.addEventListener('click', this.handleClickOutside) y window.addEventListener('keydown', this.handleKeydown). El hook beforeUnmount() limpia: document.removeEventListener('click', this.handleClickOutside) y window.removeEventListener('keydown', this.handleKeydown).
 
----
+ApplicationUIService.openDropdownMenu() recibe position (HTMLElement), title (string), component (Component) y opcional width (string), ejecuta getBoundingClientRect() en position para obtener dimensiones y posición, establece values en Application.dropdownMenu.value, usa markRaw(component) para prevenir proxy reactive, establece showing: true. ApplicationUIService.closeDropdownMenu() establece showing: false, ejecuta setTimeout de 500ms para limpiar component y title permitiendo animación de salida.
 
-## ⌨️ Event Handlers
+## 5. Flujo de Funcionamiento
 
-### handleClickOutside
+**Apertura del Dropdown:**
+1. Usuario click en botón con ref en componente padre
+2. Componente padre ejecuta Application.ApplicationUIService.openDropdownMenu(this.$refs.button, 'Title', Component, '300px')
+3. ApplicationUIService ejecuta getBoundingClientRect() en button para obtener rect
+4. Establece Application.dropdownMenu.value.position_x = rect.left + 'px'
+5. Establece Application.dropdownMenu.value.position_y = rect.bottom + 'px'
+6. Establece Application.dropdownMenu.value.activeElementWidth = rect.width + 'px'
+7. Establece Application.dropdownMenu.value.activeElementHeight = rect.height + 'px'
+8. Establece Application.dropdownMenu.value.canvasWidth = window.innerWidth + 'px'
+9. Establece Application.dropdownMenu.value.canvasHeight = window.innerHeight + 'px'
+10. Establece Application.dropdownMenu.value.title = 'Title'
+11. Establece Application.dropdownMenu.value.component = markRaw(Component)
+12. Establece Application.dropdownMenu.value.width = '300px'
+13. Establece Application.dropdownMenu.value.showing = true
+14. DropdownMenu computed dropDownData detecta cambio vía reactividad
+15. Template remueve clase hidden de dropdown-menu-container
+16. Transition de opacity ejecuta 0 to 1 en 0.5s
+17. Computed dropdownStyle recalcula posición con nuevos values
+18. Template aplica estilos dinámicos a dropdown-menu
+19. Component tag renderiza Component mediante :is directive
+20. Dropdown aparece posicionado correctamente
+
+**Cierre por Click Outside:**
+1. Usuario click en área fuera del dropdown
+2. Listener de click en document ejecuta handleClickOutside con MouseEvent
+3. Method verifica dropDownData.showing es true
+4. Obtiene referencia a #dropdown-element-in-general
+5. Ejecuta contains(event.target) que retorna false
+6. Ejecuta Application.ApplicationUIService.closeDropdownMenu()
+7. ApplicationUIService establece Application.dropdownMenu.value.showing = false
+8. Computed dropDownData detecta cambio
+9. Template aplica clase hidden
+10. Transition de opacity ejecuta 1 to 0 en 0.5s
+11. setTimeout de 500ms ejecuta callback
+12. Callback limpia component = null y title = ''
+13. Dropdown desaparece completamente
+
+**Cierre por Tecla ESC:**
+1. Usuario presiona tecla Escape
+2. Listener de keydown en window ejecuta handleKeydown con KeyboardEvent
+3. Method verifica e.key === 'Escape' y dropDownData.showing es true
+4. Ejecuta Application.ApplicationUIService.closeDropdownMenu()
+5. Flujo continúa como cierre por click outside desde paso 7
+
+**Ajuste de Posicionamiento cuando se Sale de Pantalla:**
+1. ApplicationUIService establece position_x muy a la derecha (ej: 1800px)
+2. Computed dropdownStyle calcula leftPosition = 1800 - (300/2) = 1650px
+3. Verifica 1650 + 300 > 1920 (canvasWidth) es true
+4. Ajusta leftPosition = 1800 - 300 = 1500px
+5. Retorna styles con left: '1500px'
+6. Dropdown aparece alineado a la derecha del trigger, no centrado
+
+## 6. Reglas Obligatorias
+
+### 6.1 Uso de markRaw() para Componentes
+
+SIEMPRE usar markRaw() al establecer component en Application.dropdownMenu.value:
 
 ```typescript
-handleClickOutside(event: MouseEvent) {
-    if (this.dropDownData.showing) {
-        const dropdown = document.getElementById('dropdown-element-in-general');
-        if (!dropdown) return;
+// ✅ CORRECTO
+this.app.dropdownMenu.value.component = markRaw(component);
 
-        // Cerrar si el click fue fuera del dropdown
-        if (!dropdown.contains(event.target as Node)) {
-            Application.ApplicationUIService.closeDropdownMenu();
-        }
-    }
-}
+// ❌ INCORRECTO - Genera warnings y overhead
+this.app.dropdownMenu.value.component = component;
 ```
 
-### handleKeydown
+### 6.2 Limpieza de Listeners Obligatoria
 
-```typescript
-handleKeydown(e: KeyboardEvent) {
-    // Cerrar con tecla ESC
-    if (e.key === 'Escape' && this.dropDownData.showing) {
-        Application.ApplicationUIService.closeDropdownMenu();
-    }
-}
-```
-
----
-
-## 🔄 Ciclo de Vida
-
-### Mounted
-
-```typescript
-mounted() {
-    // Registrar event listeners globales
-    document.addEventListener('click', this.handleClickOutside);
-    window.addEventListener('keydown', this.handleKeydown);
-}
-```
-
-### BeforeUnmount
+SIEMPRE limpiar event listeners en beforeUnmount():
 
 ```typescript
 beforeUnmount() {
-    // Limpiar event listeners
     document.removeEventListener('click', this.handleClickOutside);
     window.removeEventListener('keydown', this.handleKeydown);
 }
 ```
 
----
+### 6.3 ID Único del Dropdown
 
-## 📝 Uso desde ApplicationUIService
+El elemento dropdown DEBE tener id="dropdown-element-in-general" para handleClickOutside:
 
-### Abrir Dropdown
+```vue
+<div class="dropdown-menu" id="dropdown-element-in-general">
+```
+
+### 6.4 Computed dropDownData
+
+SIEMPRE retornar Application.dropdownMenu.value directamente, NO copiar:
 
 ```typescript
-// Método en ApplicationUIService
-openDropdownMenu(
-    position: HTMLElement,      // Elemento trigger
-    title: string,              // Título del menú
-    component: Component,       // Componente a mostrar
-    width?: string              // Ancho opcional
-) {
-    const rect = position.getBoundingClientRect();
-    
-    this.app.dropdownMenu.value.position_x = `${rect.left}px`;
-    this.app.dropdownMenu.value.position_y = `${rect.bottom}px`;
-    this.app.dropdownMenu.value.activeElementWidth = `${rect.width}px`;
-    this.app.dropdownMenu.value.activeElementHeight = `${rect.height}px`;
-    this.app.dropdownMenu.value.title = title;
-    this.app.dropdownMenu.value.component = markRaw(component);
-    
-    if (width) {
-        this.app.dropdownMenu.value.width = width;
+computed: {
+    dropDownData() {
+        return Application.dropdownMenu.value;  // ✅ Referencia reactiva
+        // NO: return { ...Application.dropdownMenu.value }  // ❌ Pierde reactividad
     }
-    
-    this.app.dropdownMenu.value.showing = true;
 }
 ```
 
-### Cerrar Dropdown
+### 6.5 Delay en Limpieza de Component
+
+Limpieza de component DEBE usar setTimeout de 500ms para permitir animación de salida:
 
 ```typescript
 closeDropdownMenu() {
     this.app.dropdownMenu.value.showing = false;
-    
     setTimeout(() => {
         this.app.dropdownMenu.value.component = null;
         this.app.dropdownMenu.value.title = '';
-    }, 500);  // Esperar animación de cierre
+    }, 500);
 }
 ```
 
----
+### 6.6 Z-Index Hierarchy
 
-## 💡 Ejemplo de Uso
+Container DEBE usar z-index: 888, menu z-index: 889:
+
+```css
+.dropdown-menu-container {
+    z-index: 888;
+}
+.dropdown-menu {
+    z-index: 889;
+}
+```
+
+## 7. Prohibiciones
+
+1. NO modificar Application.dropdownMenu.value desde DropdownMenu component - Solo ApplicationUIService lo gestiona
+2. NO renderizar múltiples instancias de DropdownMenu - Solo una en App.vue
+3. NO aplicar position: fixed al dropdown-menu - Usar absolute con posicionamiento dinámico
+4. NO usar v-if en lugar de clase hidden - Destruye component durante transición
+5. NO registrar listeners en window para click outside - Usar document.addEventListener
+6. NO olvidar stopPropagation() en elemento trigger - Primer click cierra dropdown inmediatamente
+7. NO aplicar pointer-events: all al container - Debe ser none para no bloquear fondo
+8. NO usar transiciones CSS en left/top - Solo opacity para performance
+9. NO almacenar estado en data del componente - Application.dropdownMenu.value es fuente única
+10. NO validar contenido del componente hijo - Es responsabilidad del componente hijo
+
+## 8. Dependencias
+
+### Dependencias Directas
+
+**Application Singleton:**
+- Application.dropdownMenu.value - Reactive state con showing, title, component, width, positions
+- Application.ApplicationUIService.openDropdownMenu() - Abrir dropdown con parámetros
+- Application.ApplicationUIService.closeDropdownMenu() - Cerrar dropdown y limpiar state
+
+**Vue Core:**
+- markRaw() - Prevenir proxy reactivo en componentes dinámicos
+- Composition API: computed, mounted, beforeUnmount, data
+- Directivas: :is, :class, :style, v-if
+
+**DOM APIs:**
+- document.addEventListener('click') - Detectar click outside
+- window.addEventListener('keydown') - Detectar tecla ESC
+- document.getElementById() - Obtener referencia a dropdown
+- Element.contains() - Verificar si click fue dentro/fuera
+- event.target - Obtener elemento clicked
+- getBoundingClientRect() - Obtener dimensiones y posición de trigger
+
+### Dependencias de CSS
+
+- Variables: --white, --border-radius, --shadow-dark, --gray-dark, --gray-lighter
+- Transiciones: opacity 0.5s ease
+- Positioning: absolute, fixed
+- Z-index: 888-889
+
+### Dependencias Implícitas
+
+- Componentes pasados como content deben ser válidos Vue components
+- ApplicationUIService debe gestionar exclusividad (un dropdown a la vez)
+- Trigger elements deben tener dimensiones medibles para getBoundingClientRect()
+
+## 9. Relaciones
+
+**Componentes Relacionados:**
+
+DropdownMenu ← ApplicationUIService (control de apertura/cierre)
+DropdownMenu → Dynamic Component (renderiza componente arbitrario)
+DropdownMenu ← Trigger Components (botones, links que abren dropdown)
+
+**Flujo de Comunicación:**
+
+Trigger Component → click event → ApplicationUIService.openDropdownMenu() → Application.dropdownMenu.value → DropdownMenu.computed → reactivity → render
+
+DropdownMenu.handleClickOutside → ApplicationUIService.closeDropdownMenu() → Application.dropdownMenu.value.showing = false → DropdownMenu.computed → hide
+
+**Documentos Relacionados:**
+
+- application-singleton.md - Application.dropdownMenu.value estructura
+- ui-services.md - ApplicationUIService.openDropdownMenu() y closeDropdownMenu()
+- core-components.md - Visión general de componentes core
+- modal-components.md - Comparación con modales (z-index, blocking)
+
+**Casos de Uso Típicos:**
+
+- Menús contextuales en filas de tabla
+- Filtros desplegables en listviews
+- Formularios rápidos inline
+- Selector de opciones con custom UI
+- Menús de acciones en botones
+
+## 10. Notas de Implementación
+
+### Uso desde Componente Padre
+
+```vue
+<template>
+    <button ref="optionsButton" @click="showOptions">
+        Options ▼
+    </button>
+</template>
+
+<script>
+import Application from '@/models/application';
+import OptionsMenuComponent from '@/components/OptionsMenuComponent.vue';
+
+export default {
+    methods: {
+        showOptions() {
+            Application.ApplicationUIService.openDropdownMenu(
+                this.$refs.optionsButton,
+                'Options',
+                OptionsMenuComponent,
+                '200px'
+            );
+        }
+    }
+}
+</script>
+```
 
 ### Componente de Contenido
 
@@ -258,47 +327,35 @@ closeDropdownMenu() {
 export default {
     name: 'OptionsMenuComponent',
     methods: {
-        editItem() { /* ... */ },
-        deleteItem() { /* ... */ },
-        duplicateItem() { /* ... */ }
+        editItem() { /* lógica */ },
+        deleteItem() { /* lógica */ },
+        duplicateItem() { /* lógica */ }
     }
 }
 </script>
 ```
 
-### Abrir el Dropdown
+### Prevenir Cierre en Primer Click
+
+El trigger debe usar stopPropagation() para evitar que primer click cierre dropdown:
 
 ```vue
-<template>
-    <button ref="optionsButton" @click="showOptions">
-        Options ▼
-    </button>
-</template>
-
-<script>
-import Application from '@/models/application';
-import OptionsMenuComponent from '@/components/OptionsMenuComponent.vue';
-
-export default {
-    methods: {
-        showOptions() {
-            Application.ApplicationUIService.openDropdownMenu(
-                this.$refs.optionsButton,    // Elemento trigger
-                'Options',                    // Título
-                OptionsMenuComponent,         // Componente
-                '200px'                       // Ancho
-            );
-        }
-    }
-}
-</script>
+<button @click.stop="showDropdown">...</button>
 ```
 
----
+### Z-Index Hierarchy
 
-## 🎨 Estilos
+```
+Contenido normal: z-index < 888
+DropdownMenu container: 888
+DropdownMenu card: 889
+Modal overlay: 1000
+Modal content: 1001
+LoadingScreen: 1100
+Confirmation: 1500
+```
 
-### Container
+### Estilos Críticos
 
 ```css
 .dropdown-menu-container {
@@ -310,19 +367,15 @@ export default {
     z-index: 888;
     display: flex;
     transition: opacity 0.5s ease;
-    pointer-events: none;       /* No bloquea interacción de fondo */
+    pointer-events: none;
 }
 
 .dropdown-menu-container.hidden {
     opacity: 0;
 }
-```
 
-### Menu Card
-
-```css
 .dropdown-menu {
-    position: absolute;          /* Posicionado por dropdownStyle */
+    position: absolute;
     background: var(--white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
@@ -330,13 +383,9 @@ export default {
     min-width: 150px;
     max-width: 400px;
     z-index: 889;
-    pointer-events: all;        /* Intercepta clicks */
+    pointer-events: all;
 }
-```
 
-### Title
-
-```css
 .dropdown-menu-title {
     display: block;
     font-weight: 600;
@@ -348,14 +397,30 @@ export default {
 }
 ```
 
----
+### Debugging
 
-## 🎯 Casos de Uso
+```javascript
+// Ver estado del dropdown
+console.log('Dropdown data:', Application.dropdownMenu.value);
 
-### 1. Menú de Opciones
+// Ver posición calculada
+const menu = document.getElementById('dropdown-element-in-general');
+console.log('Position:', menu.style.left, menu.style.top);
+console.log('Size:', menu.style.maxWidth);
+
+// Simular apertura
+Application.ApplicationUIService.openDropdownMenu(
+    document.querySelector('button'),
+    'Test',
+    { template: '<div>Test Content</div>' }
+);
+```
+
+### Casos de Uso
+
+**Menú de Opciones en Tabla:**
 
 ```typescript
-// Menú contextual en una fila de tabla
 Application.ApplicationUIService.openDropdownMenu(
     event.target,
     'Row Options',
@@ -363,10 +428,9 @@ Application.ApplicationUIService.openDropdownMenu(
 );
 ```
 
-### 2. Filtros
+**Dropdown de Filtros:**
 
 ```typescript
-// Dropdown de filtros
 Application.ApplicationUIService.openDropdownMenu(
     filterButton,
     'Filters',
@@ -375,10 +439,9 @@ Application.ApplicationUIService.openDropdownMenu(
 );
 ```
 
-### 3. Mini Formulario
+**Mini Formulario:**
 
 ```typescript
-// Formulario rápido en dropdown
 Application.ApplicationUIService.openDropdownMenu(
     addButton,
     'Quick Add',
@@ -387,96 +450,25 @@ Application.ApplicationUIService.openDropdownMenu(
 );
 ```
 
----
+## 11. Referencias Cruzadas
 
-## ⚠️ Consideraciones
+**Application Layer:**
+- [application-singleton.md](../03-application/application-singleton.md) - Application.dropdownMenu.value estructura
+- [ui-services.md](../03-application/ui-services.md) - ApplicationUIService.openDropdownMenu() y closeDropdownMenu()
 
-### 1. Z-Index
+**Componentes Relacionados:**
+- [core-components.md](core-components.md) - Visión general de componentes core del framework
+- [modal-components.md](modal-components.md) - Comparación con sistema de modales
+- [LoadingScreenComponent.md](LoadingScreenComponent.md) - Z-index hierarchy
+- [ToastComponents.md](ToastComponents.md) - Notificaciones no-blocking
 
-```css
-z-index: 888;  /* Container */
-z-index: 889;  /* Menu */
-```
+**Arquitectura:**
+- [02-FLOW-ARCHITECTURE.md](../../02-FLOW-ARCHITECTURE.md) - Flujo de UI y gestión de overlay components
+- [01-FRAMEWORK-OVERVIEW.md](../../01-FRAMEWORK-OVERVIEW.md) - Application singleton pattern
 
-**Jerarquía:**
-- Contenido normal: z-index < 888
-- Dropdown: 888-889
-- Modales: 1000+
-- Loading popup: 1100
-- Confirmation: 1500
+**Vue Documentation:**
+- Dynamic Components con :is directive
+- markRaw() API para prevenir reactive proxy
+- Event handling: addEventListener y removeEventListener
 
-### 2. Click Outside
-
-```typescript
-// El primer click que abre el dropdown no debe cerrarlo
-// Se maneja con event.stopPropagation() en el trigger
-```
-
-### 3. markRaw()
-
-```typescript
-// ✅ SIEMPRE usar markRaw() con componentes
-this.app.dropdownMenu.value.component = markRaw(component);
-
-// ❌ NO hacer
-this.app.dropdownMenu.value.component = component;
-```
-
----
-
-## 🔗 Integración con App.vue
-
-### Registro en App.vue
-
-```vue
-<template>
-    <div id="app">
-        <!-- Otros componentes -->
-        <DropdownMenu />   <!-- Registrado globalmente -->
-    </div>
-</template>
-```
-
----
-
-## 🐛 Debugging
-
-### Ver Estado del Dropdown
-
-```javascript
-console.log('Dropdown data:', Application.dropdownMenu.value);
-```
-
-### Ver Posición Calculada
-
-```javascript
-const menu = document.getElementById('dropdown-element-in-general');
-console.log('Position:', menu.style.left, menu.style.top);
-console.log('Size:', menu.style.maxWidth);
-```
-
-### Simular Apertura
-
-```javascript
-Application.ApplicationUIService.openDropdownMenu(
-    document.querySelector('button'),
-    'Test',
-    { template: '<div>Test Content</div>' }
-);
-```
-
----
-
-## 📚 Resumen
-
-`DropdownMenu` es un **menú desplegable inteligente**:
-
-- ✅ Posicionamiento automático (evita salir de pantalla)
-- ✅ Componentes dinámicos como contenido
-- ✅ Cierre con ESC o click fuera
-- ✅ Control centralizado vía ApplicationUIService
-- ✅ Z-index correcto en jerarquía visual
-- ✅ Transiciones suaves
-- ✅ Fácil de usar desde cualquier componente
-
-Ideal para menús contextuales, filtros, y formularios rápidos.
+**Ubicación del código fuente:** src/components/DropdownMenu.vue

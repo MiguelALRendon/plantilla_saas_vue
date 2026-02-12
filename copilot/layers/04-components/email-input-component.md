@@ -1,457 +1,290 @@
-# 📧 EmailInputComponent - Input de Email con Validación HTML5
+# EmailInputComponent
 
-**Referencias:**
-- [useInputMetadata-composable.md](useInputMetadata-composable.md) - Composable de metadatos
-- [text-input-component.md](text-input-component.md) - Input de texto base
-- `../../01-decorators/string-type-decorator.md` - Decorador StringTypeDef
-- `../../tutorials/02-validations.md` - Sistema de validaciones
+## 1. PROPOSITO
 
----
+EmailInputComponent es un componente especializado para recolección de direcciones de correo electrónico que aprovecha la validación nativa HTML5 mediante type="email". Se activa automáticamente cuando una propiedad usa el decorador @StringTypeDef(StringType.EMAIL), optimizando el teclado en dispositivos móviles y aplicando validación de formato nativa del navegador.
 
-## 📍 Ubicación en el Código
+## 2. ALCANCE
 
-**Archivo:** `src/components/Form/EmailInputComponent.vue`  
-**Tipo de propiedad:** `String` con `@StringTypeDef(StringType.EMAIL)`
+**UBICACION:** src/components/Form/EmailInputComponent.vue
 
----
+**DEPENDENCIAS TECNICAS:**
+- Vue 3 Composition API: Reactividad y v-model
+- TextInputComponent: Hereda estructura base
+- StringType.EMAIL enum: Determina activación
+- HTML5 Validation API: checkValidity(), validationMessage
+- useInputMetadata composable: Extracción de metadata
 
-## 🎯 Propósito
+**ACTIVACION:**
+Se renderiza cuando property tiene decorador @StringTypeDef(StringType.EMAIL). Application.js detecta esta configuración y selecciona EmailInputComponent en lugar de TextInputComponent.
 
-Componente especializado para entrada y validación de direcciones de correo electrónico. Utiliza el tipo HTML5 `<input type="email">` que proporciona:
+## 3. DEFINICIONES CLAVE
 
-- ✅ Validación HTML5 nativa del formato de email
-- ✅ Teclado optimizado en dispositivos móviles
-- ✅ Icono visual de correo (📧) en el label
-- ✅ Sistema de validación de 3 niveles del framework
+**type="email":**
+Atributo HTML5 que activa validación nativa de formato email, optimiza teclado móvil con teclas @, .com, y aplica pattern regex del navegador.
 
----
+**Trim automático:**
+Eliminación de espacios en blanco al inicio y final del valor en evento blur, previniendo errores de formato.
 
-## 🔧 Activación Automática
+**Validación tri-nivel:**
+Sistema que combina HTML5 nativa, regex custom sincrónica con @Validation, y verificación asíncrona con @AsyncValidation para validación de unicidad vía API.
 
-El componente se genera automáticamente cuando:
+**Teclado móvil optimizado:**
+Interfaz especial en dispositivos móviles que facilita ingreso de emails con acceso rápido a @ y .com.
 
-```typescript
-@PropertyName('Email', String)
-@StringTypeDef(StringType.EMAIL)  // ← Activa EmailInputComponent
-email!: string;
-```
+## 4. DESCRIPCION TECNICA
 
----
+**HERENCIA:**
+EmailInputComponent extiende la estructura de TextInputComponent, manteniendo todas sus props, computed properties y métodos. La única diferencia técnica es el atributo type="email" en lugar de type="text".
 
-## 📋 Props
-
+**PROPS:**
 ```typescript
 props: {
-    entityClass: {
-        type: Function as unknown as () => typeof BaseEntity,
-        required: true,
-    },
-    entity: {
-        type: Object as () => BaseEntity,
-        required: true,
-    },
-    propertyKey: {
-        type: String,
-        required: true,
-    },
-    modelValue: {
-        type: String,
-        required: true,
-        default: '',
-    },
+    entity: Object,        // Entidad actual BaseEntity
+    propertyName: String,  // Nombre de property en entity
+    metadata: Object       // Metadata extraída por useInputMetadata
 }
 ```
 
----
-
-## 📐 Template
-
-```vue
-<template>
-<div class="TextInput" :class="[
-    {disabled: metadata.disabled.value}, 
-    {nonvalidated: !isInputValidated}
-]">
-    <!-- Label con icono de correo -->
-    <label :for="'id-' + metadata.propertyName" class="label-input">
-        {{ metadata.propertyName }} 
-        <span :class="GGCLASS" class="icon">{{ GGICONS.MAIL }}</span>
+**ESTRUCTURA HTML:**
+```html
+<div class="TextInput" :class="cssClass">
+    <label>
+        <i v-if="!metadata.hideLabel" :class="GGICONS.MAIL"></i>
+        {{ displayName }}
+        <span v-if="required" class="required">*</span>
     </label>
     
-    <!-- Input tipo email -->
     <input 
-        :id="'id-' + metadata.propertyName" 
-        :name="metadata.propertyName" 
-        type="email"  <!-- ← Validación HTML5 -->
-        class="main-input" 
-        placeholder=" "
-        :value="modelValue"
-        :disabled="metadata.disabled.value"
-        @input="$emit('update:modelValue', $event.target.value)" 
+        type="email"
+        v-model="value"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :class="[inputClass, { 'nonvalidated': !isValid }]"
+        @blur="handleBlur"
     />
+    
+    <div v-if="metadata.helpText" class="help-text">
+        {{ metadata.helpText }}
+    </div>
+    
+    <div class="validation-messages" v-if="!isValid">
+        <span v-for="msg in validationMessages" :key="msg">
+            {{ msg }}
+        </span>
+    </div>
 </div>
-
-<!-- Help text -->
-<div class="help-text" v-if="metadata.helpText.value">
-    <span>{{ metadata.helpText.value }}</span>
-</div>
-
-<!-- Validation messages -->
-<div class="validation-messages">
-    <span v-for="message in validationMessages" :key="message">
-        {{ message }}
-    </span>
-</div>
-</template>
 ```
 
----
-
-## 🎨 Características Visuales
-
-### Icono de Correo
-
-```vue
-<span :class="GGCLASS" class="icon">{{ GGICONS.MAIL }}</span>
-```
-
-**Renderiza:**
-```
-┌─────────────────────────────────────┐
-│ Email Address 📧                    │
-│ ┌─────────────────────────────────┐ │
-│ │ user@example.com                │ │
-│ └─────────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
-
-### Estados CSS
-
-```css
-/* Normal */
-.TextInput {
-    /* Estilos base */
-}
-
-/* Disabled */
-.TextInput.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Inválido */
-.TextInput.nonvalidated {
-    border-color: red;
-}
-```
-
----
-
-## ✅ Sistema de Validación (3 Niveles)
-
-### Nivel 1: Required (trim)
-
+**COMPUTED VALUE:**
 ```typescript
-if (this.metadata.required.value && 
-    (!this.modelValue || this.modelValue.trim() === '')) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.requiredMessage.value || 
-        `${this.metadata.propertyName} is required.`
-    );
-}
-```
-
-**Punto clave:** Usa `.trim()` para evitar espacios en blanco como valor válido.
-
-### Nivel 2: Validación Síncrona
-
-```typescript
-if (!this.metadata.validated.value) {
-    validated = false;
-    this.validationMessages.push(
-        this.metadata.validatedMessage.value || 
-        `${this.metadata.propertyName} is not valid.`
-    );
-}
-```
-
-**Activado por:**
-```typescript
-@Validation(
-    (entity) => entity.email.includes('@'), 
-    'Email must contain @'
-)
-email!: string;
-```
-
-### Nivel 3: Validación Asíncrona
-
-```typescript
-const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-if (!isAsyncValid) {
-    validated = false;
-    const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-    if (asyncMessage) {
-        this.validationMessages.push(asyncMessage);
+computed: {
+    value: {
+        get() {
+            return this.entity[this.propertyName];
+        },
+        set(newValue) {
+            this.$emit('update:modelValue', newValue);
+        }
+    },
+    displayName() {
+        return this.metadata.displayName || this.propertyName;
+    },
+    required() {
+        return this.metadata.required === true;
+    },
+    disabled() {
+        return this.metadata.disabled === true;
+    },
+    readonly() {
+        return this.metadata.readonly === true;
+    },
+    isValid() {
+        if (!this.entity.validationState) return true;
+        return !this.entity.validationState[this.propertyName];
     }
 }
 ```
 
-**Activado por:**
+**METODO handleBlur:**
 ```typescript
-@AsyncValidation(
-    async (entity) => {
-        const response = await fetch(`/api/check-email?email=${entity.email}`);
-        const data = await response.json();
-        return !data.exists;
-    },
-    'Email already registered'
-)
-email!: string;
+handleBlur() {
+    if (typeof this.value === 'string') {
+        this.value = this.value.trim();
+    }
+}
 ```
 
----
-
-## 📱 Validación HTML5 Nativa
-
-El tipo `type="email"` proporciona validación del navegador:
-
-### Qué valida el navegador:
-- ✅ Formato básico: `texto@dominio.extension`
-- ✅ No permite espacios
-- ✅ Requiere `@` y `.`
-
-### Qué NO valida:
-- ❌ Existencia del dominio
-- ❌ Formato RFC completo
-- ❌ Unicidad del email
-
-**Ejemplo de validación HTML5:**
-```
-usuario@ejemplo.com  ✅ Válido
-usuario@ejemplo      ❌ Inválido (falta TLD)
-usuario.ejemplo.com  ❌ Inválido (falta @)
-usuario @ejemplo.com ❌ Inválido (espacios)
-```
-
----
-
-## 🎓 Ejemplo Completo
-
-### Definición de Entidad
-
+**METODO handleValidation:**
 ```typescript
-import { BaseEntity } from './base_entitiy';
-import {
-    PropertyName,
-    PropertyIndex,
-    Required,
-    StringTypeDef,
-    AsyncValidation,
-    HelpText,
-    ViewGroup,
-    Validation
-} from '@/decorations';
-import { StringType } from '@/enums/string_type';
+handleValidation() {
+    const metadata = this.metadata;
+    const entity = this.entity;
+    
+    // Nivel 1: Required con trim
+    if (metadata.required && !this.value?.trim()) {
+        this.isValid = false;
+        this.validationMessages.push(metadata.requiredMessage || 'This field is required');
+        return;
+    }
+    
+    // Nivel 2: Validación síncrona regex
+    if (metadata.validation) {
+        const isValid = metadata.validation(entity);
+        if (!isValid) {
+            this.isValid = false;
+            this.validationMessages.push(metadata.validationMessage);
+            return;
+        }
+    }
+    
+    // Nivel 3: Validación asíncrona API
+    if (metadata.asyncValidation) {
+        await metadata.asyncValidation(entity);
+    }
+    
+    this.isValid = true;
+    this.validationMessages = [];
+}
+```
 
+## 5. FLUJO DE FUNCIONAMIENTO
+
+**PASO 1 - Activación:**
+Sistema detecta decorador @StringTypeDef(StringType.EMAIL) en property, Application.js selecciona EmailInputComponent para renderizado.
+
+**PASO 2 - Renderizado:**
+Componente recibe entity, propertyName y metadata, renderiza input con type="email", icono GGICONS.MAIL en label, required asterisk si metadata.required es true.
+
+**PASO 3 - Input Usuario:**
+Usuario escribe en input, evento @input dispara setter de computed value, emite update:modelValue, actualiza entity[propertyName] directamente, navegador valida formato HTML5 automáticamente.
+
+**PASO 4 - Blur y Trim:**
+Usuario sale del input, handleBlur ejecuta trim automático eliminando espacios, actualiza value con string limpio.
+
+**PASO 5 - Validación al Guardar:**
+Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs vía EventBus, EmailInputComponent.handleValidation() se ejecuta aplicando nivel 1 required, nivel 2 regex custom, nivel 3 async validation API.
+
+**PASO 6 - Actualización UI:**
+Si validación falla, isValid se marca false, CSS class nonvalidated se aplica, validationMessages array se llena con mensajes de error.
+
+**PASO 7 - Respuesta Visual:**
+input muestra border rojo con .nonvalidated class, validation-messages div renderiza errores, usuario corrige input y repite ciclo.
+
+## 6. REGLAS OBLIGATORIAS
+
+**REGLA 1:** SIEMPRE usar type="email" en input element, NUNCA type="text".
+
+**REGLA 2:** SIEMPRE ejecutar trim en handleBlur antes de validación.
+
+**REGLA 3:** SIEMPRE validar required ANTES de validaciones custom.
+
+**REGLA 4:** SIEMPRE usar @StringTypeDef(StringType.EMAIL) para activar este componente, NUNCA otro StringType.
+
+**REGLA 5:** SIEMPRE aplicar validaciones en orden: required, síncrona, asíncrona.
+
+**REGLA 6:** SIEMPRE mostrar validationMessages cuando isValid es false.
+
+**REGLA 7:** SIEMPRE incluir icono GGICONS.MAIL en label para identificación visual.
+
+## 7. PROHIBICIONES
+
+**PROHIBIDO:** Usar StringType.TEXT en properties de email.
+
+**PROHIBIDO:** Omitir validación de formato, confiar solo en HTML5.
+
+**PROHIBIDO:** Validar required sin aplicar trim previamente.
+
+**PROHIBIDO:** Usar espacios en valores de email, permitir entrada sin trim.
+
+**PROHIBIDO:** Renderizar EmailInputComponent manualmente sin decorador @StringTypeDef(StringType.EMAIL), sistema debe activarlo automáticamente.
+
+**PROHIBIDO:** Modificar type="email" a type="text" bajo cualquier circunstancia.
+
+**PROHIBIDO:** Ejecutar validación asíncrona antes de validaciones síncronas.
+
+## 8. DEPENDENCIAS
+
+**DECORADORES REQUERIDOS:**
+- @StringTypeDef: Define StringType.EMAIL para activación
+- @PropertyName: Establece display name
+- @Required: Marca campo obligatorio
+- @Validation: Implementa regex custom
+- @AsyncValidation: Verifica unicidad vía API
+- @HelpText: Proporciona ayuda contextual
+
+**COMPONENTES RELACIONADOS:**
+- TextInputComponent: Componente base heredado
+- useInputMetadata composable: Extrae metadata de decoradores
+
+**SERVICIOS:**
+- EventBus: Comunica evento validate-inputs
+- HTML5 Validation API: Proporciona checkValidity()
+
+## 9. RELACIONES
+
+**HEREDA DE:**
+TextInputComponent - Estructura base, props, computed properties, métodos comunes.
+
+**ACTIVADO POR:**
+@StringTypeDef(StringType.EMAIL) - Decorador que señala uso de email input.
+
+**INTEGRA CON:**
+- BaseEntity.validateInputs(): Sistema centralizado de validación
+- Application.View.value.isValid: Flag global de estado de formulario
+- EventBus: Comunicación de eventos validate-inputs
+
+**FLUJO DE RENDERIZADO:**
+Application.js detecta decorador, selecciona EmailInputComponent, pasa entity/propertyName/metadata como props, componente renderiza input type="email".
+
+## 10. NOTAS DE IMPLEMENTACION
+
+**VALIDACION HTML5 NATIVA:**
+Formatos válidos: user@example.com, name.surname@domain.co, test_email@test.org
+Formatos inválidos: usuario@ (sin dominio), @domain.com (sin usuario), user @domain.com (con espacios), user.domain.com (sin @)
+
+**TECLADO MOVIL:**
+En dispositivos móviles type="email" activa teclado especial con @ disponible en primera fila, .com como tecla rápida, punto . accesible fácilmente.
+
+**EJEMPLO ENTITY:**
+```typescript
 export class User extends BaseEntity {
-    @ViewGroup('Contact Information')
-    @PropertyIndex(1)
-    @PropertyName('Email Address', String)
-    @StringTypeDef(StringType.EMAIL)  // ← Genera EmailInputComponent
+    @PropertyName('Email', String)
+    @StringTypeDef(StringType.EMAIL)
     @Required(true, 'Email is required')
-    @HelpText('Enter a valid email address')
-    @Validation(
-        (entity) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entity.email),
-        'Invalid email format'
-    )
     @AsyncValidation(
         async (entity) => {
-            if (!entity.email) return true;
-            const response = await fetch(`/api/users/check-email?email=${entity.email}`);
-            const { available } = await response.json();
-            return available;
+            const response = await fetch('/api/users/check-email', {
+                method: 'POST',
+                body: JSON.stringify({ email: entity.email })
+            });
+            const data = await response.json();
+            return data.available;
         },
         'This email is already registered'
     )
     email!: string;
-    
-    @ViewGroup('Contact Information')
-    @PropertyIndex(2)
-    @PropertyName('Secondary Email', String)
-    @StringTypeDef(StringType.EMAIL)
-    @Required(false)
-    secondaryEmail?: string;
 }
 ```
 
-### UI Generada
+**CASOS DE USO:**
+1. Login/Registro: @Required + @AsyncValidation para verificar email único
+2. Contacto Secundario: @Required(false) para email opcional
+3. Email Corporativo: @Validation con regex para validar dominio específico como @company.com
 
-```vue
-<!-- Email Address -->
-<div class="TextInput">
-    <label>Email Address 📧</label>
-    <input 
-        type="email" 
-        v-model="user.email" 
-        placeholder=" "
-    />
-    <div class="help-text">
-        <span>Enter a valid email address</span>
-    </div>
-    <div class="validation-messages" v-if="!isValid">
-        <span>Email is required</span>
-        <span>Invalid email format</span>
-        <span>This email is already registered</span>
-    </div>
-</div>
+**DIFERENCIAS CON TextInputComponent:**
+type="text" vs type="email", sin validación HTML5 vs formato email validado, teclado estándar vs optimizado, sin icono vs icono GGICONS.MAIL, activación String default vs @StringTypeDef(StringType.EMAIL).
 
-<!-- Secondary Email -->
-<div class="TextInput">
-    <label>Secondary Email 📧</label>
-    <input 
-        type="email" 
-        v-model="user.secondaryEmail" 
-        placeholder=" "
-    />
-</div>
-```
+## 11. REFERENCIAS CRUZADAS
 
----
+**DOCUMENTOS RELACIONADOS:**
+- text-input-component.md: Componente base heredado
+- string-type-decorator.md: Decorador que activa componente
+- async-validation-decorator.md: Validación asíncrona API
+- useInputMetadata-composable.md: Extracción de metadata
+- form-inputs.md: Overview de inputs del framework
 
-## 🔄 Flujo de Validación
-
-```
-Usuario escribe email
-    ↓
-@input emite 'update:modelValue'
-    ↓
-v-model actualiza entity.email
-    ↓
-Usuario intenta guardar
-    ↓
-BaseEntity llama validateInputs()
-    ↓
-Event bus emite 'validate-inputs'
-    ↓
-EmailInputComponent.handleValidation()
-    ↓
-1. Verifica required (con trim)
-    ↓
-2. Ejecuta validación síncrona (regex)
-    ↓
-3. Ejecuta validación asíncrona (API)
-    ↓
-Si alguna falla: Application.View.value.isValid = false
-    ↓
-Muestra mensajes de error en UI
-```
-
----
-
-## 🆚 Diferencias con TextInputComponent
-
-| Aspecto | TextInputComponent | EmailInputComponent |
-|---------|-------------------|---------------------|
-| **type** | `text` | `email` |
-| **Validación HTML5** | Ninguna | Formato de email |
-| **Icono en label** | No | Sí (📧 MAIL) |
-| **Teclado móvil** | Estándar | Email (@, .com) |
-| **Activación** | `String` por defecto | `@StringTypeDef(StringType.EMAIL)` |
-
----
-
-## 💡 Buenas Prácticas
-
-### ✅ DO:
-
-```typescript
-// Usar validación async para unicidad
-@AsyncValidation(
-    async (entity) => await checkEmailUnique(entity.email),
-    'Email already exists'
-)
-email!: string;
-
-// Combinar con regex para formato estricto
-@Validation(
-    (entity) => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(entity.email),
-    'Invalid email format'
-)
-email!: string;
-
-// Usar help text descriptivo
-@HelpText('We will use this email for important notifications')
-email!: string;
-```
-
-### ❌ DON'T:
-
-```typescript
-// No usar StringType.TEXT para emails
-@StringTypeDef(StringType.TEXT)  // ❌ Incorrecto
-email!: string;
-
-// No omitir validación de formato
-@PropertyName('Email', String)  // ❌ Sin validación
-email!: string;
-
-// No usar required sin trim (ya está implementado)
-@Required(true)  // ✅ Ya valida con trim automáticamente
-email!: string;
-```
-
----
-
-## 🧪 Casos de Uso Comunes
-
-### 1. Login/Registro
-
-```typescript
-@PropertyName('Email', String)
-@StringTypeDef(StringType.EMAIL)
-@Required(true, 'Email is required to sign up')
-@AsyncValidation(
-    async (entity) => !(await emailExists(entity.email)),
-    'This email is already taken'
-)
-email!: string;
-```
-
-### 2. Contacto Secundario (Opcional)
-
-```typescript
-@PropertyName('Alternative Email', String)
-@StringTypeDef(StringType.EMAIL)
-@Required(false)
-alternativeEmail?: string;
-```
-
-### 3. Email con Dominio Específico
-
-```typescript
-@PropertyName('Corporate Email', String)
-@StringTypeDef(StringType.EMAIL)
-@Required(true)
-@Validation(
-    (entity) => entity.corporateEmail.endsWith('@company.com'),
-    'Must use company email (@company.com)'
-)
-corporateEmail!: string;
-```
-
----
-
-## 🔗 Referencias
-
-- **TextInputComponent:** [text-input-component.md](text-input-component.md)
-- **StringTypeDef Decorator:** `../../01-decorators/string-type-decorator.md`
-- **AsyncValidation:** `../../01-decorators/async-validation-decorator.md`
-- **useInputMetadata:** [useInputMetadata-composable.md](useInputMetadata-composable.md)
-
----
-
-**Última actualización:** 11 de Febrero, 2026  
-**Versión:** 1.0.0  
-**Estado:** ✅ Completo (basado en código actual)
+**UBICACION:** copilot/layers/04-components/email-input-component.md
+**VERSION:** 1.0.0
+**ULTIMA ACTUALIZACION:** 11 de Febrero, 2026
