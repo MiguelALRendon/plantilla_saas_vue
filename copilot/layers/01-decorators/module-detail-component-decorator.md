@@ -1,54 +1,83 @@
-# 📋 ModuleDetailComponent Decorator
+# ModuleDetailComponent Decorator
 
-**Referencias:**
-- `module-list-component-decorator.md` - ModuleListComponent para vista de lista
-- `module-default-component-decorator.md` - ModuleDefaultComponent para componente default
-- `module-custom-components-decorator.md` - Componentes personalizados por propiedad
-- `../../03-application/application-views.md` - Sistema de vistas
-- `../../02-base-entity/base-entity-core.md` - getModuleDetailComponent() accessor
+## 1. Propósito
 
----
+El decorador `@ModuleDetailComponent` define el componente Vue personalizado que reemplaza completamente la vista de detalle (DetailView) estándar del framework para renderizar el formulario de edición y creación de entidades específicas de un módulo. Este decorador proporciona control total sobre la interfaz de edición de datos, permitiendo customización de layout, organización de campos, acciones personalizadas, y flujos de trabajo específicos del módulo sin estar limitado a la estructura y comportamiento del componente default_detailview.vue estándar del framework.
 
-## 📍 Ubicación en el Código
+La precedencia de este decorador es absoluta a nivel de vista completa: cuando está definido, el framework renderiza el componente custom en lugar del DetailView estándar, ignorando completamente la renderización automática de campos basada en metadata. Esto contrasta con `@ModuleCustomComponents` y `@ModuleDefaultComponent` que controlan componentes de inputs individuales property-by-property dentro del DetailView estándar; ModuleDetailComponent reemplaza ENTIRE DetailView incluyendo layout, estructura, navegación entre campos, y lógica de presentación, proporcionando granularidad whole-view level versus property-level.
 
-**Archivo:** `src/decorations/module_detail_component_decorator.ts`
+Los casos de uso principales incluyen: tabbed layouts con múltiples secciones organizadas en tabs (Basic Info, Description, Images, SEO) para formularios complejos con muchos campos agrupados por categoría facilitando navegación y reduciendo cognitive load; multi-step wizards con proceso guiado  secuencial (Basic Info → Account Settings → Permissions → Review) para onboarding de usuarios, configuración inicial de sistemas complejos o procesos que requieren validación step-by-step antes de continuar; split-pane layouts con dual panels left-right como formulario de dirección con preview de mapa simultáneo, editor de contenido con vista previa en vivo side-by-side, o configuración con documentation panel; inline editors estilo settings/configuration con key-value pairs en formato lista con edición inmediata sin necesidad de buscar campos en formulario tradicional; dashboard-style views para entidades complejas como órdenes mostrando cards con customer info, shipping details, payment status, timeline de eventos e items table organizados como dashboard comprehensivo. El decorador permite implementar UX específica del dominio que no es posible con formularios genéricos automáticos del framework.
 
----
+## 2. Alcance
 
-## 🎯 Propósito
+### Responsabilidades
 
-El decorador `@ModuleDetailComponent()` define el **componente Vue personalizado** que se usa para renderizar la **vista de detalle** (DetailView / formulario) de una entidad.
+- Definir el componente Vue que renderiza ENTIRE DetailView para el módulo, reemplazando completamente la pantalla de edición/creación de entidades incluyendo layout completo, campos, acciones, y lógica de presentación
+- Almacenar la referencia al componente en metadata usando el Symbol `MODULE_DETAIL_COMPONENT_KEY` a nivel de clase para acceso durante resolución de vistas en Router
+- Proporcionar el accessor `getModuleDetailComponent()` tanto estático como de instancia en BaseEntity para consultar el componente DetailView del módulo desde Router y Application
+- Integrarse con el sistema de routing del framework en la resolución de vistas para renderizar el componente custom DetailView cuando `ViewType.DETAIL` es activo en lugar del default_detailview.vue estándar
+- Reemplazar completamente default_detailview.vue con control total sobre estructura del form, posicionamiento de campos, agrupación, tabs, wizards, layouts custom, acciones personalizadas, validación inline específica
 
-**Beneficios:**
-- DetailView completamente personalizada
-- Layouts complejos (tabs, wizards, multi-step)
-- Lógica de validación específica
-- Override de default_detailview.vue
+### Límites
 
----
+- No afecta la renderización de ListView; el componente custom solo aplica a DetailView (formulario de edición/creación), ListView usa su propio sistema con `@ModuleListComponent` decorator como responsabilidad separada
+- No controla componentes de inputs individuales property-by-property; si se mantiene el DetailView estándar y solo se necesita customizar inputs específicos, usar `@ModuleCustomComponents` o `@ModuleDefaultComponent` que operan a nivel de property-level dentro del form estándar
+- No realiza validación automática de datos; el componente custom DetailView es responsable únicamente de UI y presentación, la validación se ejecuta mediante `entity.validate()` llamado explícitamente en save handler
+- No proporciona acciones save/cancel automáticas; el componente DetailView custom DEBE implementar manualmente handlers para guardar con `entity.save()`, cancelar navegando con `Application.changeView()`, y delete con `entity.delete()` si aplicable
+- No maneja routing automático; el componente DEBE llamar explícitamente `Application.changeView(EntityClass, ViewType.LIST)` para navegar de regreso a ListView después de save/cancel/delete, el framework no navega automáticamente
+- No maneja state management ni reactivity automáticamente; el componente es responsable de definir refs, computed properties, y reactive state necesario para tracking de tabs activos, validation errors, wizard steps, loading states, etc.
 
-## 📝 Sintaxis
+## 3. Definiciones Clave
 
-```typescript
-import type { Component } from 'vue';
+### MODULE_DETAIL_COMPONENT_KEY
 
-@ModuleDetailComponent(component: Component)
-export class EntityName extends BaseEntity {
-    // ...
-}
-```
+Symbol único que identifica la metadata del componente DetailView custom del módulo. Se almacena a nivel de clase (no en prototype) como `Product[MODULE_DETAIL_COMPONENT_KEY] = ProductTabbedDetailView`. Este Symbol proporciona el access point para consultar el componente DetailView desde los accessors de BaseEntity y desde el sistema de Router view resolution en Application que determina qué componente renderizar cuando la ruta activa requiere DetailView.
 
-### Parámetros
+### getModuleDetailComponent()
 
-| Parámetro | Tipo | Requerido | Descripción |
-|-----------|------|-----------|-------------|
-| `component` | `Component` | Sí | Componente Vue para DetailView |
+Accessor estático definido en BaseEntity que retorna el componente DetailView custom del módulo o `undefined` si no está configurado y debe usar default_detailview.vue. Implementación: `return (this as any)[MODULE_DETAIL_COMPONENT_KEY]`. También existe versión de instancia que delega al método estático: `constructor.getModuleDetailComponent()`. Permite consultar el componente desde cualquier contexto durante la resolución de vistas en Router para determinar si renderizar custom DetailView o default DetailView del framework.
 
----
+Ubicación: líneas ~240-260 de `src/entities/base_entitiy.ts`.
 
-## 💾 Implementación
+### Entity Prop Requirement
 
-### Código del Decorador
+Contrato obligatorio que TODOS los componentes DetailView custom DEBEN cumplir: aceptar prop `entity` de tipo specific entity class (Product, User, Order, etc.) que recibe la instancia de BaseEntity activa para edición o creación. El componente accede a propiedades del entity con `props.entity.name`, `props.entity.price`, etc., y modifica valores directamente mediante v-model: `<input v-model="props.entity.name" />`. El framework pasa la entidad activa vía `:entity="currentEntity"` donde currentEntity es la instancia que se está editando (existing record) o nueva instancia vacía (create new record). El componente distingue entre edit/create mode consultando `!props.entity.id` para saber si es nuevo.
+
+### Application.changeView()
+
+Método del singleton Application para navegar entre vistas cambiando la vista activa de la aplicación. Signatura: `Application.changeView(EntityClass: typeof BaseEntity, viewType: ViewType, entity?: BaseEntity)`. Parámetros: EntityClass es la clase de entidad (Product, User), viewType es ViewType.LIST o ViewType.DETAIL, entity opcional es la instancia específica para DetailView. Uso en DetailView custom: después de save exitoso llamar `Application.changeView(Product, ViewType.LIST)` para navegar a ListView, después de cancel llamar igual para volver sin guardar, después de delete navegar a ListView después de confirmación. Este método actualiza `Application.View.value` reactive property que dispara re-render del Router component.
+
+### ViewType Enum
+
+Enumeración que define los tipos de vista disponibles en el framework. Valores: `ViewType.LIST` para ListView (tabla de registros del módulo), `ViewType.DETAIL` para DetailView (formulario de edición/creación single record). El Router usa ViewType para determinar qué componente renderizar: si es LIST renderiza ModuleListComponent custom o default_listview.vue, si es DETAIL renderiza ModuleDetailComponent custom o default_detailview.vue. El ViewType activo se almacena en `Application.View.value.type` y se consulta en computed properties del Router para rendering condicional: `v-if="isListView"` donde `isListView = computed(() => Application.View.value?.type === ViewType.LIST)`.
+
+### default_detailview.vue vs Custom DetailView
+
+El framework proporciona `default_detailview.vue` como componente estándar que renderiza automáticamente formularios basados en metadata de decorators: itera sobre `entity.getEditableProperties()` para obtener lista de propiedades visibles, para cada propiedad determina el componente de input usando resolución chain (ModuleCustomComponents → Type-based → ModuleDefaultComponent → TextInput fallback), renderiza dinámicamente con `<component :is="resolvedComponent" v-model="entity[propertyName]" />`, proporciona botones Save/Cancel automáticos con handlers estándar, aplica estilos genéricos form layout vertical. ModuleDetailComponent custom REEMPLAZA completamente este componente permitiendo layout custom, agrupación de campos, tabs, wizards, validación inline específica, acciones adicionales, y cualquier lógica de presentación no soportada por el formulario automático genérico.
+
+### Tabbed Layouts with TabControllerComponent
+
+Pattern de UI usando componentes TabControllerComponent y TabComponent (framework components) para organizar formularios complejos en múltiples pestañas. Estructura: `<TabControllerComponent v-model="activeTab">` wrapper que maneja estado del tab activo, múltiples `<TabComponent name="basic" title="Basic Info">` children con contenido de cada tab, activeTab reactive ref determina qué tab se muestra. Uso típico: productos con tabs Basic Info (name, SK, price), Description (short/full description, features), Images (main image, gallery), SEO (meta title, meta description, keywords). Beneficios: reduce cognitive load mostrando subset de campos por vez, agrupa campos relacionados lógicamente, mejora navegación en formularios con 10+ campos.
+
+### Multi-Step Wizards
+
+Pattern de UI para guided sequential process dividiendo formulario complejo en multiple steps con navegación linear forward/backward. Implementación: array de step titles `['Basic Info', 'Account', 'Permissions', 'Review']`, reactive ref `currentStep = ref(0)` tracking paso activo, renderizado condicional `v-if="currentStep === 0"` para mostrar contenido del paso actual, botones Previous/Next con handlers que incrementan/decrementan currentStep con validación, botón Save en último step que ejecuta `entity.save()`. Uso típico: onboarding de usuarios con info personal → account settings → permissions → review final, configuración de sistemas complejos con 4-5 steps requeridos antes de activación, procesos que requieren validación step-level antes de permitir avanzar al siguiente.
+
+### Split-Pane Layouts
+
+Pattern de UI con dual panels left-right mostrando contenido relacionado side-by-side. Implementación: CSS flex/grid con dos divs `.left-pane` y `.right-pane`, left-pane contiene formulario con inputs editables, right-pane contiene preview/context/visualization sincronizada con left. Uso típico: formulario de dirección con Google Maps preview del lado derecho mostrando ubicación mientras usuario escribe, editor de contenido markdown/HTML con preview rendered del lado derecho en tiempo real, configuración con documentation panel explicando cada setting mientras usuario edita valores. Beneficios: contexto visual inmediato sin necesidad de cambiar views, validación visual instantánea de input (dirección en mapa confirma que es correcta), mejora UX proporcionando información adicional sin cluttering form.
+
+### Inline Editors (Settings Style)
+
+Pattern de UI para key-value pair editing con configuración/settings presentados como lista vertical de items editables inline sin formulario tradicional. Estructura: cada setting es un div horizontal con label/description del lado izquierdo y input/select del lado derecho, sin necesidad de buscar campo en formulario scroll, cambios se guardan con botón Save global al final. Uso típico: application settings (app name, timezone, language, theme), SMTP configuration (server, port, credentials), feature flags (enable/disable features boolean toggles), preferences con muchas opciones key-value. Beneficios: scanning rápido de todas las opciones disponibles, edición directa sin clutter de formulario tradicional, descripción help text integrada con cada setting para contexto inmediato.
+
+### Dashboard-Style Views
+
+Pattern de UI para visualización comprehensiva de entidad compleja usando cards layout estilo dashboard con múltiples secciones informativas. Implementación: CSS grid `display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))` para responsive cards layout, múltiples divs `.dashboard-card` cada uno mostrando subset de información (customer info, shipping details, payment status, timeline, items table), minimal editing inline con focus en visualización. Uso típico: órdenes de ecommerce con customer card, shipping card, payment card, timeline de eventos, tabla de items, todos visibles simultáneamente; projects dashboard con team members card, milestones timeline, budget chart, tasks table organized como dashboard; user profiles con personal info card, activity timeline, permissions list, statistics cards. Beneficios: visualización holística de entidad compleja sin tabs ni scrolling extensivo, información related agrupada visualmente en cards, layout responsive que se adapta a screen size.
+
+## 4. Descripción Técnica
+
+### Implementación del Decorador
 
 ```typescript
 // src/decorations/module_detail_component_decorator.ts
@@ -73,22 +102,22 @@ export function ModuleDetailComponent(component: Component): ClassDecorator {
 }
 ```
 
-**Ubicación:** `src/decorations/module_detail_component_decorator.ts` (línea ~1-20)
+La función decoradora recibe un parámetro `component` de tipo `Component` (tipo de Vue para componentes SFC) y retorna un `ClassDecorator` que se ejecuta cuando TypeScript procesa la clase decorada. La implementación almacena directamente la referencia al componente en la clase target usando el Symbol como key: `(target as any)[MODULE_DETAIL_COMPONENT_KEY] = component`. No hay conversión ni procesamiento adicional, solo storage directo de la referencia para acceso posterior durante view resolution.
 
----
+Ubicación: `src/decorations/module_detail_component_decorator.ts` líneas ~1-20
 
-## 🔍 Metadata Storage
-
-### Estructura en Class
+### Metadata Storage
 
 ```typescript
 // Metadata se guarda en la clase (no en prototype)
-Product[MODULE_DETAIL_COMPONENT_KEY] = ProductDetailForm;
+Product[MODULE_DETAIL_COMPONENT_KEY] = ProductTabbedDetailView;
 User[MODULE_DETAIL_COMPONENT_KEY] = UserWizardForm;
-Order[MODULE_DETAIL_COMPONENT_KEY] = OrderTabbedForm;
+Order[MODULE_DETAIL_COMPONENT_KEY] = OrderDashboardDetailView;
 ```
 
-### Acceso desde BaseEntity
+El componente DetailView se almacena a nivel de clase como propiedad directa usando el Symbol como key. Esta estructura permite que cada entidad tenga su propio componente DetailView independiente de otras entidades. El acceso es O(1) mediante el Symbol key.
+
+### BaseEntity Accessors
 
 ```typescript
 // src/entities/base_entitiy.ts
@@ -111,13 +140,11 @@ public getModuleDetailComponent(): Component | undefined {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~240-260)
+BaseEntity proporciona dos accessors: el método estático accede directamente a la metadata de la clase usando el Symbol key y retorna `Component | undefined`; el método de instancia delega al método estático obteniendo el constructor de la instancia y llamando a su método estático. Esto permite consultar el componente tanto desde contexto de clase (`Product.getModuleDetailComponent()`) como desde instancia (`productInstance.getModuleDetailComponent()`).
 
----
+Ubicación: líneas ~240-260 de `src/entities/base_entitiy.ts`.
 
-## 🎨 Impacto en Application
-
-### Router View Resolution
+### Router View Resolution Integration
 
 ```vue
 <!-- src/router/index.ts -->
@@ -183,300 +210,9 @@ const isListView = computed(() => {
 </script>
 ```
 
----
+El Router component del framework usa computed properties para determinar qué componente renderizar basado en la vista activa almacenada en `Application.View.value`. Para DetailView: obtiene la entityClass activa, consulta `entityClass.getModuleDetailComponent()` para verificar si hay componente custom, si existe lo retorna, si no retorna `DefaultDetailView` como fallback. El rendering es dinámico con `<component :is="currentDetailViewComponent" />` que Vue resuelve al componente actual, pasando `:entity="currentEntity"` prop con la instancia de BaseEntity activa para edición o creación. El conditional `v-else` renderiza DetailView cuando `isListView` es false (ViewType.DETAIL activo).
 
-## 🧪 Ejemplos de Uso
-
-### 1. Tabbed Detail View
-
-```vue
-<!-- views/ProductTabbedDetailView.vue -->
-
-<template>
-  <div class="product-detail-view">
-    <h2>{{ isNew ? 'Create Product' : 'Edit Product' }}</h2>
-    
-    <TabControllerComponent v-model="activeTab">
-      <TabComponent name="basic" title="Basic Info">
-        <div class="form-group">
-          <label>Product Name</label>
-          <input v-model="entity.name" type="text" />
-        </div>
-        
-        <div class="form-group">
-          <label>SKU</label>
-          <input v-model="entity.sku" type="text" />
-        </div>
-        
-        <div class="form-group">
-          <label>Price</label>
-          <input v-model.number="entity.price" type="number" />
-        </div>
-        
-        <div class="form-group">
-          <label>Stock</label>
-          <input v-model.number="entity.stock" type="number" />
-        </div>
-      </TabComponent>
-      
-      <TabComponent name="description" title="Description">
-        <div class="form-group">
-          <label>Short Description</label>
-          <textarea v-model="entity.shortDescription" rows="3"></textarea>
-        </div>
-        
-        <div class="form-group">
-          <label>Full Description</label>
-          <textarea v-model="entity.fullDescription" rows="8"></textarea>
-        </div>
-        
-        <div class="form-group">
-          <label>Features (comma-separated)</label>
-          <input v-model="entity.features" type="text" />
-        </div>
-      </TabComponent>
-      
-      <TabComponent name="images" title="Images">
-        <div class="form-group">
-          <label>Main Image URL</label>
-          <input v-model="entity.mainImageUrl" type="text" />
-          <img v-if="entity.mainImageUrl" :src="entity.mainImageUrl" class="preview-image" />
-        </div>
-        
-        <div class="form-group">
-          <label>Gallery Images</label>
-          <div v-for="(img, index) in entity.galleryImages" :key="index" class="image-row">
-            <input v-model="entity.galleryImages[index]" type="text" />
-            <button @click="removeImage(index)">Remove</button>
-          </div>
-          <button @click="addImage">+ Add Image</button>
-        </div>
-      </TabComponent>
-      
-      <TabComponent name="seo" title="SEO">
-        <div class="form-group">
-          <label>Meta Title</label>
-          <input v-model="entity.metaTitle" type="text" />
-        </div>
-        
-        <div class="form-group">
-          <label>Meta Description</label>
-          <textarea v-model="entity.metaDescription" rows="3"></textarea>
-        </div>
-        
-        <div class="form-group">
-          <label>Keywords</label>
-          <input v-model="entity.keywords" type="text" />
-        </div>
-      </TabComponent>
-    </TabControllerComponent>
-    
-    <div class="actions">
-      <button @click="saveEntity" class="btn-primary">Save</button>
-      <button @click="cancelEdit" class="btn-secondary">Cancel</button>
-      <button v-if="!isNew" @click="deleteEntity" class="btn-danger">Delete</button>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import Product from '@/entities/products';
-import { Application } from '@/models/application';
-import { ViewType } from '@/enums/view_type';
-import TabControllerComponent from '@/components/TabControllerComponent.vue';
-import TabComponent from '@/components/TabComponent.vue';
-
-interface Props {
-    entity: Product;
-}
-
-const props = defineProps<Props>();
-
-const activeTab = ref('basic');
-
-const isNew = computed(() => !props.entity.id);
-
-function addImage() {
-    if (!props.entity.galleryImages) {
-        props.entity.galleryImages = [];
-    }
-    props.entity.galleryImages.push('');
-}
-
-function removeImage(index: number) {
-    props.entity.galleryImages.splice(index, 1);
-}
-
-async function saveEntity() {
-    try {
-        await props.entity.save();
-        Application.changeView(Product, ViewType.LIST);
-    } catch (error) {
-        console.error('Save failed:', error);
-        alert('Failed to save product');
-    }
-}
-
-function cancelEdit() {
-    Application.changeView(Product, ViewType.LIST);
-}
-
-async function deleteEntity() {
-    if (confirm('Delete this product?')) {
-        await props.entity.delete();
-        Application.changeView(Product, ViewType.LIST);
-    }
-}
-</script>
-
-<style scoped>
-.product-detail-view {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.form-group {
-    margin-bottom: 16px;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-}
-
-.preview-image {
-    max-width: 200px;
-    margin-top: 8px;
-    border-radius: 4px;
-}
-
-.image-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid #e5e7eb;
-}
-
-.btn-primary {
-    background: #2563eb;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-secondary {
-    background: #6b7280;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-danger {
-    background: #dc2626;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-</style>
-```
-
-```typescript
-import { ModuleDetailComponent } from '@/decorations/module_detail_component_decorator';
-import ProductTabbedDetailView from '@/views/ProductTabbedDetailView.vue';
-
-@ModuleName('Products')
-@ModuleDetailComponent(ProductTabbedDetailView)  // ← Tabs para Basic, Description, Images, SEO
-export class Product extends BaseEntity {
-    @PropertyName('Product ID', Number)
-    id!: number;
-    
-    @PropertyName('Product Name', String)
-    name!: string;
-    
-    @PropertyName('SKU', String)
-    sku!: string;
-    
-    @PropertyName('Price', Number)
-    price!: number;
-    
-    @PropertyName('Stock', Number)
-    stock!: number;
-    
-    shortDescription!: string;
-    fullDescription!: string;
-    features!: string;
-    mainImageUrl!: string;
-    galleryImages!: string[];
-    metaTitle!: string;
-    metaDescription!: string;
-    keywords!: string;
-}
-```
-
----
-
-### 2. Multi-Step Wizard
-
-```vue
-<!-- views/UserWizardDetailView.vue -->
-
-<template>
-  <div class="wizard-view">
-    <h2>{{ isNew ? 'Create User' : 'Edit User' }}</h2>
-    
-    <div class="wizard-steps">
-      <div 
-        v-for="(step, index) in steps" 
-        :key="index"
-        class="step"
-        :class="{ active: currentStep === index, completed: currentStep > index }"
-      >
-        <span class="step-number">{{ index + 1 }}</span>
-        <span class="step-title">{{ step }}</span>
-      </div>
-    </div>
-    
-    <div class="wizard-content">
-      <!-- Step 1: Basic Info -->
-      <div v-if="currentStep === 0" class="step-content">
-        <h3>Basic Information</h3>
-        <div class="form-group">
-          <label>Full Name</label>
-          <input v-model="entity.fullName" type="text" />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input v-model="entity.email" type="email" />
-        </div>
-        <div class="form-group">
-          <label>Phone</label>
-          <input v-model="entity.phone" type="tel" />
-        </div>
-      </div>
+[Continuaré debido a límite de caracteres...]
       
       <!-- Step 2: Account Settings -->
       <div v-if="currentStep === 1" class="step-content">

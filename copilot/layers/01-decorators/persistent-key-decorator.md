@@ -1,149 +1,124 @@
-# 🔑 PersistentKey Decorator
+# PersistentKey Decorator
 
-**Referencias:**
-- `persistent-decorator.md` - Persistent habilita sincronización con backend
-- `api-endpoint-decorator.md` - ApiEndpoint define URL base
-- `primary-property-decorator.md` - Primary define primary key alternativa
-- `../../02-base-entity/crud-operations.md` - save(), delete() usan persistent key
-- `../../tutorials/01-basic-crud.md` - Persistent key en CRUD
+## 1. Propósito
 
----
+El decorador PersistentKey especifica qué propiedad usar como identificador único para operaciones de persistencia con backend API, determinando qué campo valor se incluye en URLs endpoints individuales entity requests. Este decorador establece property usada construir request paths PUT/PATCH/DELETE specific entities y GET by id lookups siendo append al ApiEndpoint base URL formando complete endpoint path. Critical para arquitecturas donde entity primary key NO es necessarily property usada URLs API example cuando datos source usa integer autoincrement id primary key pero API endpoints prefieren slug field string-based human-readable URLs SEO-friendly UUIDs immutable identifiers evitando exponer internal integer ids security reasons. El decorador almacena property name string en prototype usando PERSISTENT_KEY_METADATA Symbol accesible through getPersistentKey() accessor queried por save() delete() getElement() methods antes construir HTTP request URLs permitiendo customization URL building strategy independent primary key definition database representation. La implementación resuelve tension between: internal application entity identification using primary keys performance optimization integer comparisons in-memory filtering; external API communication using different identifier types strings UUIDs slugs codes maintaining flexibility backwards compatibility without coupling entity schema database schema API contract allowing each layer use appropriate identifier type concern separation. Beneficios operacionales: URL flexibility APIs pueden designed human-readable slugs customer codes product SKUs inventory numbers flexible naming conventions independent database autoincrement ids; security improved internal database ids NOT exposed external URLs reducing information leakage attack surfaces preventing enumeration attacks; migration support legacy systems gradual refactoring changing identifier schemes without rewriting entire entity schema codebase one decorator change propaga URLs globally; versioning API endpoints requiring different identifier types across versions same entity code adapted decorator parameter switching identifier field context-appropriate backward compatible integration; immutability support UUIDs hashes immutable identifiers preferred primary keys concurrency control distributed systems while maintaining numeric primary keys internal optimization performance indexing requirements.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivo:** `src/decorations/persistent_key_decorator.ts`
+### Responsabilidades
 
----
+- Definir nombre property string usado unique identifier URL construction API persistence endpoints PUT/DELETE/GET operations building request paths
+- Almacenar persistent key property name en entity class prototype usando PERSISTENT_KEY_METADATA Symbol efficient O(1) metadata lookup durante URL formatting HTTP request preparation
+- Proveer getPersistentKey() accessor method tanto static level (queried sin entity instance) como instance level (delegating static method constructor) unified API consistent access pattern
+- Integrar con save() method BaseEntity determining whether new entity creation POST request base endpoint or existing entity update PUT endpoint/{persistentKeyValue} URL constructed using persistent key value
+- Integrar con delete() method constructing DELETE request URLs ApiEndpoint/{persistentKeyValue} appending persistent key value base endpoint path complete URL targeting specific entity deletion
+- Integrar con getElement() static method constructing GET request URLs ApiEndpoint/{id} parameter appending persistent key value retrieving single entity backend matching identifier
+- Proveer default fallback primary key cuando PersistentKey NO configured: getPersistentKey() retorna getPrimaryProperty() ensuring backward compatibility primary key usada URLs unless explicitly overridden persistent key decorator applied
+- Soportar any property type string number UUID allowing flexible identifier types appropriate domain requirements API design constraints backend implementation technology choices
 
-## 🎯 Propósito
+### Límites
 
-El decorador `@PersistentKey()` especifica qué propiedad usar como **identificador único** para operaciones de persistencia (save, update, delete).
+- No valida uniqueness persistent key values database; backend responsible ensuring identifiers unique enforcing constraints violations handled API error responses
+- No convierte valores automatically formatting; persistent key value transmission raw property value developer responsible ensuring value appropriate API expectations string encoding URL-safe characters
+- No valida existencia property decorated; if persistent key references non-existent property runtime errors occur accessing undefined property developer responsible verifying property exists decorated correctly
+- No sincroniza backend metadata; persistent key selection frontend-only decision determining URL construction strategy backend unaware which property frontend uses identifier coordination API contract implicit
+- No maneja composite keys multi-field identifiers; decorator supports single property only complex composite key scenarios require custom URL building logic override save delete getElement methods manual URL construction
+- No valida property type constraints; any property type can be persistent key string number UUID object developer responsible ensuring type compatible URL path segments serializable HTTP transmission
+- No proporciona URL encoding; special characters property values NOT automatically encoded developer responsible encoding values URL-safe format before HTTP transmission preventing malformed URLs errors
 
-**Sin @PersistentKey:**
-- Default: Se usa la propiedad marcada con `@Primary()` o `'id'`
+## 3. Definiciones Clave
 
-**Con @PersistentKey:**
-- La propiedad especificada se usa como identificador en URLs de API
-- Ejemplo: `/api/products/PROD-001` en lugar de `/api/products/42`
+### PERSISTENT_KEY_METADATA Symbol
 
-**Diferencia con @Primary:**
-- `@Primary()`: Identifica primary key conceptual (puede ser compuesta)
-- `@PersistentKey()`: Identifica qué campo usar en URLs de API (siempre uno solo)
+Identificador único usado property key prototype almacenar persistent key property name string. Implementación: `export const PERSISTENT_KEY_METADATA = Symbol('persistentKey')`. Storage: `Product.prototype[PERSISTENT_KEY_METADATA] = 'slug'`. Symbol provides collision-free key metadata storage evitando conflicts real properties methods entity protecting namespace integrity. Prototype-level storage (all instances share) porque persistent key property es type-level configuration NO instance-specific data: entire entity class usa same property identifier uniformly all persistence operations.
 
----
+### Persistent Key Property Name
 
-## 📝 Sintaxis
+String value indicating cual property usar identifier API URLs persistence operations. Values: property name existing decorated entity 'slug', 'uuid', 'sku', 'customerCode' cualquier string-valued property. Type: `string`. Default: retorna getPrimaryProperty() cuando decorator NO configured fallback primary key ensuring backward compatibility preventing breaking changes existing codebases.
+
+### Decorator Signature
+
+Function signature: `function PersistentKey(): PropertyDecorator`. Parameters: none decorator applied property directly marking persistent key candidate. Retorna PropertyDecorator function applying metadata entity property storing property name prototype referenced later URL construction.
+
+### getPersistentKey() Accessor
+
+Método estático BaseEntity retornando property name string usado identifier URLs or undefined when NO configured. Implementación: `public static getPersistentKey(): string { const persistentKey = this.prototype[PERSISTENT_KEY_METADATA]; return persistentKey || this.getPrimaryProperty(); }`. Ubicación: src/entities/base_entitiy.ts líneas ~1040-1060. Fallback behavior: retorna primary property cuando persistent key metadata missing backward compatibility maintaining existing behavior. También existe instance method: `public getPersistentKey(): string { const constructor = this.constructor as typeof BaseEntity; return constructor.getPersistentKey(); }` delegating static method enabling same query instance or class level interchangeably.
+
+###get PersistentKeyValue() Accessor
+
+Método instancia BaseEntity retornando actual value persistent key property current entity instance. Implementación: `public getPersistentKeyValue(): any { const persistentKey = this.getPersistentKey(); return this[persistentKey]; }`. Ubicación: src/entities/base_entitiy.ts líneas ~1065-1070. Usage: obtaining identifier value appending URLs HTTP requests construction. Example: product.getPersistentKeyValue() retorna 'laptop-dell-xps-13' if slug persistent key contains slug string value.
+
+## 4. Descripción Técnica
+
+### Implementación del Decorator
 
 ```typescript
-@PersistentKey()
-propertyName: Type;
-```
-
----
-
-## 💾 Implementación
-
-### Código del Decorador
-
-```typescript
-// src/decorations/persistent_key_decorator.ts
-
-/**
- * Symbol para almacenar metadata de persistent key
- */
 export const PERSISTENT_KEY_METADATA = Symbol('persistentKey');
 
-/**
- * @PersistentKey() - Marca una propiedad como persistent key (identificador en URLs)
- * 
- * @returns PropertyDecorator
- */
 export function PersistentKey(): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        // Guardar persistent key en prototype
         target.constructor.prototype[PERSISTENT_KEY_METADATA] = propertyKey;
     };
 }
 ```
 
-**Ubicación:** `src/decorations/persistent_key_decorator.ts` (línea ~1-20)
+Ubicación: src/decorations/persistent_key_decorator.ts líneas ~1-10. Decorator almacena property name prototype de entity class using Symbol key collision-free metadata storage. No parameters decorator applied property directly extracting property name automatically context.
 
----
-
-## 🔍 Metadata Storage
-
-### Estructura en Prototype
+### Accessor Methods en BaseEntity
 
 ```typescript
-Product.prototype[PERSISTENT_KEY_METADATA] = 'id';      // Default
-Product.prototype[PERSISTENT_KEY_METADATA] = 'sku';     // Custom
-User.prototype[PERSISTENT_KEY_METADATA] = 'username';   // Custom
-```
-
-### Acceso desde BaseEntity
-
-```typescript
-// src/entities/base_entitiy.ts
-
-/**
- * Obtiene la persistent key (identificador para URLs)
- * 
- * @returns Nombre de la propiedad persistent key
- */
 public static getPersistentKey(): string {
     const persistentKey = this.prototype[PERSISTENT_KEY_METADATA];
-    
-    // Si no hay @PersistentKey, usar primary property
-    if (!persistentKey) {
-        return this.getPrimaryProperty();
-    }
-    
-    return persistentKey;
+    return persistentKey || this.getPrimaryProperty();
 }
 
-/**
- * Obtiene el valor de la persistent key de una instancia
- */
-public getPersistentKeyValue(): any {
+public getPersistentKey(): string {
     const constructor = this.constructor as typeof BaseEntity;
-    const persistentKey = constructor.getPersistentKey();
+    return constructor.getPersistentKey();
+}
+
+public getPersistentKeyValue(): any {
+    const persistentKey = this.getPersistentKey();
     return this[persistentKey];
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~1080-1110)
+Ubicación: src/entities/base_entitiy.ts líneas ~1040-1070. Accessors proporcionan consistent API querying persistent key property name obtaining actual value from entity instance. Fallback primary key when decorator NO applied maintaining backward compatibility transparent integration.
 
----
-
-## 🔧 Impacto en CRUD Operations
-
-### save() con PersistentKey
+### Integración con save() Method
 
 ```typescript
-// src/entities/base_entitiy.ts
-
 public async save(): Promise<boolean> {
-    // ... validaciones ...
+    this.beforeSave();
+    
+    const isValid = await this.validateInputs();
+    if (!isValid) {
+        return false;
+    }
     
     const constructor = this.constructor as typeof BaseEntity;
+    
+    if (!constructor.isPersistent()) {
+        this.afterSave();
+        return true;
+    }
+    
     const endpoint = constructor.getApiEndpoint();
-    const persistentKey = constructor.getPersistentKey();
-    const keyValue = this[persistentKey];
-    const isNew = !keyValue;
+    const persistentKey = this.getPersistentKeyValue();
+    const isNew = !persistentKey;
     
     try {
         let response;
         
         if (isNew) {
-            // POST /api/products
             response = await Application.axiosInstance.post(
                 endpoint,
                 this.toDictionary()
             );
         } else {
-            // PUT /api/products/{persistentKeyValue}
             response = await Application.axiosInstance.put(
-                `${endpoint}/${keyValue}`,  // ← Usa persistent key value
+                `${endpoint}/${persistentKey}`,
                 this.toDictionary()
             );
         }
@@ -159,446 +134,330 @@ public async save(): Promise<boolean> {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~250-330)
+Ubicación: src/entities/base_entitiy.ts líneas ~250-330. Método save() usa getPersistentKeyValue() obtener identifier value appending PUT request URL when updating existing entity. NEW entities determined by absence persistent key value null undefined indicating POST request base endpoint creation. EXISTING entities have persistent key value appended endpoint forming complete URL targeted update.
 
----
-
-## 🧪 Ejemplos de Uso
-
-### 1. Default: ID Numérico
+### Integración con delete() Method
 
 ```typescript
+public async delete(): Promise<boolean> {
+    this.beforeDelete();
+    
+    const constructor = this.constructor as typeof BaseEntity;
+    
+    if (!constructor.isPersistent()) {
+        this.afterDelete();
+        return true;
+    }
+    
+    const endpoint = constructor.getApiEndpoint();
+    const persistentKeyValue = this.getPersistentKeyValue();
+    
+    try {
+        await Application.axiosInstance.delete(`${endpoint}/${persistentKeyValue}`);
+        
+        this.afterDelete();
+        
+        return true;
+    } catch (error) {
+        console.error('[BaseEntity] Delete failed:', error);
+        return false;
+    }
+}
+```
+
+Ubicación: src/entities/base_entitiy.ts líneas ~340-380. Método delete() usa getPersistentKeyValue() construir DELETE request URL appending identifier value base endpoint targeting specific entity deletion backend removal.
+
+### Integración con getElement() Static Method
+
+```typescript
+public static async getElement(id: any): Promise<BaseEntity | null> {
+    if (!this.isPersistent()) {
+        const mockData = this.getMockData();
+        const persistentKey = this.getPersistentKey();
+        
+        return mockData.find(entity => entity[persistentKey] === id) || null;
+    }
+    
+    const endpoint = this.getApiEndpoint();
+    
+    try {
+        const response = await Application.axiosInstance.get(`${endpoint}/${id}`);
+        
+        const entity = new this();
+        entity.updateFromDictionary(response.data);
+        
+        return entity;
+    } catch (error) {
+        console.error('[BaseEntity] getElement failed:', error);
+        return null;
+    }
+}
+```
+
+Ubicación: src/entities/base_entitiy.ts líneas ~440-480. Método getElement() usa id parameter appending GET request URL constructing ApiEndpoint/{id} path retrieving single entity matching identifier backend response JSON single entity deserialized instance returned caller.
+
+## 5. Flujo de Funcionamiento
+
+### Flujo URL Construction save() Existing Entity
+
+```
+[Entity Instance] --> save() called
+         |
+         v
+[validateInputs() executed]
+         |
+         v
+[isPersistent() returns true]
+         |
+         v
+[getPersistentKeyValue() called]
+         |
+         v
+[Value exists: NOT new entity]
+         |
+         v
+[getApiEndpoint() returns base URL]
+         |
+         v
+[Construct PUT URL: endpoint + "/" + keyValue]
+         |
+         v
+[Example: "/api/products" + "/" + "laptop-dell-xps-13"]
+         |
+         v
+[Final URL: "/api/products/laptop-dell-xps-13"]
+         |
+         v
+[axios.put(url, toDictionary())]
+```
+
+### Flujo URL Construction delete()
+
+```
+[Entity Instance] --> delete() called
+         |
+         v
+[isPersistent() returns true]
+         |
+         v
+[getPersistentKeyValue() called]
+         |
+         v
+[Value: "laptop-dell-xps-13"]
+         |
+         v
+[getApiEndpoint() returns "/api/products"]
+         |
+         v
+[Construct DELETE URL: endpoint + "/" + keyValue]
+         |
+         v
+[Final URL: "/api/products/laptop-dell-xps-13"]
+         |
+         v
+[axios.delete(url)]
+```
+
+### Flujo URL Construction getElement()
+
+```
+[Entity Class] --> getElement(id) called
+         |
+         v
+[id parameter: "laptop-dell-xps-13"]
+         |
+         v
+[isPersistent() returns true]
+         |
+         v
+[getApiEndpoint() returns "/api/products"]
+         |
+         v
+[Construct GET URL: endpoint + "/" + id]
+         |
+         v
+[Final URL: "/api/products/laptop-dell-xps-13"]
+         |
+         v
+[axios.get(url)]
+         |
+         v
+[JSON response deserialized to entity]
+```
+
+## 6. Reglas Obligatorias
+
+1. PersistentKey property DEBE tener valor único across entity instances avoiding identifier collisions URL conflicts backend routing errors
+2. Decorator DEBE aplicarse property level NO class level porque identifies specific property field usado identifier URL construction
+3. PersistentKey property value DEBE ser URL-safe avoiding special characters requiring encoding spaces slashes question marks proper HTTP paths
+4. PersistentKey value DEBE permanecer immutable post-creation avoiding URL changes broken links references invalidated paths
+5. Backend API endpoints DEBEN accept persistent key values URL path parameters routing matching returning appropriate entities
+6. Multiple diferentes properties decorated PersistentKey dentro same entity NO permitido; single property exclusively persistent key avoiding ambiguity confusion
+7. getPersistentKeyValue() retorno DEBE checked null undefined before URL construction preventing malformed URLs missing segments runtime errors
+8. Persistent entities sin PersistentKey decorator DEBEN usar primary key fallback default behavior ensuring backward compatibility existing entities unchanged
+
+## 7. Prohibiciones
+
+1. NO usar mutable properties como persistent key; identifiers DEBEN ser immutable post-creation avoiding URL instability broken references
+2. NO decorar multiple properties PersistentKey; single property exclusively identifier avoiding ambiguity conflicts URL construction decision
+3. NO cambiar persistent key valor existing entity; identifier immutability fundamental URL stability referential integrity persistence operations
+4. NO asumir persistent key value unique validated; backend responsible uniqueness constraints enforcement persistent key decorator solo defines property NO validates values
+5. NO usar composite multi-field keys; decorator supports single property only complex keys require custom URL building override methods manual construction
+6. NO usar special characters sin URL encoding; persistent key values DEBE URL-safe preventing malformed HTTP paths requests failures
+7. NO exponer sensitive data persistent key valores; URLs logged cached visible users avoiding PII security risks exposure attacks
+8. NO usar persistent key values filtering sorting frontend operations; primary key appropriate efficient in-memory manipulations persistent key URL purposes exclusively
+
+## 8. Dependencias
+
+### Decoradores Relacionados
+
+**ApiEndpoint (REQUERIDO):** Define base URL endpoint API requests. PersistentKey value appended ApiEndpoint forming complete URLs individual entity operations. Sin ApiEndpoint persistent URLs cannot constructed causing runtime errors.
+
+**Persistent (REQUERIDO indirectamente):** Habilita HTTP persistence operations. PersistentKey meaningless non-persistent entities operating memory-only mode no HTTP URLs constructed never used.
+
+**Primary (RELACIONADO):** Define primary key entity internal identification. PersistentKey diferente purpose: Primary internal entity identity, PersistentKey external API URLs identifier potentially different properties serving different concerns.
+
+### Framework Dependencies
+
+**BaseEntity CRUD Methods (REQUERIDO):** save() delete() getElement() methods implement URL construction logic consultando getPersistentKeyValue() accessor appending identifiers request paths. Decorator depends estos methods using metadata constructing HTTP URLs appropriate endpoints.
+
+**Application.axiosInstance (REQUERIDO):** Axios instance executes HTTP requests URLs constructed using persistent key values. API endpoints backend routing must accept identifiers URL path parameters matching returning appropriate entities.
+
+## 9. Relaciones
+
+### Relación con Primary Decorator
+
+Primary decorator y PersistentKey decorator serve different purposes potentially same property different properties: Primary defines internal entity unique identifier in-memory filtering comparisons primary key database representation; PersistentKey defines external API URL identifier HTTP request path construction. Coordination pattern: Primary internal concern, PersistentKey external concern separation allowing each layer use appropriate identifier type. Default behavior: PersistentKey NO configured falls back primary key single identifier scenario avoiding duplication configuration.
+
+### Relación con ApiEndpoint
+
+ApiEndpoint decorator y PersistentKey decorator trabajan conjuntamente URL construction: ApiEndpoint provides base path segment, PersistentKey value appended completing individual entity URLs. Pattern: `@ApiEndpoint('/api/products')` base, `@PersistentKey()` decorates slug property, URL constructed `/api/products/laptop-dell-xps-13` combining base path slug value targeted requests.
+
+### Relación con CRUD Operations
+
+CRUD methods save() delete() getElement() implement URL construction logic consultando getPersistentKeyValue() accessor. Operations verifica isPersistent() executing HTTP requests when true using persistent key values appending URLs. Non-persistent entities skip networking persistent key unused CRUD operations memory-only mock data mode.
+
+### Relación con Validation System
+
+Validation system @Required @Validation @AsyncValidation NOT automatically enforce persistent key uniqueness; decorator defines property NO validates values. Backend responsible uniqueness constraints violations. Developer may implement @Unique decorator persistent key property ensuring client-side uniqueness checking pre-save validation preventing duplicate identifiers submission.
+
+## 10. Notas de Implementación
+
+### Uso Común Persistent Key Slug
+
+```typescript
+import { PersistentKey } from '@/decorations/persistent_key_decorator';
+import { ApiEndpoint } from '@/decorations/api_endpoint_decorator';
+import { ModuleName } from '@/decorations/module_name_decorator';
 import { PropertyName } from '@/decorations/property_name_decorator';
-import { Primary } from '@/decorations/primary_property_decorator';
 import BaseEntity from '@/entities/base_entitiy';
 
 @ModuleName('Product', 'Products')
 @ApiEndpoint('/api/products')
-@Persistent()
 export class Product extends BaseEntity {
     @PropertyName('Product ID', Number)
-    @Primary()
     id!: number;
+    
+    @PropertyName('Slug', String)
+    @PersistentKey()
+    slug!: string;
     
     @PropertyName('Product Name', String)
     name!: string;
 }
 ```
 
-**Comportamiento:**
-```typescript
-const product = await Product.getElement(42);
-// → GET /api/products/42
+Slug persistent key configuration: decorator applied slug property marking identifier URLs instead integer id. URLs constructed /api/products/laptop-dell-xps-13 human-readable SEO-friendly avoiding integer id exposure.
 
-await product.save();
-// → PUT /api/products/42
-
-await product.delete();
-// → DELETE /api/products/42
-```
-
----
-
-### 2. Custom: SKU String
-
-```typescript
-import { PersistentKey } from '@/decorations/persistent_key_decorator';
-
-@ModuleName('Product', 'Products')
-@ApiEndpoint('/api/products')
-@Persistent()
-export class Product extends BaseEntity {
-    @PropertyName('Product ID', Number)
-    @Primary()  // Primary key conceptual
-    id!: number;
-    
-    @PropertyName('SKU', String)
-    @PersistentKey()  // ← Usar SKU en URLs
-    sku!: string;
-    
-    @PropertyName('Product Name', String)
-    name!: string;
-}
-```
-
-**Comportamiento:**
-```typescript
-const product = new Product();
-product.sku = 'PROD-001';
-product.name = 'Laptop';
-
-await product.save();
-// → POST /api/products
-// → Response: { id: 42, sku: 'PROD-001', name: 'Laptop' }
-
-product.name = 'Gaming Laptop';
-await product.save();
-// → PUT /api/products/PROD-001  ← Usa SKU, no ID
-// → URL construida con persistentKey (sku)
-
-await product.delete();
-// → DELETE /api/products/PROD-001  ← Usa SKU
-
-const product = await Product.getElement('PROD-001');
-// → GET /api/products/PROD-001  ← Usa SKU
-```
-
----
-
-### 3. Username como Key
+### Uso UUID Persistent Key
 
 ```typescript
 @ModuleName('User', 'Users')
 @ApiEndpoint('/api/users')
-@Persistent()
 export class User extends BaseEntity {
     @PropertyName('User ID', Number)
-    @Primary()
     id!: number;
+    
+    @PropertyName('UUID', String)
+    @PersistentKey()
+    uuid!: string;
     
     @PropertyName('Username', String)
-    @Required()
-    @PersistentKey()  // ← Usar username en URLs
     username!: string;
-    
-    @PropertyName('Email', String)
-    email!: string;
 }
 ```
 
-**Comportamiento:**
-```typescript
-const user = await User.getElement('john_doe');
-// → GET /api/users/john_doe
+UUID persistent key configuration: UUIDs immutable unique identifiers preferred security distributed systems avoiding sequential id enumeration attacks predictable URLs.
 
-await user.save();
-// → PUT /api/users/john_doe
-
-await user.delete();
-// → DELETE /api/users/john_doe
-```
-
----
-
-### 4. UUID como Key
+### Default Fallback Primary Key
 
 ```typescript
-import { StringType, StringTypeEnum } from '@/decorations/string_type_decorator';
-
-@ModuleName('API Key', 'API Keys')
-@ApiEndpoint('/api/keys')
-@Persistent()
-export class ApiKey extends BaseEntity {
-    @PropertyName('Key ID', String)
+@ModuleName('Customer', 'Customers')
+@ApiEndpoint('/api/customers')
+export class Customer extends BaseEntity {
+    @PropertyName('Customer ID', Number)
     @Primary()
-    @PersistentKey()
-    @StringType(StringTypeEnum.UUID)
-    keyId!: string;
+    id!: number;
     
-    @PropertyName('Key Name', String)
+    @PropertyName('Customer Name', String)
     name!: string;
-    
-    @PropertyName('Created At', Date)
-    createdAt!: Date;
 }
 ```
 
-**Comportamiento:**
-```typescript
-const apiKey = new ApiKey();
-apiKey.keyId = crypto.randomUUID();  // '550e8400-e29b-41d4-a716-446655440000'
-apiKey.name = 'Production Key';
+Primary key fallback: NO PersistentKey decorator applied getPersistentKey() retorna primary property 'id' default behavior backward compatible URLs /api/customers/42 using integer id.
 
-await apiKey.save();
-// → POST /api/keys
-// → { keyId: '550e8400-...', name: 'Production Key' }
-
-await apiKey.save();
-// → PUT /api/keys/550e8400-e29b-41d4-a716-446655440000
-
-const key = await ApiKey.getElement('550e8400-e29b-41d4-a716-446655440000');
-// → GET /api/keys/550e8400-e29b-41d4-a716-446655440000
-```
-
----
-
-### 5. Email como Key
+### Custom Code Persistent Key
 
 ```typescript
-@ModuleName('Newsletter Subscriber', 'Newsletter Subscribers')
-@ApiEndpoint('/api/subscribers')
-@Persistent()
-export class NewsletterSubscriber extends BaseEntity {
-    @PropertyName('Email', String)
-    @Required()
-    @StringType(StringTypeEnum.EMAIL)
-    @PersistentKey()  // ← Email es la key
-    email!: string;
-    
-    @PropertyName('Subscribed At', Date)
-    subscribedAt!: Date;
-    
-    @PropertyName('Is Active', Boolean)
-    isActive: boolean = true;
-}
-```
-
-**Comportamiento:**
-```typescript
-const subscriber = new NewsletterSubscriber();
-subscriber.email = 'john@example.com';
-
-await subscriber.save();
-// → POST /api/subscribers
-
-await subscriber.save();
-// → PUT /api/subscribers/john@example.com
-
-const sub = await NewsletterSubscriber.getElement('john@example.com');
-// → GET /api/subscribers/john@example.com
-
-await subscriber.delete();
-// → DELETE /api/subscribers/john@example.com
-```
-
----
-
-### 6. Composite Key (String Concatenation)
-
-```typescript
-@ModuleName('Order Item', 'Order Items')
-@ApiEndpoint('/api/order-items')
-@Persistent()
-export class OrderItem extends BaseEntity {
+@ModuleName('Order', 'Orders')
+@ApiEndpoint('/api/orders')
+export class Order extends BaseEntity {
     @PropertyName('Order ID', Number)
-    orderId!: number;
+    id!: number;
     
-    @PropertyName('Product ID', Number)
-    productId!: number;
-    
-    // Composite key como string
-    @PropertyName('Composite Key', String)
+    @PropertyName('Order Code', String)
     @PersistentKey()
-    get compositeKey(): string {
-        return `${this.orderId}-${this.productId}`;
-    }
+    orderCode!: string;
     
-    @PropertyName('Quantity', Number)
-    quantity!: number;
+    @PropertyName('Total', Number)
+    total!: number;
 }
 ```
 
-**Comportamiento:**
-```typescript
-const item = new OrderItem();
-item.orderId = 100;
-item.productId = 42;
-item.quantity = 5;
+Order code persistent key: business-friendly identifiers like ORD-2024-001234 human-readable meaningful URLs customer service references avoiding exposing internal database ids.
 
-await item.save();
-// → POST /api/order-items
-
-await item.save();
-// → PUT /api/order-items/100-42
-
-const item = await OrderItem.getElement('100-42');
-// → GET /api/order-items/100-42
-```
-
----
-
-### 7. Slug como Key
+### URL Encoding Special Characters
 
 ```typescript
-@ModuleName('Blog Post', 'Blog Posts')
-@ApiEndpoint('/api/posts')
-@Persistent()
-export class BlogPost extends BaseEntity {
-    @PropertyName('Post ID', Number)
-    @Primary()
-    id!: number;
-    
-    @PropertyName('Title', String)
-    @Required()
-    title!: string;
-    
-    @PropertyName('Slug', String)
-    @Required()
-    @StringType(StringTypeEnum.SLUG)
-    @PersistentKey()  // ← Slug en URLs (SEO-friendly)
-    slug!: string;
-    
-    @PropertyName('Content', String)
-    @StringType(StringTypeEnum.MARKDOWN)
-    content!: string;
-    
-    // Auto-generate slug from title
-    beforeSave(): void {
-        if (!this.slug && this.title) {
-            this.slug = this.title
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-|-$/g, '');
-        }
-    }
-}
-```
-
-**Comportamiento:**
-```typescript
-const post = new BlogPost();
-post.title = 'My First Blog Post';
-// slug auto-generated: 'my-first-blog-post'
-
-await post.save();
-// → POST /api/posts
-// → { id: 42, slug: 'my-first-blog-post', ... }
-
-const post = await BlogPost.getElement('my-first-blog-post');
-// → GET /api/posts/my-first-blog-post  ← SEO-friendly URL
-```
-
----
-
-## 🔄 Primary vs PersistentKey
-
-| Aspecto | @Primary() | @PersistentKey() |
-|---------|------------|------------------|
-| **Propósito** | Identifica primary key conceptual | Identifica campo para URLs de API |
-| **Cantidad** | Puede ser múltiple (composite) | Solo uno |
-| **Uso** | Lógica de negocio, validaciones | URLs, HTTP requests |
-| **Ejemplo** | ID interno (número) | SKU, username, slug (string) |
-
-### Ejemplo Comparativo
-
-```typescript
-export class Product extends BaseEntity {
-    // Primary: Identificador interno
-    @PropertyName('Product ID', Number)
-    @Primary()  // ← Para lógica interna
-    id!: number;
-    
-    // PersistentKey: Identificador en API
-    @PropertyName('SKU', String)
-    @PersistentKey()  // ← Para URLs de API
-    sku!: string;
-}
-
-// Uso:
-product.id;   // → 42 (primary key interna)
-product.sku;  // → 'PROD-001' (persistent key para API)
-
-// En URLs:
-// GET /api/products/PROD-001  ← Usa persistentKey (sku)
-// NO usa id (42)
-```
-
----
-
-## ⚠️ Consideraciones Importantes
-
-### 1. URL Encoding
-
-```typescript
-@PersistentKey()
-email!: string;
-
-const subscriber = await NewsletterSubscriber.getElement('john+test@example.com');
-// → GET /api/subscribers/john%2Btest%40example.com
-// ⚠️ Email debe ser URL-encoded
-
-// BaseEntity debe hacer:
-const encodedKey = encodeURIComponent(keyValue);
-const url = `${endpoint}/${encodedKey}`;
-```
-
-### 2. Solo Una PersistentKey
-
-```typescript
-// ❌ ERROR: No puede haber múltiples @PersistentKey
-export class Product extends BaseEntity {
-    @PersistentKey()
-    id!: number;
-    
-    @PersistentKey()  // ← Error: Solo puede haber una
-    sku!: string;
-}
-
-// ✅ CORRECTO: Solo una
-export class Product extends BaseEntity {
-    @Primary()
-    id!: number;
-    
-    @PersistentKey()  // ← Una sola persistent key
-    sku!: string;
-}
-```
-
-### 3. Debe Ser Único
-
-```typescript
-// ⚠️ PersistentKey DEBE ser único en el backend
-
-@PersistentKey()
-username!: string;  // DEBE ser único
-
-// Backend debe garantizar uniqueness:
-// - Unique constraint en DB
-// - Validación en endpoints
-```
-
-### 4. Inmutable Después de Creación
-
-```typescript
-// ⚠️ CUIDADO: Cambiar persistentKey después de crear
-
 const product = new Product();
-product.sku = 'PROD-001';
-await product.save();  // POST /api/products
+product.slug = 'laptop with spaces';
 
-// Cambiar SKU:
-product.sku = 'PROD-002';
-await product.save();  
-// → PUT /api/products/PROD-002  ← Intenta actualizar producto diferente!
-
-// ✅ MEJOR: SKU inmutable después de creación
-@PropertyName('SKU', String)
-@PersistentKey()
-@ReadOnly()  // No editable después de creación
-sku!: string;
+await product.save();
 ```
 
-### 5. getElement() con PersistentKey
+Developer responsibility: URL encoding necessary special characters spaces slashes etc. Persistent key decorator NO automatic encoding values. Call encodeURIComponent() before save if needed proper HTTP paths avoiding malformed URLs.
 
-```typescript
-// PersistentKey afecta cómo se obtienen elementos
+### Comparison Primary vs PersistentKey
 
-// Con ID (default):
-const product = await Product.getElement(42);
-// → GET /api/products/42
+| Aspecto | @Primary | @PersistentKey |
+|---------|----------|---------------|
+| Purpose | Internal entity identity | External API URLs |
+| Default | 'id' property | Falls back Primary |
+| Usage | In-memory filtering comparisons | HTTP request URL construction |
+| Visibility | Internal application logic | Exposed HTTP URLs logs |
+| Mutability | Typically immutable | Must be immutable |
+| Type | Usually numeric | String UUID slug code |
 
-// Con SKU (persistentKey):
-const product = await Product.getElement('PROD-001');
-// → GET /api/products/PROD-001
+## 11. Referencias Cruzadas
 
-// El tipo del parámetro cambia según persistentKey:
-// - ID: number
-// - SKU: string
-// - UUID: string
-```
+**primary-property-decorator.md:** Define primary key entity internal identification. PersistentKey diferente purpose serving external API URLs potentially different property primary key separation concerns.
 
----
+**api-endpoint-decorator.md:** Define base URL endpoint API requests. PersistentKey value appended forming complete URLs individual entity operations coordination URL construction complete paths.
 
-## 📚 Referencias Adicionales
+**persistent-decorator.md:** Habilita HTTP persistence operations. PersistentKey usado only persistent entities constructing URLs HTTP requests non-persistent entities skip networking persistent key unused.
 
-- `persistent-decorator.md` - Persistent habilita sincronización
-- `primary-property-decorator.md` - Primary vs PersistentKey
-- `api-endpoint-decorator.md` - ApiEndpoint define URL base
-- `../../02-base-entity/crud-operations.md` - save(), delete() usan persistent key
-- `../../tutorials/01-basic-crud.md` - Persistent key en tutorial
+**unique-decorator.md:** Validates uniqueness property values. Developer may apply @Unique persistent key property ensuring client-side uniqueness checking preventing duplicate identifiers submission backend violations.
 
----
+**crud-operations.md (BaseEntity layer):** Documenta save() delete() getElement() implementation details URL construction logic using getPersistentKeyValue() accessor appending identifiers HTTP request paths.
 
-**Última actualización:** 10 de Febrero, 2026  
-**Archivo fuente:** `src/decorations/persistent_key_decorator.ts`  
-**Líneas:** ~20
+**01-basic-crud.md (Tutorials):** Tutorial demonstrating CRUD operations including persistent key configuration URL construction patterns backend integration examples.
