@@ -1,8 +1,8 @@
 # CONTRATO DE DESARROLLO - Framework SaaS Vue
 
-**Versión:** 2.0.0  
+**Versión:** 2.1.0  
 **Fecha de Creación:** 10 de Febrero, 2026  
-**Última Actualización:** 11 de Febrero, 2026  
+**Última Actualización:** 12 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
 
 ## 1. Propósito
@@ -394,6 +394,56 @@ Obligatorio:
 
 La detección y la corrección constituyen fases distintas y no intercambiables del proceso documental.
 
+### 8.12 Cláusula de Formato - Estructura Documental Obligatoria
+
+Todo archivo de documentación técnica del framework DEBE cumplir obligatoriamente con la siguiente estructura de 11 secciones:
+
+```markdown
+# TÍTULO
+
+## 1. Propósito
+## 2. Alcance
+## 3. Definiciones Clave
+## 4. Descripción Técnica
+## 5. Flujo de Funcionamiento
+## 6. Reglas Obligatorias
+## 7. Prohibiciones
+## 8. Dependencias
+## 9. Relaciones
+## 10. Notas de Implementación
+## 11. Referencias Cruzadas
+```
+
+**Obligaciones de formato:**
+
+1. **Orden inmutable:** Las 11 secciones deben aparecer exactamente en el orden establecido, sin omisiones ni reordenamientos.
+
+2. **Presencia obligatoria:** Ninguna sección puede omitirse. Si una sección no aplica al contenido específico, debe incluirse igualmente con una nota explicativa breve (ejemplo: "No aplica" o "Sin dependencias externas").
+
+3. **Numeración exacta:** Las secciones deben numerarse del 1 al 11 sin excepción.
+
+4. **Título H2:** Cada sección debe usar formato de encabezado nivel 2 (`## N. Nombre`).
+
+5. **Contenido proporcional:** Cada sección debe contener información sustantiva relacionada con su propósito. Prohibido usar secciones vacías o con contenido genérico no específico al documento.
+
+**Alcance de aplicación:**
+
+- Archivos en `/copilot/layers/`
+- Documentos de arquitectura (`01-FRAMEWORK-OVERVIEW.md`, `02-FLOW-ARCHITECTURE.md`)
+- Documentación de tutoriales en `/copilot/tutorials/`
+- Ejemplos en `/copilot/examples/`
+- Este contrato (`00-CONTRACT.md`)
+
+**Excepciones:**
+
+- README.md de índices (naturaleza específica de índice documental)
+- Archivos de estado temporal (ESTADO-*.md)
+- Archivos de auditoría (AUDITORIA-*.md)
+
+**Validación:**
+
+Durante cualquier proceso de reestructuración, auditoría o creación de documentación, el cumplimiento de este formato debe verificarse ANTES de considerar el archivo como completo.
+
 ## 9. Dependencias
 
 Este contrato depende de:
@@ -422,7 +472,12 @@ Este contrato sigue versionamiento semántico:
 - **Minor:** Aclaraciones o nuevas reglas
 - **Patch:** Correcciones tipográficas
 
-Versión actual: **2.0.0**
+Versión actual: **2.1.0**
+
+Cambios en versión 2.1.0 (12 de Febrero, 2026):
+- Adición de Cláusula 8.12: Formato Documental Obligatorio de 11 Secciones
+- Establecimiento de estructura normalizada para toda documentación técnica
+- Definición de excepciones al formato (READMEs, archivos de estado/auditoría)
 
 Cambios en versión 2.0.0:
 - Reestructuración bajo formato unificado de 11 secciones
@@ -479,7 +534,7 @@ Documentos vinculados contractualmente:
 
 Este contrato mantiene integridad, consistencia y mantenibilidad del framework. Constituye protección de arquitectura deliberada.
 
-**Versión:** 2.0.0  
+**Versión:** 2.1.0  
 **Fecha de Vigencia:** Desde el 10 de Febrero, 2026  
-**Última Actualización:** 11 de Febrero, 2026  
+**Última Actualización:** 12 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
