@@ -1,29 +1,24 @@
-# 🍞 Toast System Components
+# Toast System Components
 
-**Referencias:**
-- `core-components.md` - Componentes core
-- `../03-application/ui-services.md` - UI Services
-- `../models/Toast.md` - Modelo Toast
+## 1. Propósito
 
----
+Sistema integral de notificaciones toast para proporcionar feedback visual inmediato al usuario mediante mensajes temporales no intrusivos. ToastContainerComponent actúa como contenedor fixed posicionado en esquina superior derecha mientras ToastItemComponent renderiza notificaciones individuales con auto-dismiss timer pausable. Sistema soporta cuatro tipos visuales diferenciados (SUCCESS, ERROR, INFO, WARNING) con gradientes distintivos y gestiona ciclo completo desde apertura hasta remoción del DOM, incluyendo animaciones de entrada/salida y manejo de interacción usuario (pause on hover, cierre manual, cierre con ESC).
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivos:**
-- `src/components/Informative/ToastContainerComponent.vue` - Contenedor de toasts
-- `src/components/Informative/ToastItemComponent.vue` - Toast individual
+Este documento cubre ambos componentes del sistema toast: ToastContainerComponent (src/components/Informative/ToastContainerComponent.vue) y ToastItemComponent (src/components/Informative/ToastItemComponent.vue). Incluye estructura del modelo Toast (id, message, type, duration), integración con Application.ToastList para gestión reactiva de lista global, sistema de auto-dismiss con timers configurables, algoritmo pause/resume basado en mouseenter/mouseleave events, posicionamiento fixed con z-index y pointer-events, manejo de eventos globales (click, keydown), animaciones de fade in/out, métodos de ApplicationUIService (showToast, closeToast), y estilos diferenciados por tipo. No cubre lógica de invocación automática desde BaseEntity CRUD operations.
 
----
+## 3. Definiciones Clave
 
-## 🎯 Propósito
+**ToastContainerComponent**: Componente contenedor fixed renderizado en App.vue que observa Application.ToastList y genera ToastItemComponent por cada entrada, gestionando remoción cuando toasts emiten evento remove.
 
-Sistema de **notificaciones toast** para feedback al usuario. Muestra mensajes temporales en la esquina superior derecha de la pantalla.
+**ToastItemComponent**: Componente individual que renderiza mensaje, icono de cierre, aplica estilos por tipo y gestiona auto-dismiss timer con capacidad de pausa.
 
-**Tipos de Toast:**
-- ✅ SUCCESS - Operación exitosa
-- ❌ ERROR - Error o fallo
-- ℹ️ INFO - Información general
-- ⚠️ WARNING - Advertencia
+**Toast Model**: Interface con propiedades id (string UUID), message (string a mostrar), type (ToastType enum), duration (number en milisegundos, default 3000).
+
+**ToastType Enum**: Valores SUCCESS, ERROR, INFO, WARNING que determinan clase CSS y gradiente de background aplicados.
+
+**Auto-Dismiss Timer**: Sistema de setTimeout que dispara remoción automática después de duration especificada, con lógica pause/resume calculando tiempo restante mediante Date.now() timestamps.
 
 ---
 

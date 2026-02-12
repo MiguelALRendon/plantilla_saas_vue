@@ -1,20 +1,6 @@
-# 📝 TextInputComponent - Input de Texto
+# TextInputComponent
 
-**Referencias:**
-- `form-inputs.md` - Overview del sistema de inputs
-- `useInputMetadata-composable.md` - Composable de metadatos
-- `../../02-base-entity/validation-system.md` - Sistema de validación
-
----
-
-## 📍 Ubicación en el Código
-
-**Archivo:** `src/components/Form/TextInputComponent.vue`  
-**Export:** `src/components/Form/index.ts`
-
----
-
-## 🎯 Propósito
+## 1. Propósito
 
 Componente de input de texto plano para propiedades de tipo `String` sin subtipo especial definido por `@StringTypeDef`.
 

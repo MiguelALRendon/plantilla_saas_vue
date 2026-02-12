@@ -1,25 +1,24 @@
-# 📑 TabComponent & TabControllerComponent
+# TabComponent & TabControllerComponent
 
-**Referencias:**
-- `core-components.md` - Componentes core del framework
-- `form-inputs.md` - Componentes de formulario
-- `array-input-component.md` - Inputs de arrays
+## 1. Propósito
 
----
+Sistema de componentes Vue que implementa navegación por tabs (pestañas) para organizar contenido en grupos temáticos dentro de vistas de detalle. TabComponent proporciona el contenedor para contenido de pestaña individual mientras TabControllerComponent gestiona estado activo, navegación entre tabs y renderizado de headers clicables. Principal aplicación: mostrar arrays de entidades relacionadas en formularios de detalle mediante integración con ArrayInputComponent, permitiendo separación visual de múltiples listas asociadas a una entidad padre.
 
-## 📍 Ubicación en el Código
+## 2. Alcance
 
-**Archivos:**
-- `src/components/TabComponent.vue` - Tab individual
-- `src/components/TabControllerComponent.vue` - Controlador de tabs
+Este documento cubre ambos componentes del sistema de tabs: TabComponent (src/components/TabComponent.vue) y TabControllerComponent (src/components/TabControllerComponent.vue). Incluye estructura de props, template structure, manejo de estado activo mediante índices, sistema de renderizado de headers dinámicos, integración con slots de Vue, hooks de ciclo de vida (mounted), algoritmo de activación/desactivación de tabs, estilos CSS para estados (active/inactive), y uso conjunto con BaseEntity.getArrayKeysOrdered() para generación automática de tabs desde metadata de decoradores. No cubre implementación interna de ArrayInputComponent ni lógica de gestión de arrays en BaseEntity.
 
----
+## 3. Definiciones Clave
 
-## 🎯 Propósito
+**TabComponent**: Componente contenedor simple que envuelve contenido de una pestaña individual, controlando visibilidad mediante clase CSS .active.
 
-Sistema de **tabs (pestañas)** para organizar contenido en grupos. Usado principalmente en vistas de detalle para mostrar arrays de entidades relacionadas.
+**TabControllerComponent**: Componente controlador que gestiona múltiples TabComponents hijos, renderiza headers clicables y mantiene índice de tab actualmente seleccionado.
 
-**Uso Principal:** Mostrar listas de relaciones en formularios de detalle (ej: lista de items de una orden).
+**selectedTab**: Data property en TabControllerComponent que almacena índice (number) del tab actualmente visible, iniciando en 0 para primer tab.
+
+**tabElements**: NodeListOf<Element> que almacena referencias DOM a todos los TabComponent montados, utilizada para manipulación directa de clases CSS.
+
+**Tabs Prop**: Array<string> que define nombres para headers de tabs, debe coincidir en longitud y orden con número de TabComponents hijos.
 
 ---
 
