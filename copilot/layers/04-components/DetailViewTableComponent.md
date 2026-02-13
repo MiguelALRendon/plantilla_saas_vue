@@ -1,10 +1,10 @@
 # DetailViewTableComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 DetailViewTableComponent es un componente de tabla que renderiza lista de registros de una entidad con columnas generadas automáticamente desde metadatos mediante sistema de decoradores. Proporciona visualización tabular con header sticky, body scrollable, click en fila para abrir DetailView, formateo de valores según DisplayFormat, y renderizado especial para boolean con iconos check/cancel. Usado por default_listview.vue para mostrar colecciones de entidades.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Informative/DetailViewTableComponent.vue
 
@@ -33,7 +33,7 @@ CSS classes que controlan ancho de columnas: table-length-small 10%, table-lengt
 **openDetailView method:**
 Método que recibe entity del click de fila, obtiene uniqueValue con getUniquePropertyValue, actualiza Application.View.value.entityOid, ejecuta changeViewToDetailView navegando a detalle.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **TEMPLATE ESTRUCTURA:**
 ```html

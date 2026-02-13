@@ -1,10 +1,10 @@
 # NumberInputComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 NumberInputComponent es un componente especializado para entrada de valores numéricos enteros y decimales que incluye botones de incremento y decremento para facilitar ajustes rápidos. Implementa validación en tiempo de escritura mediante handleKeyPress, soporte para números negativos, y formato de visualización opcional mediante @DisplayFormat. Se activa automáticamente para properties de tipo Number.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Form/NumberInputComponent.vue
 
@@ -32,7 +32,7 @@ Variable reactiva que controla cuándo mostrar valor raw editable vs valor forma
 **displayValue computed:**
 Propiedad computada que retorna valor formateado solo cuando input NO tiene focus. Durante edición retorna valor raw para permitir escritura normal.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **PROPS:**
 ```typescript

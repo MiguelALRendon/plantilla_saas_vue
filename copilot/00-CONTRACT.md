@@ -190,41 +190,9 @@ Documentación sin actualizar = Documentación inválida
 3. Probar en contexto completo
 4. Verificar no ruptura de funcionalidad existente
 
-## 7. Prohibiciones
+### 6.7 RÉGIMEN DE REESTRUCTURACIÓN DOCUMENTAL PARA CONSUMO POR IA
 
-### 7.1 Prohibiciones Arquitectónicas
-
-Prohibido sin autorización explícita:
-- Modificar sistema de decoradores
-- Cambiar jerarquía de BaseEntity
-- Alterar patrón Singleton de Application
-- Modificar sistema de eventos (eventBus)
-- Cambiar almacenamiento de metadatos
-- Modificar flujo de validación
-- Alterar ciclo de vida CRUD
-- Cambiar sistema de persistencia
-- Modificar generación de componentes
-- Cambiar lógica de selección de inputs
-- Alterar sistema de agrupación (ViewGroup)
-- Modificar binding de datos
-- Cambiar detección de cambios (getDirtyState)
-- Modificar sistema de originalState
-- Alterar lógica de resetChanges
-- Modificar interceptores de Axios
-- Cambiar sistema de mapeo de claves
-- Alterar validaciones de persistencia
-
-### 7.2 Prohibiciones Documentales
-
-Prohibido absolutamente:
-- Código sin documentación sincronizada
-- Documentación sin actualizar tras cambios
-- Referencias cruzadas rotas o inexistentes
-- Omisión de estructura documental obligatoria
-
-## 8. RÉGIMEN DE REESTRUCTURACIÓN DOCUMENTAL PARA CONSUMO POR IA
-
-### 8.1 Naturaleza de la Reestructuración
+#### 6.7.1 Naturaleza de la Reestructuración
 
 Toda reestructuración documental debe ser EXCLUSIVAMENTE estructural y semántica.
 
@@ -236,7 +204,7 @@ Prohibiciones absolutas durante reestructuración:
 - Suavizar prohibiciones existentes
 - Cambiar significado de cláusulas contractuales
 
-### 8.2 Principio de Inmutabilidad Arquitectónica
+#### 6.7.2 Principio de Inmutabilidad Arquitectónica
 
 Se declaran EXPLÍCITAMENTE INMUTABLES:
 - Arquitectura: Entidad → Decoradores → Metadatos → BaseEntity → Application → UI
@@ -256,7 +224,7 @@ Cláusulas de Reestructuración
 
 Ninguna cláusula de reestructuración puede invalidar MI LÓGICA ni el contrato original.
 
-### 8.3 Principio Anti-Alucinación
+#### 6.7.3 Principio Anti-Alucinación
 
 Durante cualquier proceso de reestructuración:
 
@@ -273,7 +241,7 @@ Obligatorio:
 - Ante vacío: mantener vacío o señalarlo explícitamente
 - Ante contradicción: señalarla sin resolverla
 
-### 8.4 Obligación de Iteración Completa
+#### 6.7.4 Obligación de Iteración Completa
 
 Toda reestructur acción documental debe procesar el 100% de archivos .md del repositorio.
 
@@ -287,9 +255,9 @@ Obligatorio:
 - Revisión cruzada global de coherencia terminológica
 - Validación de referencias cruzadas entre documentos
 
-### 8.5 Principio de Auto-Aplicación
+#### 6.7.5 Principio de Auto-Aplicación
 
-Las cláusulas de esta sección (Sección 8) aplican al propio contrato durante su reestructuración.
+Las cláusulas de esta subsección (Subsección 6.7) aplican al propio contrato durante su reestructuración.
 
 Estas cláusulas:
 - Permanecen vigentes durante toda tarea de reestructuración
@@ -297,7 +265,7 @@ Estas cláusulas:
 - Obligan a releer el contrato completamente tras modificarlo
 - Se aplican recursivamente a sí mismas
 
-### 8.6 Eliminación de Ruido Visual
+#### 6.7.6 Eliminación de Ruido Visual
 
 Durante reestructuración documental:
 
@@ -315,7 +283,7 @@ Obligatorio preservar:
 - Diagramas técnicos
 - Referencias estructuradas
 
-### 8.7 Prohibición de Creatividad Técnica
+#### 6.7.7 Prohibición de Creatividad Técnica
 
 Durante reestructuración documental:
 
@@ -329,7 +297,7 @@ Prohibido:
 
 Modo obligatorio: Normalizador determinista sin capacidad de innovación técnica.
 
-### 8.8 Cláusula de Verificación Recursiva de Completitud
+#### 6.7.8 Cláusula de Verificación Recursiva de Completitud
 
 Cada vez que el sistema considere alcanzado el 100% de procesamiento, DEBE OBLIGATORIAMENTE:
 
@@ -351,16 +319,16 @@ Esta verificación debe repetirse hasta que:
 
 Prohibido: Declarar finalización basándose en estimación o cálculo aproximado.
 
-### 8.9 Preservación de Validez Contractual
+#### 6.7.9 Preservación de Validez Contractual
 
 Las cláusulas de reestructuración NO invalidan ningún artículo previo de este contrato.
 
 En caso de conflicto interpretativo:
 1. MI LÓGICA tiene prioridad absoluta
-2. Artículos 1-7 tienen prioridad sobre Artículo 8
-3. Artículo 8 regula CÓMO documentar, no QUÉ documentar
+2. Artículos 1-7 tienen prioridad sobre Artículo 6.7
+3. Artículo 6.7 regula CÓMO documentar, no QUÉ documentar
 
-### 8.10 Principio de Proporcionalidad y Prohibición de Reescritura Total Innecesaria
+#### 6.7.10 Principio de Proporcionalidad y Prohibición de Reescritura Total Innecesaria
 
 Durante cualquier proceso de reestructuración documental, las modificaciones deben ser estrictamente proporcionales al objetivo estructural definido.
 
@@ -377,7 +345,7 @@ Obligatorio:
 
 La reestructuración no constituye autorización para recreación del contenido.
 
-### 8.11 Separación Obligatoria entre Detección y Corrección
+#### 6.7.11 Separación Obligatoria entre Detección y Corrección
 
 Durante procesos de auditoría, verificación o análisis documental:
 
@@ -394,7 +362,7 @@ Obligatorio:
 
 La detección y la corrección constituyen fases distintas y no intercambiables del proceso documental.
 
-### 8.12 Cláusula de Formato - Estructura Documental Obligatoria
+#### 6.7.12 Cláusula de Formato - Estructura Documental Obligatoria
 
 Todo archivo de documentación técnica del framework DEBE cumplir obligatoriamente con la siguiente estructura de 11 secciones:
 
@@ -444,7 +412,39 @@ Todo archivo de documentación técnica del framework DEBE cumplir obligatoriame
 
 Durante cualquier proceso de reestructuración, auditoría o creación de documentación, el cumplimiento de este formato debe verificarse ANTES de considerar el archivo como completo.
 
-## 9. Dependencias
+## 7. Prohibiciones
+
+### 7.1 Prohibiciones Arquitectónicas
+
+Prohibido sin autorización explícita:
+- Modificar sistema de decoradores
+- Cambiar jerarquía de BaseEntity
+- Alterar patrón Singleton de Application
+- Modificar sistema de eventos (eventBus)
+- Cambiar almacenamiento de metadatos
+- Modificar flujo de validación
+- Alterar ciclo de vida CRUD
+- Cambiar sistema de persistencia
+- Modificar generación de componentes
+- Cambiar lógica de selección de inputs
+- Alterar sistema de agrupación (ViewGroup)
+- Modificar binding de datos
+- Cambiar detección de cambios (getDirtyState)
+- Modificar sistema de originalState
+- Alterar lógica de resetChanges
+- Modificar interceptores de Axios
+- Cambiar sistema de mapeo de claves
+- Alterar validaciones de persistencia
+
+### 7.2 Prohibiciones Documentales
+
+Prohibido absolutamente:
+- Código sin documentación sincronizada
+- Documentación sin actualizar tras cambios
+- Referencias cruzadas rotas o inexistentes
+- Omisión de estructura documental obligatoria
+
+## 8. Dependencias
 
 Este contrato depende de:
 - Existencia de documentación en formato Markdown
@@ -452,7 +452,7 @@ Este contrato depende de:
 - Código fuente del framework en /src
 - Versionamiento semántico
 
-## 10. Relaciones
+## 9. Relaciones
 
 Este contrato regula:
 - Documentos técnicos en /copilot
@@ -463,9 +463,9 @@ Este contrato es regulado por:
 - MI LÓGICA (autoridad suprema)
 - Principios de versionamiento semántico
 
-## 11. Notas de Implementación
+## 10. Notas de Implementación
 
-### 11.1 Versionamiento del Contrato
+### 10.1 Versionamiento del Contrato
 
 Este contrato sigue versionamiento semántico:
 - **Major:** Cambios fundamentales en principios
@@ -475,17 +475,17 @@ Este contrato sigue versionamiento semántico:
 Versión actual: **2.1.0**
 
 Cambios en versión 2.1.0 (12 de Febrero, 2026):
-- Adición de Cláusula 8.12: Formato Documental Obligatorio de 11 Secciones
+- Adición de Cláusula 6.7.12: Formato Documental Obligatorio de 11 Secciones
 - Establecimiento de estructura normalizada para toda documentación técnica
 - Definición de excepciones al formato (READMEs, archivos de estado/auditoría)
 
 Cambios en versión 2.0.0:
 - Reestructuración bajo formato unificado de 11 secciones
-- Adición de Sección 8: Régimen de Reestructuración Documental
+- Adición de Subsección 6.7: Régimen de Reestructuración Documental
 - Eliminación de elementos decorativos no técnicos
 - Normalización de lenguaje técnico
 
-### 11.2 Modificaciones al Contrato
+### 10.2 Modificaciones al Contrato
 
 Modificar este contrato requiere:
 1. Justificación documentada
@@ -494,7 +494,7 @@ Modificar este contrato requiere:
 4. Comunicación explícita del cambio
 5. Incremento de versión según versionamiento semántico
 
-### 11.3 Aplicabilidad
+### 10.3 Aplicabilidad
 
 Al trabajar con este framework, se acepta contractualmente:
 - Respetar MI LÓGICA como principio fundamental
@@ -505,7 +505,7 @@ Al trabajar con este framework, se acepta contractualmente:
 - Priorizar consistencia arquitectónica
 - Aplicar las cláusulas de reestructuración documental cuando corresponda
 
-### 11.4 Interpretación
+### 10.4 Interpretación
 
 En caso de conflicto interpretativo entre secciones:
 1. MI LÓGICA tiene autoridad suprema
@@ -514,7 +514,7 @@ En caso de conflicto interpretativo entre secciones:
 4. Reglas Obligatorias prevalecen sobre interpretaciones
 5. Prohibiciones son absolutas salvo autorización
 
-## 12. Referencias Cruzadas
+## 11. Referencias Cruzadas
 
 Documentos vinculados contractualmente:
 - [01-FRAMEWORK-OVERVIEW.md](01-FRAMEWORK-OVERVIEW.md) - Visión general del framework

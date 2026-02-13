@@ -1,10 +1,10 @@
 # ObjectInputComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 ObjectInputComponent es un componente especializado para seleccionar objetos relacionados mediante modal de lookup implementando relaciones 1:1 entre entidades. Proporciona input readonly mostrando objeto seleccionado formateado con getDefaultPropertyValue, botón de búsqueda que abre modal lookup con lista de objetos disponibles, selección mediante click con callback, y validación específica para required verificando null, undefined y EmptyEntity instances.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Form/ObjectInputComponent.vue
 
@@ -33,7 +33,7 @@ Método de ApplicationUIService que recibe modelType class, callback setNewValue
 **EmptyEntity:**
 Clase especial que hereda de BaseEntity usada como valor default cuando no hay objeto seleccionado, permite distinguir entre sin selección y null/undefined en validación required.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **PROPS:**
 ```typescript

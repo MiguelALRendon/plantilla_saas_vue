@@ -746,7 +746,7 @@ export abstract class BaseEntity {
             this._isSaving = false;
             this.afterSave();
             Application.ApplicationUIService.hideLoadingMenu();
-            Application.ApplicationUIService.showToast('Guardado con exito.', ToastType.SUCCESS);
+            Application.ApplicationUIService.showToast('Guardado con éxito.', ToastType.SUCCESS);
             return this;
         } catch (error: any) {
             this._isSaving = false;

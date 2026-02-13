@@ -1,10 +1,10 @@
 # EmailInputComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 EmailInputComponent es un componente especializado para recolección de direcciones de correo electrónico que aprovecha la validación nativa HTML5 mediante type="email". Se activa automáticamente cuando una propiedad usa el decorador @StringTypeDef(StringType.EMAIL), optimizando el teclado en dispositivos móviles y aplicando validación de formato nativa del navegador.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Form/EmailInputComponent.vue
 
@@ -32,7 +32,7 @@ Sistema que combina HTML5 nativa, regex custom sincrónica con @Validation, y ve
 **Teclado móvil optimizado:**
 Interfaz especial en dispositivos móviles que facilita ingreso de emails con acceso rápido a @ y .com.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **HERENCIA:**
 EmailInputComponent extiende la estructura de TextInputComponent, manteniendo todas sus props, computed properties y métodos. La única diferencia técnica es el atributo type="email" en lugar de type="text".

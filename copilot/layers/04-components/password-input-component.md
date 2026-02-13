@@ -1,10 +1,10 @@
 # PasswordInputComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 PasswordInputComponent es un componente especializado para entrada de contraseñas que incluye funcionalidad de mostrar/ocultar contraseña mediante toggle dinámico entre type="password" y type="text". Se activa automáticamente para properties con decorador @StringTypeDef(StringType.PASSWORD), proporcionando seguridad visual con contraseña oculta por defecto y botón con icono de ojo para alternar visibilidad.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Form/PasswordInputComponent.vue
 
@@ -32,7 +32,7 @@ Método que invierte valor de showPassword alternando entre estados visible/ocul
 **Botón de visibilidad:**
 Elemento button con clase right posicionado al lado derecho del input, muestra icono VISIBILITY cuando password está oculto, VISIBILITY_OFF cuando está visible.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **PROPS:**
 ```typescript

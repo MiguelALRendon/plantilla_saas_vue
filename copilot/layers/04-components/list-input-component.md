@@ -1,10 +1,10 @@
 # ListInputComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 ListInputComponent es un componente dropdown personalizado para seleccionar opciones de una lista predefinida mediante interfaz animada con transición. Permite elegir valores de enums o listas estáticas, formatea automáticamente valores snake_case a Title Case, implementa posicionamiento inteligente abriéndose hacia arriba o abajo según espacio disponible, y se cierra al hacer clic fuera del dropdown. Requiere integración manual con EnumAdapter, no se genera automáticamente desde decoradores.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Form/ListInputComponent.vue
 
@@ -32,7 +32,7 @@ Método que calcula posición del botón trigger con getBoundingClientRect, dete
 **fromBottom flag:**
 Variable booleana que controla dirección de apertura: false dropdown aparece debajo del trigger, true dropdown aparece encima cuando espacio inferior es menor a 300px.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **PROPS:**
 ```typescript

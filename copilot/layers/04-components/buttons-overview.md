@@ -1,10 +1,10 @@
 # Button Components Overview
 
-## 1. PROPOSITO
+## 1. Propósito
 
 Los componentes button proporcionan acciones estándar CRUD para vistas del framework gestionadas automáticamente por Application según contexto vista actual ViewType y persistencia entidad. Incluyen SaveButton guardar entidad, NewButton crear instancia, RefreshButton recargar datos, ValidateButton validar sin guardar, SaveAndNewButton guardar y crear nuevo, SendToDevice placeholder futuro, GenericButton sin acción predefinida. Application.setButtonList() determina qué botones mostrar basado en ViewTypes LISTVIEW muestra New Refresh, DETAILVIEW muestra todos buttons si persistent o subset si non-persistent.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Buttons/
 
@@ -43,7 +43,7 @@ setButtonList() ejecuta setTimeout 405ms después changeView permitiendo animaci
 **isPersistent() check:**
 BaseEntity método retorna boolean true si entity tiene @Persistent decorator o primary key populated indicating backend persisted record. False si entity in-memory only no guardada API como view models temporary data. Determina si mostrar Save SaveAndNew buttons solo entities pueden persistir backend database.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **SAVEBUTTON COMPONENT:**
 ```vue

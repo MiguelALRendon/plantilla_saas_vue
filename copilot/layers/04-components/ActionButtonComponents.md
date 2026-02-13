@@ -74,7 +74,7 @@ El flujo operacional comienza cuando Application.changeView() o Application.chan
 
 Este flujo permite workflows de ingreso rápido donde usuario crea múltiples registros consecutivamente, útil en escenarios de captura de datos masiva.
 
-## 6. Reglas de Uso
+## 6. Reglas Obligatorias
 
 Las reglas obligatorias para uso correcto de Action Button Components son:
 
@@ -199,7 +199,7 @@ Action Button Components mantienen dependencias críticas con:
 - --info-blue, --success-green, --warning-orange, --secondary-gray, --accent-purple, --primary-blue, --error-red
 - Si variables CSS no están definidas, botones pierden styling de color
 
-## 9. Relaciones con Otros Componentes
+## 9. Relaciones
 
 Action Button Components participan en las siguientes relaciones arquitecturales:
 

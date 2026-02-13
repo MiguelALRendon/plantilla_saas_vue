@@ -1,10 +1,10 @@
 # Core Components del Framework
 
-## 1. PROPOSITO
+## 1. Propósito
 
 Los componentes core forman estructura principal aplicación proporcionando layout contenedores, navegación tabs, estados carga, menús contextuales. Incluyen ComponentContainerComponent renderiza vista actual dinámicamente con TopBar ActionsComponent LoadingScreen, ActionsComponent barra flotante sticky botones acción, TabControllerComponent y TabComponent sistema navegación pestañas clickeables, LoadingScreenComponent pantalla carga fullscreen transiciones vistas, DropdownMenu menú contextual posicionado inteligentemente viewport boundaries. Garantizan arquitectura modular reactiva framework Vue 3 con Application singleton coordinando estado global UI patterns consistentes.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/
 
@@ -39,7 +39,7 @@ Position absolute top 50px below TopBar height 100% width 100% z-index 99999 hig
 **DropdownMenu smart positioning:**
 Computed dropdownStyle calcula position left top evitando viewport overflow, centrar horizontalmente leftPosition = posX - (dropdownWidth / 2), ajustar derecha if leftPosition + dropdownWidth mayor canvasWidth, ajustar izquierda if leftPosition menor 0, determinar mitad pantalla isInBottomHalf = posY mayor canvasHeight / 2, mostrar arriba elemento if isInBottomHalf topPosition -= elementHeight, return style object max-width left top CSS inline properties. HandleClickOutside listener closes dropdown click fuera element, handleKeydown listener closes Escape key pressed.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **COMPONENTCONTAINER STRUCTURE:**
 ```vue

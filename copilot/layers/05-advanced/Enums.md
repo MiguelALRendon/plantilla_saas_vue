@@ -1,10 +1,10 @@
 # Enums del Framework
 
-## 1. PROPOSITO
+## 1. Propósito
 
 Los enums del framework definen conjuntos cerrados de valores que se usan para tipado fuerte TypeScript, validación y lógica condicional a lo largo del sistema. Cada enum representa un dominio específico: tipos de vistas para controlar navegación, formatos de strings para renderizado de inputs, disposición de formularios, tipos de notificaciones toast, y tipos de diálogos de confirmación. Proporcionan constantes type-safe que previenen valores inválidos y facilitan refactoring.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION GENERAL:** src/enums/
 
@@ -39,7 +39,7 @@ Define 4 tipos notificaciones temporales: SUCCESS verde con check para operacion
 **confMenuType enum:**
 Define 4 tipos diálogos modales: INFO azul para confirmaciones generales, SUCCESS verde para operaciones exitosas, WARNING amarillo para acciones destructivas, ERROR rojo para errores graves.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **VIEWTYPES ENUM:**
 ```typescript

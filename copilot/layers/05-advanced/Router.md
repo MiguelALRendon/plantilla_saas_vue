@@ -1,10 +1,10 @@
 # Router del Framework
 
-## 1. PROPOSITO
+## 1. Propósito
 
 El router maneja navegación entre módulos y vistas del framework sincronizándose automáticamente con estado Application.View bidireccional. Utiliza Vue Router con rutas dinámicas pattern :module y :module/:oid mapeando a entidades BaseEntity y sus vistas lista/detalle. Resuelve dependencia circular con Application mediante lazy initialization initializeRouterWithApplication() permitiendo ambos sistemas referenciar mutuamente. Garantiza URLs limpias HTML5 History API sin hash, logging navegación, detección cambios prevención loops, y redirección automática home al primer módulo.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/router/index.ts
 
@@ -44,7 +44,7 @@ beforeEach busca moduleClass en Application.ModuleList.value.find() comparando m
 **EntityOid convenciones:**
 String "new" indica modo creación executeando moduleClass.createNewInstance() generando entidad vacía, string numérico "123" indica edición requiriendo carga desde API future implementation, string vacío "" para ListView sin entidad específica. Application.View.value.entityOid almacena valor sincronizado con URL oid parameter.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **RUTAS ARRAY:**
 ```typescript

@@ -1,10 +1,10 @@
 # Models del Framework
 
-## 1. PROPOSITO
+## 1. Propósito
 
 Los models definen estructuras de datos TypeScript que representan estado de aplicación mediante interfaces y clases. Incluyen configuración global AppConfiguration, estado vistas View CRUD, estado modal Modal para lookups, menús dropdown DropdownMenu, diálogos confirmación confirmationMenu, notificaciones Toast, contexto UI completo ApplicationUIContext, y utilidades EnumAdapter para conversión enums. La mayoría son interfaces usadas como tipos para propiedades reactivas Ref de Application y ApplicationUIService garantizando type safety y reactividad Vue 3.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/models/
 
@@ -46,7 +46,7 @@ Estado modal global sistema con modalView typeof BaseEntity clase mostrar, modal
 **EnumAdapter class:**
 Clase utilitaria convierte enums TypeScript numéricos a arrays {key value} para componentes selección ListInputComponent. Resuelve problema reverse mapping donde enum ToastType genera {SUCCESS: 0, 0: "SUCCESS"} duplicando keys. Método getKeyValuePairs() filtra con isNaN(Number(key)) retornando solo keys string sin duplicados numéricos.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **APPCONFIGURATION INTERFACE:**
 ```typescript

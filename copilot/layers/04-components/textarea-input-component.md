@@ -1,10 +1,10 @@
 # TextAreaComponent
 
-## 1. PROPOSITO
+## 1. Propósito
 
 TextAreaComponent es un componente especializado para entrada de texto multilínea mediante elemento textarea nativo HTML, diseñado para recolectar párrafos, descripciones largas y comentarios. Se activa automáticamente cuando una propiedad usa decorador @StringTypeDef(StringType.TEXTAREA), soportando auto-resize según contenido y validación de dos niveles: required y síncrona, sin soporte actual para validación asíncrona.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/components/Form/TextAreaComponent.vue
 
@@ -35,7 +35,7 @@ Sistema reducido que solo implementa nivel 1 required con trim y nivel 2 validac
 **saveItem method:**
 Método con nombre inconsistente que ejecuta validación en lugar de guardar, invocado por evento validate-inputs, debería llamarse handleValidation para consistencia con otros componentes.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **PROPS:**
 ```typescript

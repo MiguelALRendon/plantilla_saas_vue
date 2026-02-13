@@ -1,10 +1,10 @@
 # Types del Framework
 
-## 1. PROPOSITO
+## 1. Propósito
 
 Los types definen definiciones de tipos TypeScript auxiliares que proporcionan tipado fuerte y soporte de assets para el framework. Incluyen el tipo Events que mapea todos los eventos del event bus global con sus payloads tipados, y las declaraciones assets.d.ts que permiten imports de imágenes con validación TypeScript. Garantizan seguridad de tipos en comunicación entre componentes vía event bus y en carga de recursos estáticos mediante imports de módulos.
 
-## 2. ALCANCE
+## 2. Alcance
 
 **UBICACION:** src/types/
 
@@ -45,7 +45,7 @@ Instancia global mitt en Application.eventBus compartida por todos componentes d
 **Vite asset processing:**
 Bundler Vite procesa imports de assets retornando URL directa en desarrollo /src/assets/file.png y URL con hash en producción /assets/file-a3f4b2c8.png para cache busting. Assets no usados son tree-shakeable eliminándose del bundle final.
 
-## 4. DESCRIPCION TECNICA
+## 4. Descripción Técnica
 
 **EVENTS TYPE DEFINITION:**
 ```typescript
