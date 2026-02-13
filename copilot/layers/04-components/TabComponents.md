@@ -16,15 +16,19 @@ Este documento cubre ambos componentes del sistema de tabs: TabComponent (src/co
 
 **selectedTab**: Data property en TabControllerComponent que almacena índice (number) del tab actualmente visible, iniciando en 0 para primer tab.
 
-**tabElements**: NodeListOf<Element> que almacena referencias DOM a todos los TabComponent montados, utilizada para manipulación directa de clases CSS.
+**tabElements**: NodeListOf<Element> que almacena referencias DOM a todos los TabComponent montados, utilizada para manipulación directa de clases CSS mediante classList.add y classList.remove.
 
-**Tabs Prop**: Array<string> que define nombres para headers de tabs, debe coincidir en longitud y orden con número de TabComponents hijos.
+**tabs prop**: Array<string> que define nombres para headers de tabs en TabControllerComponent, debe coincidir en longitud y orden con número de TabComponents hijos en slot default.
 
----
+**setActiveTab method**: Método en TabControllerComponent que recibe índice number, actualiza selectedTab, itera tabElements removiendo clase active de todos y agregándola solo al índice especificado.
 
-## 📦 TabComponent
+**slot default**: Sistema de slots de Vue usado por TabControllerComponent para recibir TabComponent children, validado en setup mediante useSlots comprobando que todos los vnodes sean tipo TabComponent.
 
-### Estructura
+## 4. Descripción Técnica
+
+### TabComponent (src/components/TabComponent.vue)
+
+#### Template
 
 ```vue
 <template>
@@ -34,109 +38,334 @@ Este documento cubre ambos componentes del sistema de tabs: TabComponent (src/co
 </template>
 ```
 
-**Contenedor simple** que envuelve el contenido de una pestaña.
+Contenedor simple div con clase tab-component que envuelve slot default conteniendo contenido de pestaña. Display controlado mediante CSS display:none por defecto y display:block cuando tiene clase active.
 
-### Estilos
+#### Script
+
+```typescript
+export default {
+  name: 'TabComponent',
+};
+```
+
+Sin props, sin data, sin methods. Componente puramente presentacional manejado por TabControllerComponent padre.
+
+#### Estilos
 
 ```css
-.tab-component {
+.tab-component{
     width: 100%;
     height: 100%;
     padding: .5rem;
     border-radius: 0 0 1rem 1rem;
     border: 2px solid var(--sky);
-    border-top: none;              /* Sin borde superior (conecta con tab header) */
+    border-top: none;
     box-sizing: border-box;
     background-color: var(--bg-gray);
-    display: none;                 /* Oculto por defecto */
+    display: none;
 }
-
-.tab-component.active {
-    display: block;                /* Visible cuando activo */
+.tab-component.active{
+    display: block;
     overflow: hidden;
 }
 ```
 
----
+border-top none conecta visualmente con tab header superior. display none oculta por defecto. Clase active cambia a display block haciendo visible el contenido. overflow hidden previene scroll interno inesperado.
 
-## 🎛️ TabControllerComponent
+### TabControllerComponent (src/components/TabControllerComponent.vue)
 
-### Props
+#### Props
 
 ```typescript
-{
-    tabs: Array<string>  // Array de nombres de tabs
+props: {
+    tabs: {
+      type: Array<string>,
+      required: true,
+    },
 }
 ```
 
-### Estructura
+tabs: Array de strings con nombres que aparecen en headers clicables. Orden en array corresponde a orden visual de tabs y debe coincidir con orden de TabComponents en slot.
+
+#### Template
 
 ```vue
 <template>
   <div class="tab-container">
-    <!-- Headers de tabs -->
     <div class="tab-container-row">
       <div 
-        class="tab" 
-        v-for="(tab, index) in tabs" 
-        :class="[{active: index == selectedTab}]"
-        @click="setActiveTab(index)">
-        <span>{{ tab }}</span> 
-      </div>
+      class="tab" 
+      v-for="(tab, index) in tabs" :class="[{active: index == selectedTab}]"
+      @click="setActiveTab(index)"
+      >
+      <span>{{ tab }}</span> 
     </div>
-    
-    <!-- Contenido de tabs -->
+    </div>
     <slot></slot>
   </div>
 </template>
 ```
 
-### Data
+div.tab-container raíz con flexbox column. div.tab-container-row contiene headers de tabs renderizados con v-for iterando props.tabs. Cada div.tab tiene @click="setActiveTab(index)" para cambiar tab activo. Clase active aplicada condicionalmente cuando index == selectedTab. slot default después de headers renderiza TabComponents hijos.
+
+#### Setup con Composition API
 
 ```typescript
-{
-    selectedTab: number              // Índice del tab activo
-    tabElements: NodeListOf<Element> | null  // Referencias a elementos TabComponent
+setup() {
+    const slots = useSlots()
+
+    const isValid = computed(() => {
+      const nodes = slots.default?.()
+      if (!nodes) return true
+
+      return nodes.every(vnode => vnode.type === TabComponent)
+    })
+
+    return { isValid }
 }
 ```
 
----
+useSlots obtiene slots del componente. Computed isValid verifica que todos los hijos en slot default sean TabComponent mediante vnode.type === TabComponent. Retorna false y console.warn si validación falla. Permite detección temprana de uso incorrecto del componente.
 
-## ⚙️ Funcionamiento
-
-### setActiveTab(index)
+#### Data
 
 ```typescript
-methods: {
-    setActiveTab(index: number) {
-        // Actualizar índice seleccionado
-        this.selectedTab = index;
-        
-        // Actualizar clases CSS de los tabs
-        this.tabElements?.forEach((el, i) => {
-            el.classList.remove('active');
-            if (i === index) {
-                el.classList.add('active');
-            }
-        });
-    }
+data() {
+    return {
+      selectedTab: 0,
+      tabElements: null as NodeListOf<Element> | null,
+    };
 }
 ```
 
-**Flujo:**
-1. Usuario hace click en un tab header
-2. `setActiveTab(index)` se ejecuta
-3. Se actualiza `selectedTab`
-4. Se remueve clase `.active` de todos los TabComponent
-5. Se agrega clase `.active` al TabComponent correspondiente
-6. CSS muestra/oculta tabs según clase
+selectedTab: Índice numérico del tab actualmente visible, inicializado en 0 para mostrar primer tab por defecto. tabElements: Referencia DOM a todos los .tab-component elements obtenida en mounted mediante document.querySelectorAll, inicializada null hasta mounted ejecuta.
 
----
+#### Método setActiveTab
 
-## 📝 Ejemplo de Uso
+```typescript
+setActiveTab(index: number) {
+    this.selectedTab = index;
+    this.tabElements?.forEach((el, i) => {
+      el.classList.remove('active');
+      if (i === index) {
+        el.classList.add('active');
+      }
+    });
+}
+```
 
-### En default_detailview.vue
+Actualiza selectedTab con índice recibido. Itera tabElements removiendo clase active de todos los elementos. Agrega clase active solo al elemento con índice coincidente mediante el.classList.add. Operador optional chaining (?.) previene error si tabElements es null.
 
+#### Lifecycle Hook mounted
+
+```typescript
+mounted() {
+    this.tabElements = document.querySelectorAll('.tab-component');
+    this.setActiveTab(0);
+}
+```
+
+Obtiene NodeListOf<Element> de todos los .tab-component del DOM y almacena en tabElements. Ejecuta setActiveTab(0) para activar primer tab por defecto al montar componente.
+
+#### Estilos CSS
+
+```css
+.tab-container-row{
+    display: flex;
+    flex-direction: row;
+    gap: .5rem;
+    border-bottom: 2px solid var(--sky);
+}
+
+.tab-container-row .tab{
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    border-radius: 1rem 1rem 0 0;
+    border: 1px solid var(--border-gray);
+    border-bottom: none;
+    transition: 0.5s ease;
+}
+
+.tab-container-row .tab.active{
+    border: 2px solid var(--sky);
+    border-bottom: none;
+    background-color: var(--bg-gray);
+}
+```
+
+tab-container-row usa flexbox horizontal con gap. border-bottom conecta visualmente con TabComponent border-top. tabs individuales con border-radius superior, border-bottom none para fusión visual. Tab activo con border más grueso y background coincidente con TabComponent.active. Transición suave de 0.5s ease para cambios visuales.
+
+## 5. Flujo de Funcionamiento
+
+### Inicialización del Sistema de Tabs
+
+```
+1. TabControllerComponent monta en default_detailview.vue
+        ↓
+2. setup() ejecuta, useSlots obtiene slots
+        ↓
+3. Computed isValid valida que hijos sean TabComponent
+        ↓
+4. data() inicializa selectedTab=0, tabElements=null
+        ↓
+5. Template renderiza headers desde props.tabs con v-for
+        ↓
+6. slot renderiza TabComponents hijos (todos display:none)
+        ↓
+7. mounted() ejecuta document.querySelectorAll('.tab-component')
+        ↓
+8. tabElements poblado con NodeListOf<Element>
+        ↓
+9. setActiveTab(0) ejecuta, primer tab recibe clase active
+        ↓
+10. Primer TabComponent cambia a display:block, visible
+```
+
+### Flujo de Cambio de Tab por Usuario
+
+```
+Usuario hace click en tab header "Items"
+        ↓
+Evento @click dispara en div.tab con index=1
+        ↓
+setActiveTab(1) ejecuta
+        ↓
+this.selectedTab = 1
+        ↓
+tabElements.forEach itera todos los TabComponent
+        ↓
+el.classList.remove('active') en todos
+        ↓
+Llega a índice 1 (match)
+        ↓
+el.classList.add('active') solo en index 1
+        ↓
+CSS cambia display:none → display:block en tab index 1
+        ↓
+Tab anterior display:block → display:none
+        ↓
+Usuario ve contenido de tab "Items"
+```
+
+### Flujo de Integración con BaseEntity Arrays
+
+```
+default_detailview.vue monta
+        ↓
+entity.getArrayKeysOrdered() ejecuta
+        ↓
+Retorna ['items', 'comments', 'attachments'] ordenados por @PropertyIndex
+        ↓
+getArrayListsTabs() llama entity.getKeys con filtro arrays
+        ↓
+Genera tabs=['Items', 'Comments', 'Attachments'] desde @PropertyName
+        ↓
+<TabControllerComponent :tabs="tabs"> recibe array
+        ↓
+v-for genera 3 headers clicables
+        ↓
+<TabComponent v-for="tab in entity.getArrayKeysOrdered()"> genera 3 contenedores
+        ↓
+Cada TabComponent contiene <ArrayInputComponent> con property-key correspondiente
+        ↓
+TabComponent #0 con items[], TabComponent #1 con comments[], TabComponent #2 con attachments[]
+```
+
+### Flujo de Validación de Hijos
+
+```
+setup() ejecuta al montar
+        ↓
+useSlots() obtiene slots del componente
+        ↓
+computed(() => { const nodes = slots.default?.() }) ejecuta
+        ↓
+Si nodes es undefined o null, return true (slot vacío permitido)
+        ↓
+Si nodes existe, nodes.every(vnode => vnode.type === TabComponent) valida
+        ↓
+Si algún vnode NO es TabComponent, return false
+        ↓
+console.warn('[TabController] All children must be TabComponent') (no implementado en código actual pero especificado en documentación)
+        ↓
+isValid.value determina si configuración es correcta
+```
+
+## 6. Reglas Obligatorias
+
+TabControllerComponent props.tabs DEBE ser array de strings, cada string representa nombre visible de un tab header. Número de elementos en props.tabs DEBE coincidir exactamente con número de TabComponent hijos en slot default, discordancia causa desincronización visual y lógica. Orden de strings en props.tabs DEBE corresponder al orden de TabComponents hijos en slot, tabs[0] corresponde a primer TabComponent, tabs[1] a segundo, etc. Todos los hijos directos de TabControllerComponent DEBEN ser TabComponent, otros componentes causan comportamiento inesperado. setActiveTab DEBE ejecutarse en mounted después de querySelectorAll para garantizar que tabElements esté poblado. Clase active DEBE removerse de todos los TabComponent antes de agregar a uno nuevo para garantizar solo un tab visible. document.querySelectorAll('.tab-component') en mounted DEBE ejecutarse después de que slot renderizó hijos TabComponent. selectedTab DEBE inicializarse en 0 para mostrar primer tab por defecto al montar. TabComponent NO debe tener lógica propia de activación, completamente controlado por TabControllerComponent padre. Border y border-radius de tabs y TabComponent DEBEN coordinarse para fusión visual correcta sin gaps.
+
+## 7. Prohibiciones
+
+NO usar TabComponent fuera de TabControllerComponent, componente diseñado exclusivamente para uso dentro de TabController. NO pasar props.tabs con número diferente de TabComponents hijos, causa índices fuera de rango. NO modificar directamente clase active de TabComponent desde código externo, solo TabControllerComponent.setActiveTab debe manipular. NO mezclar TabComponent con otros componentes como hijos directos de TabControllerComponent, validación setup espera solo TabComponent. NO ejecutar setActiveTab con índice mayor o igual a tabs.length, causa undefined behavior. NO olvidar inicializar tabElements a null en data, querySelectorAll retorna NodeListOf no array. NO usar this.$refs para obtener TabComponents, document.querySelectorAll es método establecido. NO aplicar display inline o flex directamente a .tab-component, rompe lógica de show/hide con display:none y display:block. NO modificar selectedTab sin ejecutar setActiveTab, causa desincronización entre índice y clases CSS. NO asumir que TabComponent renderiza por defecto, display:none hasta setActiveTab ejecuta en mounted.
+
+## 8. Dependencias
+
+### Dependencias Directas
+
+**Vue 3 Composition API**: useSlots para acceso a slots, computed para validación reactiva de hijos. **Vue 3 Template Syntax**: v-for para iteración de tabs, :class binding condicional, @click event handlers, slot para contenido dinámico. **TabComponent**: Dependencia obligatoria como hijo único permitido de TabControllerComponent.
+
+### Dependencias de CSS
+
+**CSS Custom Properties**: var(--sky) para bordes azules, var(--bg-gray) para background, var(--border-gray) para bordes inactivos. **CSS Flexbox**: display:flex con flex-direction:row en tab-container-row, flex-direction:column en tab-container raíz.
+
+### Dependencias de Sistema
+
+**DOM API**: document.querySelectorAll para obtener referencias a elementos, Element.classList.add y Element.classList.remove para manipulación de clases.
+
+### Componentes Relacionados
+
+**ArrayInputComponent**: Contenido típico dentro de TabComponent mostrando arrays de entidades relacionadas. **FormGroupComponent**: Contenedor padre común que envuelve TabControllerComponent en default_detailview. **default_detailview.vue**: Vista principal que genera TabControllerComponent dinámicamente desde entity.getArrayKeysOrdered.
+
+## 9. Relaciones
+
+### TabControllerComponent → TabComponent
+
+TabControllerComponent es padre obligatorio de TabComponent. TabController renderiza headers basados en props.tabs y slot con TabComponents. TabController manipula clases CSS de TabComponent mediante tabElements.forEach. TabComponent es componente puramente presentacional sin lógica propia. Relación 1:N donde TabController gestiona múltiples TabComponents.
+
+### TabControllerComponent ← default_detailview.vue
+
+default_detailview renderiza TabControllerComponent cuando entity.getArrayKeys retorna propiedades tipo Array. Prop tabs poblado llamando entity.getArrayKeysOrdered que ordena por @PropertyIndex. Contenido generado con v-for iterando getArrayKeysOrdered creando TabComponent por cada propiedad array. ArrayInputComponent renderizado dentro de cada TabComponent con property-key correspondiente.
+
+### TabComponent ↔ ArrayInputComponent
+
+TabComponent envuelve ArrayInputComponent como hijo común en default_detailview. ArrayInputComponent recibe entity y property-key de array específico. TabComponent controla visibilidad de ArrayInputComponent mediante clase active. Múltiples listas arrays organizadas en tabs evitando sobrecarga visual en formulario.
+
+### Integración con BaseEntity
+
+entity.getArrayKeysOrdered(): Método que retorna string[] de propiedades tipo Array ordenadas por @PropertyIndex decorator. entity.getArrayKeys(): Método que retorna todas las propiedades tipo Array sin ordenamiento. entityClass.getArrayPropertyType(key): Obtiene tipo de elementos del array para pasar a ArrayInputComponent.
+
+### Integración con Decoradores
+
+@PropertyIndex en propiedades array determina orden de tabs generados. @PropertyName en propiedades array proporciona nombres para headers de tabs. @ArrayOf(Type) decorator identifica propiedad como array y define tipo de elementos.
+
+## 10. Notas de Implementación
+
+### Ejemplo Completo de Implementación
+
+Definición de entidad con arrays:
+```typescript
+@ModuleName('Orders')
+export class Order extends BaseEntity {
+    @PropertyIndex(1)
+    @PropertyName('Order ID', Number)
+    id!: number;
+    
+    @PropertyIndex(2)
+    @PropertyName('Customer', String)
+    customer!: string;
+    
+    @PropertyIndex(10)
+    @PropertyName('Items', ArrayOf(OrderItem))
+    items!: OrderItem[];
+    
+    @PropertyIndex(11)
+    @PropertyName('Comments', ArrayOf(Comment))
+    comments!: Comment[];
+}
+```
+
+Uso en default_detailview.vue:
 ```vue
 <FormGroupComponent title="Listas">
     <TabControllerComponent :tabs="getArrayListsTabs()">
@@ -152,15 +381,15 @@ methods: {
 </FormGroupComponent>
 ```
 
-**Resultado Visual:**
+Resultado visual renderizado:
 ```
 ┌─────────────────────────────────────┐
 │ Listas                              │
 ├─────────────────────────────────────┤
-│ [Items] [Comments] [Attachments]   │ ← Tab headers
+│ [Items] [Comments]                  │ ← Tab headers clicables
 ├─────────────────────────────────────┤
 │                                     │
-│ [+ New Item]                        │ ← Tab content (active)
+│ [+ New Item]                        │ ← Tab content activo (Items)
 │ ┌─────────────────────────────────┐│
 │ │ Item 1 - $100                   ││
 │ │ Item 2 - $50                    ││
@@ -170,310 +399,33 @@ methods: {
 └─────────────────────────────────────┘
 ```
 
----
+### Características de Implementación
 
-## 🎨 Estilos del Controller
+querySelectorAll('.tab-component') en mounted obtiene TODOS los .tab-component del documento, no solo hijos del componente actual, potencial issue en casos edge con múltiples TabControllers. Clase active agregada/removida mediante classList API es más eficiente que binding Vue :class para manipulación frecuente. selectedTab data property proporciona single source of truth para estado activo, sincronizado con clases CSS mediante setActiveTab. Border visual conectado entre tab header y tab content mediante border-bottom:none en header y border-top:none en content. Transición CSS 0.5s ease en tabs proporciona feedback visual suave en hover y clicks. Optional chaining (?.) en tabElements?.forEach previene errores si mounted no ejecutó correctamente. setup validation con useSlots y computed permite detección temprana de configuración incorrecta.
 
-### Tab Container
+### Debugging y Solución de Problemas
 
-```css
-.tab-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-```
+Verificar número de tabs coincide con TabComponents: console.log(this.tabs.length, this.tabElements?.length). Ver tab activo actual: console.log(this.selectedTab). Verificar clases active: document.querySelectorAll('.tab-component.active').length debería ser 1. Si múltiples tabs visibles, setActiveTab no ejecutó correctamente loop de remove. Si ningún tab visible, mounted no ejecutó setActiveTab(0) o querySelectorAll retornó vacío. Si click en header no cambia tab, @click="setActiveTab(index)" mal configurado o index incorrecto.
 
-### Tab Headers Row
+### Casos de Uso Típicos
 
-```css
-.tab-container-row {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-    width: 100%;
-}
-```
+Caso 1 - Arrays de relaciones Many-to-Many: Order con items[], comments[], attachments[]. Caso 2 - Entidad con múltiples listas categorizadas: Product con images[], reviews[], variants[]. Caso 3 - Formulario complejo con secciones agrupadas: tabs para diferentes aspectos de entidad aunque no sean arrays.
 
-### Individual Tab Header
+### Consideraciones de Performance
 
-```css
-.tab {
-    padding: 0.75rem 1.5rem;
-    background-color: var(--white);
-    border: 2px solid var(--sky);
-    border-bottom: none;
-    border-radius: 1rem 1rem 0 0;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
+querySelectorAll ejecuta cada vez que mounted corre, en listas grandes considerar caching. classList.add/remove más performante que Vue reactivity para manipulación frecuente de clases. forEach en cada setActiveTab itera todos los tabs, O(n) aceptable para número razonable de tabs (<20).
 
-.tab:hover {
-    background-color: var(--gray-lightest);
-}
+### Alternativas y Extensiones
 
-.tab.active {
-    background-color: var(--bg-gray);
-    font-weight: 600;
-    color: var(--primary);
-}
-```
+Para tabs dinámicos condicionales, computed tabs basado en estado de entity. Para tabs con badges o notificaciones, extender template de header con span.badge. Para tabs con iconos, agregar componente de icono antes de span con nombre. Para animación de transición entre tabs, agregar Vue transition component envolviendo TabComponent.
 
----
+## 11. Referencias Cruzadas
 
-## 🔄 Ciclo de Vida
+Documentos relacionados: array-input-component.md (componente típico dentro de tabs), FormLayoutComponents.md (FormGroupComponent que envuelve tabs), views-overview.md (default_detailview que genera tabs), ../../01-decorators/property-index-decorator.md (ordenamiento de tabs), ../../01-decorators/property-name-decorator.md (nombres de tabs), ../../02-base-entity/metadata-access.md (métodos getArrayKeysOrdered y getArrayPropertyType).
 
-### Setup (Composition API)
+Archivos de código fuente: src/components/TabComponent.vue (componente de tab individual), src/components/TabControllerComponent.vue (componente controlador), src/views/default_detailview.vue (vista que usa tabs), src/entities/base_entitiy.ts (métodos getArrayKeysOrdered).
 
-```typescript
-setup() {
-    const slots = useSlots()
+Componentes relacionados: ArrayInputComponent.md (contenido típico de tabs), FormGroupComponent en FormLayoutComponents.md (contenedor padre), default_detailview en views-overview.md (vista generadora).
 
-    const isValid = computed(() => {
-        const nodes = slots.default?.()
-        
-        if (!nodes) return false
-        
-        // Validar que todos los hijos sean TabComponent
-        return nodes.every(node => 
-            node.type && 
-            (node.type as any).name === 'TabComponent'
-        )
-    })
-
-    if (!isValid.value) {
-        console.warn('[TabController] All children must be TabComponent')
-    }
-
-    return { isValid }
-}
-```
-
-**Validación:** Solo acepta `TabComponent` como hijos directos.
-
-### Mounted
-
-```typescript
-mounted() {
-    // Obtener referencias a todos los TabComponent
-    this.tabElements = this.$el.querySelectorAll('.tab-component');
-    
-    // Activar el primer tab por defecto
-    this.setActiveTab(0);
-}
-```
-
----
-
-## 🎯 Integración con BaseEntity
-
-### getArrayKeysOrdered()
-
-```typescript
-// En BaseEntity
-public getArrayKeysOrdered(): string[] {
-    const arrayKeys = this.getArrayKeys();
-    const propertyIndices = this.getPropertyIndices();
-    
-    return arrayKeys.sort((a, b) => {
-        const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
-        const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
-        return indexA - indexB;
-    });
-}
-```
-
-**Efecto:** Tabs se ordenan según `@PropertyIndex()` decorador.
-
----
-
-## 📊 Ejemplo Completo
-
-### Definición de Entidad
-
-```typescript
-@ModuleName('Orders')
-export class Order extends BaseEntity {
-    @PropertyIndex(1)
-    @PropertyName('Order ID', Number)
-    id!: number;
-    
-    @PropertyIndex(2)
-    @PropertyName('Customer', String)
-    customer!: string;
-    
-    @PropertyIndex(10)
-    @PropertyName('Items', Array)
-    @ArrayOf(OrderItem)
-    items!: OrderItem[];
-    
-    @PropertyIndex(11)
-    @PropertyName('Comments', Array)
-    @ArrayOf(Comment)
-    comments!: Comment[];
-}
-```
-
-### Renderizado Automático
-
-```vue
-<!-- En default_detailview.vue -->
-<TabControllerComponent :tabs="['Items', 'Comments']">
-    <TabComponent>
-        <!-- Contenido de Items -->
-        <ArrayInputComponent :entity="order" property-key="items" ... />
-    </TabComponent>
-    <TabComponent>
-        <!-- Contenido de Comments -->
-        <ArrayInputComponent :entity="order" property-key="comments" ... />
-    </TabComponent>
-</TabControllerComponent>
-```
-
----
-
-## 💡 Características Avanzadas
-
-### Tab Dinámico
-
-```vue
-<TabControllerComponent :tabs="dynamicTabs">
-    <TabComponent v-for="tab in dynamicTabs" :key="tab">
-        <!-- Contenido dinámico -->
-    </TabComponent>
-</TabControllerComponent>
-
-<script>
-computed: {
-    dynamicTabs() {
-        // Tabs condicionales
-        const tabs = ['General'];
-        if (this.entity.hasItems) tabs.push('Items');
-        if (this.entity.hasComments) tabs.push('Comments');
-        return tabs;
-    }
-}
-</script>
-```
-
----
-
-## ⚠️ Consideraciones
-
-### 1. Número de Tabs vs TabComponents
-
-```typescript
-// ❌ INCORRECTO: Número diferente
-<TabControllerComponent :tabs="['Tab1', 'Tab2']">
-    <TabComponent>Content 1</TabComponent>
-    <!-- Falta Tab 2 -->
-</TabControllerComponent>
-
-// ✅ CORRECTO: Mismo número
-<TabControllerComponent :tabs="['Tab1', 'Tab2']">
-    <TabComponent>Content 1</TabComponent>
-    <TabComponent>Content 2</TabComponent>
-</TabControllerComponent>
-```
-
-### 2. Orden de Tabs
-
-El orden de `tabs` prop debe coincidir con el orden de `TabComponent` hijos:
-- `tabs[0]` → Primer `TabComponent`
-- `tabs[1]` → Segundo `TabComponent`, etc.
-
-### 3. Contenido Activo
-
-Solo un `TabComponent` tiene clase `.active` a la vez → Solo uno visible.
-
----
-
-## 🔗 Componentes Relacionados
-
-- **ArrayInputComponent** - Contenido típico de tabs
-- **FormGroupComponent** - Contenedor padre común
-- **default_detailview.vue** - Vista que utiliza tabs
-
----
-
-## 🎨 Personalización
-
-### Estilos Custom de Tabs
-
-```css
-/* Tab headers con iconos */
-.tab {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.tab-icon {
-    width: 20px;
-    height: 20px;
-}
-
-/* Tab activo con borde inferior */
-.tab.active {
-    border-bottom: 3px solid var(--primary);
-}
-```
-
-### Tab con Badge
-
-```vue
-<div class="tab" @click="setActiveTab(index)">
-    <span>{{ tab }}</span>
-    <span class="badge" v-if="hasNotifications(index)">5</span>
-</div>
-
-<style>
-.badge {
-    background: red;
-    color: white;
-    border-radius: 50%;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.75rem;
-}
-</style>
-```
-
----
-
-## 🐛 Debugging
-
-### Ver Tab Activo
-
-```javascript
-// En Vue DevTools
-selectedTab: 0  // Índice del tab activo
-```
-
-### Ver TabComponents
-
-```javascript
-const tabs = document.querySelectorAll('.tab-component');
-tabs.forEach((tab, i) => {
-    console.log(`Tab ${i}: ${tab.classList.contains('active') ? 'Active' : 'Inactive'}`);
-});
-```
-
----
-
-## 📚 Resumen
-
-Sistema de **tabs para organizar contenido**:
-
-**TabComponent:**
-- ✅ Contenedor simple para contenido de tab
-- ✅ Visible solo cuando tiene clase `.active`
-- ✅ Estilos conectados con tab header
-
-**TabControllerComponent:**
-- ✅ Gestor de múltiples tabs
-- ✅ Headers clicables
-- ✅ Cambia tab activo dinámicamente
-- ✅ Validación de hijos (solo TabComponent)
-- ✅ Primer tab activo por defecto
-
-**Uso Principal:** Arrays de relaciones en vistas de detalle.
+Versión: 1.0.0
+Última actualización: 12 de Febrero, 2026
