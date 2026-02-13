@@ -324,7 +324,6 @@ console.log('Toast type name:', ToastType[ToastType.SUCCESS]);
 StringType.TELEPHONE y StringType.URL definidos pero sin componentes dedicados, renderizan como TextInputComponent default.
 DetailTypes.NEW y DetailTypes.EDIT definidos pero no integrados, modo se determina implícitamente con entityOid === 'new' check.
 MaskSides.START y MaskSides.END definidos pero decorador @Mask no exportado en decorations/index.ts.
-ViewTypes.DEFAULTVIEW reservado sin implementación actual.
 
 **MAPEO COMPONENTES:**
 StringType.EMAIL EmailInputComponent input type="email" validación HTML5

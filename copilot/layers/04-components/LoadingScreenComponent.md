@@ -1164,7 +1164,7 @@ Permite personalización desde ComponentContainerComponent:
 </LoadingScreenComponent>
 ```
 
-**Nota:** Actualmente NO implementado, LoadingScreenComponent no tiene slots.
+**Nota:** LoadingScreenComponent no incluye slots en su implementación.
 
 ## 11. Referencias Cruzadas
 

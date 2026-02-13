@@ -77,40 +77,16 @@ export function ApiMethods(methods: HttpMethod[]): ClassDecorator {
 }
 ```
 
-**IMPORTANTE:** El decorador acepta SOLO `HttpMethod[]` (array de tipos específicos). NO acepta strings genéricos ni strings individuales.
-
 **Parámetros:**
-- `methods: HttpMethod[]` - Array tipado de métodos HTTP permitidos
+- `methods: HttpMethod[]` - Array tipado de métodos HTTP permitidos. Los valores válidos son: 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'
 
-**Uso correcto:**
+**Tipo HttpMethod:** Union type que acepta exclusivamente los cinco métodos HTTP estándar en uppercase.
+
+**Uso:**
 ```typescript
-@ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])  // Correcto
+@ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])
 export class Product extends BaseEntity {
     // ...
-}
-```
-
-**Uso incorrecto:**
-```typescript
-@ApiMethods('GET')  // ❌ ERROR: No acepta string individual
-@ApiMethods(['get', 'post'])  // ❌ ERROR: Debe ser uppercase y tipo HttpMethod
-```
-        let methodsArray: string[];
-        
-        // Normalizar input a array
-        if (typeof methods === 'string') {
-            methodsArray = methods.split(',').map(m => m.trim().toUpperCase());
-        } else {
-            methodsArray = methods.map(m => m.toUpperCase());
-        }
-        
-        // Validar y filtrar métodos válidos
-        const validMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-        methodsArray = methodsArray.filter(m => validMethods.includes(m));
-        
-        // Almacenar en prototype
-        target.prototype[API_METHODS_METADATA] = methodsArray;
-    };
 }
 ```
 

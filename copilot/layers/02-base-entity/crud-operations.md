@@ -91,7 +91,7 @@ catch (error: any) {
 
 **Ubicación:** `src/entities/base_entitiy.ts` (líneas 767-830)
 
-**IMPORTANTE:** Este método NO es un alias de save(). Tiene su propia implementación completa.
+**Descripción:** Método con implementación independiente que ejecuta actualización mediante PUT request.
 
 **Algoritmo completo:**
 
@@ -136,7 +136,7 @@ catch (error: any) {
 
 **Ubicación:** `src/entities/base_entitiy.ts` (líneas 833-870)
 
-**Retorno:** `void` (sin valor de retorno)
+**Retorno:** `Promise<void>`
 
 **Flujo de ejecución:**
 1. Verifica `validatePersistenceConfiguration()` - retorna `void` si falla
@@ -154,21 +154,18 @@ catch (error: any) {
    - Muestra confirmation menu con error
    - Lanza excepción
 
-**IMPORTANTE:** Este método retorna `void`, NO retorna boolean ni `this`.
-
 ### 4.4. Método getElementList()
 
 **Firma:** `public static async getElementList<T extends BaseEntity>(this: new (data: Record<string, any>) => T, filter: string = ''): Promise<T[]>`
 
 **Ubicación:** `src/entities/base_entitiy.ts` (líneas 698-725)
 
-**Parámetros correctos:**
+**Parámetros:**
 - Constructor signature: `new (data: Record<string, any>) => T` - Constructor que recibe data
-- `filter: string = ''` - String de filtro (NO es `Record<string, any>`)
+- `filter: string = ''` - Parámetro string para filtrado de resultados
 
 **Comportamiento:**
 - Método estático que ejecuta GET al endpoint base
-- El parámetro `filter` es un string simple, no un objeto
 - Response esperado: array de objetos planos
 - Cada objeto se transforma creando instancia: `new this(data)`
 - Retorna array vacío si hay error
@@ -185,18 +182,17 @@ const filtered = await Product.getElementList('?active=true');
 
 **Ubicación:** `src/entities/base_entitiy.ts` (líneas 669-696)
 
-**Parámetros correctos:**
+**Parámetros:**
 - Constructor signature: `new (data: Record<string, any>) => T` - Constructor que recibe data
-- `oid: string` - ID del elemento (string, NO `any`)
+- `oid: string` - Identificador del elemento a obtener
 
-**Retorno:** `Promise<T>` - NO retorna `null`, lanza excepción en caso de error
+**Retorno:** `Promise<T>` - Instancia de la entidad solicitada
 
 **Comportamiento:**
 - Método estático que ejecuta GET a `${endpoint}/${oid}`
 - Response esperado: objeto plano con datos de entidad
 - Crea instancia con `new this(data)` pasando data al constructor
-- Muestra confirmation menu con error si falla
-- Lanza excepción en caso de error
+- En caso de fallo: muestra confirmation menu con mensaje de error y lanza excepción
 
 **Uso correcto:**
 ```typescript

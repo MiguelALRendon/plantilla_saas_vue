@@ -944,7 +944,7 @@ search = ''     →  Muestra: [todos]
 
 ## ✅ Sistema de Validación (2 Niveles)
 
-**⚠️ NOTA:** ArrayInputComponent NO soporta validación asíncrona actualmente.
+**Alcance:** ArrayInputComponent implementa validación required y validación síncrona. No incluye validación asíncrona.
 
 ### Nivel 1: Required (Array Vacío)
 

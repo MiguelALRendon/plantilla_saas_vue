@@ -70,10 +70,8 @@ export function HelpText(text: string): PropertyDecorator {
 }
 ```
 
-**IMPORTANTE:** La implementación actual solo acepta `text: string`. NO acepta funciones para help text dinámico.
-
 **Parámetros:**
-- `text: string` - Texto de ayuda estático
+- `text: string` - Texto de ayuda estático que se muestra debajo del campo de entrada
 
 **Uso correcto:**
 ```typescript
