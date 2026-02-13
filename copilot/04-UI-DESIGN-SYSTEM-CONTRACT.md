@@ -241,37 +241,123 @@ Obligaciones:
 - Translate estándar (si aplica)
 - Rotate estándar (si aplica)
 
-### 6.4 Política Anti-Hardcode
+### 6.4 Política de Tokenización Obligatoria de Valores CSS
 
-Prohibido absolutamente:
+#### 6.4.1 Principio de Tokenización Universal
+
+TODO valor CSS repetible o estandarizable DEBE existir como variable en `constants.css` ANTES de su uso.
+
+Flujo Obligatorio:
+
+```
+DESARROLLADOR necesita valor CSS
+    ↓
+PASO 1: Verificar existencia en constants.css
+    ├─→ SI existe → Usar variable
+    └─→ SI NO existe → Ir a PASO 2
+    ↓
+PASO 2: Clasificar valor
+    ├─→ ¿Es parte de categoría tokenizable? (color, espaciado, sombra, etc.)
+    │   ├─→ SÍ → Ir a PASO 3
+    │   └─→ NO → Verificar si es valor único demostrable → Documentar excepción
+    ↓
+PASO 3: Agregar token a constants.css
+    ├─→ Seguir naming convention existente
+    ├─→ Agregar en sección apropiada (colores, espaciados, etc.)
+    ├─→ Documentar en comentario CSS su propósito
+    └─→ Actualizar Sección 6.3 de este contrato listando nuevo token
+    ↓
+PASO 4: Usar variable recién creada
+    └─→ Reemplazar cualquier uso hardcodeado previo del mismo valor
+```
+
+#### 6.4.2 Valores Prohibidos sin Tokenización
+
+| Categoría | Prohibido | Obligatorio | Excepción |
+|-----------|-----------|-------------|-----------||
+| **Colores** | `#3b82f6` | `var(--color-primary)` | Ninguna |
+| **Colores** | `rgb(59, 130, 246)` | `var(--color-primary)` | Ninguna |
+| **Colores** | `rgba(0,0,0,0.5)` | `var(--overlay-dark)` | Ninguna |
+| **Espaciado** | `padding: 16px` | `padding: var(--spacing-medium)` | Valor único demostrado |
+| **Espaciado** | `margin: 20px` | `margin: var(--spacing-large)` | Valor único demostrado |
+| **Sombras** | `box-shadow: 0 2px 4px...` | `box-shadow: var(--shadow-medium)` | Ninguna |
+| **Radios** | `border-radius: 8px` | `border-radius: var(--radius-standard)` | `border-radius: 50%` (círculo) |
+| **Z-index** | `z-index: 999` | `z-index: var(--z-modal)` | Ninguna |
+| **Transiciones** | `transition: all 0.3s` | `transition: all var(--transition-normal)` | Ninguna |
+| **Duraciones** | `animation-duration: 500ms` | `animation-duration: var(--duration-slow)` | Ninguna |
+| **Anchos** | `width: 300px` | `width: var(--container-small)` | Anchos responsive (%, vw) |
+| **Alturas** | `height: 60px` | `height: var(--header-height)` | `height: 100%` |
+| **Font-size** | `font-size: 18px` | `font-size: var(--text-large)` | Ninguna |
+| **Opacidad** | `opacity: 0.7` | `opacity: var(--opacity-hover)` | `opacity: 0` o `1` |
+
+#### 6.4.3 Procedimiento de Detección de Hardcode
+
+Antes de commit de archivo CSS:
+
+```bash
+# Buscar colores hex
+grep -r "#[0-9a-fA-F]\{3,6\}" src/css/*.css
+→ Si encuentra matches → BLOQUEAR commit
+
+# Buscar valores numéricos sospechosos
+grep -rE "(padding|margin|width|height):[^;]*[0-9]+px" src/css/*.css
+→ Si encuentra matches sin var() → REVISAR
+
+# Buscar z-index numérico
+grep -r "z-index:[^;]*[0-9]" src/css/*.css
+→ Si encuentra matches sin var() → BLOQUEAR commit
+```
+
+#### 6.4.4 Criterio de "Valor Único Demostrable"
+
+Un valor se considera "único demostrable" cuando:
+
+1. Es cálculo derivado: `calc(100% - 20px)`
+2. Es porcentaje responsive: `width: 50%`
+3. Es viewport unit: `height: 100vh`
+4. Aparece 1 sola vez en toda la codebase
+5. Está documentado como excepción con comentario:
 
 ```css
-/* PROHIBIDO */
-.component {
-    width: 300px;                  /* Dimensión fija arbitraria */
-    color: #3b82f6;               /* Color directo */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);  /* Sombra literal */
-    z-index: 999;                 /* Z-index arbitrario */
-    transition: all 0.2s;         /* Duración hardcodeada */
-    border-radius: 8px;           /* Radio literal */
+.unique-component {
+    /* Excepción: Valor específico para alineación con elemento externo */
+    margin-top: 37px; /* Alinea con navbar de tercero */
 }
 ```
 
-Obligatorio:
+#### 6.4.5 Garantía de Completitud de constants.css
 
-```css
-/* OBLIGATORIO */
-.component {
-    max-width: var(--container-width);
-    color: var(--btn-primary);
-    box-shadow: var(--shadow-medium);
-    z-index: var(--z-modal);
-    transition: all var(--transition-normal);
-    border-radius: var(--border-radius);
-}
+`constants.css` DEBE contener tokens para las categorías definidas en Sección 6.3.
+
+Si desarrollador detecta token faltante:
+
+```
+PASO 1: Identificar categoría (color, espaciado, etc.)
+PASO 2: Verificar si categoría tiene sección en constants.css
+    └─→ SI NO tiene → Crear sección completa
+PASO 3: Agregar token con naming consistente
+PASO 4: Agregar entrada en Sección 6.3 de este contrato
+PASO 5: Usar token en CSS
 ```
 
-Excepción única: Valores irrepetibles demostrados como únicos en el sistema y documentados como tal.
+#### 6.4.6 Validación de Conformidad
+
+Todo archivo CSS nuevo o modificado DEBE pasar:
+
+```
+CHECKLIST PRE-COMMIT:
+[ ] Sin colores hex directos (salvo excepción documentada)
+[ ] Sin valores numéricos px repetidos (salvo calc, %, vh/vw)  
+[ ] Sin z-index numéricos (solo variables)
+[ ] Sin duraciones/delays hardcoded
+[ ] Excepciones documentadas con comentario /* Excepción: razón */
+[ ] Tokens usados existen en constants.css
+```
+
+Responsabilidad:
+- Desarrollador: Verificar antes de commit
+- Revisor: Validar en code review
+- CI/CD: Ejecutar linter CSS que rechace patrones prohibidos
 
 ### 6.5 Sistema de Layout Flexbox
 

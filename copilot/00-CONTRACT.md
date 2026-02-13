@@ -20,15 +20,67 @@ Este contrato aplica a:
 
 ## 3. Definiciones Clave
 
-**MI LÓGICA:** Arquitectura fundamental del framework definida como:
-- Arquitectura basada en decoradores TypeScript
-- Sistema de metadatos almacenado en prototipos
-- Generación automática de interfaces desde entidades
-- Patrón Singleton para Application
-- Sistema de eventos mediante mitt
-- Hooks de ciclo de vida en BaseEntity
-- Componentes reactivos generados dinámicamente
-- Flujo unidireccional: Entidad → Decoradores → Metadatos → BaseEntity → Application → UI
+**MI LÓGICA (AXIOMA TÉCNICO INMUTABLE):** Sistema arquitectónico fundamental del framework cuya preservación tiene prioridad absoluta sobre cualquier otra consideración técnica, normativa o práctica.
+
+Declaración Axiomática:
+
+```
+AXIOMA A1 [Arquitectura de Capas]:
+  ∀ componente ∈ Sistema → componente ∈ {Capa1, Capa2, Capa3, Capa4, Capa5}
+  Donde:
+    Capa1 = Entidades (Definición)
+    Capa2 = Decoradores (Metadatos)
+    Capa3 = BaseEntity (Lógica CRUD)
+    Capa4 = Application (Orquestador)
+    Capa5 = UI Components (Generados)
+
+AXIOMA A2 [Flujo Unidireccional]:
+  Entidad → Decoradores → Metadatos → BaseEntity → Application → UI
+  ∀ dato: dirección(dato) = unidireccional ∧ ¬∃ bypass(Capa_n)
+
+AXIOMA A3 [Generación desde Metadatos]:
+  ∀ UI_Component: lógica_renderizado(UI_Component) = f(Metadatos)
+  Donde f(Metadatos) es función pura determinista
+
+AXIOMA A4 [Inmutabilidad Estructural]:
+  TypeScript + Decoradores + Vue 3 = Stack Tecnológico Inmutable
+  BaseEntity.prototype = Almacenamiento Canónico de Metadatos
+```
+
+Criterios de Violación (Cualquiera de estos constituye violación de MI LÓGICA):
+
+| Acción | Viola Axioma | Permitida |
+|--------|--------------|-----------||
+| Agregar Capa 2.5 entre Decoradores y BaseEntity | A1 | NO |
+| UI accede directamente a Entidad sin Application | A2 | NO |
+| Componente UI con lógica no derivada de metadatos | A3 | NO |
+| Reemplazar decoradores por JSON config | A4 | NO |
+| Hacer flujo bidireccional UI → BaseEntity | A2 | NO |
+| Cambiar Vue 3 por React | A4 | NO |
+| Mover metadatos de prototype a Map externo | A4 | NO |
+
+Supremacía Jerárquica:
+
+```
+MI LÓGICA (Axiomas A1-A4)
+    ├──> Invalida: Cualquier cláusula contractual contradictoria
+    ├──> Invalida: Cualquier optimización que viole axiomas
+    ├──> Invalida: Cualquier mejora propuesta que altere estructura
+    └──> Prevalece: Sobre conveniencia, performance, modernización
+```
+
+Procedimiento de Validación contra MI LÓGICA:
+
+```
+PARA TODO cambio propuesto:
+  1. Verificar(A1) → ¿Respeta 5 capas? [SÍ/NO]
+  2. Verificar(A2) → ¿Mantiene flujo unidireccional? [SÍ/NO]
+  3. Verificar(A3) → ¿UI sigue siendo generada desde metadatos? [SÍ/NO]
+  4. Verificar(A4) → ¿Preserva stack tecnológico? [SÍ/NO]
+  
+  SI alguna verificación = NO → RECHAZAR cambio
+  SI todas verificaciones = SÍ → Evaluar según Sección 6.2
+```
 
 **Cambio Mayor:** Cualquier modificación que altere arquitectura core, flujo de datos, generación de UI, sistema de estado o persistencia.
 
