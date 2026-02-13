@@ -225,8 +225,9 @@ Tiempo estimado: 1.5 horas
 2. [Framework Overview](01-FRAMEWORK-OVERVIEW.md) - 20 minutos
 3. [Quick Start](03-QUICK-START.md) - 15 minutos
 4. [Contrato UI/Design System](04-UI-DESIGN-SYSTEM-CONTRACT.md) - 15 minutos - Lectura obligatoria para desarrollo UI
-5. [Tutorial CRUD Básico](tutorials/01-basic-crud.md) - 30 minutos
-6. [Ejemplo Clásico - Inventario](examples/classic-module-example.md) - 20 minutos
+5. [Contrato de Enforcement Técnico](05-ENFORCEMENT-TECHNICAL-CONTRACT.md) - 20 minutos - Lectura obligatoria para desarrollo con IA
+6. [Tutorial CRUD Básico](tutorials/01-basic-crud.md) - 30 minutos
+7. [Ejemplo Clásico - Inventario](examples/classic-module-example.md) - 20 minutos
 
 #### Nivel Intermedio (Semana 1)
 Tiempo estimado: 6 horas
@@ -520,6 +521,7 @@ Por contrato de desarrollo, todo cambio en código debe documentarse. La documen
 3. [Arquitectura de Flujos](02-FLOW-ARCHITECTURE.md)
 4. [Quick Start](03-QUICK-START.md)
 5. [Contrato UI/Design System](04-UI-DESIGN-SYSTEM-CONTRACT.md)
+6. [Contrato de Enforcement Técnico](05-ENFORCEMENT-TECHNICAL-CONTRACT.md)
 
 ### Tutoriales de Implementación
 

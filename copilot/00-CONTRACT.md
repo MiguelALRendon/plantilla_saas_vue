@@ -567,9 +567,48 @@ El contrato UI/CSS es subordinado a MI LÓGICA y al presente contrato, pero vinc
 
 Todo cambio realizado sobre un componente que contenga estilos debera ser sometido a la evaluacion de las reglas contractuales del contrato [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) y en la respuesta final de la realizacion de latarea se tiene que abordar un apartado dedicado al estado de la UI, con sugerencias de cambios basados en los requerimientos contractuales o en su respectivo caso, simplemente mencionar que el componente cumple con todas las reglas.
 
-### 6.9 – Cláusula de Indexación Estructural Profunda
+### 6.9 Enforcement Técnico
 
-### 6.9.1 Naturaleza Obligatoria
+El enforcement técnico del framework se rige obligatoriamente por el contrato [05-ENFORCEMENT-TECHNICAL-CONTRACT.md](05-ENFORCEMENT-TECHNICAL-CONTRACT.md).
+
+Todo código generado por agentes de IA, toda modificación propuesta y toda integración al repositorio debe cumplir los mecanismos de verificación establecidos en dicho contrato subordinado.
+
+El contrato de enforcement es subordinado a MI LÓGICA y al presente contrato, pero vinculante en materia de autoverificación obligatoria del modelo, validación cruzada entre capas, gestión de breaking changes, responsabilidad del arquitecto, registro de excepciones y pre-commit verification.
+
+Las obligaciones principales del enforcement técnico incluyen:
+
+**Autoverificación Obligatoria del Modelo (AOM):**
+- Todo agente de IA DEBERÁ ejecutar proceso de autoverificación antes de presentar código
+- Verificación de cumplimiento de MI LÓGICA (Axiomas A1-A4)
+- Generación de Declaración de Cumplimiento Contractual estructurada
+- Identificación proactiva de conflictos y excepciones
+
+**Validación Cruzada entre Capas (VCC):**
+- Coherencia Entidad ↔ Decoradores
+- Coherencia Decoradores ↔ Metadatos
+- Coherencia Metadatos ↔ UI
+- Coherencia API ↔ Backend
+
+**Política de Breaking Changes:**
+- Todo breaking change DEBERÁ seguir proceso obligatorio
+- Documentación en `/copilot/BREAKING-CHANGES.md`
+- Aprobación explícita del arquitecto
+- Versionamiento MAJOR obligatorio
+
+**Registro de Excepciones:**
+- Toda excepción DEBERÁ registrarse en `/copilot/EXCEPCIONES.md`
+- Aprobación explícita del arquitecto
+- Marcado en código con comentario `// EXC-XXX`
+
+**Responsabilidad del Arquitecto:**
+- El arquitecto es la autoridad técnica final
+- Solo el arquitecto puede modificar contratos base
+- Solo el arquitecto puede autorizar excepciones y breaking changes
+- La IA no puede modificar contratos salvo instrucción explícita
+
+### 6.10 – Cláusula de Indexación Estructural Profunda
+
+### 6.10.1 Naturaleza Obligatoria
 
 Todo documento del Spec Kit debe ser completamente indexable a nivel estructural interno.
 
@@ -577,7 +616,7 @@ La indexación no se limita al archivo como unidad, sino que debe incluir cada n
 
 ---
 
-### 6.9.2 Alcance de la Indexación
+### 6.10.2 Alcance de la Indexación
 
 La indexación estructural profunda incluye obligatoriamente:
 
@@ -598,7 +637,7 @@ Queda prohibido indexar únicamente el documento raíz omitiendo su estructura i
 
 ---
 
-### 6.9.3 Profundidad Jerárquica
+### 6.10.3 Profundidad Jerárquica
 
 Cuando un documento posea estructura numerada jerárquica, el índice deberá reflejarla íntegramente sin simplificación.
 
@@ -615,7 +654,7 @@ No se permite agrupar niveles en forma resumida.
 
 ---
 
-### 6.9.4 Indexación de Elementos Técnicos
+### 6.10.4 Indexación de Elementos Técnicos
 
 Cuando un documento contenga:
 
@@ -633,7 +672,7 @@ No se permite indexar únicamente la sección contenedora ignorando los elemento
 
 ---
 
-### 6.9.5 Identificador Subestructural
+### 6.10.5 Identificador Subestructural
 
 Cada elemento interno deberá poder ser referenciado mediante un identificador derivado del ID del documento.
 
@@ -649,7 +688,7 @@ La notación debe ser determinista y reproducible.
 
 ---
 
-### 6.9.6 Separación del Formato de Índices
+### 6.10.6 Separación del Formato de Índices
 
 Los documentos cuyo propósito sea exclusivamente indexación estructural:
 
@@ -660,7 +699,7 @@ Los documentos cuyo propósito sea exclusivamente indexación estructural:
 
 ---
 
-### 6.9.7 Prohibiciones
+### 6.10.7 Prohibiciones
 
 Está estrictamente prohibido:
 
@@ -675,7 +714,7 @@ Está estrictamente prohibido:
 
 ---
 
-### 6.9.8 Verificación de Completitud
+### 6.10.8 Verificación de Completitud
 
 El sistema de índices deberá garantizar:
 
@@ -805,6 +844,7 @@ Documentos vinculados contractualmente:
 - [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) - Arquitectura y flujos del sistema
 - [03-QUICK-START.md](03-QUICK-START.md) - Guía de inicio rápido
 - [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) - Contrato de sistema de diseño UI/CSS
+- [05-ENFORCEMENT-TECHNICAL-CONTRACT.md](05-ENFORCEMENT-TECHNICAL-CONTRACT.md) - Contrato de enforcement técnico
 - [README.md](README.md) - Índice principal de documentación
 - layers/01-decorators/ - Especificaciones de decoradores
 - layers/02-base-entity/ - Especificación de BaseEntity
