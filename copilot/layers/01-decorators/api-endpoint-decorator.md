@@ -37,7 +37,7 @@ El decorator ApiEndpoint define la URL base del endpoint de API para operaciones
 
 **Endpoint Absoluto:** URL completa con protocolo y dominio. Ejemplo: `'https://api.mybackend.com/products'`. Axios hace request a URL exacta sin concatenar base URL.
 
-**getApiEndpoint() Accessor:** Método estático en BaseEntity que retorna `this.prototype[API_ENDPOINT_KEY] || ''`. Accede metadata de endpoint sin necesidad de instancia.
+**getApiEndpoint() Accessor:** Método estático en BaseEntity que retorna `(this as any)[API_ENDPOINT_KEY]`. Accede metadata de endpoint almacenada directamente en la clase sin necesidad de instancia. Retorna `string | undefined`.
 
 **CRUD URL Construction:** Patrón de construcción de URLs: CREATE usa `POST {endpoint}`, READ usa `GET {endpoint}/{id}`, UPDATE usa `PUT {endpoint}/{id}`, DELETE usa `DELETE {endpoint}/{id}`, LIST usa `GET {endpoint}`.
 
@@ -65,13 +65,13 @@ export function ApiEndpoint(path: string): ClassDecorator {
 ### Accessor en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 110
-public static getApiEndpoint(): string {
-    return this.prototype[API_ENDPOINT_KEY] || '';
+// src/entities/base_entitiy.ts - Línea 416-422
+public static getApiEndpoint(): string | undefined {
+    return (this as any)[API_ENDPOINT_KEY];
 }
 
 // Método de instancia (delegación al estático)
-public getApiEndpoint(): string {
+public getApiEndpoint(): string | undefined {
     return (this.constructor as typeof BaseEntity).getApiEndpoint();
 }
 ```
@@ -458,7 +458,7 @@ Retornar array de instancias
 
 **Prohibido:** Incluir query parameters en endpoint string. '/api/products?active=true' es incorrecto, pasar params en axios options.
 
-**Prohibido:** Cambiar endpoint dinámicamente sin override. Modificar `this.prototype[API_ENDPOINT_KEY]` directamente puede causar race conditions en multi-instancia.
+**Prohibido:** Cambiar endpoint dinámicamente sin override. Modificar `(this as any)[API_ENDPOINT_KEY]` directamente en runtime puede causar race conditions en multi-instancia.
 
 **Prohibido:** Asumir que backend tiene CORS configurado. Endpoints absolutos (https://otro-dominio.com) requieren CORS en backend.
 

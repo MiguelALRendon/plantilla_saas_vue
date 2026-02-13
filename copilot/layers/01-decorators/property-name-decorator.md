@@ -56,7 +56,7 @@ export function PropertyName(
         proto[PROPERTY_NAME_KEY][propertyKey] = name;
 
         // Almacenar tipo de propiedad
-        if (!proto[PROPERTY_NAME_KEY]) {
+        if (!proto[PROPERTY_TYPE_KEY]) {
             proto[PROPERTY_TYPE_KEY] = {};
         }
         proto[PROPERTY_TYPE_KEY][propertyKey] = type;
