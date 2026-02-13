@@ -4,7 +4,7 @@
 
 El decorador `@ModuleIcon` define el icono visual que representa un módulo de entidad en los componentes de interfaz de usuario del framework, específicamente en SideBarComponent, TopBarComponent headers, breadcrumbs, y cualquier otro elemento visual donde se necesite identificar rápidamente el módulo mediante iconografía consistente. Este decorador proporciona identificación visual inmediata del módulo sin necesitar leer texto, mejorando significativamente la user experience mediante reconocimiento de patrones visuales y navegación intuitiva basada en iconos familiares.
 
-El propósito central es establecer un mapping directo entre la entidad de dominio (Product, Customer, Order) y su representación visual mediante un icon name string que el framework resuelve a un componente de icono Vue durante rendering. El decorador almacena este icon name en metadata de la entidad usando el Symbol `MODULE_ICON_METADATA` para acceso eficiente O(1) durante construcción de menús, headers, y breadcrumbs donde múltiples módulos se renderizan simultáneamente requiriendo lookups rápidos de iconografía.
+El propósito central es establecer un mapping directo entre la entidad de dominio (Product, Customer, Order) y su representación visual mediante un icon name string que el framework resuelve a un componente de icono Vue durante rendering. El decorador almacena este icon name en metadata de la entidad usando el Symbol `MODULE_ICON_KEY` para acceso eficiente O(1) durante construcción de menús, headers, y breadcrumbs donde múltiples módulos se renderizan simultáneamente requiriendo lookups rápidos de iconografía.
 
 Los casos de uso principales incluyen: sidebar navigation menu mostrando iconos al lado de cada module name facilitando scanning visual rápido de opciones disponibles sin necesitar leer todos los labels texto; view headers en ListView/DetailView mostrando module icon consistente con sidebar creando coherencia visual entre navegación y contenido activo; breadcrumbs navigation trails mostrando iconos compactos para cada level del trail ahorrando espacio horizontal mientras manteniendo clarity de ubicación; empty states y error messages donde module icon proporciona contexto visual claro del módulo afectado sin depender exclusivamente de mensajes text; tooltips y helper text donde iconos pequeños indican module context inline con explicación textual complementaria.
 
@@ -15,7 +15,7 @@ Beneficios operacionales: consistencia visual across entire application todos lo
 ### Responsabilidades
 
 - Definir el icon name string parameter que identifica qué icono visual representa el módulo en UI components, usando nombres de icon library configurada (ej. 'box', 'user', 'shopping-cart' para Feather Icons default)
-- Almacenar icon name en metadata usando Symbol `MODULE_ICON_METADATA` en prototype de la clase para lookup O(1) durante rendering de componentes que necesitan displaymodule icons
+- Almacenar icon name en metadata usando Symbol `MODULE_ICON_KEY` en prototype de la clase para lookup O(1) durante rendering de componentes que necesitan displaymodule icons
 - Proporcionar accessor method `getModuleIcon()` estático en BaseEntity que retorna icon name string o fallback default 'circle' cuando no está configurado explícitamente
 - Integrarse con SideBarComponent para rendering de menu items con icon components correspondientes mediante dynamic component resolution basado en icon name lookup
 - Integrarse con TopBarComponent y breadcrumbs para display consistent de module icon en headers y navigation trails throughout application
@@ -33,13 +33,13 @@ Beneficios operacionales: consistencia visual across entire application todos lo
 
 ## 3. Definiciones Clave
 
-### MODULE_ICON_METADATA
+### MODULE_ICON_KEY
 
-Symbol único que identifica la metadata del module icon alamacenada en prototype de la entity class. Implementación: `export const MODULE_ICON_METADATA = Symbol('moduleIcon')`. Storage: `Product.prototype[MODULE_ICON_METADATA] = 'box'`. Este Symbol proporciona collision-free key para metadata storage evitando conflicts con properties reales de la entidad o metadata de otros decorators, permitiendo lookup O(1) eficiente durante rendering de UI components sin iterar propiedades.
+Symbol único que identifica la metadata del module icon alamacenada en prototype de la entity class. Implementación: `export const MODULE_ICON_KEY = Symbol('moduleIcon')`. Storage: `Product.prototype[MODULE_ICON_KEY] = 'box'`. Este Symbol proporciona collision-free key para metadata storage evitando conflicts con properties reales de la entidad o metadata de otros decorators, permitiendo lookup O(1) eficiente durante rendering de UI components sin iterar propiedades.
 
 ### getModuleIcon()
 
-Accessor estático definido en BaseEntity que retorna icon name string del módulo o fallback 'circle' default si no configurado. Implementación: `public static getModuleIcon(): string { const icon = this.prototype[MODULE_ICON_METADATA]; return icon || 'circle'; }`. Ubicación: `src/entities/base_entitiy.ts` líneas ~950-960. Uso: `Product.getModuleIcon() // → 'box'` retorna icon name para resolución en icon service que mapea a Vue icon component.
+Accessor estático definido en BaseEntity que retorna icon name string del módulo o fallback 'circle' default si no configurado. Implementación: `public static getModuleIcon(): string { const icon = this.prototype[MODULE_ICON_KEY]; return icon || 'circle'; }`. Ubicación: `src/entities/base_entitiy.ts` líneas ~950-960. Uso: `Product.getModuleIcon() // → 'box'` retorna icon name para resolución en icon service que mapea a Vue icon component.
 
 ### Icon Name String
 
@@ -67,7 +67,7 @@ Cuando entity class NO tiene `@ModuleIcon` decorator configurado, `getModuleIcon
 /**
  * Symbol para almacenar metadata de module icon
  */
-export const MODULE_ICON_METADATA = Symbol('moduleIcon');
+export const MODULE_ICON_KEY = Symbol('moduleIcon');
 
 /**
  * @ModuleIcon() - Define el icono del módulo
@@ -78,23 +78,23 @@ export const MODULE_ICON_METADATA = Symbol('moduleIcon');
 export function ModuleIcon(icon: string): ClassDecorator {
     return function (target: any) {
         // Guardar icono en prototype
-        target.prototype[MODULE_ICON_METADATA] = icon;
+        target.prototype[MODULE_ICON_KEY] = icon;
     };
 }
 ```
 
-La función decoradora recibe un parámetro `icon` de tipo `string` y retorna un `ClassDecorator`. La implementación es simple assignment: `target.prototype[MODULE_ICON_METADATA] = icon` almacena el icon name directamente en prototype de la clase usando Symbol como key collision-free. No hay validación ni processing del icon name, asumiendo developer ha verificado que existe en icon library activa. Ubicación: `src/decorations/module_icon_decorator.ts` líneas ~1-25.
+La función decoradora recibe un parámetro `icon` de tipo `string` y retorna un `ClassDecorator`. La implementación es simple assignment: `target.prototype[MODULE_ICON_KEY] = icon` almacena el icon name directamente en prototype de la clase usando Symbol como key collision-free. No hay validación ni processing del icon name, asumiendo developer ha verificado que existe en icon library activa. Ubicación: `src/decorations/module_icon_decorator.ts` líneas ~1-25.
 
 ### Metadata Storage
 
 ```typescript
 // Metadata stored in prototype
-Product.prototype[MODULE_ICON_METADATA] = 'box';
-Customer.prototype[MODULE_ICON_METADATA] = 'user';
-Order.prototype[MODULE_ICON_METADATA] = 'shopping-cart';
+Product.prototype[MODULE_ICON_KEY] = 'box';
+Customer.prototype[MODULE_ICON_KEY] = 'user';
+Order.prototype[MODULE_ICON_KEY] = 'shopping-cart';
 ```
 
-Storage en prototype (no en class directamente) permite que todas las instancias de la entidad compartan el mismo icon name sin duplicación memory overhead. Lookup: `Product.prototype[MODULE_ICON_METADATA]` retorna 'box' directly O(1) efficiency.
+Storage en prototype (no en class directamente) permite que todas las instancias de la entidad compartan el mismo icon name sin duplicación memory overhead. Lookup: `Product.prototype[MODULE_ICON_KEY]` retorna 'box' directly O(1) efficiency.
 
 ### BaseEntity Accessor
 
@@ -107,7 +107,7 @@ Storage en prototype (no en class directamente) permite que todas las instancias
  * @returns Nombre del icono o 'circle' por defecto
  */
 public static getModuleIcon(): string {
-    const icon = this.prototype[MODULE_ICON_METADATA];
+    const icon = this.prototype[MODULE_ICON_KEY];
     return icon || 'circle';  // Default: 'circle'
 }
 ```
@@ -167,7 +167,7 @@ Component itera module list, para cada entity class obtiene icon name con `getMo
 
 **Fase 1: Decoración (Design-Time)**
 
-Cuando TypeScript procesa clase decorada con `@ModuleIcon('box')`, el decorador se ejecuta inmediatamente. La función decoradora recibe icon name string parameter ('box') y target class, ejecuta assignment `target.prototype[MODULE_ICON_METADATA] = 'box'` almacenando icon name en prototype. Metadata es inmutable durante vida de aplicación, no modifica en runtime. Múltiples entidades pueden usar mismo icon name ('user' compartido entre Customer y Employee) sin conflicts ya que metadata está aislada en prototype de cada class.
+Cuando TypeScript procesa clase decorada con `@ModuleIcon('box')`, el decorador se ejecuta inmediatamente. La función decoradora recibe icon name string parameter ('box') y target class, ejecuta assignment `target.prototype[MODULE_ICON_KEY] = 'box'` almacenando icon name en prototype. Metadata es inmutable durante vida de aplicación, no modifica en runtime. Múltiples entidades pueden usar mismo icon name ('user' compartido entre Customer y Employee) sin conflicts ya que metadata está aislada en prototype de cada class.
 
 **Fase 2: Registration en Application (Startup)**
 
@@ -205,7 +205,7 @@ User click en sidebar item dispara `@click="navigateToModule(entityClass)"` hand
 
 2. **NO validar existence de icon en decorator code**: El decorador NO debe agregar validación checks verificando icon name existe en IconService durante decoration time porque: decoradores ejecutan during TypeScript processing before icon service initialized circular dependency, validation runtime overhead cada entity class load checking icon existence expensive unnecessary, responsibility separation developer verifica icons, decorator solo stores metadata minimal coupling, IconService handles fallback robustly si icon missing retornando default 'circle' gracefully. Keep decorator simple storage only.
 
-3. **NO modificar icon metadata dynamically en runtime**: Una vez decorated, icon name debe permanecer immutable no cambiar `Product.prototype[MODULE_ICON_METADATA]` programmatically because: UI components cache icon resolution changing metadata NO triggers re-render unexpected visual inconsistency, prototype pollution mutating prototype affects todas instances unpredictably dangerous side effects, metadata intended as static design-time configuration no runtime behavior, alternative usar computed getters si dynamic icon selection needed basado en entity state pero raro use case generally unnecessary complexity.
+3. **NO modificar icon metadata dynamically en runtime**: Una vez decorated, icon name debe permanecer immutable no cambiar `Product.prototype[MODULE_ICON_KEY]` programmatically because: UI components cache icon resolution changing metadata NO triggers re-render unexpected visual inconsistency, prototype pollution mutating prototype affects todas instances unpredictably dangerous side effects, metadata intended as static design-time configuration no runtime behavior, alternative usar computed getters si dynamic icon selection needed basado en entity state pero raro use case generally unnecessary complexity.
 
 4. **NO configurar multiple icons per module**: Cada module debe tener single canonical icon representativo across entire application, no different icons en diferentes contexts. Prohibido patterns: icon A en sidebar icon B en header inconsistency confusing, icon cambia based on entity state (Draft vs Published) unnecessary complexity mejor usar badges/indicators, icon different per user role unnecesary todos users mismo mental model module identity. Esta Consistency fundamental para user recognition patterns learning transfer.
 
@@ -216,7 +216,7 @@ User click en sidebar item dispara `@click="navigateToModule(entityClass)"` hand
 ## 8. Dependencias
 
 ### BaseEntity
-Import MODULE_ICON_METADATA Symbol y proporciona getModuleIcon() accessor estático retornando icon name string o 'circle' fallback. Ubicación src/entities/base_entitiy.ts líneas ~950-960. Este accessor punto de acceso único para UI components query icon metadata sin acceder Symbol directamente encapsulation.
+Import MODULE_ICON_KEY Symbol y proporciona getModuleIcon() accessor estático retornando icon name string o 'circle' fallback. Ubicación src/entities/base_entitiy.ts líneas ~950-960. Este accessor punto de acceso único para UI components query icon metadata sin acceder Symbol directamente encapsulation.
 
 ### IconService  
 Service layer maneja mapping icon names a Vue icon components. Ubicación src/services/icon_service.ts. API: `IconService.getIcon(name)` retorna component o default, `registerIcon(name, component)` register customs, `hasIcon(name)` existence check. SideBarComponent depends on IconService para resolve icon names: `<component :is="IconService.getIcon(entityClass.getModuleIcon())" />`.
@@ -293,5 +293,5 @@ Durante app initialization (src/main.ts), entity classes se registran en Applica
 
 **Ubicación código fuente**: `src/decorations/module_icon_decorator.ts` (~25 líneas)  
 **Constants relacionadas**: `src/constants/icons.ts`, `src /constants/ggicons.ts` (~100 líneas mappings)  
-**Símbolos y exports**: `MODULE_ICON_METADATA` Symbol, `ModuleIcon` function Class Decorator, `getModuleIcon()` accessor BaseEntity  
+**Símbolos y exports**: `MODULE_ICON_KEY` Symbol, `ModuleIcon` function Class Decorator, `getModuleIcon()` accessor BaseEntity  
 **Icon libraries soportadas**: Feather Icons (default ~300 icons), Google Material Icons (~2000 icons), Font Awesome (~7000 icons), Custom SVG via manual registration

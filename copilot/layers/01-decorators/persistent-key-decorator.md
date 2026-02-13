@@ -54,16 +54,33 @@ Método instancia BaseEntity retornando actual value persistent key property cur
 ### Implementación del Decorator
 
 ```typescript
-export const PERSISTENT_KEY_METADATA = Symbol('persistentKey');
+// src/decorations/persistent_key_decorator.ts
+export const PERSISTENT_KEY_KEY = Symbol('persistent_key');
 
-export function PersistentKey(): PropertyDecorator {
+export function PersistentKey(persistentKey: string): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        target.constructor.prototype[PERSISTENT_KEY_METADATA] = propertyKey;
+        const proto = target.constructor.prototype;
+        if (!proto[PERSISTENT_KEY_KEY]) {
+            proto[PERSISTENT_KEY_KEY] = {};
+        }
+        proto[PERSISTENT_KEY_KEY][propertyKey] = persistentKey;
     };
 }
 ```
 
-Ubicación: src/decorations/persistent_key_decorator.ts líneas ~1-10. Decorator almacena property name prototype de entity class using Symbol key collision-free metadata storage. No parameters decorator applied property directly extracting property name automatically context.
+**IMPORTANTE:** Este decorador SÍ recibe un parámetro `persistentKey: string` que especifica el nombre de la clave en el backend.
+
+**Parámetros:**
+- `persistentKey: string` - Nombre de la clave en el backend/API
+
+**Uso correcto:**
+```typescript
+export class Product extends BaseEntity {
+    @PropertyName('ID', Number)
+    @PersistentKey('product_id')  // Backend usa 'product_id', frontend usa 'id'
+    id!: number;
+}
+```
 
 ### Accessor Methods en BaseEntity
 

@@ -65,19 +65,47 @@ export interface AsyncValidationMetadata {
 ### Implementación del Decorator
 
 ```typescript
-// src/decorations/async_validation_decorator.ts - Línea 5
+// src/decorations/async_validation_decorator.ts
 export const ASYNC_VALIDATION_KEY = Symbol('async_validation');
 
 export interface AsyncValidationMetadata {
-    validation: (instance: any) => Promise<boolean>;
-    message: string;
+    condition: (entity: any) => Promise<boolean>;
+    message?: string;
 }
 
 export function AsyncValidation(
-    validation: (instance: any) => Promise<boolean>,
-    message: string
+    condition: (entity: any) => Promise<boolean>,
+    message?: string
 ): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
+        const proto = target.constructor.prototype;
+        if (!proto[ASYNC_VALIDATION_KEY]) {
+            proto[ASYNC_VALIDATION_KEY] = {};
+        }
+        proto[ASYNC_VALIDATION_KEY][propertyKey] = { condition, message };
+    };
+}
+```
+
+**IMPORTANTE:** La interface usa `condition` (NO `validation`) y `message` es opcional.
+
+**Parámetros:**
+- `condition: (entity: any) => Promise<boolean>` - Función async que retorna true si válido
+- `message?: string` - Mensaje de error opcional
+
+**Uso correcto:**
+```typescript
+export class Customer extends BaseEntity {
+    @AsyncValidation(
+        async (entity) => {
+            const response = await checkEmailUnique(entity.email);
+            return response.available;
+        },
+        'Email already exists'  // Mensaje opcional
+    )
+    email!: string;
+}
+```
         const proto = target.constructor.prototype;
         
         // Inicializar Record si NO existe

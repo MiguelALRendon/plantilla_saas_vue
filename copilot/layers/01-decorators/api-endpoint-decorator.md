@@ -50,17 +50,17 @@ El decorator ApiEndpoint define la URL base del endpoint de API para operaciones
 ### Implementación del Decorator
 
 ```typescript
-// src/decorations/api_endpoint_decorator.ts - Línea 10
+// src/decorations/api_endpoint_decorator.ts
 export const API_ENDPOINT_KEY = Symbol('api_endpoint');
 
-export function ApiEndpoint(endpoint: string): ClassDecorator {
-    return function <T extends Function>(target: T) {
-        const proto = target.prototype;
-        proto[API_ENDPOINT_KEY] = endpoint;
-        return target;
+export function ApiEndpoint(path: string): ClassDecorator {
+    return function (target: Function) {
+        (target as any)[API_ENDPOINT_KEY] = path;
     };
 }
 ```
+
+**Nota importante:** El decorador almacena el endpoint directamente en `target` (la clase), NO en `target.prototype`. Este es el patrón correcto para decoradores de clase que almacenan metadata a nivel de clase completa.
 
 ### Accessor en BaseEntity
 

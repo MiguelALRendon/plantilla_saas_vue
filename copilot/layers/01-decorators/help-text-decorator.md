@@ -55,29 +55,32 @@ El decorator HelpText agrega texto de ayuda descriptivo que se muestra permanent
 
 ```typescript
 // src/decorations/help_text_decorator.ts
+export const HELP_TEXT_KEY = Symbol('help_text');
 
-import { HELP_TEXT_METADATA } from './index';
-import type BaseEntity from '@/entities/base_entitiy';
-
-/**
- * Agrega texto de ayuda descriptivo a un campo
- * 
- * @param text - Texto de ayuda (string o función que retorna string)
- * @returns PropertyDecorator
- */
-export function HelpText(
-    text: string | ((entity: BaseEntity) => string)
-): PropertyDecorator {
+export function HelpText(text: string): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
-        const propKey = propertyKey.toString();
-        
-        if (!proto[HELP_TEXT_METADATA]) {
-            proto[HELP_TEXT_METADATA] = {};
+        if (!proto[HELP_TEXT_KEY]) {
+            proto[HELP_TEXT_KEY] = {};
         }
-        
-        proto[HELP_TEXT_METADATA][propKey] = text;
+        proto[HELP_TEXT_KEY][propertyKey] = text;
     };
+}
+```
+
+**IMPORTANTE:** La implementación actual solo acepta `text: string`. NO acepta funciones para help text dinámico.
+
+**Parámetros:**
+- `text: string` - Texto de ayuda estático
+
+**Uso correcto:**
+```typescript
+export class Customer extends BaseEntity {
+    @PropertyName('Email', String)
+    @HelpText('Enter a valid email address')  // Solo strings
+    email!: string;
+}
+```
 }
 
 export const HELP_TEXT_METADATA = Symbol('helpText');

@@ -15,7 +15,7 @@ Asigna clases CSS de columna a una propiedad para controlar su ancho en layouts 
 
 ### Symbol de Metadatos
 ```typescript
-export const CSS_COLUMN_CLASS_METADATA = Symbol('cssColumnClass');
+export const CSS_COLUMN_CLASS_KEY = Symbol('cssColumnClass');
 ```
 
 ### Firma
@@ -28,7 +28,7 @@ function CssColumnClass(className: string): PropertyDecorator
 ### Almacenamiento
 ```typescript
 // En el prototype de la clase
-proto[CSS_COLUMN_CLASS_METADATA] = {
+proto[CSS_COLUMN_CLASS_KEY] = {
     'name': 'col-md-8',
     'sku': 'col-md-4',
     'price': 'col-md-3',
@@ -46,15 +46,15 @@ El decorador CssColumnClass almacena una cadena de texto con clases CSS que ser√
 ```typescript
 // src/decorations/css_column_class_decorator.ts
 
-export const CSS_COLUMN_CLASS_METADATA = Symbol('cssColumnClass');
+export const CSS_COLUMN_CLASS_KEY = Symbol('cssColumnClass');
 
 export function CssColumnClass(className: string): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        if (!target[CSS_COLUMN_CLASS_METADATA]) {
-            target[CSS_COLUMN_CLASS_METADATA] = {};
+        if (!target[CSS_COLUMN_CLASS_KEY]) {
+            target[CSS_COLUMN_CLASS_KEY] = {};
         }
         
-        target[CSS_COLUMN_CLASS_METADATA][propertyKey] = className;
+        target[CSS_COLUMN_CLASS_KEY][propertyKey] = className;
     };
 }
 ```
@@ -65,7 +65,7 @@ export function CssColumnClass(className: string): PropertyDecorator {
 
 public getCssColumnClass(propertyKey: string): string {
     const constructor = this.constructor as typeof BaseEntity;
-    const cssMetadata = constructor.prototype[CSS_COLUMN_CLASS_METADATA];
+    const cssMetadata = constructor.prototype[CSS_COLUMN_CLASS_KEY];
     
     if (!cssMetadata || !cssMetadata[propertyKey]) {
         return 'col-md-12';
@@ -75,7 +75,7 @@ public getCssColumnClass(propertyKey: string): string {
 }
 
 public static getCssColumnClass(propertyKey: string): string {
-    const cssMetadata = this.prototype[CSS_COLUMN_CLASS_METADATA];
+    const cssMetadata = this.prototype[CSS_COLUMN_CLASS_KEY];
     
     if (!cssMetadata || !cssMetadata[propertyKey]) {
         return 'col-md-12';

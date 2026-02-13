@@ -55,29 +55,39 @@ El decorator DisplayFormat define función de formateo para transformar valor de
 
 ```typescript
 // src/decorations/display_format_decorator.ts
+export const DISPLAY_FORMAT_KEY = Symbol('display_format');
 
-import { DISPLAY_FORMAT_KEY } from './index';
+export type DisplayFormatFunction = (value: any) => string;
+export type DisplayFormatValue = string | DisplayFormatFunction;
 
-/**
- * Define función de formateo para transformar valor de propiedad en visualización
- * 
- * @param formatter - Function que recibe valor y retorna string formateado
- * @returns PropertyDecorator
- */
-export function DisplayFormat(
-    formatter: (value: any) => string
-): PropertyDecorator {
+export function DisplayFormat(format: DisplayFormatValue): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
-        const propKey = propertyKey.toString();
-        
         if (!proto[DISPLAY_FORMAT_KEY]) {
             proto[DISPLAY_FORMAT_KEY] = {};
         }
-        
-        proto[DISPLAY_FORMAT_KEY][propKey] = formatter;
+        proto[DISPLAY_FORMAT_KEY][propertyKey] = format;
     };
 }
+```
+
+**IMPORTANTE:** El decorador acepta TANTO strings como funciones (`DisplayFormatValue = string | DisplayFormatFunction`).
+
+**Parámetros:**
+- `format: DisplayFormatValue` - String de formato o función que transforma el valor
+
+**Uso correcto:**
+```typescript
+export class Product extends BaseEntity {
+    // Con función
+    @DisplayFormat((value) => '$' + value.toFixed(2))
+    price!: number;
+    
+    // Con string (también válido)
+    @DisplayFormat('currency')
+    cost!: number;
+}
+```
 
 export type DisplayFormatter = (value: any) => string;
 export const DISPLAY_FORMAT_KEY = Symbol('display_format');

@@ -55,16 +55,30 @@ Método instancia BaseEntity retornando actual value primary key property curren
 ### Implementación del Decorator
 
 ```typescript
-export const PRIMARY_PROPERTY_METADATA = Symbol('primaryProperty');
+// src/decorations/primary_property_decorator.ts
+export const PRIMARY_PROPERTY_KEY = Symbol('primary_property');
 
-export function Primary(): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
-        target.constructor.prototype[PRIMARY_PROPERTY_METADATA] = propertyKey;
+export function PrimaryProperty(propertyName: string): ClassDecorator {
+    return function (target: Function) {
+        (target as any)[PRIMARY_PROPERTY_KEY] = propertyName;
     };
 }
 ```
 
-Ubicación: src/decorations/primary_property_decorator.ts líneas ~1-10. Decorator almacena property name prototype entity class using Symbol key collision-free metadata storage extracting propertyKey automatically decoration context parameter.
+**Uso correcto:**
+```typescript
+@PrimaryProperty('id')  // Se especifica explícitamente qué propiedad es la clave primaria
+@ModuleName('Products')
+export class Product extends BaseEntity {
+    @PropertyName('ID', Number)
+    id!: number;
+    
+    @PropertyName('Name', String)
+    name!: string;
+}
+```
+
+**IMPORTANTE:** Este es un ClassDecorator que recibe el nombre de la propiedad como parámetro string. NO es un PropertyDecorator que se aplica directamente sobre la propiedad.
 
 ### Accessor Methods en BaseEntity
 

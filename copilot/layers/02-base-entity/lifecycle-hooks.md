@@ -26,17 +26,17 @@ Los lifecycle hooks (ganchos del ciclo de vida) son métodos que se ejecutan aut
 
 ## 3. Definiciones Clave
 
-**beforeSave():** Hook protected ejecutado inmediatamente antes de validateInputs() en save(). Permite normalizar datos, calcular campos derivados, generar defaults, o validar pre-condiciones business logic. Si lanza excepción, aborta save() sin ejecutar validaciones ni HTTP request.
+**beforeSave():** Hook public ejecutado inmediatamente antes de validateInputs() en save(). Permite normalizar datos, calcular campos derivados, generar defaults, o validar pre-condiciones business logic. Si lanza excepción, aborta save() sin ejecutar validaciones ni HTTP request.
 
-**afterSave():** Hook protected ejecutado después de que HTTP request (POST/PUT) sea exitoso y después de actualizar entidad con response.data. Permite invalidar cachés, emitir eventos custom, sincronizar sistemas externos, o ejecutar operaciones en cascada. Solo ejecuta si request HTTP fue exitoso.
+**afterSave():** Hook public ejecutado después de que HTTP request (POST/PUT) sea exitoso y después de actualizar entidad con response.data. Permite invalidar cachés, emitir eventos custom, sincronizar sistemas externos, o ejecutar operaciones en cascada. Solo ejecuta si request HTTP fue exitoso.
 
-**beforeDelete():** Hook protected ejecutado inmediatamente antes de HTTP DELETE request. Permite validar condiciones de eliminación (ejemplo: verificar no tiene dependencias), logging/auditing, o cancelar eliminación mediante throw Error. Si lanza excepción, aborta delete() sin hacer request HTTP.
+**beforeDelete():** Hook public ejecutado inmediatamente antes de HTTP DELETE request. Permite validar condiciones de eliminación (ejemplo: verificar no tiene dependencias), logging/auditing, o cancelar eliminación mediante throw Error. Si lanza excepción, aborta delete() sin hacer request HTTP.
 
-**afterDelete():** Hook protected ejecutado después de que HTTP DELETE request sea exitoso. Permite invalidar cachés, limpiar datos relacionados, emitir eventos, o logging/auditing. Solo ejecuta si request HTTP fue exitoso (status 200-299).
+**afterDelete():** Hook public ejecutado después de que HTTP DELETE request sea exitoso. Permite invalidar cachés, limpiar datos relacionados, emitir eventos, o logging/auditing. Solo ejecuta si request HTTP fue exitoso (status 200-299).
 
 **onValidated():** Hook public ejecutado después de que todas las validaciones (síncronas y asíncronas) completen, después de esperar 50ms para procesamiento de resultados, y antes de ocultar loading menu. Permite ejecutar lógica post-validación, actualizar UI, o emitir eventos custom de validación completa.
 
-**Protected vs Public:** Hooks beforeSave, afterSave, beforeDelete, afterDelete son protected (solo accesibles desde subclases). onValidated es public (accesible desde cualquier código). Esta distinción protege integridad de flujo CRUD.
+**public vs Public:** Hooks beforeSave, afterSave, beforeDelete, afterDelete son public (solo accesibles desde subclases). onValidated es public (accesible desde cualquier código). Esta distinción protege integridad de flujo CRUD.
 
 **Cancelación mediante throw Error:** Lanzar excepción dentro de beforeSave() o beforeDelete() cancela la operación completa, impidiendo ejecución de validaciones y HTTP request. La excepción se propaga al caller para manejo.
 
@@ -52,10 +52,10 @@ Los lifecycle hooks (ganchos del ciclo de vida) son métodos que se ejecutan aut
 
 ```typescript
 // Hooks CRUD
-protected beforeSave(): void
-protected afterSave(): void
-protected beforeDelete(): void
-protected afterDelete(): void
+public beforeSave(): void
+public afterSave(): void
+public beforeDelete(): void
+public afterDelete(): void
 
 // Hook de validación
 public onValidated(): void
@@ -95,7 +95,7 @@ export class Product extends BaseEntity {
     @PropertyName('SKU', String)
     sku?: string;
     
-    protected beforeSave(): void {
+    public beforeSave(): void {
         // Normalizar nombre
         this.name = this.name.trim().toUpperCase();
         
@@ -144,7 +144,7 @@ export class Product extends BaseEntity {
     @PropertyName('Product Name', String)
     name!: string;
     
-    protected afterSave(): void {
+    public afterSave(): void {
         console.log(`Product ${this.id} saved successfully!`);
         
         // Invalidar caché
@@ -201,7 +201,7 @@ export class Category extends BaseEntity {
     @ArrayOf(Product)
     products!: Product[];
     
-    protected beforeDelete(): void {
+    public beforeDelete(): void {
         // Verificar que no tenga productos
         if (this.products && this.products.length > 0) {
             throw new Error(
@@ -248,7 +248,7 @@ export class Product extends BaseEntity {
     @PropertyName('Product Name', String)
     name!: string;
     
-    protected afterDelete(): void {
+    public afterDelete(): void {
         console.log(`Product ${this.name} deleted`);
         
         // Invalidar caché
@@ -436,7 +436,7 @@ Retorna isValid
 
 **Regla 6:** Excepciones lanzadas en beforeSave() o beforeDelete() DEBEN propagarse al caller y abortar operación completa.
 
-**Regla 7:** Hooks son métodos protected (beforeSave, afterSave, beforeDelete, afterDelete) excepto onValidated que es public. Esta visibilidad no debe alterarse.
+**Regla 7:** Hooks son métodos public (beforeSave, afterSave, beforeDelete, afterDelete) excepto onValidated que es public. Esta visibilidad no debe alterarse.
 
 **Regla 8:** Default implementations en BaseEntity DEBEN ser métodos vacíos (no-op) para permitir override opcional en subclases.
 
@@ -487,7 +487,7 @@ Retorna isValid
 - validationErrors: Accesible desde hooks para verificar errores de validación
 
 **TypeScript:**
-- Protected visibility: Para hooks CRUD (beforeSave, afterSave, beforeDelete, afterDelete)
+- public visibility: Para hooks CRUD (beforeSave, afterSave, beforeDelete, afterDelete)
 - Public visibility: Para onValidated()
 - Void return type: Todos los hooks retornan void
 
@@ -540,7 +540,7 @@ export class BaseAuditEntity extends BaseEntity {
     @ReadOnly(true)
     updatedBy?: string;
     
-    protected beforeSave(): void {
+    public beforeSave(): void {
         const currentUser = Application.currentUser?.username;
         
         if (!this.id) {
@@ -652,7 +652,7 @@ export class Order extends BaseEntity {
     @ReadOnly(true)
     total!: number;
     
-    protected beforeSave(): void {
+    public beforeSave(): void {
         // Validar que tenga items
         if (!this.items || this.items.length === 0) {
             throw new Error('Order must have at least one item');
@@ -677,7 +677,7 @@ export class Order extends BaseEntity {
     @ArrayOf(OrderItem)
     items!: OrderItem[];
     
-    protected async afterSave(): Promise<void> {
+    public async afterSave(): Promise<void> {
         // Guardar items en cascada
         if (this.items && this.items.length > 0) {
             for (const item of this.items) {
@@ -711,7 +711,7 @@ await order.save();
 
 ```typescript
 export class Product extends BaseEntity {
-    protected afterSave(): void {
+    public afterSave(): void {
         // Invalidar cachés relacionados
         CacheService.invalidate('products');
         CacheService.invalidate('product-list');
@@ -723,7 +723,7 @@ export class Product extends BaseEntity {
         }
     }
     
-    protected afterDelete(): void {
+    public afterDelete(): void {
         // Invalidar cachés al eliminar
         CacheService.invalidate('products');
         CacheService.invalidate('product-list');
@@ -741,12 +741,12 @@ export class Order extends BaseEntity {
     
     private previousStatus?: string;
     
-    protected beforeSave(): void {
+    public beforeSave(): void {
         // Guardar estado anterior
         this.previousStatus = this.status;
     }
     
-    protected async afterSave(): Promise<void> {
+    public async afterSave(): Promise<void> {
         // Si cambió el status, notificar
         if (this.previousStatus !== this.status) {
             await this.notifyStatusChange();
@@ -777,7 +777,7 @@ export class Product extends BaseEntity {
     @PropertyName('Product Name', String)
     name!: string;
     
-    protected beforeDelete(): void {
+    public beforeDelete(): void {
         // Pedir confirmación al usuario
         const confirmed = confirm(
             `Are you sure you want to delete "${this.name}"? This action cannot be undone.`
@@ -801,12 +801,12 @@ await product.delete();
 
 ```typescript
 export class BaseEntity {
-    protected beforeSave(): void {
+    public beforeSave(): void {
         // Log en consola (desarrollo)
         console.log(`[beforeSave] ${this.constructor.name}`, this.toObject());
     }
     
-    protected afterSave(): void {
+    public afterSave(): void {
         // Log en servidor (producción)
         if (import.meta.env.PROD) {
             AuditService.log({
@@ -820,7 +820,7 @@ export class BaseEntity {
         }
     }
     
-    protected afterDelete(): void {
+    public afterDelete(): void {
         // Log eliminación
         AuditService.log({
             action: 'delete',
@@ -837,17 +837,17 @@ export class BaseEntity {
 
 ```typescript
 // CORRECTO: Síncrono
-protected beforeSave(): void {
+public beforeSave(): void {
     this.name = this.name.toUpperCase();
 }
 
 // INCORRECTO: No usar async en hook base
-protected async beforeSave(): Promise<void> {
+public async beforeSave(): Promise<void> {
     await someAsyncOperation();  // ← No se esperará
 }
 
 // SOLUCIÓN: Crear método async separado
-protected beforeSave(): void {
+public beforeSave(): void {
     // Lógica síncrona aquí
 }
 
@@ -865,13 +865,13 @@ await order.save();
 
 ```typescript
 // INCORRECTO: Loop infinito
-protected beforeSave(): void {
+public beforeSave(): void {
     this.updatedAt = new Date();
     await this.save();  // ← Loop infinito
 }
 
 // CORRECTO: Solo modificar propiedades
-protected beforeSave(): void {
+public beforeSave(): void {
     this.updatedAt = new Date();
 }
 ```
@@ -879,7 +879,7 @@ protected beforeSave(): void {
 ### Consideración 3: Excepciones Cancelan Operación
 
 ```typescript
-protected beforeSave(): void {
+public beforeSave(): void {
     if (this.price < 0) {
         throw new Error('Price cannot be negative');
     }
@@ -896,7 +896,7 @@ await product.save();
 ### Consideración 4: Hooks Solo Ejecutan en Éxito
 
 ```typescript
-protected afterSave(): void {
+public afterSave(): void {
     console.log('Saved!');
 }
 
@@ -909,13 +909,13 @@ await product.save();
 
 ```typescript
 class BaseAuditEntity extends BaseEntity {
-    protected beforeSave(): void {
+    public beforeSave(): void {
         this.updatedAt = new Date();
     }
 }
 
 class Product extends BaseAuditEntity {
-    protected beforeSave(): void {
+    public beforeSave(): void {
         super.beforeSave();  // ← Llamar hook del padre
         
         // Lógica adicional

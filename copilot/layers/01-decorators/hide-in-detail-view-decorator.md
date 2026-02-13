@@ -40,7 +40,7 @@ El decorador `@HideInDetailView()` oculta una propiedad en vistas de detalle (De
 
 ## 3. Definiciones Clave
 
-**HIDE_IN_DETAIL_VIEW_METADATA (Symbol):**
+**HIDE_IN_DETAIL_VIEW_KEY (Symbol):**
 - Identificador único para almacenar lista de propiedades ocultas en DetailView
 - Ubicación: `prototype` de la clase entity
 - Tipo: `Symbol`
@@ -83,7 +83,7 @@ El decorador `@HideInDetailView()` oculta una propiedad en vistas de detalle (De
 /**
  * Symbol para almacenar metadata de hide in detail view
  */
-export const HIDE_IN_DETAIL_VIEW_METADATA = Symbol('hideInDetailView');
+export const HIDE_IN_DETAIL_VIEW_KEY = Symbol('hideInDetailView');
 
 /**
  * @HideInDetailView() - Oculta una propiedad en DetailView (formulario)
@@ -93,19 +93,19 @@ export const HIDE_IN_DETAIL_VIEW_METADATA = Symbol('hideInDetailView');
 export function HideInDetailView(): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         // Inicializar metadata si no existe
-        if (!target[HIDE_IN_DETAIL_VIEW_METADATA]) {
-            target[HIDE_IN_DETAIL_VIEW_METADATA] = [];
+        if (!target[HIDE_IN_DETAIL_VIEW_KEY]) {
+            target[HIDE_IN_DETAIL_VIEW_KEY] = [];
         }
         
         // Agregar propiedad a lista de ocultas
-        target[HIDE_IN_DETAIL_VIEW_METADATA].push(propertyKey);
+        target[HIDE_IN_DETAIL_VIEW_KEY].push(propertyKey);
     };
 }
 ```
 
 **Elementos técnicos:**
 
-1. **Symbol HIDE_IN_DETAIL_VIEW_METADATA:**
+1. **Symbol HIDE_IN_DETAIL_VIEW_KEY:**
    - Identificador único para evitar colisiones en prototype
    - Almacena array de nombres de propiedades ocultas en DetailView
    - Accesible desde BaseEntity y componentes UI
@@ -131,7 +131,7 @@ export function HideInDetailView(): PropertyDecorator {
 
 ```typescript
 // Ejemplo: Order con campos ocultos
-Order.prototype[HIDE_IN_DETAIL_VIEW_METADATA] = [
+Order.prototype[HIDE_IN_DETAIL_VIEW_KEY] = [
     'createdAt',        // Timestamp (solo info)
     'itemsCount',       // Calculado (solo mostrar)
     'statusLabel',      // Derivado (solo mostrar)
@@ -158,7 +158,7 @@ Order.prototype[HIDE_IN_DETAIL_VIEW_METADATA] = [
  */
 public isHideInDetailView(propertyKey: string): boolean {
     const constructor = this.constructor as typeof BaseEntity;
-    const hideMetadata = constructor.prototype[HIDE_IN_DETAIL_VIEW_METADATA];
+    const hideMetadata = constructor.prototype[HIDE_IN_DETAIL_VIEW_KEY];
     
     if (!hideMetadata) {
         return false;
@@ -171,7 +171,7 @@ public isHideInDetailView(propertyKey: string): boolean {
  * Verifica si una propiedad está oculta en DetailView (método estático)
  */
 public static isHideInDetailView(propertyKey: string): boolean {
-    const hideMetadata = this.prototype[HIDE_IN_DETAIL_VIEW_METADATA];
+    const hideMetadata = this.prototype[HIDE_IN_DETAIL_VIEW_KEY];
     
     if (!hideMetadata) {
         return false;
@@ -316,7 +316,7 @@ export class Order extends BaseEntity {
 **Acciones:**
 1. TypeScript procesa decorador durante compilación
 2. Función `HideInDetailView()` se ejecuta inmediatamente
-3. PropertyDecorator agrega 'createdAt' a `Order.prototype[HIDE_IN_DETAIL_VIEW_METADATA]`
+3. PropertyDecorator agrega 'createdAt' a `Order.prototype[HIDE_IN_DETAIL_VIEW_KEY]`
 4. Metadata queda disponible para runtime
 
 ### Fase 2: Carga de Entity Class (Runtime - Inicialización)
@@ -714,7 +714,7 @@ export class Product extends BaseEntity {
 **Dependencias:**
 ```typescript
 // src/entities/base_entitiy.ts
-import { HIDE_IN_DETAIL_VIEW_METADATA } from '@/decorations/hide_in_detail_view_decorator';
+import { HIDE_IN_DETAIL_VIEW_KEY } from '@/decorations/hide_in_detail_view_decorator';
 
 public isHideInDetailView(propertyKey: string): boolean
 public static isHideInDetailView(propertyKey: string): boolean
@@ -1206,6 +1206,6 @@ entities.forEach(entity => {
 
 **Símbolos exportados:**
 ```typescript
-export const HIDE_IN_DETAIL_VIEW_METADATA: Symbol
+export const HIDE_IN_DETAIL_VIEW_KEY: Symbol
 export function HideInDetailView(): PropertyDecorator
 ```

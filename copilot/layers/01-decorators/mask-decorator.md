@@ -44,7 +44,7 @@ El decorador `@Mask()` aplica formateo automático de entrada a campos de texto 
 
 ## 3. Definiciones Clave
 
-**MASK_METADATA (Symbol):**
+**MASK_KEY (Symbol):**
 - Identificador único para almacenar configuración de máscaras en prototype
 - Ubicación: `prototype` de la clase entity
 - Tipo: `Symbol`
@@ -103,7 +103,7 @@ import { MaskSide } from '@/enums/mask_sides';
 /**
  * Symbol para almacenar metadata de mask
  */
-export const MASK_METADATA = Symbol('mask');
+export const MASK_KEY = Symbol('mask');
 
 /**
  * Configuración de máscara
@@ -131,7 +131,7 @@ import { MaskSide } from '@/enums/mask_sides';
 /**
  * Symbol para almacenar metadata de mask
  */
-export const MASK_METADATA = Symbol('mask');
+export const MASK_KEY = Symbol('mask');
 
 /**
  * Configuración de máscara
@@ -151,12 +151,12 @@ export interface MaskConfig {
 export function Mask(mask: string, side: MaskSide = MaskSide.RIGHT): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         // Inicializar metadata si no existe
-        if (!target[MASK_METADATA]) {
-            target[MASK_METADATA] = {};
+        if (!target[MASK_KEY]) {
+            target[MASK_KEY] = {};
         }
         
         // Guardar configuración
-        target[MASK_METADATA][propertyKey] = {
+        target[MASK_KEY][propertyKey] = {
             mask: mask,
             side: side
         };
@@ -166,7 +166,7 @@ export function Mask(mask: string, side: MaskSide = MaskSide.RIGHT): PropertyDec
 
 **Elementos técnicos:**
 
-1. **Symbol MASK_METADATA:**
+1. **Symbol MASK_KEY:**
    - Identificador único para evitar colisiones en prototype
    - Almacena objeto con configuraciones de máscara por propiedad
    - Accesible desde BaseEntity y componentes UI
@@ -215,7 +215,7 @@ export enum MaskSide {
 
 ```typescript
 // Ejemplo: Customer con campos enmascarados
-Customer.prototype[MASK_METADATA] = {
+Customer.prototype[MASK_KEY] = {
     'phone': { 
         mask: '(###) ###-####', 
         side: MaskSide.RIGHT 
@@ -250,7 +250,7 @@ Customer.prototype[MASK_METADATA] = {
  */
 public getMask(propertyKey: string): MaskConfig | undefined {
     const constructor = this.constructor as typeof BaseEntity;
-    const maskMetadata = constructor.prototype[MASK_METADATA];
+    const maskMetadata = constructor.prototype[MASK_KEY];
     
     if (!maskMetadata || !maskMetadata[propertyKey]) {
         return undefined;
@@ -263,7 +263,7 @@ public getMask(propertyKey: string): MaskConfig | undefined {
  * Obtiene la configuración de máscara (método estático)
  */
 public static getMask(propertyKey: string): MaskConfig | undefined {
-    const maskMetadata = this.prototype[MASK_METADATA];
+    const maskMetadata = this.prototype[MASK_KEY];
     
     if (!maskMetadata || !maskMetadata[propertyKey]) {
         return undefined;
@@ -489,7 +489,7 @@ export class Customer extends BaseEntity {
 **Acciones:**
 1. TypeScript procesa decorador durante compilación
 2. Función `Mask()` se ejecuta inmediatamente
-3. PropertyDecorator almacena MaskConfig en `Customer.prototype[MASK_METADATA]['phone']`
+3. PropertyDecorator almacena MaskConfig en `Customer.prototype[MASK_KEY]['phone']`
 4. Metadata queda disponible para runtime
 
 ### Fase 2: Carga de Entity Class (Runtime - Inicialización)
@@ -832,7 +832,7 @@ phone!: string;
 **Dependencias:**
 ```typescript
 // src/entities/base_entitiy.ts
-import { MASK_METADATA, type MaskConfig } from '@/decorations/mask_decorator';
+import { MASK_KEY, type MaskConfig } from '@/decorations/mask_decorator';
 
 public getMask(propertyKey: string): MaskConfig | undefined
 public static getMask(propertyKey: string): MaskConfig | undefined
@@ -1255,7 +1255,7 @@ Máscaras deben ser accesibles para screen readers:
 
 **Símbolos exportados:**
 ```typescript
-export const MASK_METADATA: Symbol
+export const MASK_KEY: Symbol
 export interface MaskConfig { mask: string; side: MaskSide; }
 export function Mask(mask: string, side?: MaskSide): PropertyDecorator
 export enum MaskSide { LEFT = 'left', RIGHT = 'right' }

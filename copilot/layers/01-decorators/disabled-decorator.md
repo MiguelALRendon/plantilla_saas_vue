@@ -30,7 +30,7 @@ El decorator Disabled marca propiedad como deshabilitada en interfaz de usuario,
 
 ## 3. Definiciones Clave
 
-**DISABLED_METADATA Symbol:** Identificador único usado como property key en prototype para almacenar object map de disabled conditions. Definido como `export const DISABLED_METADATA = Symbol('disabled')`. Estructura: `{ [propertyKey: string]: boolean | ((entity: BaseEntity) => boolean) }`.
+**DISABLED_KEY Symbol:** Identificador único usado como property key en prototype para almacenar object map de disabled conditions. Definido como `export const DISABLED_KEY = Symbol('disabled')`. Estructura: `{ [propertyKey: string]: boolean | ((entity: BaseEntity) => boolean) }`.
 
 **Disabled Condition Type:** Type union `boolean | ((entity: BaseEntity) => boolean)`. Valor true deshabilita siempre, false nunca deshabilita, function evaluada en runtime que retorna boolean.
 
@@ -53,7 +53,7 @@ El decorator Disabled marca propiedad como deshabilitada en interfaz de usuario,
 ```typescript
 // src/decorations/disabled_decorator.ts
 
-import { DISABLED_METADATA } from './index';
+import { DISABLED_KEY } from './index';
 
 /**
  * Marca una propiedad como deshabilitada en la interfaz de usuario
@@ -68,11 +68,11 @@ export function Disabled(
     return function (target: any, propertyKey: string | symbol) {
         const propKey = propertyKey.toString();
         
-        if (!target[DISABLED_METADATA]) {
-            target[DISABLED_METADATA] = {};
+        if (!target[DISABLED_KEY]) {
+            target[DISABLED_KEY] = {};
         }
         
-        target[DISABLED_METADATA][propKey] = condition;
+        target[DISABLED_KEY][propKey] = condition;
     };
 }
 ```
@@ -83,7 +83,7 @@ Ubicación: `src/decorations/disabled_decorator.ts` (líneas 1-30)
 
 ```typescript
 // Estructura en prototype después de aplicar decorators
-Product.prototype[DISABLED_METADATA] = {
+Product.prototype[DISABLED_KEY] = {
     'id': true,                              // Siempre disabled (static)
     'createdAt': true,                       // Siempre disabled (static)
     'updatedAt': true,                       // Siempre disabled (static)
@@ -105,7 +105,7 @@ Product.prototype[DISABLED_METADATA] = {
  */
 public isDisabled(propertyKey: string): boolean {
     const constructor = this.constructor as typeof BaseEntity;
-    const disabledMetadata = constructor.prototype[DISABLED_METADATA];
+    const disabledMetadata = constructor.prototype[DISABLED_KEY];
     
     if (!disabledMetadata || !disabledMetadata[propertyKey]) {
         return false;
@@ -129,7 +129,7 @@ public isDisabled(propertyKey: string): boolean {
  * @returns true si está deshabilitada (solo para static conditions)
  */
 public static isDisabled(propertyKey: string): boolean {
-    const disabledMetadata = this.prototype[DISABLED_METADATA];
+    const disabledMetadata = this.prototype[DISABLED_KEY];
     
     if (!disabledMetadata || !disabledMetadata[propertyKey]) {
         return false;
@@ -236,7 +236,7 @@ export class Product extends BaseEntity {
 }
 
 // Resultado después de ejecutar decorator:
-Product.prototype[DISABLED_METADATA] = {
+Product.prototype[DISABLED_KEY] = {
     'id': true
 }
 ```
@@ -1100,7 +1100,7 @@ describe('Disabled Decorator', () => {
 ### Código Fuente
 
 - `src/decorations/disabled_decorator.ts` - Implementación decorator
-- `src/decorations/index.ts` - Export DISABLED_METADATA Symbol
+- `src/decorations/index.ts` - Export DISABLED_KEY Symbol
 - `src/entities/base_entitiy.ts` - isDisabled() accessor methods
 
 ### Ejemplos de Uso
@@ -1146,7 +1146,7 @@ Líneas: 30
 ### Estructura en Prototype
 
 ```typescript
-Product.prototype[DISABLED_METADATA] = {
+Product.prototype[DISABLED_KEY] = {
     'id': true,                              // Siempre disabled
     'createdAt': true,                       // Siempre disabled
     'isActive': (entity) => entity.id > 0    // Disabled si existe (editing)
@@ -1166,7 +1166,7 @@ Product.prototype[DISABLED_METADATA] = {
  */
 public isDisabled(propertyKey: string): boolean {
     const constructor = this.constructor as typeof BaseEntity;
-    const disabledMetadata = constructor.prototype[DISABLED_METADATA];
+    const disabledMetadata = constructor.prototype[DISABLED_KEY];
     
     if (!disabledMetadata || !disabledMetadata[propertyKey]) {
         return false;
@@ -1187,7 +1187,7 @@ public isDisabled(propertyKey: string): boolean {
  * Verifica si una propiedad está deshabilitada (método estático)
  */
 public static isDisabled(propertyKey: string): boolean {
-    const disabledMetadata = this.prototype[DISABLED_METADATA];
+    const disabledMetadata = this.prototype[DISABLED_KEY];
     
     if (!disabledMetadata || !disabledMetadata[propertyKey]) {
         return false;

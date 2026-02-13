@@ -40,7 +40,7 @@ El decorador `@HideInListView()` oculta una propiedad en vistas de lista (ListVi
 
 ## 3. Definiciones Clave
 
-**HIDE_IN_LIST_VIEW_METADATA (Symbol):**
+**HIDE_IN_LIST_VIEW_KEY (Symbol):**
 - Identificador único para almacenar lista de propiedades ocultas en ListView
 - Ubicación: `prototype` de la clase entity
 - Tipo: `Symbol`
@@ -83,7 +83,7 @@ El decorador `@HideInListView()` oculta una propiedad en vistas de lista (ListVi
 /**
  * Symbol para almacenar metadata de hide in list view
  */
-export const HIDE_IN_LIST_VIEW_METADATA = Symbol('hideInListView');
+export const HIDE_IN_LIST_VIEW_KEY = Symbol('hideInListView');
 
 /**
  * @HideInListView() - Oculta una propiedad en ListView (tabla)
@@ -93,19 +93,19 @@ export const HIDE_IN_LIST_VIEW_METADATA = Symbol('hideInListView');
 export function HideInListView(): PropertyDecorator {
     return function (target: any, propertyKey: string | symbol) {
         // Inicializar metadata si no existe
-        if (!target[HIDE_IN_LIST_VIEW_METADATA]) {
-            target[HIDE_IN_LIST_VIEW_METADATA] = [];
+        if (!target[HIDE_IN_LIST_VIEW_KEY]) {
+            target[HIDE_IN_LIST_VIEW_KEY] = [];
         }
         
         // Agregar propiedad a lista de ocultas
-        target[HIDE_IN_LIST_VIEW_METADATA].push(propertyKey);
+        target[HIDE_IN_LIST_VIEW_KEY].push(propertyKey);
     };
 }
 ```
 
 **Elementos técnicos:**
 
-1. **Symbol HIDE_IN_LIST_VIEW_METADATA:**
+1. **Symbol HIDE_IN_LIST_VIEW_KEY:**
    - Identificador único para evitar colisiones en prototype
    - Almacena array de nombres de propiedades ocultas en ListView
    - Accesible desde BaseEntity y componentes UI
@@ -131,7 +131,7 @@ export function HideInListView(): PropertyDecorator {
 
 ```typescript
 // Ejemplo: Product con campos ocultos en tabla
-Product.prototype[HIDE_IN_LIST_VIEW_METADATA] = [
+Product.prototype[HIDE_IN_LIST_VIEW_KEY] = [
     'description',      // Texto largo
     'internalNotes',    // Info interna
     'createdAt',        // Metadata
@@ -158,7 +158,7 @@ Product.prototype[HIDE_IN_LIST_VIEW_METADATA] = [
  */
 public isHideInListView(propertyKey: string): boolean {
     const constructor = this.constructor as typeof BaseEntity;
-    const hideMetadata = constructor.prototype[HIDE_IN_LIST_VIEW_METADATA];
+    const hideMetadata = constructor.prototype[HIDE_IN_LIST_VIEW_KEY];
     
     if (!hideMetadata) {
         return false;
@@ -171,7 +171,7 @@ public isHideInListView(propertyKey: string): boolean {
  * Verifica si una propiedad está oculta en ListView (método estático)
  */
 public static isHideInListView(propertyKey: string): boolean {
-    const hideMetadata = this.prototype[HIDE_IN_LIST_VIEW_METADATA];
+    const hideMetadata = this.prototype[HIDE_IN_LIST_VIEW_KEY];
     
     if (!hideMetadata) {
         return false;
@@ -331,7 +331,7 @@ export class Product extends BaseEntity {
 **Acciones:**
 1. TypeScript procesa decorador durante compilación
 2. Función `HideInListView()` se ejecuta inmediatamente
-3. PropertyDecorator agrega 'description' a `Product.prototype[HIDE_IN_LIST_VIEW_METADATA]`
+3. PropertyDecorator agrega 'description' a `Product.prototype[HIDE_IN_LIST_VIEW_KEY]`
 4. Metadata queda disponible para runtime
 
 ### Fase 2: Carga de Entity Class (Runtime - Inicialización)
@@ -748,7 +748,7 @@ export class Order extends BaseEntity {
 **Dependencias:**
 ```typescript
 // src/entities/base_entitiy.ts
-import { HIDE_IN_LIST_VIEW_METADATA } from '@/decorations/hide_in_list_view_decorator';
+import { HIDE_IN_LIST_VIEW_KEY } from '@/decorations/hide_in_list_view_decorator';
 
 public isHideInListView(propertyKey: string): boolean
 public static isHideInListView(propertyKey: string): boolean
@@ -1283,6 +1283,6 @@ const filteredProperties = computed(() => {
 
 **Símbolos exportados:**
 ```typescript
-export const HIDE_IN_LIST_VIEW_METADATA: Symbol
+export const HIDE_IN_LIST_VIEW_KEY: Symbol
 export function HideInListView(): PropertyDecorator
 ```

@@ -13,7 +13,7 @@ BaseEntity implementa el patrón Active Record proporcionando métodos CRUD comp
 - Método estático getElementList() para obtención de colecciones con filtros opcionales
 - Método estático getElement() para obtención de registro individual por ID
 - Serialización vía toObject() con manejo de relaciones y tipos complejos
-- Deserialización vía fromDictionary() con transformación de tipos
+- Transformación de tipos en constructor mediante Object.assign()
 - Validación automática pre-guardado (required, sync, async)
 - Emisión de eventos al eventBus tras operaciones exitosas
 - Manejo de errores HTTP con feedback mediante toast
@@ -30,7 +30,7 @@ BaseEntity implementa el patrón Active Record proporcionando métodos CRUD comp
 
 **toObject():** Método de serialización que convierte instancia BaseEntity a objeto plano Record<string, any>, usado para transmitir datos a la API.
 
-**fromDictionary():** Método estático de deserialización que construye instancia BaseEntity desde objeto plano, aplicando transformaciones de tipo (ISO strings a Date, etc.).
+**toPersistentObject():** Método de instancia que serializa entidad a objeto plano usando solo propiedades definidas mediante @PropertyName, preparando datos para envío a API.
 
 **Primary Key Value:** Valor de la propiedad marcada con @PrimaryProperty, utilizado para discriminar between creación (null/undefined) y actualización (valor presente).
 
@@ -88,84 +88,123 @@ catch (error: any) {
 
 **Firma:** `public async update(): Promise<this>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~767)
+**Ubicación:** `src/entities/base_entitiy.ts` (líneas 767-830)
 
-**Implementación:**
-```typescript
-public async update(): Promise<this> {
-    return this.save();
-}
-```
+**IMPORTANTE:** Este método NO es un alias de save(). Tiene su propia implementación completa.
 
-Método de conveniencia que delega a save(). Es un alias semántico que hace explícito que se está actualizando una entidad existente, aunque save() ya discrimina automáticamente entre creación y actualización.
+**Algoritmo completo:**
+
+1. **Validaciones previas:**
+   - Verifica `validatePersistenceConfiguration()` - retorna `this` si falla
+   - Verifica `validateApiMethod('PUT')` - retorna `this` si PUT no permitido
+   - Verifica que NO sea nueva (`isNew()`) - muestra error y retorna `this` si es nueva
+
+2. **Preparación:**
+   - Establece `_isSaving = true`
+   - Ejecuta hook `beforeUpdate()`
+
+3. **Ejecución:**
+   - Ejecuta hook `onUpdating()`
+   - Obtiene endpoint vía `getApiEndpoint()`
+   - Obtiene unique key con `getUniquePropertyValue()`
+   - Mapea datos con `mapToPersistentKeys(this.toObject())`
+   - Ejecuta PUT request: `Application.axiosInstance.put(\`${endpoint}/${uniqueKey}\`, dataToSend)`
+
+4. **Actualización de estado (si éxito):**
+   - Mapea datos de respuesta con `mapFromPersistentKeys(response.data)`
+   - Actualiza instancia con `Object.assign(this, mappedData)`
+   - Actualiza `_originalState` con snapshot del estado actual
+   - Establece `_isSaving = false`
+   - Ejecuta hook `afterUpdate()`
+
+5. **Manejo de errores (catch):**
+   - Establece `_isSaving = false`
+   - Ejecuta hook `updateFailed()`
+   - Muestra confirmation menu con error
+   - Lanza excepción
+
+6. **Retorno:** `this` (la instancia actualizada)
+
+**Diferencia clave con save():**
+- `save()` decide entre POST o PUT según `isNew()`
+- `update()` SIEMPRE usa PUT y falla si la entidad es nueva
 
 ### 4.3. Método delete()
 
 **Firma:** `public async delete(): Promise<void>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~819)
+**Ubicación:** `src/entities/base_entitiy.ts` (líneas 833-870)
+
+**Retorno:** `void` (sin valor de retorno)
 
 **Flujo de ejecución:**
-1. Ejecuta hook beforeDelete()
-2. Obtiene pkValue con getPrimaryPropertyValue()
-3. Si pkValue es null/undefined: muestra error y retorna early
-4. Verifica isPersistent() - retorna early si no es persistente
-5. Obtiene endpoint vía getApiEndpoint()
-6. Ejecuta DELETE request: `Application.axiosInstance.delete(\`${endpoint}/${pkValue}\`)`
-7. Si éxito:
-   - Ejecuta hook afterDelete()
-   - Muestra toast de éxito
-   - Retorna sin valor (void)
-   - Emite evento 'deleted' con { entityClass, entity }
-   - Retorna true
-8. Si error:
-   - Muestra toast con mensaje de error
-   - Retorna false
+1. Verifica `validatePersistenceConfiguration()` - retorna `void` si falla
+2. Verifica `validateApiMethod('DELETE')` - retorna `void` si DELETE no permitido
+3. Verifica que NO sea nueva (`isNew()`) - muestra error y retorna `void` si es nueva
+4. Ejecuta hook `beforeDelete()`
+5. Ejecuta hook `onDeleting()`
+6. Obtiene endpoint y unique key
+7. Ejecuta DELETE request: `Application.axiosInstance.delete(\`${endpoint}/${uniqueKey}\`)`
+8. Si éxito:
+   - Ejecuta hook `afterDelete()`
+   - Retorna `void`
+9. Si error:
+   - Ejecuta hook `deleteFailed()`
+   - Muestra confirmation menu con error
+   - Lanza excepción
 
-**Diferencia con save/update:** Retorna boolean en lugar de this, ya que entidad eliminada no debe seguir usándose.
+**IMPORTANTE:** Este método retorna `void`, NO retorna boolean ni `this`.
 
 ### 4.4. Método getElementList()
 
-**Firma:** `public static async getElementList<T extends BaseEntity>(this: new () => T, filters?: Record<string, any>): Promise<T[]>`
+**Firma:** `public static async getElementList<T extends BaseEntity>(this: new (data: Record<string, any>) => T, filter: string = ''): Promise<T[]>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~615)
+**Ubicación:** `src/entities/base_entitiy.ts` (líneas 698-725)
+
+**Parámetros correctos:**
+- Constructor signature: `new (data: Record<string, any>) => T` - Constructor que recibe data
+- `filter: string = ''` - String de filtro (NO es `Record<string, any>`)
 
 **Comportamiento:**
 - Método estático que ejecuta GET al endpoint base
-- Parámetro filters se convierte en query params: `{ active: true }` → `?active=true`
+- El parámetro `filter` es un string simple, no un objeto
 - Response esperado: array de objetos planos
-- Cada objeto se transforma en instancia de la entidad: `new this()` + `Object.assign()`
-- Emite evento 'list-fetched' con array completo
-- Retorna array vacío si hay error (no lanza excepción)
+- Cada objeto se transforma creando instancia: `new this(data)`
+- Retorna array vacío si hay error
 
-**Uso típico:**
+**Uso correcto:**
 ```typescript
 const products = await Product.getElementList();
-const filtered = await Product.getElementList({ category: 'electronics', active: true });
+const filtered = await Product.getElementList('?active=true');
 ```
 
 ### 4.5. Método getElement()
 
-**Firma:** `public static async getElement<T extends BaseEntity>(this: new () => T, id: any): Promise<T | null>`
+**Firma:** `public static async getElement<T extends BaseEntity>(this: new (data: Record<string, any>) => T, oid: string): Promise<T>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~650)
+**Ubicación:** `src/entities/base_entitiy.ts` (líneas 669-696)
+
+**Parámetros correctos:**
+- Constructor signature: `new (data: Record<string, any>) => T` - Constructor que recibe data
+- `oid: string` - ID del elemento (string, NO `any`)
+
+**Retorno:** `Promise<T>` - NO retorna `null`, lanza excepción en caso de error
 
 **Comportamiento:**
-- Método estático que ejecuta GET a `${endpoint}/${id}`
+- Método estático que ejecuta GET a `${endpoint}/${oid}`
 - Response esperado: objeto plano con datos de entidad
-- Crea instancia con `new this()` + `Object.assign()`
-- Emite evento 'element-fetched' con instancia
-- Retorna null si error 404 (registro no encontrado)
-- Retorna null para otros errores también (no lanza excepción)
+- Crea instancia con `new this(data)` pasando data al constructor
+- Muestra confirmation menu con error si falla
+- Lanza excepción en caso de error
 
-**Manejo especial de 404:**
+**Uso correcto:**
 ```typescript
-if (error.response?.status === 404) {
-    Application.showToast('Record not found', 'warning');
-} else {
-    Application.showToast(error.response?.data?.message || 'Failed to fetch record', 'error');
+try {
+    const product = await Product.getElement('123');
+    // product es instancia de Product
+} catch (error) {
+    // Manejar error
 }
-return null;
 ```
 
 ### 4.6. Método toObject()
@@ -192,27 +231,6 @@ public toObject(): Record<string, any> {
 - Retorna un objeto plano Record<string, any>
 - No hace transformaciones especiales de tipos
 - El backend es responsable de parsear correctamente los valores
-**Método estático de construcción:**
-```typescript
-public static fromDictionary<T extends BaseEntity>(
-    this: new () => T,
-    data: Record<string, any>
-): T {
-    const entity = new this();
-    
-    Object.entries(data).forEach(([key, value]) => {
-        if (entity.getPropertyType(key) === Date && typeof value === 'string') {
-            (entity as any)[key] = new Date(value);
-        } else {
-            (entity as any)[key] = value;
-        }
-    });
-    
-    return entity;
-}
-```
-
-**Transformación inversa:** Convierte strings ISO a objetos Date cuando el tipo de propiedad lo indica.
 
 ## 5. Flujo de Funcionamiento
 
@@ -351,7 +369,7 @@ Usuario: entity.toObject()
 
 8. **Error handling:** Operaciones CRUD DEBEN capturar excepciones, mostrar toast de error y manejar gracefully (retornar valor por defecto o lanzar error según método).
 
-9. **Instance methods vs static:** save(), update(), delete() son métodos de instancia. getElementList(), getElement(), fromDictionary() son métodos estáticos. NO intercambiar.
+9. **Instance methods vs static:** save(), update(), delete() son métodos de instancia. getElementList(), getElement() son métodos estáticos. NO intercambiar.
 
 10. **toObject for persistence:** Datos enviados a API usan toObject() para serializar la entidad a objeto plano antes de transmitir por HTTP.
 

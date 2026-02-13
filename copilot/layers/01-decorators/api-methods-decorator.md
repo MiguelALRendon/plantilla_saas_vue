@@ -65,19 +65,36 @@ export enum HttpMethod {
 ### Implementación del Decorator
 
 ```typescript
-// src/decorations/api_methods_decorator.ts - Línea 5
-export const API_METHODS_METADATA = Symbol('apiMethods');
+// src/decorations/api_methods_decorator.ts
+export const API_METHODS_KEY = Symbol('api_methods');
 
-export enum HttpMethod {
-    GET = 'GET',
-    POST = 'POST',
-    PUT = 'PUT',
-    PATCH = 'PATCH',
-    DELETE = 'DELETE'
-}
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export function ApiMethods(methods: string[] | string): ClassDecorator {
+export function ApiMethods(methods: HttpMethod[]): ClassDecorator {
     return function (target: any) {
+        (target as any)[API_METHODS_KEY] = methods;
+    };
+}
+```
+
+**IMPORTANTE:** El decorador acepta SOLO `HttpMethod[]` (array de tipos específicos). NO acepta strings genéricos ni strings individuales.
+
+**Parámetros:**
+- `methods: HttpMethod[]` - Array tipado de métodos HTTP permitidos
+
+**Uso correcto:**
+```typescript
+@ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])  // Correcto
+export class Product extends BaseEntity {
+    // ...
+}
+```
+
+**Uso incorrecto:**
+```typescript
+@ApiMethods('GET')  // ❌ ERROR: No acepta string individual
+@ApiMethods(['get', 'post'])  // ❌ ERROR: Debe ser uppercase y tipo HttpMethod
+```
         let methodsArray: string[];
         
         // Normalizar input a array

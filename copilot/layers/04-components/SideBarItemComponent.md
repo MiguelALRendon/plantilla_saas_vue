@@ -64,7 +64,7 @@ El ciclo operacional del componente sigue este flujo:
 
 Este flujo garantiza que siempre haya exactamente un item activo coincidiendo con el módulo visualizado en Application.View.
 
-## 6. Reglas de Uso
+## 6. Reglas Obligatorias
 
 Las reglas obligatorias para el uso correcto de SideBarItemComponent son:
 
@@ -143,7 +143,7 @@ SideBarItemComponent mantiene las siguientes dependencias críticas:
 - Casting as typeof BaseEntity en setNewView
 - JavaScript puro requeriría eliminación de tipos
 
-## 9. Relaciones con Otros Componentes
+## 9. Relaciones
 
 SideBarItemComponent participa en las siguientes relaciones arquitecturales:
 

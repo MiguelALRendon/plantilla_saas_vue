@@ -55,20 +55,29 @@ El decorator DefaultProperty asigna valor inicial automático a una propiedad cu
 ### Implementación del Decorator
 
 ```typescript
-// src/decorations/default_property_decorator.ts - Línea 5
-export const DEFAULT_PROPERTY_METADATA = Symbol('defaultProperty');
+// src/decorations/default_property_decorator.ts
+export const DEFAULT_PROPERTY_KEY = Symbol('default_property');
 
-export function DefaultProperty(defaultValue: any | (() => any)): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
-        // Inicializar metadata object si no existe
-        if (!target[DEFAULT_PROPERTY_METADATA]) {
-            target[DEFAULT_PROPERTY_METADATA] = {};
-        }
-        
-        // Guardar default value (o function) en metadata map
-        target[DEFAULT_PROPERTY_METADATA][propertyKey] = defaultValue;
+export function DefaultProperty(propertyName: string): ClassDecorator {
+    return function (target: Function) {
+        (target as any)[DEFAULT_PROPERTY_KEY] = propertyName;
     };
 }
+```
+
+**IMPORTANTE:** Este decorador NO establece valores por defecto para propiedades. Su función real es marcar cuál propiedad se debe usar como representación textual por defecto de la entidad (similar a `__str__` en Python).
+
+**Ejemplo de uso correcto:**
+```typescript
+@DefaultProperty('name')  // 'name' será la propiedad usada para mostrar la entidad
+@ModuleName('Products')
+export class Product extends BaseEntity {
+    id!: number;
+    name!: string;
+    description!: string;
+}
+
+// Cuando se necesite representar un Product como texto, se usará product.name
 ```
 
 ### Accessor en BaseEntity
