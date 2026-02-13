@@ -1,7 +1,7 @@
 # Índice Maestro de Documentación - Framework SaaS Vue
 
 **Versión:** 1.0.0  
-**Última actualización:** 11 de Febrero, 2026
+**Última actualización:** 13 de Febrero, 2026
 
 ---
 
@@ -18,8 +18,8 @@ El índice opera como mecanismo de localización de información técnica, permi
 ### Cobertura de Documentación
 
 **Versión del Framework:** 1.0.0  
-**Documentos totales:** 30+ documentos técnicos (objetivo: 50+ documentos)  
-**Última actualización del índice:** 11 de Febrero, 2026
+**Documentos totales:** 31+ documentos técnicos (objetivo: 50+ documentos)  
+**Última actualización del índice:** 13 de Febrero, 2026
 
 ### Áreas Documentadas
 
@@ -29,7 +29,7 @@ El índice opera como mecanismo de localización de información técnica, permi
 - Componentes de interfaz (16 componentes documentados)
 - Tutoriales de implementación (3 tutoriales)
 - Ejemplos de referencia (2 implementaciones completas)
-- Documentos fundamentales (4 documentos)
+- Documentos fundamentales (5 documentos: Contrato, Overview, Arquitectura, Quick Start, UI/CSS Contract)
 
 ### Documentación Reciente
 
@@ -224,8 +224,9 @@ Tiempo estimado: 1.5 horas
 1. [Contrato de Desarrollo](00-CONTRACT.md) - 10 minutos - Lectura obligatoria prioritaria
 2. [Framework Overview](01-FRAMEWORK-OVERVIEW.md) - 20 minutos
 3. [Quick Start](03-QUICK-START.md) - 15 minutos
-4. [Tutorial CRUD Básico](tutorials/01-basic-crud.md) - 30 minutos
-5. [Ejemplo Clásico - Inventario](examples/classic-module-example.md) - 20 minutos
+4. [Contrato UI/Design System](04-UI-DESIGN-SYSTEM-CONTRACT.md) - 15 minutos - Lectura obligatoria para desarrollo UI
+5. [Tutorial CRUD Básico](tutorials/01-basic-crud.md) - 30 minutos
+6. [Ejemplo Clásico - Inventario](examples/classic-module-example.md) - 20 minutos
 
 #### Nivel Intermedio (Semana 1)
 Tiempo estimado: 6 horas
@@ -518,6 +519,7 @@ Por contrato de desarrollo, todo cambio en código debe documentarse. La documen
 2. [Framework Overview](01-FRAMEWORK-OVERVIEW.md)
 3. [Arquitectura de Flujos](02-FLOW-ARCHITECTURE.md)
 4. [Quick Start](03-QUICK-START.md)
+5. [Contrato UI/Design System](04-UI-DESIGN-SYSTEM-CONTRACT.md)
 
 ### Tutoriales de Implementación
 

@@ -503,9 +503,21 @@ Todo archivo de documentación técnica del framework DEBE cumplir obligatoriame
 
 Durante cualquier proceso de reestructuración, auditoría o creación de documentación, el cumplimiento de este formato debe verificarse ANTES de considerar el archivo como completo.
 
-## 6.8 – Cláusula de Indexación Estructural Profunda
+### 6.8 Sistema UI/CSS
 
-### 6.8.1 Naturaleza Obligatoria
+El sistema de interfaz de usuario y hojas de estilo CSS del framework se rige obligatoriamente por el contrato [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md).
+
+Toda modificación, extensión o creación de estilos visuales debe cumplir las reglas establecidas en dicho contrato subordinado.
+
+El contrato UI/CSS es subordinado a MI LÓGICA y al presente contrato, pero vinculante en materia de diseño visual, tokens de diseño, sistema de layout, responsividad y optimización CSS.
+
+### 6.8.1 Especificacion de cambios
+
+Todo cambio realizado sobre un componente que contenga estilos debera ser sometido a la evaluacion de las reglas contractuales del contrato [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) y en la respuesta final de la realizacion de latarea se tiene que abordar un apartado dedicado al estado de la UI, con sugerencias de cambios basados en los requerimientos contractuales o en su respectivo caso, simplemente mencionar que el componente cumple con todas las reglas.
+
+### 6.9 – Cláusula de Indexación Estructural Profunda
+
+### 6.9.1 Naturaleza Obligatoria
 
 Todo documento del Spec Kit debe ser completamente indexable a nivel estructural interno.
 
@@ -513,7 +525,7 @@ La indexación no se limita al archivo como unidad, sino que debe incluir cada n
 
 ---
 
-### 6.8.2 Alcance de la Indexación
+### 6.9.2 Alcance de la Indexación
 
 La indexación estructural profunda incluye obligatoriamente:
 
@@ -534,7 +546,7 @@ Queda prohibido indexar únicamente el documento raíz omitiendo su estructura i
 
 ---
 
-### 6.8.3 Profundidad Jerárquica
+### 6.9.3 Profundidad Jerárquica
 
 Cuando un documento posea estructura numerada jerárquica, el índice deberá reflejarla íntegramente sin simplificación.
 
@@ -551,7 +563,7 @@ No se permite agrupar niveles en forma resumida.
 
 ---
 
-### 6.8.4 Indexación de Elementos Técnicos
+### 6.9.4 Indexación de Elementos Técnicos
 
 Cuando un documento contenga:
 
@@ -569,7 +581,7 @@ No se permite indexar únicamente la sección contenedora ignorando los elemento
 
 ---
 
-### 6.8.5 Identificador Subestructural
+### 6.9.5 Identificador Subestructural
 
 Cada elemento interno deberá poder ser referenciado mediante un identificador derivado del ID del documento.
 
@@ -585,7 +597,7 @@ La notación debe ser determinista y reproducible.
 
 ---
 
-### 6.8.6 Separación del Formato de Índices
+### 6.9.6 Separación del Formato de Índices
 
 Los documentos cuyo propósito sea exclusivamente indexación estructural:
 
@@ -596,7 +608,7 @@ Los documentos cuyo propósito sea exclusivamente indexación estructural:
 
 ---
 
-### 6.8.7 Prohibiciones
+### 6.9.7 Prohibiciones
 
 Está estrictamente prohibido:
 
@@ -611,7 +623,7 @@ Está estrictamente prohibido:
 
 ---
 
-### 6.8.8 Verificación de Completitud
+### 6.9.8 Verificación de Completitud
 
 El sistema de índices deberá garantizar:
 
@@ -740,6 +752,7 @@ Documentos vinculados contractualmente:
 - [01-FRAMEWORK-OVERVIEW.md](01-FRAMEWORK-OVERVIEW.md) - Visión general del framework
 - [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) - Arquitectura y flujos del sistema
 - [03-QUICK-START.md](03-QUICK-START.md) - Guía de inicio rápido
+- [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) - Contrato de sistema de diseño UI/CSS
 - [README.md](README.md) - Índice principal de documentación
 - layers/01-decorators/ - Especificaciones de decoradores
 - layers/02-base-entity/ - Especificación de BaseEntity
