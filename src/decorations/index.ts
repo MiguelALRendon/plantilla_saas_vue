@@ -36,3 +36,4 @@ export type { DisplayFormatFunction, DisplayFormatValue } from './display_format
 export { HELP_TEXT_KEY, HelpText } from './help_text_decorator';
 export { TAB_ORDER_KEY, TabOrder } from './tab_order_decorator';
 export { PERSISTENT_KEY, Persistent } from './persistent_decorator';
+export { MASK_KEY, Mask } from './mask_decorator';

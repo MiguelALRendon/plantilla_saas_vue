@@ -207,10 +207,10 @@ Componentes Vue para interfaz de usuario.
 #### Capa 5: Avanzado
 Extensiones y personalización del framework.
 
-- [Custom Components](layers/05-advanced/custom-components.md) - Componentes personalizados
-- [Extending BaseEntity](layers/05-advanced/extending-base-entity.md) - Extensión de BaseEntity
-- [Creating Decorators](layers/05-advanced/creating-decorators.md) - Creación de decoradores
-- [Performance Optimization](layers/05-advanced/performance.md) - Optimización de rendimiento
+- [Enums](layers/05-advanced/Enums.md) - Enumeraciones del sistema
+- [Models](layers/05-advanced/Models.md) - Modelos del framework
+- [Router](layers/05-advanced/Router.md) - Sistema de enrutamiento
+- [Types](layers/05-advanced/Types.md) - Tipos TypeScript del framework
 
 ---
 
@@ -240,14 +240,14 @@ Tiempo estimado: 6 horas
 6. [Componentes de Formulario](layers/04-components/) - 1 hora
 
 #### Nivel Avanzado (Mes 1)
-Tiempo estimado: 10 horas
+Tiempo estimado: 6 horas
 
 1. [Ejemplo Avanzado - Órdenes](examples/advanced-module-example.md) - 1 hora
-2. [Custom Components](tutorials/04-custom-components.md) - 1.5 horas
-3. [Patrones Avanzados](tutorials/05-advanced-patterns.md) - 2 horas
-4. [Todos los Decoradores](layers/01-decorators/) - 3 horas
-5. [Extending BaseEntity](layers/05-advanced/extending-base-entity.md) - 1 hora
-6. [Creating Decorators](layers/05-advanced/creating-decorators.md) - 1.5 horas
+2. [Todos los Decoradores](layers/01-decorators/) - 3 horas
+3. [Enums](layers/05-advanced/Enums.md) - 0.5 horas
+4. [Models](layers/05-advanced/Models.md) - 0.5 horas
+5. [Router](layers/05-advanced/Router.md) - 0.5 horas
+6. [Types](layers/05-advanced/Types.md) - 0.5 horas
 
 ### Flujos de Trabajo por Tipo de Tarea
 
@@ -272,7 +272,8 @@ Tiempo estimado: 10 horas
 - [ViewGroup](layers/01-decorators/view-group-decorator.md)
 - [DisplayFormat](layers/01-decorators/display-format-decorator.md)
 - [HelpText](layers/01-decorators/help-text-decorator.md)
-- [Custom Components](layers/05-advanced/custom-components.md)
+- [ModuleListComponent](layers/01-decorators/module-list-component-decorator.md)
+- [ModuleDetailComponent](layers/01-decorators/module-detail-component-decorator.md)
 
 #### Integrar API
 - [ApiEndpoint](layers/01-decorators/api-endpoint-decorator.md)
@@ -280,8 +281,7 @@ Tiempo estimado: 10 horas
 - [CRUD Operations](layers/02-base-entity/crud-operations.md)
 
 #### Optimizar
-- [Performance Optimization](layers/05-advanced/performance.md)
-- Best Practices (múltiples documentos)
+- Best Practices (documentados en ejemplos y tutoriales)
 
 ---
 
@@ -381,10 +381,11 @@ Por contrato de desarrollo, todo cambio en código debe documentarse. La documen
 
 #### Avanzado
 - [Validaciones Asíncronas](layers/01-decorators/async-validation-decorator.md)
-- [Componentes Custom](layers/05-advanced/custom-components.md)
-- [Extending BaseEntity](layers/05-advanced/extending-base-entity.md)
-- [Creating Decorators](layers/05-advanced/creating-decorators.md)
-- [Ejemplo Avanzado](examples/advanced-module-example.md)
+- [Ejemplo Avanzado - Órdenes de Compra](examples/advanced-module-example.md)
+- [Enums del Sistema](layers/05-advanced/Enums.md)
+- [Models del Framework](layers/05-advanced/Models.md)
+- [Router](layers/05-advanced/Router.md)
+- [Types TypeScript](layers/05-advanced/Types.md)
 
 ### Búsqueda por Componente del Framework
 
@@ -480,15 +481,12 @@ Por contrato de desarrollo, todo cambio en código debe documentarse. La documen
 - DetailViewTableComponent
 - Índice Maestro
 
-#### Documentación en Progreso
+#### Documentación Planificada (Futuro)
 
-- Tutorial 4: Componentes Custom
-- Tutorial 5: Patrones Avanzados
-- Sección de nivel avanzado: Custom Components, Extending BaseEntity, Creating Decorators, Performance
 - Ejemplos interactivos
 - Troubleshooting guide
 - Migration guide
-- API reference completa
+- API reference expandida
 
 ### Canales de Soporte
 
@@ -560,10 +558,10 @@ Por contrato de desarrollo, todo cambio en código debe documentarse. La documen
 - Layout: [SideBarComponent](layers/04-components/SideBarComponent.md), [TopBarComponent](layers/04-components/TopBarComponent.md)
 
 **Capa 5 - Avanzado:**
-- [Custom Components](layers/05-advanced/custom-components.md)
-- [Extending BaseEntity](layers/05-advanced/extending-base-entity.md)
-- [Creating Decorators](layers/05-advanced/creating-decorators.md)
-- [Performance Optimization](layers/05-advanced/performance.md)
+- [Enums](layers/05-advanced/Enums.md)
+- [Models](layers/05-advanced/Models.md)
+- [Router](layers/05-advanced/Router.md)
+- [Types](layers/05-advanced/Types.md)
 
 ---
 
