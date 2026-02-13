@@ -791,7 +791,7 @@ ActionsComponent depende de la estructura DOM específica:
 
 3. **markRaw de Vue:** Depende de que Application use `markRaw()` al asignar componentes a ListButtons para performance óptimo.
 
-## 9. Relaciones entre Entidades
+## 9. Relaciones
 
 ### Relación con Application (1:1 Reactiva)
 

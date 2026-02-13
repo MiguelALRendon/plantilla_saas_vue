@@ -897,7 +897,7 @@ Modal se cierra
 
 ---
 
-## 🔍 Búsqueda en Tiempo Real
+## Búsqueda en Tiempo Real
 
 ### Computed Property: filteredData
 

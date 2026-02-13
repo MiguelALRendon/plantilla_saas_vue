@@ -798,7 +798,7 @@ LoadingScreenComponent se renderiza dentro de ComponentContainerComponent:
 
 **Posicionamiento:** `position: absolute` dentro de ViewContainer (que tiene `position: relative`).
 
-## 9. Relaciones entre Entidades
+## 9. Relaciones
 
 ### Relación con Application (1:1 Reactiva mediante EventBus)
 

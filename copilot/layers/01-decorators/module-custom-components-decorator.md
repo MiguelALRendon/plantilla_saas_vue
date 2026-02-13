@@ -940,7 +940,7 @@ const RichTextEditor = defineAsyncComponent({
 });
 ```
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### 8.1. BaseEntity (Core)
 
@@ -1062,7 +1062,7 @@ Application.View.value.entityClass = Product;
 const customComponents = Product.getModuleCustomComponents();
 ```
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### 9.1. Con @ModuleDefaultComponent (Precedencia)
 

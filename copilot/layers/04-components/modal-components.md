@@ -1,12 +1,12 @@
 # Modal Components Overview - Sistema de Componentes Modales
 
-## Sección 1: Propósito
+## 1. Propósito
 
 Los componentes de modal proporcionan ventanas emergentes overlay para diferentes contextos de interacción usuario-sistema. ModalComponent renderiza vistas completas de entidades (ListView, DetailView, LookupView, CustomView) en contexto modal. ConfirmationDialogComponent solicita confirmación explícita para acciones críticas. LoadingPopupComponent indica procesos asíncronos activos bloqueando interacción durante operaciones.
 
 Estos componentes se controlan centralizadamente mediante ApplicationUIService usando Event Bus, permitiendo apertura/cierre desde cualquier parte del código sin dependencias directas. Todos son componentes globales montados en App.vue disponibles simultáneamente en toda la aplicación.
 
-## Sección 2: Alcance
+## 2. Alcance
 
 Este documento describe:
 - ModalComponent para vistas de entidades en modal (ListView, DetailView, LookupView, CustomView)
@@ -20,7 +20,7 @@ Este documento describe:
 
 Los componentes operan globalmente montados en App.vue. No se instancian directamente en vistas individuales. Se controlan exclusivamente via ApplicationUIService methods.
 
-## Sección 3: Definiciones Clave
+## 3. Definiciones Clave
 
 **ModalComponent**: Componente modal fullscreen que renderiza dinámicamente vistas de entidades (ListView, DetailView, LookupView, CustomView) basándose en Application.modal.value.viewType y Application.modal.value.modalView.
 
@@ -38,7 +38,7 @@ Los componentes operan globalmente montados en App.vue. No se instancian directa
 
 **Event Bus Events**: show-modal, hide-modal, show-confirmation, hide-confirmation, show-loading-menu, hide-loading-menu emitidos por ApplicationUIService y escuchados por componentes modales.
 
-## Sección 4: Descripción Técnica
+## 4. Descripción Técnica
 
 ### ModalComponent
 
@@ -502,7 +502,7 @@ hideLoadingMenu() {
 }
 ```
 
-## Sección 5: Flujo de Funcionamiento
+## 5. Flujo de Funcionamiento
 
 1. **Apertura de Modal**: Código invoca Application.ApplicationUIService.showModal(entityClass, ViewTypes.DETAILVIEW). ApplicationUIService actualiza Application.modal.value con modalView = entityClass, viewType = DETAILVIEW. Emite evento show-modal via eventBus. ModalComponent listener recibe evento, ejecuta isShowing = true, actualiza modalModule = Application.modal.value.modalView.
 
@@ -524,7 +524,7 @@ hideLoadingMenu() {
 
 10. **Ocultar Loading al Completar**: axios.post() completa exitosamente. BaseEntity.save() invoca Application.ApplicationUIService.hideLoadingMenu(). Service emite hide-loading-menu. LoadingPopupComponent ejecuta showing = false removiendo active class. Opacity transition 1 → 0, pointer-events none. Spinner desaparece con fade-out, usuario recupera interacción. Si hay error, catch block igualmente invoca hideLoadingMenu() garantizando cleanup.
 
-## Sección 6: Reglas Obligatorias
+## 6. Reglas Obligatorias
 
 1. **Todos los modales DEBEN montarse en App.vue globalmente**: ModalComponent, ConfirmationDialogComponent, LoadingPopupComponent DEBEN existir como hijos directos de App.vue. No instanciar en vistas individuales. Un solo instance global por tipo opera para toda aplicación.
 
@@ -540,7 +540,7 @@ hideLoadingMenu() {
 
 7. **Z-index hierarchy DEBE respetarse**: ConfirmationDialog (1500) > LoadingPopup (1100) > ModalComponent (1000). Confirmation debe estar sobre todo. Modificar z-index rompe jerarquía causando overlaps incorrectos. Z-index son valores establecidos framework-wide.
 
-## Sección 7: Prohibiciones
+## 7. Prohibiciones
 
 1. **NUNCA instanciar modales localmente en vistas**: No crear <ModalComponent /> en templates de vistas individuales. Los modales son globales App.vue. Instanciación local causa múltiples instances conflictivas con state inconsistente.
 
@@ -556,7 +556,7 @@ hideLoadingMenu() {
 
 7. **NUNCA asumir que modal persiste después closeModal**: Después closeModal(), Application.modal.value.modalView se limpia a null. No intentar acceder componente renderizado, datos temporales modal, o state después cierre. Modal state es transitorio destruído al cerrar.
 
-## Sección 8: Dependencias
+## 8. Dependencias
 
 **Dependencias Directas:**
 - @/constants/application.ts: Application singleton exporta modal.value, confirmationMenu.value, eventBus para state management y eventos
@@ -576,7 +576,7 @@ hideLoadingMenu() {
 - Event Bus: eventBus.on() en mounted(), eventBus.off() en beforeUnmount() para event-driven architecture
 - Document Events: document.addEventListener('keydown') en ModalComponent para ESC key handling
 
-## Sección 9: Relaciones
+## 9. Relaciones
 
 **Utilizado por:**
 - Todas las vistas y componentes: Cualquier código puede invocar ApplicationUIService methods para mostrar modales. DefaultListView, DefaultDetailView, SaveButton, DeleteButton, ObjectInputComponent todos usan modales.
@@ -596,7 +596,7 @@ hideLoadingMenu() {
 **Bloquea interacción:**
 - Toda UI: Mientras modal activo, overlay rgba background bloquea clicks elementos subyacentes. LoadingPopup pointer-events: all previene interacción durante operaciones. ConfirmationDialog requiere decisión usuario antes continuar.
 
-## Sección 10: Notas de Implementación
+## 10. Notas de Implementación
 
 ### Abrir Modal con Vista Personalizada
 
@@ -757,7 +757,7 @@ describe('ModalComponent', () => {
 });
 ```
 
-## Sección 11: Referencias Cruzadas
+## 11. Referencias Cruzadas
 
 **Documentos Relacionados:**
 - [DialogComponents.md](DialogComponents.md): Documentación detallada ConfirmationDialog y LoadingPopup components

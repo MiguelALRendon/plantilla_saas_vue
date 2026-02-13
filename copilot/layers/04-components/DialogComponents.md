@@ -1,12 +1,12 @@
 # Dialog Components - Componentes de Diálogo
 
-## Sección 1: Propósito
+## 1. Propósito
 
 DialogComponents comprende ConfirmationDialogComponent y LoadingPopupComponent que proporcionan interfaces modales especializadas para confirmaciones usuario y feedback visual de operaciones asíncronas. ConfirmationDialogComponent solicita aprobación explícita acciones críticas (eliminar datos, descartar cambios, operaciones irreversibles) con 4 variantes visuales diferenciadas. LoadingPopupComponent indica procesos activos bloqueando interacción durante peticiones HTTP, cálculos pesados, operaciones que requieren espera usuario.
 
 Ambos componentes operan como overlays fullscreen z-indexed sobre contenido principal, controlados centralizadamente via ApplicationUIService Event Bus. No se instancian directamente, existen como singletons globales montados App.vue disponibles framework-wide.
 
-## Sección 2: Alcance
+## 2. Alcance
 
 Este documento describe:
 - ConfirmationDialogComponent estructura, estilos, tipos visuales (INFO, SUCCESS, WARNING, ERROR)
@@ -20,7 +20,7 @@ Este documento describe:
 
 Los componentes operan exclusivamente como UI global no reutilizable localmente. No aceptan props, leen state central Application.confirmationMenu.value y showing boolean local.
 
-## Sección 3: Definiciones Clave
+## 3. Definiciones Clave
 
 **ConfirmationDialogComponent**: Diálogo modal centrado que renderiza título, mensaje, icono coloreado, botones Aceptar/Cancelar para confirmar/abortar acciones críticas. Soporta 4 tipos visuales diferenciados por iconos y colores.
 
@@ -38,7 +38,7 @@ Los componentes operan exclusivamente como UI global no reutilizable localmente.
 
 **acceptConfigurationMenu Method**: ApplicationUIService method ejecutando confirmationAction callback si existe, luego cerrando dialog vía closeConfirmationMenu().
 
-## Sección 4: Descripción Técnica
+## 4. Descripción Técnica
 
 ### ConfirmationDialogComponent
 
@@ -349,7 +349,7 @@ Timeout 400ms después showLoadingMenu() garantiza spinner visible tiempo mínim
 
 Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success o error.
 
-## Sección 5: Flujo de Funcionamiento
+## 5. Flujo de Funcionamiento
 
 1. **Apertura Confirmation Dialog**: Código invoca Application.ApplicationUIService.openConfirmationMenu(confMenuType.WARNING, 'Delete Item', 'Confirm deletion?', deleteCallback, 'Delete', 'Cancel'). ApplicationUIService actualiza Application.confirmationMenu.value con type = WARNING, title, message, confirmationAction = deleteCallback, button texts. Emite evento show-confirmation via eventBus.
 
@@ -371,7 +371,7 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 
 10. **Cleanup Dialog al Desmontar**: Si App.vue hot-reload desarrollo o navegación router desmonta ConfirmationDialog, beforeUnmount() hook ejecuta. Application.eventBus.off('show-confirmation') y Application.eventBus.off('hide-confirmation') remueven listeners registrados. Previene memory leaks acumulando listeners duplicados. LoadingPopup análogo limpia show-loading-menu y hide-loading-menu listeners. Proper cleanup esencial estabilidad long-running app development.
 
-## Sección 6: Reglas Obligatorias
+## 6. Reglas Obligatorias
 
 1. **ConfirmationDialog botón Aceptar DEBE renderizarse solo si confirmationAction existe**: v-if="dialogInfo.confirmationAction" en botón Aceptar es obligatorio. Dialog INFO sin callback debe mostrar solo botón OK/Cancelar. Renderizar botón Aceptar sin callback causa click sin efecto confundiendo usuario.
 
@@ -387,7 +387,7 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 
 7. **confMenuType DEBE usarse para todos dialogs confirmación**: No crear custom dialog types omitiendo enum. Usar INFO, SUCCESS, WARNING, ERROR únicamente. Consistency visual UX framework-wide requiere adherencia strict 4 tipos definidos.
 
-## Sección 7: Prohibiciones
+## 7. Prohibiciones
 
 1. **NUNCA omitir hideLoadingMenu en catch blocks**: Todo try { showLoadingMenu(); ... } DEBE tener catch { hideLoadingMenu(); } o finally { hideLoadingMenu(); }. Omitir causa loading overlay permanente bloqueando UI. Usuario queda stuck sin manera cerrar loading salvo refresh forzado navegador.
 
@@ -403,7 +403,7 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 
 7. **NUNCA modificar duración animations sin actualizar timeouts**: Si cambia .confirmation-dialog-container { transition: 0.5s; }, ApplicationUIService closeConfirmationMenu() timeout DEBE actualizarse matchear. Mismatches causan state limpieza prematura antes animación complete o delays innecesarios.
 
-## Sección 8: Dependencias
+## 8. Dependencias
 
 **Dependencias Directas:**
 - @/constants/application.ts: Application singleton exporta confirmationMenu.value, eventBus para state management y eventos
@@ -419,7 +419,7 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 **Dependencias Lifecycle:**
 - Event Bus: eventBus.on() mounted(), eventBus.off() beforeUnmount() event-driven architecture
 
-## Sección 9: Relaciones
+## 9. Relaciones
 
 **Utilizado por:**
 - BaseEntity CRUD Methods: save(), delete(), load() invocan showLoadingMenu()/hideLoadingMenu() durante async operations. openConfirmationMenu() ERROR al fallar operaciones.
@@ -437,7 +437,7 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 **Bloquea interacción:**
 - Toda UI: ConfirmationDialog z-index 1500 overlay bloquea clicks, requiere decisión usuario. LoadingPopup pointer-events: all bloquea interacción durante operaciones. Usuarios no pueden interactuar hasta dialog resolve o loading complete.
 
-## Sección 10: Notas de Implementación
+## 10. Notas de Implementación
 
 ### Confirmation Dialog Async Callback con Loading
 
@@ -614,7 +614,7 @@ describe('ConfirmationDialogComponent', () => {
 });
 ```
 
-## Sección 11: Referencias Cruzadas
+## 11. Referencias Cruzadas
 
 **Documentos Relacionados:**
 - [modal-components.md](modal-components.md): Documentación sistema modales completo incluyendo ModalComponent

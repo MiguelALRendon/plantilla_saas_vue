@@ -18,7 +18,7 @@ NumberInputComponent es un componente especializado para entrada de valores num�
 **ACTIVACION:**
 Se renderiza automáticamente cuando property es de tipo Number. Application.js detecta PropertyName(name, Number) y selecciona NumberInputComponent.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **handleKeyPress:**
 Método que intercepta eventos keydown para permitir solo caracteres numéricos válidos: dígitos 0-9, punto decimal único, signo menos al inicio, backspace, delete, flechas de navegación. Previene ingreso de letras, espacios u otros símbolos.
@@ -203,7 +203,7 @@ handleBlur() {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Activación:**
 Sistema detecta PropertyName(name, Number) en entity, Application.js selecciona NumberInputComponent para renderizado.
@@ -226,7 +226,7 @@ Usuario sale del input, handleBlur ejecuta marcando focusState false, si valor e
 **PASO 7 - Validación al Guardar:**
 Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs, NumberInputComponent.handleValidation() ejecuta, verifica required con valor > 0 o !== null, aplica @Validation para rangos mínimo/máximo, actualiza isValid y validationMessages.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE usar type="text" en input, NUNCA type="number" para tener control total de caracteres.
 
@@ -242,7 +242,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 **REGLA 7:** SIEMPRE deshabilitar botones +/- cuando disabled o readonly están activos.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Usar type="number" que permite rueda de mouse y flechas no controladas.
 
@@ -258,7 +258,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 **PROHIBIDO:** Modificar valor mediante botones +/- cuando input está disabled o readonly.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @PropertyName: Define nombre y tipo Number
@@ -274,7 +274,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 **SERVICIOS:**
 - EventBus: Comunicación de evento validate-inputs
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **ACTIVADO POR:**
 @PropertyName(name, Number) - Decorador que señala uso de number input.
@@ -287,7 +287,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 **FLUJO DE RENDERIZADO:**
 Application.js detecta tipo Number, selecciona NumberInputComponent, pasa entity/propertyName/metadata como props, componente renderiza input con botones incremento/decremento.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO ENTITY:**
 ```typescript
@@ -347,7 +347,7 @@ $emit('update:modelValue', newValue: number)
 ```
 Se emite cuando usuario escribe y hace blur, o cuando hace clic en botón + o -.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - display-format-decorator.md: Decorator para formato visual

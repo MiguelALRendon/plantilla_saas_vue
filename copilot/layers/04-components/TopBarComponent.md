@@ -845,7 +845,7 @@ Estas variables deben definirse en `src/css/constants.css` o archivo de variable
 
 3. **ComponentContainerComponent:** Depende de la altura de 50px del TopBar para calcular `max-height: calc(100vh - 50px)`. Cambio en altura de TopBar rompe layout de ComponentContainer.
 
-## 9. Relaciones entre Entidades
+## 9. Relaciones
 
 ### Relación con Application (1:1 Reactiva)
 

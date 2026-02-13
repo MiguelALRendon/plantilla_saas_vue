@@ -408,7 +408,7 @@ User clicks "+ New Product" button canCreate true authorized. Handler executes c
 
 6. **NO mezclar authorization levels same module confusion**: Module SHOULD have single consistent permission level NOT multiple different checks scattered actions creating confusion inconsistent behavior. Bad pattern: Product module decorated 'products.view' read-only pero Create button checks 'products.manage' edit permission delete action checks 'admin' permission different authorization levels same module confusing users actions available inconsistent contradictory expected behaviors unclear. Good pattern: Product module decorated appropriate permission 'products.manage' all CRUD operations requiring same level consistent authorization expectations clear predictable, separate modules different permission levels ProductViewer (products.view read-only), ProductManagement (products.manage CRUD), ProductAdmin (products.delete危険 operations) distinct modules clear boundaries authorization levels explicit separation concerns understandable maintainable.
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### BaseEntity
 Import MODULE_PERMISSION_KEY Symbol y proporciona getModulePermission() hasPermission(user) accessor methods estáticos verificando authorization. Ubicación src/entities/base_entitiy.ts líneas ~200-240. All entity classes inherit accessors automatically BaseEntity base class unified API consistent dependency foundational framework architecture authorization system integrated core.
@@ -434,7 +434,7 @@ Backend API endpoints MUST validate permissions independently every request chec
 ### Permission Service Optional
 Optional external permission service handling hierarchical wildcards complex authorization logic (ej. 'admin.*' includes 'admin.users' 'admin.settings'). If implemented, hasPermission() method BaseEntity pueden integrate calling PermissionService.check(user, permission) delegating complex logic external service. Not framework built-in developer responsibility implementing if needed project-specific requirements varying complexity levels.
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Con ModuleName / ModuleIcon Decorators
 **Complementary Module Identity**: ModuleName define labels text, ModuleIcon define visual icon, ModulePermission define access authorization. Together complete module identity: SideBarComponent filtered permissions displaysa authorized modules icon + name combined presentation visual + textual + authorization integrated. Decorators independent orthogonal concerns applied separately entities mixable different combinations some modules named+icon+permission, others named only public, flexibility granular control module configuration desired.

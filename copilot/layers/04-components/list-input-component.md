@@ -18,7 +18,7 @@ ListInputComponent es un componente dropdown personalizado para seleccionar opci
 **ACTIVACION:**
 NO se genera automáticamente. Requiere integración manual en vistas custom o DefaultDetailView pasando prop propertyEnumValues con EnumAdapter instance.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **EnumAdapter:**
 Clase modelo que envuelve TypeScript enum proporcionando método getKeyValuePairs() retornando array de objetos con key string y value string/number para popular opciones del dropdown.
@@ -184,7 +184,7 @@ beforeUnmount() {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Integración Manual:**
 Desarrollador crea EnumAdapter instance en vista custom con new EnumAdapter(OrderStatus), pasa adapter como prop propertyEnumValues a ListInputComponent junto con entity, propertyName y v-model.
@@ -207,7 +207,7 @@ Usuario hace clic fuera del dropdown, handleClickOutside detecta event.target fu
 **PASO 7 - Validación al Guardar:**
 Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs, handleValidation ejecuta validando required verificando modelValue no vacío, validación síncrona ejecuta metadata.validated, validación asíncrona ejecuta isAsyncValidation si definida.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE crear EnumAdapter instance antes de usar ListInputComponent, pasar como prop propertyEnumValues.
 
@@ -223,7 +223,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 ** REGLA 7:** SIEMPRE validar que valor seleccionado existe en enum con Object.values.includes.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Usar listas hardcodeadas sin EnumAdapter perdiendo type safety.
 
@@ -239,7 +239,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 **PROHIBIDO:** Omitir parseValue mostrando valores raw UPPERCASE o snake_case en UI.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @PropertyName: Establece display name
@@ -255,7 +255,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 - EventBus: Comunica evento validate-inputs
 - document: Registra click outside handler
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **INTEGRA CON:**
 - EnumAdapter.getKeyValuePairs(): Proporciona opciones para dropdown
@@ -266,7 +266,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 **FLUJO DE INTEGRACION:**
 Desarrollador define enum OrderStatus, crea adapter en vista, pasa a ListInputComponent como prop, componente renderiza dropdown, usuario selecciona valor, entity property se actualiza vía v-model.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO ENUM Y ENTITY:**
 ```typescript
@@ -357,7 +357,7 @@ Abierto: [Status] [Confirmed] [flecha arriba] con lista expandida debajo mostran
 2. Posicionamiento en scrollables: Puede fallar si dropdown está en contenedor con scroll
 3. Sin búsqueda/filtrado: UX sufre con listas > 20 items requiriendo scroll manual
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - enum-adapter.md: Clase modelo que proporciona getKeyValuePairs

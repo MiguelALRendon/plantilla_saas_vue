@@ -19,7 +19,7 @@ ObjectInputComponent es un componente especializado para seleccionar objetos rel
 **ACTIVACION:**
 Se genera automáticamente cuando property usa @PropertyName con segundo parámetro siendo clase BaseEntity en lugar de tipo primitivo String/Number/Boolean.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **modelType prop:**
 Clase BaseEntity del objeto relacionado pasada como prop, ejemplo Customer class, usada por ApplicationUIService para determinar qué entidades cargar en modal lookup.
@@ -165,7 +165,7 @@ beforeUnmount() {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Activación Automática:**
 Sistema detecta @PropertyName('Customer', Customer) donde segundo parámetro es clase BaseEntity no String/Number/Boolean, Application.js selecciona ObjectInputComponent para renderizado, pasa modelType=Customer class como prop.
@@ -188,7 +188,7 @@ Input readonly re-renderiza con customerJohn.getDefaultPropertyValue() mostrando
 **PASO 7 - Validación al Guardar:**
 Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-inputs, isValidated() ejecuta verificando nivel 1 required chequeando modelValue no es null/undefined/EmptyEntity, nivel 2 ejecuta validación síncrona como entity.customer.active === true, nivel 3 ejecuta validación asíncrona verificando crédito disponible vía API.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE usar @DefaultProperty en entity relacionada para definir display value en input.
 
@@ -204,7 +204,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 **REGLA 7:** SIEMPRE usar @PropertyName con segundo parámetro clase BaseEntity para activar ObjectInputComponent.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Omitir @DefaultProperty en entity relacionada causando display value undefined.
 
@@ -220,7 +220,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 **PROHIBIDO:** Mostrar múltiples properties en display value, limitado a getDefaultPropertyValue único.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @PropertyName: Define nombre y tipo BaseEntity class
@@ -239,7 +239,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 - default_lookup_listview: Modal para selección de objetos
 - useInputMetadata composable: Extrae metadata de decoradores
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **ACTIVADO POR:**
 @PropertyName(name, BaseEntityClass) - Segundo parámetro clase activa ObjectInputComponent.
@@ -254,7 +254,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 **FLUJO DE RENDERIZADO:**
 Application.js detecta PropertyName con BaseEntity class, selecciona ObjectInputComponent, pasa entity/propertyName/metadata/modelValue/modelType como props, componente renderiza input readonly con botón search.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO ENTITIES:**
 ```typescript
@@ -344,7 +344,7 @@ ListInputComponent: enum values vs objetos completos, dropdown vs modal
 2. NO se puede crear objeto nuevo desde modal: Usuario debe ir a módulo Customer, crear, volver a Order
 3. Display value limitado: Solo una property vía getDefaultPropertyValue, no múltiples campos como John Doe email
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - array-input-component.md: Componente para relaciones 1:N múltiples objetos

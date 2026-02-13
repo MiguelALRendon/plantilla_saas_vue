@@ -21,7 +21,7 @@ Se renderiza cuando property tiene decorador @StringTypeDef(StringType.TEXTAREA)
 **LIMITACIONES:**
 NO soporta validación asíncrona, NO muestra help text section en template actual.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **textarea element:**
 Elemento HTML nativo para entrada multilínea que permite saltos de línea con Enter, soporta scroll vertical automático cuando contenido excede altura, y preserva formato de texto con espacios y líneas.
@@ -160,7 +160,7 @@ beforeUnmount() {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Activación:**
 Sistema detecta decorador @StringTypeDef(StringType.TEXTAREA) en property, Application.js selecciona TextAreaComponent para renderizado.
@@ -180,7 +180,7 @@ Si validación falla, isInputValidated se marca false aplicando CSS class nonval
 **PASO 6 - Corrección Usuario:**
 Usuario edita contenido corrigiendo errores, próxima validación re-evalúa con isValidated(), si pasa isInputValidated vuelve a true, CSS nonvalidated se remueve, validationMessages se limpia.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE usar elemento textarea, NUNCA input type="text" para contenido multilínea.
 
@@ -196,7 +196,7 @@ Usuario edita contenido corrigiendo errores, próxima validación re-evalúa con
 
 **REGLA 7:** SIEMPRE mostrar validationMessages cuando isInputValidated es false.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Usar TextAreaComponent para textos cortos de una línea, usar TextInputComponent.
 
@@ -212,7 +212,7 @@ Usuario edita contenido corrigiendo errores, próxima validación re-evalúa con
 
 **PROHIBIDO:** Modificar método isValidated() a async sin actualizar toda la cadena de validación.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @StringTypeDef: Define StringType.TEXTAREA para activación
@@ -229,7 +229,7 @@ Usuario edita contenido corrigiendo errores, próxima validación re-evalúa con
 - EventBus: Comunica evento validate-inputs
 - Application.View.value.isValid: Flag global validación formulario
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **HEREDA DE:**
 TextInputComponent - Estructura base conceptual, usa textarea en lugar de input.
@@ -245,7 +245,7 @@ TextInputComponent - Estructura base conceptual, usa textarea en lugar de input.
 **FLUJO DE RENDERIZADO:**
 Application.js detecta decorador, selecciona TextAreaComponent, pasa entity/propertyName/metadata como props, componente renderiza textarea element.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO ENTITY:**
 ```typescript
@@ -318,7 +318,7 @@ Mínimo líneas: entity.address.split('\n').length >= 2
 **DIFERENCIAS CON TextInputComponent:**
 Elemento input vs textarea, sin multilínea vs multilínea sí, help text sí vs no omitido, validación async sí vs no, auto-resize no aplica vs sí, chars counter no vs no, activación String default vs @StringTypeDef(TEXTAREA)
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - text-input-component.md: Componente base input de línea única

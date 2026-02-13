@@ -29,7 +29,7 @@ Los models definen estructuras de datos TypeScript que representan estado de apl
 **INTEGRACION:**
 ApplicationUIService implementa ApplicationUIContext interface, todos models son interfaces excepto Toast y EnumAdapter que son classes necesitando lógica constructor.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **AppConfiguration interface:**
 Define configuración global aplicación con propiedades appName appVersion apiBaseUrl apiTimeout environment logLevel authTokenKey sessionTimeout itemsPerPage maxFileSize isDarkMode. Almacenada en ApplicationUIService.AppConfiguration como Ref<AppConfiguration> reactiva. Valores inicializados desde import.meta.env variables entorno Vite, isDarkMode persiste en localStorage resto se pierde al reload.
@@ -196,7 +196,7 @@ export class EnumAdapter {
 ```
 **PROBLEMA REVERSE MAPPING:** Enum numérico ToastType {SUCCESS: 0, ERROR: 1} genera runtime {SUCCESS: 0, ERROR: 1, 0: "SUCCESS", 1: "ERROR"} duplicando keys, Object.keys retorna ["0", "1", "SUCCESS", "ERROR"] con duplicados. SOLUCION: isNaN(Number(key)) filtra keys numéricas "0" "1" retornando solo ["SUCCESS", "ERROR"], map genera [{key: "SUCCESS", value: 0}, {key: "ERROR", value: 1}] limpio para ListInputComponent dropdown options.
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Inicializar AppConfiguration:**
 ApplicationUIService constructor ejecuta creando ref<AppConfiguration> inicializando valores, lee import.meta.env.VITE_API_BASE_URL estableciendo apiBaseUrl, lee import.meta.env.MODE estableciendo environment development o production, lee localStorage.getItem('darkMode') estableciendo isDarkMode booleano, resto propiedades hardcodeadas defaults razonables, AppConfiguration reactivo changes propagate UI automáticamente.
@@ -228,7 +228,7 @@ Usuario hace clic ValidateButton iniciando validation, ejecuta Application.event
 **PASO 10 - Convertir Enum con EnumAdapter:**
 Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, DefaultDetailView itera properties obteniendo propertyType metadata detectando EnumAdapter instance, renderiza ListInputComponent pasando :property-enum-values="adapter", ListInputComponent computed enumOptions ejecuta adapter.getKeyValuePairs() filtrando reverse mapping, retorna [{key: "LOW", value: 0}, {key: "MEDIUM", value: 1}, {key: "HIGH", value: 2}], v-for option renderiza dropdown options value numérico label string, usuario selecciona option actualizando v-model modelValue con value numérico 0 1 2 matching enum Priority values.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE usar interfaces para structures data sin lógica, classes solo cuando necesario constructor o métodos como Toast EnumAdapter.
 
@@ -244,7 +244,7 @@ Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, D
 
 **REGLA 7:** SIEMPRE calcular dropdownMenu position_x position_y verificando viewport boundaries evitando menú cortado fuera pantalla.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Mutar properties AppConfiguration directamente sin considerar persistencia, solo isDarkMode persiste localStorage resto volatile.
 
@@ -260,7 +260,7 @@ Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, D
 
 **PROHIBIDO:** Cambiar View.viewType sin cambiar View.component correspondiente causando renderizado componente incorrecto para vista.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **LIBRERIAS EXTERNAS:**
 - vue: Ref computed reactive para reactividad
@@ -284,7 +284,7 @@ Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, D
 - DropdownMenu.vue: Lee dropdownMenu.value posicionando menú
 - ListInputComponent: Recibe EnumAdapter.getKeyValuePairs() dropdown options
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **VIEW Y NAVIGATION:**
 Application.View.value conecta router con UI, router params module oid establecen entityClass entityOid, Application.changeViewToDetailView actualiza View triggering reactivity, ActionsComponent DefaultDetailView DefaultListView todos leen View properties rendering condicionalmente, View.isValid controla SaveButton disabled state.
@@ -304,7 +304,7 @@ Decorador @PropertyType(new EnumAdapter(Priority)) almacena metadata, DefaultDet
 **APPLICATIONUICONTEXT Y SERVICE:**
 ApplicationUIContext define contrato typings ApplicationUIService debe implementar, service constructor inicializa todas propiedades Ref matching interface structure, métodos service como pushToast openModal manipulan estas propiedades triggering reactivity, interface permite testing mocks implementing ApplicationUIContext inyectando componentes.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO APPCONFIGURATION USAGE:**
 ```typescript
@@ -647,7 +647,7 @@ for (let i = 0; i < 5; i++) {
 **LIMITACIONES ACTUALES:**
 EnumAdapter usa any type perdiendo type safety porque debe aceptar cualquier enum, podría mejorarse con TypeScript generics pero complica decoradores. Toast class no almacena duration property, ToastItemComponent hardcodea 3000ms timeout, podría agregarse duration a constructor. Modal.customViewId definido pero no usado actualmente, reservado vistas custom futuras. DropdownMenu no soporta stack múltiples dropdowns simultáneos, solo uno abierto vez, cerrar anterior antes abrir nuevo.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - application-singleton.md: Application.View singleton y changeViewToListView changeViewToDetailView métodos

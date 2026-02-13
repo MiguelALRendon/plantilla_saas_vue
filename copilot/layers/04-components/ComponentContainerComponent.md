@@ -679,7 +679,7 @@ Estas variables deben estar definidas en `src/css/constants.css` o archivo de va
    - DefaultComponentView
    - Componentes personalizados de módulos
 
-## 9. Relaciones entre Entidades
+## 9. Relaciones
 
 ### Relación con Application (1:1 Reactiva)
 

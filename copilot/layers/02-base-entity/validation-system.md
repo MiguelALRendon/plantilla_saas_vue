@@ -568,8 +568,6 @@ async function validate() {
 
 ## 5. Flujo de Funcionamiento
 
-## 5. Flujo de Funcionamiento
-
 ### Flujo de Ejecución de validateInputs()
 
 ```

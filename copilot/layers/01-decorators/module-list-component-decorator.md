@@ -576,7 +576,7 @@ User interacts with ListView custom component: clicking card triggers `editProdu
 
 6. **NO violar responsive design ignorando small screens**: Component CSS NO debe asumir large desktop screens fijos layouts breaking small viewports. Always test mobile devices tablets ensuring layouts adapt gracefully stacking wrapping scrolling appropriate. Fixed widths `width: 1200px` prohibited cause horizontal overflow pequeñas pantallas. Prefer relative units percentages `%` flexbox grid responsive patterns auto-adapting disponible screen space. Mobile-first approach designing small expanding large safer ensures mobile usability not afterthought retrofit difficult.
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### BaseEntity
 Import MODULE_LIST_COMPONENT_KEY Symbol y proporciona getModuleListComponent() accessor estático retornando component reference or undefined. Ubicación src/entities/base_entitiy.ts líneas ~260-280. Accessor punto acceso único UI components query ListView metadata sin acceder Symbol directamente encapsulation protecting namespace symbol private contract framework.
@@ -605,7 +605,7 @@ Complementary decorator defining custom DetailView form single entity. Independe
 ### ModuleName / ModuleIcon Decorators
 ModuleName define text labels modules ModuleIcon define visual icons. Custom ListView components SHOULD use accessors `EntityClass.getModuleName()` `EntityClass.getModuleIcon()` displaying module identity headers titles maintaining branding consistency coherence sidebar navigation view content aligned UX quality perception professionalism identity clear users know context always.
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Con DefaultListView
 **Relación Reemplazo Completo**: ModuleListComponent cuando configured reemplaza completamente DefaultListView component no inheritance extension override. DefaultListView serve fallback cuando entity NO tiene decorator no custom component defined. Developers pueden reference DefaultListView code template example patterns CRUD actions típicos pagination sorting filtering understanding expected behaviors helpful designing custom components matching capabilities if needed pero architecturally independent components not parent-child relationship class inheritance.

@@ -1,12 +1,12 @@
 # LookupItem Component - Item de Selección en Listas Lookup
 
-## Sección 1: Propósito
+## 1. Propósito
 
 LookupItem representa un item individual clicable en una lista de lookup (selección de entidad relacionada) dentro de modales. Proporciona representación visual de una entidad BaseEntity mostrando su propiedad por defecto definida con decorador @DefaultProperty, permitiendo al usuario seleccionar la entidad completa mediante click.
 
 El componente se utiliza exclusivamente dentro de default_lookup_listview.vue para renderizar listas de entidades disponibles para selección. Casos de uso típicos incluyen seleccionar Customer para Order, Category para Product, User para Assignment, o cualquier relación donde se necesita elegir una entidad de una lista completa.
 
-## Sección 2: Alcance
+## 2. Alcance
 
 Este documento describe:
 - La estructura y props de LookupItem component
@@ -20,7 +20,7 @@ Este documento describe:
 
 El componente opera exclusivamente en contexto de modales lookup disparados por ObjectInputComponent cuando el usuario necesita seleccionar una entidad relacionada.
 
-## Sección 3: Definiciones Clave
+## 3. Definiciones Clave
 
 **LookupItem**: Componente Vue que renderiza representación visual clicable de una instancia BaseEntity mostrando su propiedad por defecto, usado en listas de selección modal.
 
@@ -38,7 +38,7 @@ El componente opera exclusivamente en contexto de modales lookup disparados por 
 
 **itemFromList Prop**: Prop que recibe instancia BaseEntity a renderizar en LookupItem individual.
 
-## Sección 4: Descripción Técnica
+## 4. Descripción Técnica
 
 ### Estructura del Componente
 
@@ -183,7 +183,7 @@ export default defineComponent({
 
 El @click se registra en componente padre (default_lookup_listview), no en LookupItem. LookupItem es elemento HTML nativo que emite click DOM event, no custom Vue event.
 
-## Sección 5: Flujo de Funcionamiento
+## 5. Flujo de Funcionamiento
 
 1. **Apertura de Modal desde ObjectInput**: Usuario interactúa con ObjectInputComponent haciendo click en input de entidad relacionada. ObjectInputComponent detecta click ejecutando método openLookupModal(). El método invoca Application.ApplicationUIService.openModal() pasando entityClass de la propiedad relacionada, component: default_lookup_listview, y onFunction callback que recibirá entidad seleccionada. Application.Modal.value se actualiza con state incluyendo entityClass y callback.
 
@@ -205,7 +205,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 
 10. **Limpieza de Modal**: Después de closeModalOnFunction(), ModalComponent detecta cambio en Application.Modal.value.isActive = false. El componente ejecuta transición de salida fade-out opacity 0 durante 300ms. Luego el v-if="Application.Modal.value.isActive" oculta modal completamente. La instancia de default_lookup_listview se desmonta liberando data array de entidades. LookupItem components se destruyen y eventos se limpian automáticamente por Vue.
 
-## Sección 6: Reglas Obligatorias
+## 6. Reglas Obligatorias
 
 1. **Entidad DEBE tener @DefaultProperty definido**: Toda entidad BaseEntity usada en lookup DEBE tener decorador @DefaultProperty aplicado a una propiedad. Sin @DefaultProperty, getDefaultPropertyValue() retorna undefined y LookupItem renderiza vacío sin indicación visual. Aplicar @DefaultProperty a propiedad más representativa de la entidad.
 
@@ -221,7 +221,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 
 7. **getDefaultPropertyValue() DEBE retornar valor displayable**: La propiedad marcada con @DefaultProperty DEBE ser String, Number, o tipo convertible a string legible. No marcar propiedades Object, Array, o BaseEntity como DefaultProperty. El valor se renderiza directamente como texto sin transformación.
 
-## Sección 7: Prohibiciones
+## 7. Prohibiciones
 
 1. **NUNCA implementar lógica click dentro de LookupItem**: No añadir métodos methods: { handleClick() { ... } } dentro de LookupItem.vue. No emitir custom event @click desde LookupItem. El componente DEBE ser presentacional puro. Toda lógica de selección DEBE residir en vista lookup padre.
 
@@ -237,7 +237,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 
 7. **NUNCA assumir que getDefaultPropertyValue() es truthy**: El valor retornado puede ser undefined, null, empty string, o 0. LookupItem DEBE manejar casos donde valor es falsy sin crashear. No depender de valor existente para renderizado condicional. Mostrar string vacío es comportamiento aceptable para entidades sin DefaultProperty.
 
-## Sección 8: Dependencias
+## 8. Dependencias
 
 **Dependencias Directas:**
 - @/entities/base_entitiy.ts: BaseEntity clase base proporciona método getDefaultPropertyValue() invocado en template de LookupItem para extraer valor display
@@ -259,7 +259,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 - @/css/constants.css: Variables CSS var(--white), var(--border-radius), var(--shadow-light) para estilos consistentes
 - @/css/main.css: Estilos globales de cursor, transitions, filter properties
 
-## Sección 9: Relaciones
+## 9. Relaciones
 
 **Utilizado por:**
 - default_lookup_listview.vue: Renderiza múltiples LookupItem en v-for creando lista seleccionable de entidades. Cada LookupItem representa un item disponible para selección.
@@ -282,7 +282,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 **Complementa:**
 - ModalComponent: LookupItem proporciona contenido item individual dentro de modal que ModalComponent envuelve visualmente con backdrop y bordes.
 
-## Sección 10: Notas de Implementación
+## 10. Notas de Implementación
 
 ### Personalizar LookupItem para Mostrar Múltiples Campos
 
@@ -633,7 +633,7 @@ describe('LookupItem', () => {
 });
 ```
 
-## Sección 11: Referencias Cruzadas
+## 11. Referencias Cruzadas
 
 **Documentos Relacionados:**
 - [core-components.md](core-components.md): Documentación componentes core del framework incluyendo estructura general

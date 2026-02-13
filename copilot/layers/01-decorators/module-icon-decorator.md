@@ -213,7 +213,7 @@ User click en sidebar item dispara `@click="navigateToModule(entityClass)"` hand
 
 6. **NO omitir @ModuleIcon en user-facing modules confiando en fallback**: Aunque 'circle' fallback exists preventing broken rendering, omitir decorator intencionalmente crear generic placeholder poor professional appearance bajaUX quality perception. Fallback intended como safety net para edge cases (utility classes, WIP modules development), no como estrategia producción acceptable. Todos modules production deben icon meaningful configured explicitly.
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### BaseEntity
 Import MODULE_ICON_METADATA Symbol y proporciona getModuleIcon() accessor estático retornando icon name string o 'circle' fallback. Ubicación src/entities/base_entitiy.ts líneas ~950-960. Este accessor punto de acceso único para UI components query icon metadata sin acceder Symbol directamente encapsulation.
@@ -236,7 +236,7 @@ Vue feature `<component :is="componentRef" />` permite render components dynamic
 ### Module Registration System
 Durante app initialization (src/main.ts), entity classes se registran en Application.ModuleList mediante Application.registerModule(EntityClass) calls. Este registration process NO procesa icons directamente, solo añade class reference a lista. Icon resolution lazy diferido hasta UI components actually render necessitando icon display.
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Con @ModuleName
 **Relación Complementaria Presentation Metadata**: ModuleName define text labels (singular/plural) displayed en UI, ModuleIcon define visual icon companion. Ambos decorators trabajan together creating complete module identity: SideBarComponent renderiza `<icon />{{ name }}` combining both metadatas. Sin ModuleName, module tendría icon pero no label (confusing); sin ModuleIcon, tendría label pero generic 'circle' placeholder (functional pero less polished). Best practice aplicar AMBOS decorators a todas user-facing entity classes consistency.

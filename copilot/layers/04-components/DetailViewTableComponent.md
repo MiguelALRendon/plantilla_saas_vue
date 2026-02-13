@@ -19,7 +19,7 @@ DetailViewTableComponent es un componente de tabla que renderiza lista de regist
 **ACTIVACION:**
 Se usa en default_listview.vue como componente principal para renderizar lista de registros. Recibe data array de entities como prop.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **Header sticky:**
 Thead con position sticky top 0 z-index 1 que permanece fijo visible durante scroll vertical del tbody, permitiendo ver siempre nombres de columnas.
@@ -178,7 +178,7 @@ tbody tr:hover {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Navegación ListView:**
 Usuario navega a ruta /products, Router llama ListView component, ListView renderiza DetailViewTableComponent pasando data prop con entities array.
@@ -201,7 +201,7 @@ openDetailView ejecuta Application.changeViewToDetailView pasando entity, sistem
 **PASO 7 - Scroll y Sticky:**
 Usuario hace scroll vertical en tbody, header thead permanece sticky visible con position top 0, body scroll independiente mantiene usabilidad viendo columnas siempre, hover effect aplica background gris en row bajo cursor.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE generar columnas desde getProperties iterando metadata, NUNCA hardcodear columnas.
 
@@ -217,7 +217,7 @@ Usuario hace scroll vertical en tbody, header thead permanece sticky visible con
 
 **REGLA 7:** SIEMPRE hacer rows clickeable con @click navegando a DetailView con openDetailView method.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Hardcodear nombres de columnas ignorando metadata system.
 
@@ -233,7 +233,7 @@ Usuario hace scroll vertical en tbody, header thead permanece sticky visible con
 
 **PROHIBIDO:** Omitir hover effect en rows reduciendo feedback visual de clickeabilidad.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @PropertyName: Define display label de columnas
@@ -256,7 +256,7 @@ Usuario hace scroll vertical en tbody, header thead permanece sticky visible con
 - Application.changeViewToDetailView: Navegación
 - Router: Actualiza URL con entityOid
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **USADO POR:**
 default_listview.vue - Vista principal de listado de módulos.
@@ -270,7 +270,7 @@ default_listview.vue - Vista principal de listado de módulos.
 **FLUJO DE NAVEGACION:**
 usuario click fila → openDetailView ejecuta → entityOid actualizado → changeViewToDetailView → router navega → DetailView renderiza.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO ENTITY:**
 ```typescript
@@ -337,7 +337,7 @@ Table usa flex column para header sticky y body scrollable independiente, thead 
 **FLUJO COMPLETO:**
 Usuario /products → ListView → DetailViewTableComponent monta → data genera 50 products → header desde getProperties → rows desde data iteration → usuario click row 2 → openDetailView(product2) → entityOid = "2" → changeViewToDetailView → router /products/2 → DetailView renderiza.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - views-overview.md: Vistas ListView y DetailView

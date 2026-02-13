@@ -467,7 +467,7 @@ sku!: string;
 phone!: string;
 ```
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### Dependencia 1: BaseEntity Core
 
@@ -514,7 +514,7 @@ Archivo: `src/views/default_listview.vue`
 
 Archivo: `src/views/default_detailview.vue`
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Relación con @StringType
 
@@ -707,7 +707,7 @@ export type DisplayFormatter = (value: any) => string;
 
 ---
 
-## 📖 Uso Básico
+## Uso Básico
 
 ### Formatear Precio
 
@@ -777,7 +777,7 @@ export class User extends BaseEntity {
 
 ---
 
-## 🔍 Funciones Accesoras en BaseEntity
+## Funciones Accesoras en BaseEntity
 
 ### Métodos de Instancia
 

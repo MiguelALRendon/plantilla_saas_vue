@@ -31,7 +31,7 @@ png, jpg, jpeg, svg, gif, webp
 **INTEGRACION:**
 Event bus usa librería mitt, Application.eventBus singleton global, assets procesados por Vite bundler.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **Events type:**
 Mapa de eventos del event bus que define nombres de eventos como keys y tipos de payload como values. Proporciona tipado fuerte para Application.eventBus.emit() y .on() validando que nombres de eventos existan y payloads coincidan con tipos esperados. Payload puede ser void sin datos, boolean para valores true/false, o boolean pipe void para opcionales.
@@ -129,7 +129,7 @@ declare module '*.webp' {
 ```
 **FUNCIONAMIENTO:** Cada declare module informa TypeScript que imports de archivos con esa extensión retornan default export tipo string siendo URL imagen. Sin declaraciones TypeScript emite error Cannot find module para imports imágenes. Vite procesa import retornando URL directa en dev /src/assets/logo.png y URL con hash producción /assets/logo-a3f4b2c8.png.
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Emitir Evento Validate-Inputs:**
 Usuario hace clic en ValidateButton, ejecuta handleValidate() llamando Application.eventBus.emit('validate-inputs'), event bus mitt notifica todos listeners registrados para evento validate-inputs, cada componente input TextInputComponent EmailInputComponent etc recibe notificación ejecutando handler que llama validateInput() local.
@@ -161,7 +161,7 @@ Desarrollador escribe import statement "import logo from '@/assets/logo.png'" en
 **PASO 10 - Event Bus Cleanup:**
 Componente Vue monta registrando listener con Application.eventBus.on('validate-inputs', handler), almacena referencia handler function para cleanup posterior, componente desmonta ejecutando onUnmounted hook llamando Application.eventBus.off('validate-inputs', handler) removiendo listener, previene memory leak evitando handler ejecute en componente ya desmontado.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE emitir hide-loading en finally block garantizando ejecución tanto success como error, NUNCA solo en try evitando loading screen stuck si exception.
 
@@ -177,7 +177,7 @@ Componente Vue monta registrando listener con Application.eventBus.on('validate-
 
 **REGLA 7:** SIEMPRE incluir assets.d.ts en tsconfig types array permitiendo TypeScript reconocer declaraciones, NUNCA ignorar missing module errors para assets.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Emitir eventos no definidos en Events type como Application.eventBus.emit('custom-event') perdiendo type safety.
 
@@ -193,7 +193,7 @@ Componente Vue monta registrando listener con Application.eventBus.on('validate-
 
 **PROHIBIDO:** Confundir show-loading fullscreen bloqueante con show-loading-menu popup discreto usando incorrectamente según operación.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **LIBRERIAS EXTERNAS:**
 - mitt: Event bus implementación TypeScript con tipado fuerte, instalada como dependency package.json
@@ -219,7 +219,7 @@ Componente Vue monta registrando listener con Application.eventBus.on('validate-
 - Modal wrapper: show-modal, hide-modal
 - ConfirmationDialogComponent: show-confirmation, hide-confirmation
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **EVENTS TYPE Y EVENT BUS:**
 Events type define contrato tipado, Application.eventBus instancia mitt usa Events como generic type mitt<Events> proporcionando autocompletado emit() on() y validación payloads. Sin Events type mitt sería any perdiendo type safety.
@@ -239,7 +239,7 @@ ApplicationUIService.openModal() establece modal.value con component datos antes
 **ASSETS.D.TS Y VITE CONFIG:**
 assets.d.ts proporciona tipos TypeScript, vite.config.js configura procesamiento real assets con assetsInclude build.assetsDir options. Ambos archivos colaboran: d.ts para compile-time type checking, Vite para runtime asset processing transformación URLs.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO EMITIR EVENTOS:**
 ```typescript
@@ -453,7 +453,7 @@ mitt no expone listeners registrados públicamente para debugging. Para verifica
 **VENTAJAS TIPADO FUERTE:**
 Autocompletado IDE con Ctrl+Space mostrando todos eventos disponibles al escribir emit(). Validación compile-time previene emitir eventos inexistentes. Refactoring seguro cambiando nombre evento actualiza automáticamente todos usages. Payload validation previene pasar tipos incorrectos como string en lugar de boolean. Documentation implícita tipos Events sirve como contrato API event bus.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - application-singleton.md: Application.eventBus instance y Application.View.value properties

@@ -18,7 +18,7 @@ EmailInputComponent es un componente especializado para recolección de direccio
 **ACTIVACION:**
 Se renderiza cuando property tiene decorador @StringTypeDef(StringType.EMAIL). Application.js detecta esta configuración y selecciona EmailInputComponent en lugar de TextInputComponent.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **type="email":**
 Atributo HTML5 que activa validación nativa de formato email, optimiza teclado móvil con teclas @, .com, y aplica pattern regex del navegador.
@@ -149,7 +149,7 @@ handleValidation() {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Activación:**
 Sistema detecta decorador @StringTypeDef(StringType.EMAIL) en property, Application.js selecciona EmailInputComponent para renderizado.
@@ -172,7 +172,7 @@ Si validación falla, isValid se marca false, CSS class nonvalidated se aplica, 
 **PASO 7 - Respuesta Visual:**
 input muestra border rojo con .nonvalidated class, validation-messages div renderiza errores, usuario corrige input y repite ciclo.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE usar type="email" en input element, NUNCA type="text".
 
@@ -188,7 +188,7 @@ input muestra border rojo con .nonvalidated class, validation-messages div rende
 
 **REGLA 7:** SIEMPRE incluir icono GGICONS.MAIL en label para identificación visual.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Usar StringType.TEXT en properties de email.
 
@@ -204,7 +204,7 @@ input muestra border rojo con .nonvalidated class, validation-messages div rende
 
 **PROHIBIDO:** Ejecutar validación asíncrona antes de validaciones síncronas.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @StringTypeDef: Define StringType.EMAIL para activación
@@ -222,7 +222,7 @@ input muestra border rojo con .nonvalidated class, validation-messages div rende
 - EventBus: Comunica evento validate-inputs
 - HTML5 Validation API: Proporciona checkValidity()
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **HEREDA DE:**
 TextInputComponent - Estructura base, props, computed properties, métodos comunes.
@@ -238,7 +238,7 @@ TextInputComponent - Estructura base, props, computed properties, métodos comun
 **FLUJO DE RENDERIZADO:**
 Application.js detecta decorador, selecciona EmailInputComponent, pasa entity/propertyName/metadata como props, componente renderiza input type="email".
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **VALIDACION HTML5 NATIVA:**
 Formatos válidos: user@example.com, name.surname@domain.co, test_email@test.org
@@ -276,7 +276,7 @@ export class User extends BaseEntity {
 **DIFERENCIAS CON TextInputComponent:**
 type="text" vs type="email", sin validación HTML5 vs formato email validado, teclado estándar vs optimizado, sin icono vs icono GGICONS.MAIL, activación String default vs @StringTypeDef(StringType.EMAIL).
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - text-input-component.md: Componente base heredado

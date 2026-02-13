@@ -27,7 +27,7 @@ ComponentContainerComponent renderiza dinámicamente Application.View.value.comp
 **INTEGRACION:**
 Application.ModuleList array entidades registradas, Application.changeViewToListView changeViewToDetailView métodos navegación programática, router.push() actualiza URL browser history.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **Esquema URLs:**
 Pattern :module representa nombre entidad lowercase como products customers orders, :module/:oid agrega object ID siendo "new" string para creación o ID numérico string "123" para edición. Ejemplos /products lista, /products/new crear, /products/123 editar. URLs limpias sin hash usando createWebHistory() HTML5 History API.
@@ -168,7 +168,7 @@ router.afterEach((to) => {
 ```
 **LOGGING DEBUG:** Imprime cada navegación exitosa mostrando to.path URL y entityOid actualizado. Solo ejecuta if Application inicializado. Output ejemplo "[Router] Navegado a: /products/123 | entityOid: 123".
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Inicializar Router Main:**
 main.ts ejecuta const app = createApp(App) creando Vue app instance, ejecuta app.use(router) montando router plugin, ejecuta Application.initializeApplication(router) pasando router reference a singleton, ejecuta initializeRouterWithApplication(Application) inyectando Application reference en router module global variable, ejecuta app.mount('#app') renderizando app, ambos sistemas Application y router ahora referencian mutuamente resolviendo circular dependency.
@@ -200,7 +200,7 @@ Usuario hace clic browser back button, browser pops history stack navegando prev
 **PASO 10 - ModuleName Decorator Custom URL:**
 Entity class usa @ModuleName("productos") decorator customizando URL, changeViewToDetailView ejecuta getModuleName() retornando "productos" en lugar class name "Products", router.push genera "/productos/123" URL lowercase, beforeEach busca ModuleList comparing "productos" lowercase con getModuleName() lowercase find match, sincroniza Application.View correctamente con clase Products entity instance, permite URLs español inglés otros idiomas independiente class name TypeScript.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE ejecutar initializeRouterWithApplication(Application) después createApp() y app.use(router) antes app.mount() resolviendo circular dependency.
 
@@ -216,7 +216,7 @@ Entity class usa @ModuleName("productos") decorator customizando URL, changeView
 
 **REGLA 7:** SIEMPRE usar createWebHistory() HTML5 mode, NUNCA createWebHashHistory() generando URLs con hash # ugly non-SEO.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Llamar router.push() directamente sin actualizar Application.View.value antes causando desync UI state URL.
 
@@ -232,7 +232,7 @@ Entity class usa @ModuleName("productos") decorator customizando URL, changeView
 
 **PROHIBIDO:** Usar router.replace() en changeView methods perdiendo history navigation stack, usar router.push() permitiendo back button.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **LIBRERIAS EXTERNAS:**
 - vue-router: createRouter createWebHistory RouteRecordRaw Router types
@@ -258,7 +258,7 @@ Entity class usa @ModuleName("productos") decorator customizando URL, changeView
 - Application.changeViewToDetailView: Actualiza View.value ejecuta router.push detail
 - Application.initializeApplication: Recibe router reference almacena Application.router
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **ROUTER Y APPLICATION CIRCULAR:**
 Router necesita Application.ModuleList para buscar moduleClass y Application.View para comparar sync, Application necesita router.push() para navegación programática actualizar URL. Circular dependency resuelto con lazy initialization router variable global Application null inicializado luego poblado initializeRouterWithApplication() después ambos creados main.ts.
@@ -278,7 +278,7 @@ Router routes no hardcodean DefaultListView DefaultDetailView components, usan C
 **META VIEWTYPE IDENTIFICATION:**
 routes array meta {viewType: 'list'} y {viewType: 'detail'} identify route type usado beforeEach conditional logic. meta.viewType detail verifica oid presente ejecuta createNewInstance detail flow, meta.viewType list ejecuta changeViewToListView flow, facilita guards adicionales authentication permission checks basados route type.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO MAIN.TS INITIALIZATION:**
 ```typescript
@@ -588,7 +588,7 @@ console.log('View entityClass:', Application.View.value.entityClass?.name);
 **LIMITACIONES ACTUALES:**
 Carga API no implementada, oid numérico no ejecuta await Entity.load(oid) solo imprime log "Preparando detail view", entity debe pre-loaded memory o created new. No lazy loading modules, todas vistas DefaultListView DefaultDetailView cargadas app bundle inicial sin code splitting. No validación OID existencia backend antes navegar, usuario puede escribir /products/999999 non-existent renderizando formulario vacío. Server configuration requerida nginx try_files $uri /index.html rewriting URLs evitando 404 HTML5 History Mode.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - application-singleton.md: Application.ModuleList Application.View Application.router properties métodos changeViewToListView changeViewToDetailView

@@ -1,12 +1,12 @@
 # Form Layout Components - Componentes de Layout para Formularios
 
-## Sección 1: Propósito
+## 1. Propósito
 
 Los componentes de layout para formularios organizan inputs en grupos visuales coherentes y filas multi-columna con diseño responsivo. Proporcionan estructura y organización a formularios generados dinámicamente sin requerir CSS manual.
 
 FormGroupComponent agrupa inputs bajo títulos de sección con bordes visuales distinguidos. FormRowTwoItemsComponent coloca dos inputs lado a lado en layout de dos columnas iguales. FormRowThreeItemsComponent coloca tres inputs en layout de tres columnas iguales. Estos componentes trabajan en conjunto con decoradores @ViewGroup y @ViewGroupRow para producir formularios organizados automáticamente desde metadatos de entidad.
 
-## Sección 2: Alcance
+## 2. Alcance
 
 Este documento describe:
 - FormGroupComponent para agrupación de secciones con títulos
@@ -19,7 +19,7 @@ Este documento describe:
 
 Los componentes operan exclusivamente en el contexto de formularios de detalle CRUD. Se renderizan dentro de DefaultDetailView o vistas personalizadas que contienen inputs de entidades BaseEntity.
 
-## Sección 3: Definiciones Clave
+## 3. Definiciones Clave
 
 **FormGroupComponent**: Componente contenedor que agrupa múltiples inputs bajo un título de sección con borde visual superior y espaciado estandarizado, renderizado como card con sombra.
 
@@ -37,7 +37,7 @@ Los componentes operan exclusivamente en el contexto de formularios de detalle C
 
 **CSS Grid Layout**: Sistema CSS Grid con grid-template-columns para columnas responsivas y column-gap para espaciado horizontal entre inputs.
 
-## Sección 4: Descripción Técnica
+## 4. Descripción Técnica
 
 ### FormGroupComponent
 
@@ -331,7 +331,7 @@ methods: {
 
 El método retorna dinámicamente el componente apropiado. component :is renderiza dinámicamente FormRowTwoItems, FormRowThreeItems, o div según metadata rowType. Esto elimina necesidad de especificar layout manualmente en templates.
 
-## Sección 5: Flujo de Funcionamiento
+## 5. Flujo de Funcionamiento
 
 1. **Definición de Metadatos en Entidad**: El desarrollador aplica decoradores @ViewGroup y @ViewGroupRowDecorator a propiedades de la clase entidad. @ViewGroup('Personal Info') agrupa firstName y lastName bajo sección "Personal Info". @ViewGroupRowDecorator(ViewGroupRow.TWO) indica que firstName y lastName deben renderizarse en FormRowTwoItems. Los decoradores almacenan información en MetadataKeys de Reflect.
 
@@ -353,7 +353,7 @@ El método retorna dinámicamente el componente apropiado. component :is renderi
 
 10. **Responsive Design (Futuro)**: Media queries CSS pueden convertir rows multi-columna a columna única en mobile. @media (max-width: 768px) { .form-row-2, .form-row-3 { grid-template-columns: 1fr; } } cambia layout a columna única apilando inputs verticalmente. FormGroupComponent mantiene estructura card pero inputs se reorganizan automáticamente sin cambiar lógica component.
 
-## Sección 6: Reglas Obligatorias
+## 6. Reglas Obligatorias
 
 1. **FormGroupComponent DEBE recibir prop title**: El prop title es required y DEBE ser string no vacío. El título se renderiza en form-group-header visible al usuario. No omitir title prop, resultaría en header vacío sin contexto visual.
 
@@ -369,7 +369,7 @@ El método retorna dinámicamente el componente apropiado. component :is renderi
 
 7. **Respetar orden visual definido por @PropertyIndex**: Cuando DefaultDetailView renderiza inputs automáticamente, el orden DEBE respetar @PropertyIndex de propiedades. Los inputs en FormRow DEBEN ordenarse según índice creciente. No reordenar manualmente inputs dentro de rows generados automáticamente.
 
-## Sección 7: Prohibiciones
+## 7. Prohibiciones
 
 1. **NUNCA usar FormRowTwoItems para un solo input**: No envolver un input solitario en FormRowTwoItems. El input ocuparía 50% del ancho disponible dejando espacio vacío. Renderizar input directamente dentro de FormGroupComponent sin row component. ViewGroupRow.SINGLE para fila completa.
 
@@ -385,7 +385,7 @@ El método retorna dinámicamente el componente apropiado. component :is renderi
 
 7. **NUNCA ignorar ViewGroupRow metadata en renderizado manual**: Cuando se crean vistas personalizadas que ignoran DefaultDetailView, NO ignorar @ViewGroupRowDecorator metadata. Leer metadata con entity.getViewGroupRows() y respetar layout especificado. Los decoradores son fuente de verdad para layout, no decisiones arbitrarias en templates.
 
-## Sección 8: Dependencias
+## 8. Dependencias
 
 **Dependencias Directas:**
 - Vue 3 Composition API: defineComponent, slots para proyección contenido en FormGroupComponent y FormRow components
@@ -403,7 +403,7 @@ El método retorna dinámicamente el componente apropiado. component :is renderi
 **Dependencias de Entidad:**
 - @/entities/base_entitiy.ts: BaseEntity proporciona métodos getViewGroups() y getViewGroupRows() que leen metadata para organizar layout
 
-## Sección 9: Relaciones
+## 9. Relaciones
 
 **Utilizado por:**
 - DefaultDetailView: Renderiza FormGroupComponent para cada grupo único definido por @ViewGroup. Renderiza FormRowTwoItems o FormRowThreeItems según @ViewGroupRowDecorator metadata. Pasa inputs como slot content.
@@ -422,7 +422,7 @@ El método retorna dinámicamente el componente apropiado. component :is renderi
 **Se distingue de:**
 - Tab Components: FormGroupComponent organiza secciones en single view lineal. TabComponent organiza secciones en views separadas con navegación. FormGroup visible todo simultáneamente, Tabs ocultan contenido inactivo.
 
-## Sección 10: Notas de Implementación
+## 10. Notas de Implementación
 
 ### Crear FormGroup Manualmente en Vista Personalizada
 
@@ -697,7 +697,7 @@ computed: {
 
 Los decoradores @ViewGroup son estáticos. Para títulos dinámicos, renderizar FormGroup manualmente en vista personalizada con :title computed property.
 
-## Sección 11: Referencias Cruzadas
+## 11. Referencias Cruzadas
 
 **Documentos Relacionados:**
 - [form-inputs.md](form-inputs.md): Componentes de inputs que se proyectan en FormRow como slot content

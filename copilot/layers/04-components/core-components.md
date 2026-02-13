@@ -22,7 +22,7 @@ ComponentContainerComponent usa component :is="currentComponent" renderizando De
 **INTEGRATION:**
 Application.View.value.component determina vista renderizada, Application.ListButtons.value array buttons ActionsComponent, Application.eventBus emite show-loading hide-loading controla LoadingScreen, Application.dropdownMenu.value estado dropdown showing position component.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **ComponentContainerComponent layout:**
 Contenedor principal estructura ViewContainer flex column con TopBarComponent fixed top, ComponentContainer main content area max-height calc(100vh - 50px) overflow auto, ActionsComponent floating sticky buttons, component :is dinámico renderiza vista actual, LoadingScreenComponent absolute overlay. Watch Application.View.value.component detecta cambios ejecutando transition sequence showLoadingScreen delay 400ms updateComponent hideLoadingScreen.
@@ -249,7 +249,7 @@ methods: {
 ```
 **FUNCIONAMIENTO:** Computed dropdownStyle calcula position CSS properties evitando overflow viewport, centerPosition horizontal posX minus half dropdownWidth, ajustar rightOverflow leftPosition plus width mayor canvas width estableciendo leftPosition posX minus full width aligning right edge cursor, ajustar leftOverflow leftPosition menor 0 estableciendo posX aligning left edge cursor, isInBottomHalf checks if cursor lower half screen, if true topPosition adjust upwards minus elementHeight showing dropdown above trigger element, return object inline styles max-width left top pixels. HandleClickOutside mounted document listener verifies click target not contains dropdown element calling closeDropdownMenu, handleKeydown window listener checks Escape key pressed calling closeDropdownMenu closing dropdown keyboard shortcut.
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Inicializar ComponentContainer:**
 App.vue monta ComponentContainerComponent ejecutando created hook, obtiene init component desde Application.View.value.component inicializado Application.initializeApplication(), verifica if init not null wrapping markRaw() estableciendo this.currentComponent avoiding Vue reactive proxies, watch Application.View.component registered detectando future changes triggering transition sequence, renderiza template structure TopBar ActionsComponent component :is ActionsComponent LoadingScreen hierarchy layout.
@@ -281,7 +281,7 @@ Usuario hace click fuera dropdown area quiere cerrar menu, document click event 
 **PASO 10 - Escape Key Close:**
 Usuario presiona Escape key keyboard shortcut cerrar dropdown, window keydown event fires handleKeydown listener executing, verifica if e.key === 'Escape' && dropDownData.showing menu open, ejecuta ApplicationUIService.closeDropdownMenu() mismo close logic click outside, hidden class added opacity 0 transition smooth close animation, pattern consistente close modals dropdowns any overlay ESC key universal close shortcut accessibility keyboard navigation users.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE wrap components con markRaw() en ComponentContainer currentComponent evitando Vue reactive proxy overhead performance optimization.
 
@@ -297,7 +297,7 @@ Usuario presiona Escape key keyboard shortcut cerrar dropdown, window keydown ev
 
 **REGLA 7:** SIEMPRE removeEventListener scrollContainer beforeUnmount ActionsComponent preventing memory leaks avoiding multiple handlers registered.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Omitir markRaw() wrapper dynamic components ComponentContainer causando Vue create reactive proxies unnecessary overhead memory consumption.
 
@@ -313,7 +313,7 @@ Usuario presiona Escape key keyboard shortcut cerrar dropdown, window keydown ev
 
 **PROHIBIDO:** Usar position fixed ActionsComponent, usar position sticky allowing scroll behavior opacity transitions at-top detection.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **MODELS:**
 - Application: Singleton con View.value ListButtons.value eventBus ApplicationUIService dropdownMenu properties methods changeViewToListView changeViewToDetailView setButtonList
@@ -338,7 +338,7 @@ Usuario presiona Escape key keyboard shortcut cerrar dropdown, window keydown ev
 - --border-radius --shadow-light --shadow-dark styling effects
 - --btn-secondary --btn-info button colors variants
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **COMPONENTCONTAINER Y APPLICATION VIEW:**
 ComponentContainer watch Application.View.value.component reactive property detecting changes executing transition sequence, Application.changeViewToListView changeViewToDetailView methods update View.component triggering watch callback, markRaw wrapper prevents Vue reactive tracking dynamic component instances optimizing performance memory, currentComponent ref updated triggers component :is Vue directive re-render mounting new component unmounting previous lifecycle hooks executed.
@@ -358,7 +358,7 @@ Computed dropdownStyle reads Application.ApplicationUIService.dropdownMenu.value
 **MARKRAW PERFORMANCE PATTERN:**
 ComponentContainer TabController ActionsComponent use markRaw() wrapping component instances preventing Vue create reactive proxies deep tracking, dynamic components rendered component :is directive no need reactivity internal component state only mount unmount operations, reduces memory footprint eliminates unnecessary watchers computed dependencies overhead, ListButtons array itself reactive Ref but items array markRaw wrapped balance reactivity where needed performance where unnecessary.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO COMPONENTCONTAINER USAGE:**
 ```vue
@@ -689,7 +689,7 @@ console.log('Active tab:', tabController.selectedTab);
 **LIMITACIONES ACTUALES:**
 ComponentContainer delay 400ms hardcoded no configurable, podría agregar prop delay customizable different transition speeds. ActionsComponent scroll detection solo verifica scrollTop === 0, no gradual opacity based scroll distance implementing progressive transparency. TabController no keyboard navigation arrows left right tab switching, solo mouse click headers accessibility limitation. DropdownMenu positioning calcula client-side JavaScript, no CSS solution limiting SSR compatibility. LoadingScreen no progress indicator spinner, solo text "Loading..." generic feedback sin visual animation.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - ActionsComponent.md: Detalle completo barra flotante buttons scroll behavior

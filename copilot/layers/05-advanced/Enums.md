@@ -22,7 +22,7 @@ Los enums del framework definen conjuntos cerrados de valores que se usan para t
 **INTEGRACION:**
 Usados por Application.View, decoradores, componentes de formulario, sistema de UI notifications.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **ViewTypes enum:**
 Define 5 tipos de vistas posibles: LISTVIEW muestra tabla de registros con botones New/Refresh, DETAILVIEW muestra formulario edición con botones Save/Validate, LOOKUPVIEW muestra modal selección sin botones acción, CUSTOMVIEW permite vistas personalizadas, DEFAULTVIEW reservado sin implementación.
@@ -116,7 +116,7 @@ export enum MaskSides {
 ```
 **ESTADO:** Decorador @Mask existe pero no exportado en decorations/index.ts, no puede usarse actualmente.
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Establecer View Type al Montar:**
 Componente vista ejecuta mounted hook, establece Application.View.value.viewType = ViewTypes.LISTVIEW o DETAILVIEW según contexto, ActionsComponent reacciona a cambio con computed property ListButtons.
@@ -139,7 +139,7 @@ Usuario hace clic en fila de tabla ejecutando openDetailView, Application.change
 **PASO 7 - Debugging Enum Values:**
 Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obteniendo string legible "DETAILVIEW", o console.log ViewGroupRow.PAIR obteniendo valor "pair", facilitando debugging con nombres descriptivos en lugar de números enum.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE establecer Application.View.value.viewType al montar vista, NUNCA dejarlo undefined.
 
@@ -155,7 +155,7 @@ Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obt
 
 **REGLA 7:** SIEMPRE verificar Application.View.value.viewType antes de ejecutar lógica específica de vista.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Usar valores mágicos numéricos 0/1/2 en lugar de enum constants ViewTypes.LISTVIEW/DETAILVIEW.
 
@@ -171,7 +171,7 @@ Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obt
 
 **PROHIBIDO:** Crear properties tipo string sin especificar StringType asumiendo comportamiento default TEXT.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **COMPONENTES QUE CONSUMEN ENUMS:**
 - ActionsComponent: Lee ViewTypes para determinar botones renderizados
@@ -193,7 +193,7 @@ Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obt
 - ApplicationUIService.pushToast: Recibe ToastType
 - ApplicationUIService.openConfirmationMenu: Recibe confMenuType
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **VIEWTYPES CONTROLA:**
 ActionsComponent.ListButtons computed renderiza NewButton/RefreshButton para LISTVIEW o SaveButton/ValidateButton/SaveAndNewButton para DETAILVIEW.
@@ -207,7 +207,7 @@ DefaultDetailView.groupedProperties itera properties consecutivas con mismo view
 **TOASTTYPE Y CONFMENUTYPE SIMILAR:**
 Ambos definen tipos SUCCESS/ERROR/INFO/WARNING pero para contextos diferentes: ToastType para notificaciones temporales auto-dismiss, confMenuType para modales requiriendo acción usuario explícita Confirm/Cancel.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO VIEWTYPES USAGE:**
 ```typescript
@@ -335,7 +335,7 @@ ViewGroupRow.SINGLE div wrapper 100% width
 ViewGroupRow.PAIR FormRowTwoItemsComponent CSS Grid 2 columns 50% each
 ViewGroupRow.TRIPLE FormRowThreeItemsComponent CSS Grid 3 columns 33.33% each
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - application-singleton.md: Application.View.value.viewType usage

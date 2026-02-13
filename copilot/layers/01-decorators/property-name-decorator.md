@@ -31,7 +31,343 @@ Ubicación en código: src/decorations/property_name_decorator.ts
 
 ---
 
-## 🔑 Símbolo de Metadatos
+## 4. Descripción Técnica
+
+### Implementación del Decorador
+
+```typescript
+// src/decorations/property_name_decorator.ts
+
+export const PROPERTY_NAME_KEY = Symbol('property_name');
+export const PROPERTY_TYPE_KEY = Symbol('property_type');
+export const ARRAY_ELEMENT_TYPE_KEY = Symbol('array_element_type');
+
+export function PropertyName(
+    name: string,
+    type: PropertyType
+): PropertyDecorator {
+    return function (target: Object, propertyKey: string | symbol) {
+        const proto = target as any;
+
+        // Almacenar nombre de propiedad
+        if (!proto[PROPERTY_NAME_KEY]) {
+            proto[PROPERTY_NAME_KEY] = {};
+        }
+        proto[PROPERTY_NAME_KEY][propertyKey] = name;
+
+        // Almacenar tipo de propiedad
+        if (!proto[PROPERTY_NAME_KEY]) {
+            proto[PROPERTY_TYPE_KEY] = {};
+        }
+        proto[PROPERTY_TYPE_KEY][propertyKey] = type;
+
+        // Para arrays, almacenar tipo de elemento
+        if (type instanceof ArrayTypeWrapper) {
+            if (!proto[ARRAY_ELEMENT_TYPE_KEY]) {
+                proto[ARRAY_ELEMENT_TYPE_KEY] = {};
+            }
+            proto[ARRAY_ELEMENT_TYPE_KEY][propertyKey] = type.elementType;
+        }
+    };
+}
+```
+
+La función decoradora recibe dos parámetros: `name` (string para display) y `type` (PropertyType). Retorna PropertyDecorator que almacena ambos valores en metadata del prototype usando Symbols como keys. Para arrays, extrae y almacena el elementType del ArrayTypeWrapper en ARRAY_ELEMENT_TYPE_KEY Symbol.
+
+### Metadata Storage Structure
+
+```typescript
+// Estructura en prototype después de aplicar decoradores
+Product.prototype[PROPERTY_NAME_KEY] = {
+    'id': 'Product ID',
+    'name': 'Product Name',
+    'price': 'Price',
+    'category': 'Category',
+    'items': 'Order Items'
+};
+
+Product.prototype[PROPERTY_TYPE_KEY] = {
+    'id': Number,
+    'name':String,
+    'price': Number,
+    'category': Category,  // Clase BaseEntity
+    'items': ArrayTypeWrapper
+};
+
+Product.prototype[ARRAY_ELEMENT_TYPE_KEY] = {
+    'items': OrderItem  // Tipo de elementos del array
+};
+```
+
+Los tres maps se almacenan separadamente en prototype usando Symbols únicos. Esto permite O(1) access a nombre, tipo y elementType de cualquier propiedad.
+
+### BaseEntity Accessors
+
+```typescript
+// src/entities/base_entitiy.ts
+
+// Método estático
+public static getProperties(): Record<string, string> {
+    const proto = this.prototype;
+    return proto[PROPERTY_NAME_KEY] || {};
+}
+
+public static getPropertyType(key: string): PropertyType | undefined {
+    const proto = this.prototype;
+    const types = proto[PROPERTY_TYPE_KEY] || {};
+    return types[key];
+}
+
+// Métodos de instancia
+public getPropertyName(key: string): string | undefined {
+    const constructor = this.constructor as typeof BaseEntity;
+    return constructor.getProperties()[key];
+}
+
+public getPropertyType(key: string): PropertyType | undefined {
+    const constructor = this.constructor as typeof BaseEntity;
+    return constructor.getPropertyType(key);
+}
+```
+
+BaseEntity proporciona accessors estáticos (clase level) e instancia level. Los métodos estáticos acceden directamente a prototype metadata. Los métodos de instancia delegan a métodos estáticos obteniendo constructor.
+
+Ubicación: líneas ~120-180 de `src/entities/base_entitiy.ts`.
+
+---
+
+## 5. Flujo de Funcionamiento
+
+### Proceso de Decoración en Tiempo de Compilación
+
+```
+1. TypeScript procesa class definition
+        ↓
+2. Encuentra decorador @PropertyName('Product Name', String)
+        ↓
+3. Ejecuta PropertyName() function retornando PropertyDecorator
+        ↓
+4. Decorator ejecutado con (target, propertyKey)
+        ↓
+5. Almacena 'Product Name' en proto[PROPERTY_NAME_KEY]['name']
+        ↓
+6. Almacena String en proto[PROPERTY_TYPE_KEY]['name']
+        ↓
+7. Si tipo es ArrayTypeWrapper, almacena elementType
+        ↓
+8. Metadata disponible en runtime
+```
+
+### Resolución de Componente de Input en DefaultDetailView
+
+```
+1. DefaultDetailView itera sobre entity.getEditableProperties()
+        ↓
+2. Para cada propertyKey, obtiene tipo: entity.getPropertyType(propertyKey)
+        ↓
+3. Determina componente según PropertyType:
+        ↓
+   - String → TextInputComponent (o Email/Password/TextArea según StringType)
+   - Number → NumberInputComponent
+   - Date → DateInputComponent
+   - Boolean → BooleanInputComponent
+   - BaseEntity class → ObjectInputComponent
+   - EnumAdapter → ListInputComponent
+   - ArrayTypeWrapper → ArrayInputComponent
+        ↓
+4. Renderiza: <component :is="resolvedComponent" v-model="entity[propertyKey]" />
+        ↓
+5. Obtiene label: entity.getPropertyName(propertyKey)
+        ↓
+6. Renderiza label encima del input
+```
+
+---
+
+## 6. Reglas Obligatorias
+
+### Aplicación del Decorador
+
+**OBLIGATORIO 6.1:** El decorador @PropertyName DEBE aplicarse a TODAS las propiedades que se desean mostrar en UI. Propiedades sin decorador NO aparecen en ListView ni DetailView automáticamente.
+
+**OBLIGATORIO 6.2:** El decorador DEBE recibir exactamente 2 parámetros: name (string) y type (PropertyType). Ambos son requeridos, no hay valores default.
+
+**OBLIGATORIO 6.3:** El parámetro `name` DEBE ser string descriptivo user-friendly para display en UI. NO usar nombres técnicos como 'prod_name', usar 'Product Name'.
+
+**OBLIGATORIO 6.4:** El parámetro `type` DEBE coincidir con el tipo TypeScript de la propiedad. Si propiedad es `name!: string`, type debe ser String. Mismatch causa errores de renderización de inputs.
+
+### Tipos de Propiedades
+
+**OBLIGATORIO 6.5:** Para propiedades String con subtipos específicos (email, password, textarea), DEBE usarse decorador @StringType adicional junto con @PropertyName. Solo @PropertyName con String genera TextInput básico.
+
+**OBLIGATORIO 6.6:** Para propiedades array, DEBE usarse ArrayOf(Type) wrapper: `@PropertyName('Items', ArrayOf(OrderItem))`. NO usar Array directamente como type.
+
+**OBLIGATORIO 6.7:** Para relaciones con otras entidades BaseEntity, DEBE pasarse la clase directamente: `@PropertyName('Category', Category)`. NO usar string 'Category'.
+
+**OBLIGATORIO 6.8:** Para enums, DEBE pasarse el enum directamente: `@PropertyName('Status', ProductStatus)`. El framework detecta enums automáticamente.
+
+### Orden de Decoradores
+
+**OBLIGATORIO 6.9:** @PropertyName DEBE aplicarse ANTES de otros decoradores de metadata (@Required, @Validation, @Disabled, etc.). Orden correcto asegura que metadata se merge correctamente.
+
+---
+
+## 7. Prohibiciones
+
+### Anti-Patterns de Uso
+
+**PROHIBIDO 7.1:** NO omitir @PropertyName decorador esperando que el framework infiera nombres automáticamente. Framework NO mira nombres de propiedades TypeScript para display.
+
+**PROHIBIDO 7.2:** NO usar nombres técnicos database-style como 'prod_id', 'cat_name' en parámetro name. DEBE usar nombres user-friendly: 'Product ID', 'Category Name'.
+
+**PROHIBIDO 7.3:** NO usar type='string' (lowercase string literal). DEBE usar String (constructor function). TypeScript type y PropertyType son diferentes conceptos.
+
+**PROHIBIDO 7.4:** NO decorar propiedades privadas (_internalState) o métodos. @PropertyName solo aplica a propiedades públicas de data.
+
+### Anti-Patterns de Tipos
+
+**PROHIBIDO 7.5:** NO usar Array como type directamente: `@PropertyName('Items', Array)`. DEBE usar `ArrayOf(ElementType)`: `@PropertyName('Items',ArrayOf(OrderItem))`.
+
+**PROHIBIDO 7.6:** NO usar Object como type para relaciones: `@PropertyName('Category', Object)`. DEBE usar clase específica: `@PropertyName('Category', Category)`.
+
+**PROHIBIDO 7.7:** NO mezclar tipos TypeScript con PropertyType: `@PropertyName('Age', number)` (lowercase). DEBE ser `@PropertyName('Age', Number)` (uppercase constructor).
+
+**PROHIBIDO 7.8:** NO usar tipos genéricos complejos como PropertyType: `@PropertyName('Data', Map<string, number>)`. Framework solo soporta tipos básicos, entidades, enums y arrays.
+
+### Anti-Patterns de Metadata
+
+**PROHIBIDO 7.9:** NO modificar metadata manualmente después de decoración: `Product.prototype[PROPERTY_NAME_KEY]['name'] = 'NewName'`. Metadata es read-only después de class definition.
+
+**PROHIBIDO 7.10:** NO intentar acceder a Symbol keys sin importar Symbol: `proto['property_name']`. DEBE importar Symbol: `import { PROPERTY_NAME_KEY } from '@/decorations'`.
+
+---
+
+## 8. Dependencias
+
+### Decoradores del Framework
+
+- `@StringType`: Define subtipo de String (TEXT, EMAIL, PASSWORD, TEXTAREA). Requerido para strings no-plain-text. Ubicación: `src/decorations/string_type_decorator.ts`.
+- `@Required`: Marca propiedad como obligatoria. Frecuentemente usado junto con @PropertyName. Ubicación: `src/decorations/required_decorator.ts`.
+- `@PrimaryProperty`: Marca propiedad primaria para display en relaciones. Comúnmente aplicado donde @PropertyName está presente. Ubicación: `src/decorations/primary_property_decorator.ts`.
+
+### Helpers y Types
+
+- `ArrayOf()`: Function helper para crear ArrayTypeWrapper. Signatura: `ArrayOf<T>(type: new (...args: any[]) => T): ArrayTypeWrapper<T>`. Ubicación: `src/decorations/property_name_decorator.ts`.
+- `PropertyType`: Type union de tipos válidos. Definición: `type PropertyType = typeof String | typeof Number | typeof Date | typeof Boolean | (new (...args: any[]) => BaseEntity) | EnumAdapter | ArrayTypeWrapper`. Ubicación: `src/decorations/property_name_decorator.ts`.
+
+### BaseEntity Methods
+
+- `getProperties()`: Static method retornando Record<string, string> con map de propertyKey → display name. Usado por DefaultDetailView y ListView para iterar sobre propiedades visibles.
+- `getPropertyType(key)`: Retorna PropertyType de propiedad específica. Usado por resolución de componentes de input.
+- `getPropertyName(key)`: Instance method retornando display name de propiedad. Usado por componentes de input para labels.
+
+### Componentes de Input
+
+Los siguientes componentes consumen metadata de @PropertyName para renderización automática:
+
+- `TextInputComponent`: Para String con StringType.TEXT o sin StringType
+- `NumberInputComponent`: Para Number
+- `DateInputComponent`: Para Date
+- `BooleanInputComponent`: Para Boolean
+- `EmailInputComponent`: Para String con StringType.EMAIL
+- `PasswordInputComponent`: Para String con StringType.PASSWORD
+- `TextAreaComponent`: Para String con StringType.TEXTAREA
+- `ObjectInputComponent`: Para BaseEntity classes
+- `ListInputComponent`: Para Enums
+- `ArrayInputComponent`: Para Arrays con ArrayOf()
+
+Ubicación: `src/components/Form/`
+
+---
+
+## 9. Relaciones
+
+### Relación con @ModuleDefaultComponent
+
+@ModuleDefaultComponent define componente de input DEFAULT para TODAS las propiedades de una entity, mientras @PropertyName define el TIPO de cada propiedad individual. Trabajan juntos: @PropertyName determina tipo (String, Number, Date) que normalmente resuelve a componente específico (TextInput, NumberInput, DateInput), pero @ModuleDefaultComponent OVERRIDE ese comportamiento forzando UN componente para todas las propiedades. Si ambos están presentes, @ModuleDefaultComponent tiene precedencia reemplazando resolución automática basada en PropertyType de @PropertyName. Uso típico: @PropertyName define tipos correctos para todas las propiedades, @ModuleDefaultComponent fuerza que todas usen mismo input custom (ej: MoneyInputComponent para todo).
+
+### Relación con @ModuleCustomComponents
+
+@ModuleCustomComponents define componentes de input ESPECÍFICOS property-by-property, mientras @PropertyName define tipo general de cada propiedad. Trabajan juntos: @PropertyName establece PropertyType baseline (String, Number, Category), @ModuleCustomComponents SELECTIVE override para propiedades específicas. Si propiedad tiene custom component en @ModuleCustomComponents, eso  tiene precedencia sobre resolución automática por PropertyType; si propiedad NO tiene custom component, usa resolución automática basada en PropertyType de @PropertyName. Ejemplo: todas las propiedades usan tipos normales (String → TextInput) EXCEPTO 'price' que usa PriceInputComponent custom definido en @ModuleCustomComponents.
+
+### Relación con DefaultDetailView
+
+DefaultDetailView es el consumidor principal de metadata de @PropertyName para rendering automático de formularios. Proceso: DefaultDetailView itera sobre `entity.getEditableProperties()` obteniendo lista de propertyKeys, para cada key llama `entity.getPropertyType(key)` obteniendo PropertyType de @PropertyName, resuelve componente input basándose en PropertyType (chain: ModuleCustomComponents → Type-based → ModuleDefaultComponent → fallback TextInput), llama `entity.getPropertyName(key)` para label, renderiza `<component :is="resolvedComponent" :label="propertyName" v-model="entity[key]" />`. Sin @PropertyName, DefaultDetailView NO puede determinar qué componente usar ni qué label mostrar, resultando en propiedad invisible o error de renderización.
+
+### Relación con ListView (DefaultListView)
+
+DefaultListView usa metadata de @PropertyName para renderizar columnas de tabla automáticamente. Proceso: ListView obtiene todas las propiedades con `EntityClass.getProperties()` retornando map de @PropertyName, para cada propiedad crea columna de tabla con header siendo display name de @PropertyName, renderiza valores con `entity.getFormattedValue(key)` o `entity[key].toString()`, ordena alfabéticamente por propertyKey o usa @PropertyIndex si está presente. PropertyType de @PropertyName NO afecta ListView directamente (solo afecta DetailView input selection), pero display name sí se usa para column headers. Sin @PropertyName, propiedad NO aparece en tabla de ListView.
+
+### Relación con Validation Decorators (@Required, @Validation)
+
+@Required y @Validation son decoradores independientes de @PropertyName que definen reglas de validación, mientras @PropertyName solo define display info y tipo. Trabajan en paralelo sin interferencia: @PropertyName determina QUÉ componente renderizar y label a mostrar, @Required/@Validation determinan CÓMO validar el valor del input. Los componentes de input consultan ambas metadata sources independientemente: `entity.getPropertyName(key)` para label, `entity.isRequired(key)` para asterisco required, `entity.validate(key, value)` para validación. Típicamente se aplican juntos: `@PropertyName('Email', String)` + `@StringType(StringTypes.EMAIL)` + `@Required()` + `@Validation(emailRegex)` para input de email completo.
+
+---
+
+## 10. Notas de Implementación
+
+### Performance de Metadata Access
+
+Metadata storage usando Symbols en prototype proporciona O(1) constant-time access. Sin embargo, DefaultDetailView itera sobre TODAS las propiedades en cada render. Para entities con 50+ propiedades, considerar usar `@HideInDetailView()` para propiedades que no necesitan mostrarse, reduciendo iterations. Access pattern eficiente: llamar `EntityClass.getProperties()` UNA VEZ en setup/computed y cachear resultado, NO llamar `entity.getPropertyName(key)` repetidamente en loop sin memoization.
+
+### Type Safety con PropertyType
+
+TypeScript NO verifica que PropertyType coincida con tipo real de propiedad en tiempo de compilación. Es responsabilidad del developer asegurar match correcto. Mismatch común: `name!: string` con `@PropertyName('Name', Number)` compila sin errores pero causa runtime errors al intentar renderizar NumberInputComponent para string value. Best practice: inmediatamente después de escribir tipo TypeScript de propiedad, aplicar @PropertyName con PropertyType matching; realizar code review específico verificando consistency entre tipos.
+
+### ArrayOf() Helper Pattern
+
+`ArrayOf(Type)` es syntax sugar que crea ArrayTypeWrapper encapsulando elementType. Alternativa interna: `new ArrayTypeWrapper(OrderItem)`, pero ArrayOf() proporciona syntax más limpia. ArrayTypeWrapper almacena solo la referencia a clase/type del elemento; NO crea instancias ni valida que array contenga elementos de ese tipo en runtime. ArrayInputComponent usa elementType para: determinar qué input component renderizar para cada elemento del array, obtener getDefaultPropertyValue() de elementos agregados, aplicar validación property-by-property en elementos.
+
+### Enums Handling Automático
+
+El framework detecta enums automáticamente sin necesidad de wrapper especial: cuando PropertyType es enum (typeof returned by TypeScript para enum), framework genera ListInputComponent con options siendo enum values. Enum keys se usan como display labels a menos que enum use string values descriptivos: `enum Status { ACTIVE = 'Active', INACTIVE = 'Inactive' }` muestra 'Active'/'Inactive'; `enum Status { ACTIVE, INACTIVE }` muestra 'ACTIVE'/'INACTIVE' (keys). Para custom labels diferentes de enum values, crear computed property en entity retornando formatted label.
+
+### Custom Display Names en Runtime
+
+Aunque @PropertyName define display name estático en decorador, puede overridearse en runtime para i18n o customization dinámica modificando metadata map directamente: `Product.prototype[PROPERTY_NAME_KEY]['name'] = translations[currentLocale].productName`. Sin embargo, esto es anti-pattern; mejor approach es usar computed property en component: `const nameLabel = computed(() => i18n.t('product.name'))` y pasar como prop a input component. Metadata decorators diseñados para valores estáticos defined at class definition time.
+
+### Relaciones Bidirectionales Type Challenge
+
+Para relaciones bidirectionales (Order has Customer, Customer has Orders array), ambas clases necesitan referenced before definition complete, causando circular dependency issues. Pattern: usar lazy evaluation en one side: `@PropertyName('Orders', ArrayOf(() => Order))` donde ArrayOf acepta function retornando type en lugar de type directo. Framework evalúa function solo cuando necesita type info, después de ambas clases están defined. Sin lazy eval, `Customer` references `Order` antes de Order class exists, causando ReferenceError.
+
+---
+
+## 11. Referencias Cruzadas
+
+### Decoradores Relacionados
+
+- [string-type-decorator.md](string-type-decorator.md): Define subtipo de String (EMAIL, PASSWORD, TEXTAREA) para correct input component selection.
+- [required-decorator.md](required-decorator.md): Marca propiedad como obligatoria, frecuentemente usado junto con @PropertyName.
+- [primary-property-decorator.md](primary-property-decorator.md): Define propiedad primaria para display en ObjectInputComponent lookups.
+- [hide-in-detail-view-decorator.md](hide-in-detail-view-decorator.md): Oculta propiedad de DetailView aunque tenga @PropertyName.
+- [hide-in-list-view-decorator.md](hide-in-list-view-decorator.md): Oculta propiedad de ListView aunque tenga @PropertyName.
+
+### Base Entity y Metadata
+
+- [../../02-base-entity/base-entity-core.md](../../02-base-entity/base-entity-core.md): Documentación de accessors `getProperties()`, `getPropertyType()`, `getPropertyName()`.
+- [../../02-base-entity/metadata-accessors.md](../../02-base-entity/metadata-accessors.md): Todos los métodos de metadata access en BaseEntity.
+
+### Componentes de Input
+
+- [../../04-components/text-input-component.md](../../04-components/text-input-component.md): Input para PropertyType String.
+- [../../04-components/number-input-component.md](../../04-components/number-input-component.md): Input para PropertyType Number.
+- [../../04-components/object-input-component.md](../../04-components/object-input-component.md): Input para PropertyType BaseEntity classes.
+- [../../04-components/array-input-component.md](../../04-components/array-input-component.md): Input para PropertyType ArrayOf().
+- [../../04-components/list-input-component.md](../../04-components/list-input-component.md): Input para PropertyType Enums.
+
+### Views y Resolución de Componentes
+
+- [../../04-components/default-detail-view.md](../../04-components/default-detail-view.md): DetailView que consume @PropertyName metadata para rendering automático.
+- [../../04-components/default-list-view.md](../../04-components/default-list-view.md): ListView que usa @PropertyName para column headers.
+
+### Tutoriales
+
+- [../../tutorials/01-basic-crud.md](../../tutorials/01-basic-crud.md): Tutorial básico mostrando uso de @PropertyName en entity simple.
+- [../../tutorials/03-relations.md](../../tutorials/03-relations.md): Tutorial de relaciones usando @PropertyName con BaseEntity types y ArrayOf().
+
+---
+
+##Símbolo de Metadatos
 
 ```typescript
 export const PROPERTY_NAME_KEY = Symbol('property_name');
@@ -64,7 +400,7 @@ proto[ARRAY_ELEMENT_TYPE_KEY] = {
 
 ---
 
-## 💻 Firma del Decorador
+## Firma del Decorador
 
 ```typescript
 function PropertyName(
@@ -85,7 +421,7 @@ type PropertyType =
 
 ---
 
-## 📖 Uso Básico
+## Uso Básico
 
 ### Tipos Primitivos
 
@@ -147,7 +483,7 @@ export class Order extends BaseEntity {
 
 ---
 
-## 🔍 Funciones Accesoras en BaseEntity
+## Funciones Accesoras en BaseEntity
 
 ### Métodos Estáticos (Clase)
 

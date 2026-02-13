@@ -18,7 +18,7 @@ PasswordInputComponent es un componente especializado para entrada de contraseñ
 **ACTIVACION:**
 Se renderiza cuando property tiene decorador @StringTypeDef(StringType.PASSWORD). Application.js detecta esta configuración y selecciona PasswordInputComponent.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **type toggle:**
 Alternancia dinámica entre type="password" que muestra puntos negros ocultando texto y type="text" que muestra caracteres reales, controlada por variable reactiva showPassword.
@@ -168,7 +168,7 @@ isValidated(): boolean {
 }
 ```
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - Activación:**
 Sistema detecta decorador @StringTypeDef(StringType.PASSWORD) en property, Application.js selecciona PasswordInputComponent para renderizado.
@@ -191,7 +191,7 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 **PASO 7 - Actualización UI:**
 Si validación falla, isInputValidated se marca false, CSS class nonvalidated se aplica al input, validationMessages div renderiza errores específicos de cada nivel fallido.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE inicializar showPassword en false para ocultar password por defecto.
 
@@ -207,7 +207,7 @@ Si validación falla, isInputValidated se marca false, CSS class nonvalidated se
 
 **REGLA 7:** SIEMPRE validar required con trim eliminando espacios en blanco.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Usar StringType.TEXT para properties de password exponiendo texto por defecto.
 
@@ -223,7 +223,7 @@ Si validación falla, isInputValidated se marca false, CSS class nonvalidated se
 
 **PROHIBIDO:** Guardar passwords en texto plano en servidor, SIEMPRE hashear con bcrypt/argon2.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **DECORADORES REQUERIDOS:**
 - @StringTypeDef: Define StringType.PASSWORD para activación
@@ -241,7 +241,7 @@ Si validación falla, isInputValidated se marca false, CSS class nonvalidated se
 - EventBus: Comunica evento validate-inputs
 - GGICONS: Proporciona iconos VISIBILITY y VISIBILITY_OFF
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **HEREDA DE:**
 TextInputComponent - Estructura base, props, computed properties, métodos comunes.
@@ -257,7 +257,7 @@ TextInputComponent - Estructura base, props, computed properties, métodos comun
 **FLUJO DE RENDERIZADO:**
 Application.js detecta decorador, selecciona PasswordInputComponent, pasa entity/propertyName/metadata como props, componente renderiza input type="password" con botón toggle.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO ENTITY:**
 ```typescript
@@ -315,7 +315,7 @@ Servidor: Hashear bcrypt/argon2, salt única, NUNCA retornar password en API, ra
 **DIFERENCIAS CON TextInputComponent:**
 type="text" vs type="password"/toggle, siempre visible vs oculto por defecto, sin botón vs botón toggle, sin icono vs icono VISIBILITY, autocomplete sí vs depende navegador, activación String default vs @StringTypeDef(PASSWORD)
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - text-input-component.md: Componente base heredado

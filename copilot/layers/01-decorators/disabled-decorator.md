@@ -544,7 +544,7 @@ price!: number;
 // Razón: Function se ejecuta en cada render (decenas/cientos de veces)
 ```
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### Dependencia 1: BaseEntity Core
 
@@ -680,7 +680,7 @@ id!: number;
 
 Archivo: [property-name-decorator.md](property-name-decorator.md)
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Relación con @ReadOnly
 
@@ -1141,7 +1141,7 @@ Líneas: 30
 
 ---
 
-## 🔍 Metadata Storage
+## Metadata Storage
 
 ### Estructura en Prototype
 

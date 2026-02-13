@@ -739,7 +739,7 @@ export class Order extends BaseEntity {
 }
 ```
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### 8.1. BaseEntity (Core)
 
@@ -856,7 +856,7 @@ function searchEntities(query: string, entities: BaseEntity[]): BaseEntity[] {
 }
 ```
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### 9.1. Con @HideInDetailView (Complementario)
 

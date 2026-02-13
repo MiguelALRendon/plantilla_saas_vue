@@ -823,7 +823,7 @@ phone!: string;
 phone!: string;
 ```
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### 8.1. BaseEntity (Core)
 
@@ -930,7 +930,7 @@ ssnDisplay!: string;
 macAddress!: string;
 ```
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### 9.1. Con @Required (Complementario)
 

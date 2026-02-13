@@ -1,12 +1,12 @@
 # Form Inputs Overview - Sistema de Inputs del Framework
 
-## Sección 1: Propósito
+## 1. Propósito
 
 El sistema de inputs proporciona componentes Vue reactivos que se generan automáticamente basándose en los metadatos de las entidades. Estos componentes representan la interfaz entre el usuario y los datos del modelo, eliminando la necesidad de escribir formularios HTML manualmente.
 
 El framework selecciona automáticamente el tipo de input apropiado según el tipo de dato TypeScript y los decoradores aplicados a cada propiedad de la entidad. Los decoradores de metadatos controlan el comportamiento, validación, presentación y características específicas de cada input sin requerir configuración adicional en las vistas.
 
-## Sección 2: Alcance
+## 2. Alcance
 
 Este documento describe:
 - Los 10 componentes de input disponibles (TextInputComponent, NumberInputComponent, BooleanInputComponent, DateInputComponent, EmailInputComponent, PasswordInputComponent, TextAreaComponent, ObjectInputComponent, ArrayInputComponent, ListInputComponent)
@@ -20,7 +20,7 @@ Este documento describe:
 
 El sistema opera exclusivamente en el contexto de formularios de detalle CRUD. Los inputs se renderizan dinámicamente dentro de DefaultDetailView o vistas personalizadas que manejan instancias de BaseEntity.
 
-## Sección 3: Definiciones Clave
+## 3. Definiciones Clave
 
 **Input Component**: Componente Vue que renderiza un control de formulario HTML específico (input, select, textarea) con lógica de validación y metadatos integrados.
 
@@ -38,7 +38,7 @@ El sistema opera exclusivamente en el contexto de formularios de detalle CRUD. L
 
 **isInputValidated State**: Variable reactiva booleana en cada input que indica si la validación actual es exitosa (true) o fallida (false), controlando clases CSS y mensajes.
 
-## Sección 4: Descripción Técnica
+## 4. Descripción Técnica
 
 ### Componentes de Input Disponibles
 
@@ -409,7 +409,7 @@ El input se renderiza pero no acepta entrada. Útil para campos calculados o cua
 
 Activado cuando isInputValidated = false después de ejecutar handleValidation(). Retroalimentación visual de errores de validación.
 
-## Sección 5: Flujo de Funcionamiento
+## 5. Flujo de Funcionamiento
 
 1. **Inicialización del Input**: Al renderizarse DefaultDetailView, se itera sobre entity.getKeys() obteniendo todas las propiedades decoradas. Para cada propertyKey, se selecciona automáticamente el componente de input apropiado (NumberInputComponent, TextInputComponent, etc.) basándose en entityClass.getPropertyType(key) y decoradores StringType si aplica. El input se monta con props entityClass, entity, propertyKey y v-model="entity[propertyKey]".
 
@@ -431,7 +431,7 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 
 10. **Limpieza al Desmontar**: Si el usuario navega a otra vista o cierra el formulario, el input ejecuta beforeUnmount(). El hook llama Application.eventBus.off('validate-inputs', this.handleValidation) removiendo el listener. Esto previene que inputs desmontados respondan a eventos futuros y libera memoria. Vue completa el desmontaje del componente y libera recursos reactivos.
 
-## Sección 6: Reglas Obligatorias
+## 6. Reglas Obligatorias
 
 1. **Todos los inputs DEBEN usar v-model**: El binding v-model es obligatorio para sincronización bidireccional. Nunca usar :value y @input separados en componente padre sin v-model. El input interno DEBE usar :value="modelValue" y @emit('update:modelValue', newValue) para mantener contrato v-model.
 
@@ -447,7 +447,7 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 
 7. **Todos los inputs DEBEN renderizar validation-messages cuando isInputValidated = false**: El template DEBE incluir div validation-messages que itera validationMessages array. Los mensajes DEBEN ser visibles cuando isInputValidated = false. Los mensajes DEBEN ocultarse cuando isInputValidated = true para evitar clutter.
 
-## Sección 7: Prohibiciones
+## 7. Prohibiciones
 
 1. **NUNCA modificar entity directamente en métodos del input**: Los inputs solo DEBEN leer de entity para metadatos. La única escritura permitida es vía v-model automático. No ejecutar entity[propertyKey] = value manualmente dentro del input. No invocar entity.save() ni entity.delete() desde inputs.
 
@@ -463,7 +463,7 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 
 7. **NUNCA asumir que modelValue tiene valor**: El modelValue puede ser undefined, null, o empty string inicialmente. El input DEBE manejar casos donde modelValue es falsy. La validación Required DEBE ejecutarse incluso si modelValue está vacío. No crashear con TypeError al acceder propiedades de modelValue null.
 
-## Sección 8: Dependencias
+## 8. Dependencias
 
 **Dependencias Directas:**
 - @/entities/base_entitiy.ts: BaseEntity clase base proporciona métodos isRequired(), isValidation(), isAsyncValidation(), isDisabled(), isReadOnly(), getHelpText(), validateInputs() que los inputs invocan vía entity prop
@@ -492,7 +492,7 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 - @/components/Buttons/SaveButton.vue: SaveButton dispara validateInputs() antes de guardar, consulta Application.View.value.isValid
 - @/components/Buttons/ValidateButton.vue: ValidateButton dispara validación manual sin guardar
 
-## Sección 9: Relaciones
+## 9. Relaciones
 
 **Sincroniza con:**
 - BaseEntity: Los inputs leen metadatos de entity y entityClass continuamente vía composable reactivo. entity.validateInputs() dispara validación global de inputs. entity.getDirtyState() rastrea propiedades modificadas por inputs.
@@ -515,7 +515,7 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 **Sustituye:**
 - Formularios HTML tradicionales: Elimina necesidad de escribir <form>, <label>, <input> manualmente con validación JavaScript. Los inputs se generan automáticamente desde metadatos de clase.
 
-## Sección 10: Notas de Implementación
+## 10. Notas de Implementación
 
 ### Crear un Nuevo Tipo de Input Personalizado
 
@@ -846,7 +846,7 @@ describe('TextInputComponent', () => {
 });
 ```
 
-## Sección 11: Referencias Cruzadas
+## 11. Referencias Cruzadas
 
 **Documentos Relacionados:**
 - [text-input-component.md](text-input-component.md): Documentación detallada TextInputComponent para String básico

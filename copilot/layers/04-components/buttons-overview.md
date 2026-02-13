@@ -26,7 +26,7 @@ Application.ListButtons.value array reactive almacena components markRaw wrapped
 **ICONOS:**
 Google Material Symbols desde constants/ggicons.ts GGICONS.SAVE GGICONS.ADD GGICONS.REFRESH GGICONS.CHECK GGICONS.SAVE2 GGICONS.DEVICES renderizados span con GGCLASS.
 
-## 3. DEFINICIONES CLAVE
+## 3. Definiciones Clave
 
 **Application.ListButtons reactive:**
 Ref<Component[]> array almacena button components wrapped markRaw() evitando reactividad innecesaria Vue. ActionsComponent itera v-for renderizando component :is dinámicamente. Actualizado setButtonList() según Application.View.value.viewType y entityObject.isPersistent() determinando qué buttons mostrar contexto vista actual.
@@ -193,7 +193,7 @@ setButtonList() {
 ```
 **LOGICA SWITCH:** Case LISTVIEW establece New Refresh sin entity individual no Save Validate. Case DETAILVIEW verifica isPersistentEntity true todos buttons incluye Save SaveAndNew, false omite Save SaveAndNew solo New Refresh Validate SendToDevice. Default empty array custom views no standard buttons.
 
-## 5. FLUJO DE FUNCIONAMIENTO
+## 5. Flujo de Funcionamiento
 
 **PASO 1 - ChangeView Trigger setButtonList:**
 Usuario hace clic fila tabla ListView ejecutando openDetailView(), Application.changeViewToDetailView actualiza View.value estableciendo entityClass entityObject component viewType, método ejecuta setTimeout(() => setButtonList(), 405) delay permitiendo CSS transitions complete, timer expires ejecuta setButtonList() leyendo viewType isPersistent determinando buttons.
@@ -225,7 +225,7 @@ Usuario navega ListView tabla products, Application.changeViewToListView estable
 **PASO 10 - Non-Persistent Entity Buttons:**
 Entity class sin @Persistent decorator view model temporary, Application.changeViewToDetailView establece viewType DETAILVIEW, setButtonList() verifica isPersistentEntity = false, switch case DETAILVIEW else branch establece ListButtons omitting Save SaveAndNew [New Refresh Validate SendToDevice], buttons Save SaveAndNew hidden no puede persistir backend, usuario puede validate crear new discard changes no save API.
 
-## 6. REGLAS OBLIGATORIAS
+## 6. Reglas Obligatorias
 
 **REGLA 1:** SIEMPRE ejecutar setButtonList() con setTimeout 405ms delay después changeView permitiendo CSS transitions complete evitando visual flicker.
 
@@ -241,7 +241,7 @@ Entity class sin @Persistent decorator view model temporary, Application.changeV
 
 **REGLA 7:** SIEMPRE verificar entityClass not null antes ejecutar createNewInstance() evitando TypeError undefined.
 
-## 7. PROHIBICIONES
+## 7. Prohibiciones
 
 **PROHIBIDO:** Omitir markRaw() wrapper button components causando Vue crear proxies reactivos unnecessary overhead memory leaks.
 
@@ -257,7 +257,7 @@ Entity class sin @Persistent decorator view model temporary, Application.changeV
 
 **PROHIBIDO:** Hardcodear button visibility logic component templates, usar setButtonList() centralized logic Application.
 
-## 8. DEPENDENCIAS
+## 8. Dependencias
 
 **MODELS:**
 - Application: Singleton con View.value ListButtons.value router eventBus setButtonList() changeViewToListView changeViewToDetailView methods
@@ -278,7 +278,7 @@ Entity class sin @Persistent decorator view model temporary, Application.changeV
 **DECORADORES:**
 - @Persistent: Determina isPersistent() retorno true false entity persistible backend
 
-## 9. RELACIONES
+## 9. Relaciones
 
 **BUTTONS Y APPLICATION VIEW:**
 Buttons leen Application.View.value.entityObject accediendo entity actual executing actions save refresh validate, View.value.entityClass usado NewButton createNewInstance() method, View.value.viewType determina setButtonList() switch case deciding qué buttons mostrar, cambios View actualizados changeView methods triggering setButtonList() updating buttons reactively.
@@ -298,7 +298,7 @@ Validate button emite 'validate-inputs' event Application.eventBus, no ejecuta v
 **MARKRAW PERFORMANCE OPTIMIZATION:**
 markRaw() Vue 3 function previene reactive proxy creation components, buttons son static instances no necesitan reactivity tracking internal changes, wrapping markRaw reduces memory footprint eliminates watchers unnecessary, ListButtons.value array sí reactivo pero items array no reactivos markRaw wrapped, balance performance reactivity donde necesario.
 
-## 10. NOTAS DE IMPLEMENTACION
+## 10. Notas de Implementación
 
 **EJEMPLO CREAR BUTTON CUSTOM:**
 ```vue
@@ -490,7 +490,7 @@ setTimeout 405ms delay crítico timing coordinación:
 **LIMITACIONES ACTUALES:**
 SendToDevice button placeholder sin funcionalidad real, no ejecuta sync devices mobile tablets, futuro implementation requiere backend API endpoints device management. GenericButton sin props system, custom buttons necesitan dedicated components no reusable generic con props label icon action. No keyboard shortcuts buttons, accessibility requiere tab navigation enter key press simulating click events.
 
-## 11. REFERENCIAS CRUZADAS
+## 11. Referencias Cruzadas
 
 **DOCUMENTOS RELACIONADOS:**
 - ActionsComponent.md: Componente renderiza buttons dinámicamente v-for ListButtons array

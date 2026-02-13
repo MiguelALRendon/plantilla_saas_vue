@@ -31,8 +31,6 @@ El decorator HelpText agrega texto de ayuda descriptivo que se muestra permanent
 
 ## 3. Definiciones Clave
 
-## 3. Definiciones Clave
-
 **HELP_TEXT_METADATA Symbol:** Identificador único usado como property key en prototype para almacenar object map de help text strings o functions. Definido como `export const HELP_TEXT_METADATA = Symbol('helpText')`. Estructura: `{ [propertyKey: string]: string | ((entity: BaseEntity) => string) }`.
 
 **HelpText Type:** Type union `string | ((entity: BaseEntity) => string)`. String estático para help text fijo, function para help text dinámico evaluado en runtime.
@@ -529,7 +527,7 @@ deleteConfirmation!: string;
 })
 ```
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### Dependencia 1: BaseEntity Core
 
@@ -620,7 +618,7 @@ import Application from '@/models/application';
 name!: string;
 ```
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Relación con @Validation
 

@@ -777,7 +777,7 @@ DetailView renderiza el campo usando el componente resuelto: `<component :is="re
 
 6. **NO eliminar Type-based fallback - respetar precedencia chain**: El componente default NO debe intentar bypassear ni eliminar los componentes Type-based del framework (TextInput para String, NumberInput para Number, etc.). Estos son parte integral de la cadena de resolución como fallback con menor prioridad. El orden de precedencia DEBE respetarse: custom > type-based > module-default > global. No romper esta cadena.
 
-## 8. Dependencias e Integraciones
+## 8. Dependencias
 
 ### BaseEntity
 
@@ -811,7 +811,7 @@ Pattern de Vue para lazy loading de componentes que permite optimizar performanc
 
 El singleton Application proporciona el método `getInputComponentForProperty(entityClass, propertyName)` que implementa la lógica de resolución de componentes con la cadena de precedencia completa. Este método es el punto central de integración: consulta ModuleCustomComponents, Type-based components, ModuleDefaultComponent y Global fallback en orden, retornando el primer match encontrado. DetailView y otros componentes del framework usan este método para determinar qué componente renderizar, delegando la lógica de precedencia de manera centraliza y consistente.
 
-## 9. Relaciones con Otros Elementos
+## 9. Relaciones
 
 ### Con @ModuleCustomComponents
 

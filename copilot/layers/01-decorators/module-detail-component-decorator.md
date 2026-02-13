@@ -924,6 +924,238 @@ export class Order extends BaseEntity {
 
 ---
 
+## 5. Flujo de Funcionamiento
+
+### Proceso de Resolución de DetailView
+
+```
+1. Usuario navega a DetailView
+        ↓
+2. Application.changeView(Product, ViewType.DETAIL, entityInstance) ejecutado
+        ↓
+3. Router computed property `currentDetailViewComponent` evaluado
+        ↓
+4. Router llama Product.getModuleDetailComponent()
+        ↓
+5. ¿Existe componente custom?
+        ↓ SI
+   Renderiza custom component
+        ↓
+6. Pasa entity instance como prop: <component :entity="currentEntity" />
+        ↓
+7. Componente custom mounted, tiene acceso a props.entity
+        ↓
+8. Usuario edita campos (v-model="props.entity.propertyName")
+        ↓
+9. Usuario click botón Save
+        ↓
+10. await props.entity.save() ejecutado
+        ↓
+11. Application.changeView(Product, ViewType.LIST) navega a ListView
+```
+
+### Flujo Sin Custom Component
+
+```
+        ↓ NO (paso 5)
+   Renderiza default_detailview.vue
+        ↓
+   Itera sobre entity.getEditableProperties()
+        ↓
+   Resuelve componente de input por propiedad
+        ↓
+   Renderiza formulario automático vertical
+```
+
+---
+
+## 6. Reglas Obligatorias
+
+### Arquitectura y Estructura
+
+**OBLIGATORIO 6.1:** El componente DetailView custom DEBE aceptar prop `entity` de tipo specific entity class (Product, User, Order, etc.). Sin esta prop, el componente no puede acceder a los datos de la instancia actual.
+
+**OBLIGATORIO 6.2:** El decorador DEBE aplicarse a nivel de clase DESPUÉS de otros decoradores de módulo. Orden correcto: `@ModuleName` → `@ModuleIcon` (opcional) → `@ModuleListComponent` (opcional) → `@ModuleDetailComponent` → definición de clase.
+
+**OBLIGATORIO 6.3:** El componente custom DEBE importar tipos TypeScript necesarios: `import type { EntityClass } from '@/entities/EntityClass'` para typing de prop entity.
+
+### Interacción con Datos
+
+**OBLIGATORIO 6.4:** El componente DEBE modificar entity properties directamente usando v-model: `<input v-model="props.entity.propertyName" />`. NO crear copias locales de datos excepto para computaciones derivadas.
+
+**OBLIGATORIO 6.5:** El componente DEBE llamar explícitamente `await props.entity.save()` en save handler. El framework NO ejecuta save automáticamente.
+
+**OBLIGATORIO 6.6:** El componente DEBE manejar errores de save con try/catch mostrando feedback al usuario mediante toasts o mensajes inline cuando `entity.save()` falla.
+
+### Navegación y Lifecycle
+
+**OBLIGATORIO 6.7:** El componente DEBE navegar explícitamente después de save/cancel/delete usando `Application.changeView(EntityClass, ViewType.LIST)`. El framework NO navega automáticamente.
+
+**OBLIGATORIO 6.8:** El componente DEBE proveer botón Cancel que navega a ListView SIN guardar cambios: `Application.changeView(EntityClass, ViewType.LIST)`.
+
+**OBLIGATORIO 6.9:** El componente DEBE distinguir entre edit/create mode consultando `!props.entity.id` cuando sea necesario mostrar UI diferente para creating vs editing.
+
+### Validación
+
+**OBLIGATORIO 6.10:** El componente DEBE ejecutar validación antes de save llamando `await props.entity.validateInputs()` o confiando en validación automática durante `entity.save()`.
+
+**OBLIGATORIO 6.11:** El componente DEBE mostrar errores de validación al usuario accediendo a `entity.validationErrors` y renderizando mensajes junto a campos inválidos.
+
+---
+
+## 7. Prohibiciones
+
+### Anti-Patterns de Props
+
+**PROHIBIDO 7.1:** NO aceptar entity como múltiples props individuales (`name`, `price`, `description`). DEBE recibir entity instance completa como single prop `entity`.
+
+**PROHIBIDO 7.2:** NO mutar la prop entity reemplazándola completamente (`props.entity = newEntity`). SOLO modificar properties individuales (`props.entity.name = 'New Name'`).
+
+**PROHIBIDO 7.3:** NO crear copias deep de entity (`const copy = JSON.parse(JSON.stringify(props.entity))`). Trabajar directamente con entity instance para mantener reactivity.
+
+### Anti-Patterns de Persistencia
+
+**PROHIBIDO 7.4:** NO ejecutar save sin validación previa. DEBE validar datos antes de guardar para prevenir datos inválidos en backend.
+
+**PROHIBIDO 7.5:** NO ignorar errores de save silenciosamente. DEBE mostrar feedback al usuario cuando save falla con mensaje descriptivo del error.
+
+**PROHIBIDO 7.6:** NO guardar automáticamente en onChange sin confirmación del usuario. El usuario DEBE ejecutar acción explícita (click botón Save) para persistir cambios.
+
+### Anti-Patterns de Navegación
+
+**PROHIBIDO 7.7:** NO usar Vue Router directamente (`router.push()`). DEBE usar `Application.changeView()` que mantiene state sincronizado con Application singleton.
+
+**PROHIBIDO 7.8:** NO navegar antes de completar save asíncrono. DEBE await `entity.save()` antes de llamar `Application.changeView()` para asegurar persistencia completa.
+
+**PROHIBIDO 7.9:** NO mantener usuario en DetailView después de save exitoso sin razón. DEBE navegar automáticamente a ListView después de save success salvo casos específicos (save and continue editing).
+
+### Anti-Patterns de UI
+
+**PROHIBIDO 7.10:** NO usar decoradores de metadata (@ViewGroup, @ViewGroupRow, @TabOrder) esperando que se apliquen automáticamente. Estos decoradores solo funcionan en default_detailview.vue; custom components DEBEN implementar layout manualmente.
+
+**PROHIBIDO 7.11:** NO renderizar todos los tabs/steps simultáneously con display:none. DEBE usar v-if para lazy loading de contenido pesado (imágenes, charts) optimizando performance.
+
+**PROHIBIDO 7.12:** NO hardcodear labels de campos en el template. DEBE usar `entity.getPropertyName('propertyKey')` para obtener labels dinámicos desde metadata manteniendo consistencia con decoradores @PropertyName.
+
+---
+
+## 8. Dependencias
+
+### Decoradores del Framework
+
+- `@ModuleName`: Define nombre del módulo. DEBE aplicarse antes de @ModuleDetailComponent para identificación correcta del módulo en Router.
+- `@ModuleIcon`: Define icono del módulo. Opcional pero recomendado para consistencia visual en SideBar y TopBar.
+- `@PropertyName`: Define nombres de propiedades para labels. ComponenteDetailView puede acceder via `entity.getPropertyName(key)` para labels dinámicos.
+
+### Componentes Vue
+
+- `BaseEntity`: Clase base de la entity que contiene métodos `save()`, `delete()`, `validateInputs()`, accessors de metadata.
+- `TabControllerComponent`: Componente del framework para UI de tabs. Ubicación: `src/components/TabControllerComponent.vue`. Usado en tabbed layouts custom.
+- `TabComponent`: Componente hijo de TabController para contenido de cada tab. Ubicación: `src/components/TabComponent.vue`.
+
+### Application Singleton
+
+- `Application.changeView()`: Método para navegación entre vistas. Signatura: `changeView(EntityClass, ViewType, entity?)`.
+- `Application.View.value`: Reactive property con vista activa. Estructura: `{ entityClass, type, entity }`.
+- `Application.ApplicationUIService.showToast()`: Método para mostrar notificaciones toast. Usado para feedback de save/delete success/error.
+
+### Tipos y Enums
+
+- `ViewType`: Enum con valores `LIST` y `DETAIL`. Importar: `import { ViewType } from '@/enums/view_type'`.
+- `Component`: Tipo TypeScript de Vue para componentes SFC. Importar: `import type { Component } from 'vue'`.
+
+### Metadata Symbols
+
+- `MODULE_DETAIL_COMPONENT_KEY`: Symbol para almacenar componente DetailView en metadata de clase. Definido en `src/decorations/module_detail_component_decorator.ts`.
+
+---
+
+## 9. Relaciones
+
+### Relación con @ModuleListComponent
+
+`@ModuleListComponent` define el componente custom para ListView (tabla de registros del módulo), mientras `@ModuleDetailComponent` define el componente custom para DetailView (formulario de edición/creación). Son decoradores complementarios independientes: ambos pueden coexistir en la misma entity class con custom ListView y custom DetailView, o uno solo puede estar presente usando default para el otro. No tienen dependencia directa entre ellos; el Router resuelve cada uno independientemente según el ViewType activo. Típicamente módulos complejos personalizan ambas vistas para UX coherente.
+
+### Relación con @ModuleDefaultComponent
+
+`@ModuleDefaultComponent` define el componente de input default para TODAS las propiedades de una entity DENTRO del default_detailview.vue estándar (property-level customization), mientras `@ModuleDetailComponent` reemplaza COMPLETAMENTE el DetailView incluyendo layout y estructura (whole-view customization). Son mutuamente exclusivos en scope: si se usa @ModuleDetailComponent, el decorador @ModuleDefaultComponent NO aplica porque default_detailview.vue no se renderiza; el custom DetailView es responsable de renderizar inputs manualmente. Usar @ModuleDefaultComponent cuando se desea mantener formulario automático estándar pero cambiar componente de input para todas las propiedades; usar @ModuleDetailComponent cuando se necesita control total sobre layout y estructura del formulario.
+
+### Relación con @ModuleCustomComponents
+
+`@ModuleCustomComponents` define componentes de input personalizados para propiedades ESPECÍFICAS DENTRO del default_detailview.vue estándar (selective property-level customization), mientras `@ModuleDetailComponent` reemplaza COMPLETAMENTE el DetailView (whole-view customization). Si se usa @ModuleDetailComponent, el decorador @ModuleCustomComponents NO aplica porque default_detailview.vue no se renderiza; el custom DetailView debe importar y usar componentes de input manualmente si se desean componentes personalizados. Usar @ModuleCustomComponents cuando se desea formulario automático estándar con inputs custom para algunas propiedades (ej: `price` usa PriceInputComponent custom pero otras propiedades usan inputs default); usar @ModuleDetailComponent cuando se necesita layout custom completo donde los inputs se posicionan manualmente según diseño específico.
+
+### Relación con metadata decorators (@ViewGroup, @ViewGroupRow)
+
+`@ViewGroup` y `@ViewGroupRow` son decoradores que controlan agrupación y layout de campos DENTRO del default_detailview.vue estándar (FormGroupComponent, FormRowTwoItems rendering automático), mientras `@ModuleDetailComponent` reemplaza default_detailview.vue completamente. Si se usa @ModuleDetailComponent, los decoradores @ViewGroup y @ViewGroupRow NO aplican automáticamente; el custom DetailView es responsable de implementar agrupación y layout manualmente si se desea organización visual similar. El custom component puede leer metadata de @ViewGroup via `entity.getViewGroup(key)` y @ViewGroupRow via `entity.getViewGroupRow(key)` para replicar lógica de agrupación programáticamente, pero el rendering automático de FormGroupComponent del default view no está disponible; debe implementarse manualmente.
+
+### Relación con Router y Application
+
+El Router es el consumidor principal del decorador: durante rendering del DetailView, el Router ejecuta computed property `currentDetailViewComponent` que call `entityClass.getModuleDetailComponent()` para obtener custom component o fallback a default_detailview.vue. Application.changeView() es el entry point de navegación que user code (custom DetailView save/cancel handlers) llama para trigger navigation updates; changeView actualiza `Application.View.value` reactive property que causa re-evaluation de computed properties del Router. El flujo completo es: custom DetailView click Save → `Application.changeView(EntityClass, ViewType.LIST)` → `Application.View.value` updated → Router computed re-evaluated → Router renderiza ListView.
+
+---
+
+## 10. Notas de Implementación
+
+### Performance Optimization con Lazy Loading
+
+Para componentes DetailView con tabs o wizards conteniendo contenido pesado (imágenes, charts, tablas grandes), usar v-if lazy loading en lugar de v-show para evitar renderizar todos los tabs/steps del DOM simultáneamente. Pattern: `<TabComponent name="images" v-if="activeTab === 'images'">` solo renderiza contenido cuando tab está activo. Esto reduce initial render time significativamente para formularios complejos con 5+ tabs cada uno con múltiples imágenes o visualizaciones. Considerar usar Suspense para async components en tabs lazy loaded mostrando skeleton/spinner mientras se cargan.
+
+### Validación Inline Específica del Dominio
+
+Custom DetailViews son ideales para implementar validación inline específica del dominio que no es posible con decoradores @Validation genéricos. Ejemplos: mostrar warning cuando price está debajo del cost indicando pérdida potencial, validar que fecha de envío no sea anterior a fecha de orden mostrando error inmediatamente, calcular y mostrar profit margin en tiempo real mientras usuario edita cost/price, validar formato de address con API externa mostrando sugerencias de autocompletado. Implementar usando watchers sobre props.entity properties ejecutando lógica de validación custom y actualizando reactive error messages.
+
+### State Management para UI Complejo
+
+Custom DetailViews con UI complejo (tabs, wizards, modals, accordions) requieren state management local usando Vue reactive refs. Pattern recomendado: `const activeTab = ref('basic')`, `const currentStep = ref(0)`, `const isUploading = ref(false)`, `const validationErrors = reactive({})`. Este state es local al componente y NO debe persistirse en entity instance; es state UI temporal que se resetea cuando componente desmonta. Evitar polluting entity instance con UI state (NO hacer `props.entity._activeTab = 'basic'`); mantener separation clara entre entity data state y UI state.
+
+### Reutilización de Inputs del Framework
+
+Custom DetailViews pueden reutilizar componentes de input del framework (TextInputComponent, NumberInputComponent, ObjectInputComponent) importándolos y usándolos manualmente en lugar de reimplementar inputs desde cero. Pattern: `import TextInputComponent from '@/components/Form/TextInputComponent.vue'`, luego `<TextInputComponent :entity="props.entity" :entityClass="ProductClass" propertyKey="name" v-model="props.entity.name" />`. Esto mantiene consistencia visual y funcional con default views (same validation, help text, disabled logic) mientras permite layout custom. Útil para custom layouts que solo reorganizan campos existentes sin cambiar comportamiento de inputs individuales.
+
+### Testing de Custom DetailViews
+
+Custom DetailViews requieren unit tests verificando: component accepts entity prop correctamente, v-model bindings actualizan entity properties, save handler llama entity.save() y navigation, cancel handler navega sin guardar, validation errors se muestran correctamente. Usar vitest/jest con @vue/test-utils mounting component con mock entity instance: `const wrapper = mount(CustomDetailView, { props: { entity: mockProduct } })`. Verificar `wrapper.emitted()` para eventos, `mockProduct.save` para llamadas a métodos, `Application.changeView` para navegación (mock Application singleton). Tests aseguran que custom view mantiene contrato esperado por el framework.
+
+### Acceso a Metadata de Decoradores
+
+Aunque custom DetailViews no usan rendering automático, pueden acceder a metadata de decoradores para decisiones dinámicas. Ejemplos: `entity.getPropertyName('price')` para labels consistentes con @PropertyName, `entity.isRequired('email')` para marcar campos required visually, `entity.getHelpText('password')` para mostrar help text custom, `entity.isDisabled('id')` para deshabilitar inputs según @Disabled. Esto mantiene single source of truth en decoradores evitando duplicación de metadata en template del custom component. Access pattern: todos los metadata accessors están disponibles en BaseEntity como métodos de instancia.
+
+---
+
+## 11. Referencias Cruzadas
+
+### Decoradores Relacionados
+
+- [module-list-component-decorator.md](module-list-component-decorator.md): Componente custom para ListView complementando DetailView customization.
+- [module-default-component-decorator.md](module-default-component-decorator.md): Componente default de input para customization property-level alternativa a whole-view customization.
+- [module-custom-components-decorator.md](module-custom-components-decorator.md): Componentes custom selectivos para propiedades específicas dentro de default DetailView.
+- [module-name-decorator.md](module-name-decorator.md): Nombre del módulo requerido para identificación en Router.
+- [module-icon-decorator.md](module-icon-decorator.md): Icono del módulo para UI elements opcional pero recomendado.
+
+### Base Entity y Metadata
+
+- [../../02-base-entity/base-entity-core.md](../../02-base-entity/base-entity-core.md): Documentación de `getModuleDetailComponent()` accessor y otros métodos de BaseEntity used by framework.
+- [../../02-base-entity/metadata-accessors.md](../../02-base-entity/metadata-accessors.md): Todos los accessors de metadata disponibles para custom components (`getPropertyName`, `isRequired`, `getHelpText`, etc.).
+
+### Application y Routing
+
+- [../../03-application/application-singleton.md](../../03-application/application-singleton.md): Documentación de `Application.changeView()` y `Application.View.value` reactive property.
+- [../../03-application/router-integration.md](../../03-application/router-integration.md): Sistema de resolución de vistas en Router y computed properties para component selection.
+- [../../03-application/ui-services.md](../../03-application/ui-services.md): `ApplicationUIService.showToast()` para notifications y feedback user.
+
+### Componentes del Framework
+
+- [../../04-components/TabControllerComponent.md](../../04-components/TabControllerComponent.md): Componente de tabs usado en tabbed layout custom DetailViews.
+- [../../04-components/text-input-component.md](../../04-components/text-input-component.md): Input component reutilizable en custom DetailViews para consistency.
+- [../../04-components/default-detail-view.md](../../04-components/default-detail-view.md): DetailView estándar que @ModuleDetailComponent reemplaza; útil para contrasting features.
+
+### Tutoriales y Ejemplos
+
+- [../../tutorials/01-basic-crud.md](../../tutorials/01-basic-crud.md): CRUD básico usando default DetailView como baseline antes de customization.
+- [../../examples/advanced-module-example.md](../../examples/advanced-module-example.md): Ejemplo completo de módulo con custom DetailView tabbed layout.
+
+---
+
 ## ⚠️ Consideraciones Importantes
 
 ### 1. DetailView MUST Accept Entity Prop
