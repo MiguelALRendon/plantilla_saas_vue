@@ -1,6 +1,6 @@
 # CONTRATO DE ENFORCEMENT TÉCNICO - Framework SaaS Vue
 
-**Versión:** 1.0.0  
+**Versión:** 1.1.0  
 **Fecha de Creación:** 13 de Febrero, 2026  
 **Última Actualización:** 13 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
@@ -51,7 +51,7 @@ Este contrato NO aplica a:
 
 **Coherencia Decoradores ↔ Metadatos:** Consistencia entre decoradores aplicados a entidades y metadatos almacenados en prototipos de clase, asegurando que toda metadata declarada sea accesible.
 
-**Consistencia Naming ↔ Contratos:** Alineación entre convenciones de nombres utilizadas en código y reglas definidas en contratos, prohibiendo introducción de naming conventions no autorizadas.
+**Consistencia Naming ↔ Contratos:** Alineación entre convenciones de nombres utilizadas en código y reglas definidas en contratos, incluyendo tanto el formato (camelCase, PascalCase, etc.) como la descriptibilidad total y auto-explicativa, prohibiendo introducción de naming conventions no autorizadas y nombres ambiguos o repetitivos.
 
 **Política de Breaking Changes:** Conjunto normativo de reglas que define qué constituye un breaking change, cómo debe documentarse, proponerse, justificarse y aprobarse.
 
@@ -264,7 +264,8 @@ PASO 2: VERIFICACIÓN CONTRACTUAL
   ├─> ¿Índices actualizados (00-CONTRACT 6.4)? [SÍ/NO]
   ├─> ¿Formato documental cumplido (00-CONTRACT 6.7.12)? [SÍ/NO]
   ├─> ¿Tokens UI/CSS respetados (04-UI-CONTRACT 6.3-6.4)? [SÍ/NO]
-  └─> ¿Naming conventions cumplidas? [SÍ/NO]
+  ├─> ¿Naming conventions cumplidas (formato 6.8.1)? [SÍ/NO]
+  └─> ¿Nombres con descriptibilidad total sin ambigüedad (6.8.1)? [SÍ/NO]
 
 PASO 3: VALIDACIÓN CRUZADA ENTRE CAPAS
   ├─> ¿Decoradores → Metadatos coherente? [SÍ/NO]
@@ -978,7 +979,8 @@ Antes de ejecutar `git commit`, DEBERÁ ejecutarse Pre-Commit Verification segú
 ### Verificación de Código
 - [ ] Sin valores CSS hardcoded no justificados
 - [ ] Sin z-index numéricos arbitrarios
-- [ ] Naming conventions respetadas
+- [ ] Naming conventions respetadas (formato + descriptibilidad total según 6.8.1)
+- [ ] Nombres auto-explicativos sin ambigüedad
 - [ ] Sin duplicación de lógica
 - [ ] Type safety preservado
 - [ ] Sin errores de compilación TypeScript
@@ -1028,11 +1030,13 @@ Antes de ejecutar `git commit`, DEBERÁ ejecutarse Pre-Commit Verification segú
 
 **Nota:** Estas herramientas son auxiliares. Autoridad final es el arquitecto.
 
-### 6.8 Coherencia de Naming Conventions
+### 6.8 Coherencia de Naming Conventions y Descriptibilidad
 
 **REGLA OBLIGATORIA:**
 
 No se PODRÁ introducir naming conventions no autorizadas. Toda convención nueva DEBERÁ documentarse contractualmente.
+
+Todo nombre DEBERÁ cumplir con descriptibilidad total y auto-explicativa según reglas de 6.8.1.
 
 #### 6.8.1 Naming Conventions Autorizadas
 
@@ -1079,6 +1083,88 @@ No se PODRÁ introducir naming conventions no autorizadas. Toda convención nuev
 - kebab-case para guías: `quick-start.md`, `basic-crud.md`
 - UPPERCASE para archivos especiales: `README.md`, `EXCEPCIONES.md`, `BREAKING-CHANGES.md`
 
+---
+
+**NOTA OBLIGATORIA - DESCRIPTIBILIDAD TOTAL:**
+
+**REGLA FUNDAMENTAL:** Todo nombre (variable, método, función, decorador, clase, constante) DEBE ser completamente descriptivo y auto-explicativo, determinando de forma TOTAL su función, propósito o contenido.
+
+**OBLIGATORIO:**
+
+- **Descriptibilidad completa:** El nombre debe explicar POR SÍ SOLO qué hace, qué contiene o qué representa sin necesidad de contexto adicional
+- **Sin ambigüedad:** No se PODRÁ usar nombres que puedan interpretarse de múltiples formas o que no sean claros en su propósito
+- **Sin repetitividad:** Nombres deben ser únicos y distinguibles de otros existentes en el mismo contexto o módulo
+- **Auto-documentación:** El código debe ser entendible leyendo únicamente los nombres, sin depender de comentarios
+
+**EJEMPLOS VÁLIDOS:**
+
+```typescript
+// CORRECTO - Descriptibilidad total
+calculateTotalPriceWithTax()
+getUserAuthenticationToken()
+isCustomerEmailVerified
+productInventoryQuantity
+validateRequiredFieldsBeforeSave()
+```
+
+**EJEMPLOS INVÁLIDOS:**
+
+```typescript
+// INCORRECTO - Nombres simples/ambiguos
+process()              // ¿Procesar qué?
+data                   // ¿Qué datos?
+check()                // ¿Verificar qué?
+temp                   // ¿Temporal de qué?
+value                  // ¿Valor de qué?
+handler                // ¿Maneja qué?
+item                   // ¿Item de qué tipo?
+getData()              // ¿Qué datos obtiene?
+isValid                // ¿Qué valida?
+count                  // ¿Cuenta de qué?
+```
+
+**EXCEPCIONES LIMITADAS:**
+
+Variables de ciclo en contexto inmediato donde el propósito es evidente por convención universal:
+
+```typescript
+// PERMITIDO - Contexto inmediato evidente
+for (let i = 0; i < length; i++) { ... }
+array.map((item, idx) => ...)
+```
+
+**NO PERMITIDO incluso en contexto:**
+
+```typescript
+// PROHIBIDO - Ambiguo incluso con contexto
+const result = fetch()     // ¿Resultado de qué fetch?
+let temp = value          // ¿Temporal para qué?
+const data = response     // ¿Qué parte del response?
+```
+
+**VALIDACIÓN OBLIGATORIA:**
+
+Antes de nombrar cualquier elemento, verificar:
+
+1. ¿El nombre explica completamente su función SIN leer código circundante? [SÍ/NO]
+2. ¿Existe ambigüedad sobre qué hace o contiene? [SÍ/NO]
+3. ¿Se puede confundir con otro elemento similar en el módulo? [SÍ/NO]
+4. ¿Requiere comentario para entenderse? [SÍ/NO]
+
+SI alguna respuesta es desfavorable → RENOMBRAR con descriptibilidad total.
+
+**PREFERENCIA DE LONGITUD:**
+
+Preferir nombres largos y explícitos sobre nombres cortos y ambiguos:
+
+- `customerEmailVerificationStatus` > `emailStatus` > `status`
+- `calculateTotalPriceIncludingTaxAndDiscount()` > `calcTotal()` > `calc()`
+- `isUserAuthenticatedAndAuthorized` > `isAuth` > `auth`
+
+**La claridad SIEMPRE prevalece sobre la brevedad.**
+
+---
+
 #### 6.8.2 Prohibición de Naming No Autorizado
 
 **PROHIBIDO:**
@@ -1087,7 +1173,11 @@ No se PODRÁ introducir naming conventions no autorizadas. Toda convención nuev
 - Usar snake_case en componentes Vue
 - Usar kebab-case en clases TypeScript
 - Abreviaturas no estándar (`btn` permitido, `cstmr` prohibido)
-- Nombres genéricos ambiguos (`data`, `info`, `handler` sin contexto)
+- Nombres genéricos ambiguos (`data`, `info`, `handler`, `temp`, `value`, `item`, `result` sin contexto descriptivo completo)
+- Nombres simples que no explican su función total (`process()`, `check()`, `isValid`, `count`)
+- Nombres que requieren comentarios para entenderse
+- Nombres repetitivos o confundibles con otros elementos del mismo contexto
+- Preferir brevedad sobre claridad
 
 #### 6.8.3 Proceso de Autorización de Nueva Convención
 
@@ -1112,6 +1202,7 @@ Si se requiere naming convention no listada en 6.8.1:
 - Aplicar excepción sin registro formal
 - Modificar contratos base sin estar trabajando explícitamente en ellos
 - Introducir naming conventions no autorizadas
+- Usar nombres ambiguos o no descriptivos que violen 6.8.1
 - Saltarse Pre-Commit Verification
 
 ### 7.2 Prohibiciones de IA
@@ -1278,7 +1369,17 @@ Este contrato sigue versionamiento semántico:
 - **Minor:** Nuevas verificaciones, extensiones de proceso, aclaraciones
 - **Patch:** Correcciones tipográficas, actualización de ejemplos
 
-**Versión actual:** 1.0.0
+**Versión actual:** 1.1.0
+
+**Cambios en versión 1.1.0 (13 de Febrero, 2026):**
+- **Extensión de Naming Conventions:** Agregada Nota Obligatoria de Descriptibilidad Total en 6.8.1
+- Establecimiento de regla fundamental: nombres deben ser completamente descriptivos y auto-explicativos
+- Prohibición explícita de nombres ambiguos, genéricos o repetitivos
+- Validación obligatoria de 4 criterios antes de nombrar elementos
+- Preferencia contractual de claridad sobre brevedad
+- Actualización de prohibiciones en 6.8.2 para incluir violaciones de descriptibilidad
+- Actualización de verificaciones AOM y Pre-Commit para incluir descriptibilidad
+- Actualización de ejemplo de Declaración de Cumplimiento Contractual
 
 **Cambios en versión 1.0.0 (13 de Febrero, 2026):**
 - Creación inicial del Contrato de Enforcement Técnico
@@ -1289,7 +1390,7 @@ Este contrato sigue versionamiento semántico:
 - Sistema de Registro de Excepciones
 - Pre-Commit Verification Checklist
 - Prohibiciones específicas de enforcement
-- Coherencia de Naming Conventions
+- Coherencia de Naming Conventions (formato)
 
 ### 10.2 Adaptación al Entorno
 
@@ -1448,6 +1549,8 @@ exit 0
 - [x] 00-CONTRACT 6.3 - Documentación Mandatoria: SÍ (creado customer.md)
 - [x] 00-CONTRACT 6.4 - Índices de Carpetas: SÍ (actualizado /src/entities/README.md)
 - [x] 00-CONTRACT 6.7.12 - Formato Documental: SÍ (11 secciones cumplidas)
+- [x] 05-ENFORCEMENT 6.8.1 - Naming Conventions: SÍ (formato y descriptibilidad cumplidos)
+- [x] 05-ENFORCEMENT 6.8.1 - Descriptibilidad Total: SÍ (nombres auto-explicativos sin ambigüedad)
 - [x] 04-UI-CONTRACT 6.3 - Sistema de Tokens: N/A (no modifica CSS)
 - [x] 04-UI-CONTRACT 6.4 - Política Anti-Hardcode: N/A (no modifica CSS)
 
@@ -1491,6 +1594,8 @@ Al trabajar con este framework bajo enforcement técnico, se acepta contractualm
 - Seguir proceso obligatorio de Breaking Changes
 - Registrar excepciones formalmente en `/copilot/EXCEPCIONES.md`
 - Ejecutar Pre-Commit Verification antes de commit
+- Respetar naming conventions con descriptibilidad total (6.8.1)
+- Usar nombres auto-explicativos sin ambigüedad ni repetitividad
 - Respetar autoridad final del arquitecto
 - No modificar contratos sin autorización explícita del arquitecto
 - Documentar sincronizadamente todo cambio
@@ -1560,7 +1665,7 @@ Este contrato mantiene integridad arquitectónica del framework mediante enforce
 
 Este contrato es subordinado a MI LÓGICA y al contrato principal `00-CONTRACT.md`. No modifica arquitectura core del framework.
 
-**Versión:** 1.0.0  
+**Versión:** 1.1.0  
 **Fecha de Vigencia:** Desde el 13 de Febrero, 2026  
 **Última Actualización:** 13 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE  
