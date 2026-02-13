@@ -851,7 +851,7 @@ public getFormattedValue(key: string): string {
 
 ---
 
-## 🎨 Impacto en UI
+## Impacto en UI
 
 ### ListView (Tabla)
 
@@ -919,7 +919,7 @@ public getFormattedValue(key: string): string {
 
 ---
 
-## 🧪 Ejemplos Avanzados
+## Ejemplos Avanzados
 
 ### 1. Formateo de Moneda Multimoneda
 
@@ -1153,7 +1153,7 @@ export class Product extends BaseEntity {
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. DisplayFormat es Solo para Visualización
 
@@ -1228,7 +1228,7 @@ Si la lista tiene muchos registros (>1000), evita formateos costosos:
 
 ---
 
-## 🔧 Implementación Interna
+## Implementación Interna
 
 ### Código del Decorador
 
@@ -1250,7 +1250,7 @@ export function DisplayFormat(formatter: (value: any) => string): PropertyDecora
 
 ---
 
-## 📊 Flujo de Formateo
+## Flujo de Formateo
 
 ```
 1. ListView/DetailView necesita mostrar un valor
@@ -1275,7 +1275,7 @@ export function DisplayFormat(formatter: (value: any) => string): PropertyDecora
 
 ---
 
-## 🎓  Mejores Prácticas
+## Mejores Prácticas
 
 ### 1. Extraer Formateadores Comunes
 
@@ -1348,7 +1348,7 @@ price!: number;
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `property-name-decorator.md` - Definir propiedades
 - `string-type-decorator.md` - Tipos de string

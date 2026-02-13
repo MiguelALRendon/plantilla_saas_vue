@@ -1156,7 +1156,7 @@ Aunque custom DetailViews no usan rendering automático, pueden acceder a metada
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. DetailView MUST Accept Entity Prop
 
@@ -1246,7 +1246,7 @@ const activeTab = ref('basic');
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `module-list-component-decorator.md` - Componente para ListView
 - `module-default-component-decorator.md` - Componente default por propiedad

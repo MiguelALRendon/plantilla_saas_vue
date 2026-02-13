@@ -93,7 +93,7 @@ enum MaskSides {
 - Ubicación: `src/composables/useMask.ts`
 - Retorna: `{ displayValue, rawValue, applyMask }`
 
-## 💾 Implementación
+## Implementación
 
 ### Código del Decorador
 
@@ -1269,7 +1269,7 @@ export function useMask(initialValue: string, maskConfig: MaskConfig)
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `string-type-decorator.md` - StringType puede combinarse con Mask
 - `display-format-decorator.md` - DisplayFormat para salida, Mask para entrada

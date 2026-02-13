@@ -796,7 +796,7 @@ export class Dashboard extends BaseEntity {
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. Total de 12 Columnas (Bootstrap)
 
@@ -883,7 +883,7 @@ describe('Product CSS Column Classes', () => {
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `property-index-decorator.md` - PropertyIndex controla orden
 - `view-group-decorator.md` - ViewGroup organiza campos

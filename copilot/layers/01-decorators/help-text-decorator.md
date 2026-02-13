@@ -81,7 +81,6 @@ export class Customer extends BaseEntity {
     email!: string;
 }
 ```
-}
 
 export const HELP_TEXT_METADATA = Symbol('helpText');
 export type HelpTextType = string | ((entity: BaseEntity) => string);
@@ -249,7 +248,7 @@ const isRequired = computed(() => {
 }
 
 .error-text::before {
-    content: '⚠ ';
+    content: '[!] ';
     margin-right: 4px;
 }
 </style>
@@ -807,7 +806,7 @@ description!: string;
 }
 
 .error-text::before {
-    content: '⚠ ';
+    content: '[!] ';
     margin-right: 4px;
 }
 
@@ -990,7 +989,7 @@ public static getHelpText(propertyKey: string): string | undefined {
 
 ---
 
-## 🎨 Impacto en UI
+## Impacto en UI
 
 ### FormInput con Help Text
 
@@ -1079,7 +1078,7 @@ const isRequired = computed(() => {
 
 ---
 
-## 🧪 Ejemplos de Uso
+## Ejemplos de Uso
 
 ### 1. Help Text Simple
 
@@ -1365,7 +1364,7 @@ export class Product extends BaseEntity {
 
 ---
 
-## 🎨 Estilos CSS Recomendados
+## Estilos CSS Recomendados
 
 ```css
 /* src/css/form.css */
@@ -1410,14 +1409,14 @@ export class Product extends BaseEntity {
 }
 
 .error-text::before {
-    content: '⚠ ';
+    content: '[!] ';
     margin-right: 4px;
 }
 ```
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. Help Text vs Validation Error
 
@@ -1447,7 +1446,7 @@ Email *
 ┌─────────────────────────────────┐
 │ userexample.com                 │  (campo con borde rojo)
 └─────────────────────────────────┘
-⚠ Invalid email format              ← Error (red)
+[!] Invalid email format              ← Error (red)
 ```
 
 ### 2. Help Text Dinámico Se Re-evalúa
@@ -1504,7 +1503,7 @@ name!: string;
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `property-name-decorator.md` - Label del campo
 - `validation-decorator.md` - Mensajes de error vs help text

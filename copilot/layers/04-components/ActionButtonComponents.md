@@ -349,7 +349,7 @@ export default {
 
 ---
 
-## 🔄 RefreshButtonComponent
+## RefreshButtonComponent
 
 ### Propósito
 
@@ -405,7 +405,7 @@ export default {
 
 ---
 
-## ✅ ValidateButtonComponent
+## ValidateButtonComponent
 
 ### Propósito
 
@@ -464,7 +464,7 @@ export default {
 
 ---
 
-## 💾 SaveButtonComponent
+## SaveButtonComponent
 
 ### Propósito
 
@@ -523,7 +523,7 @@ export default {
 
 ---
 
-## 💾➕ SaveAndNewButtonComponent
+## SaveAndNewButtonComponent
 
 ### Propósito
 
@@ -582,7 +582,7 @@ export default {
 
 ---
 
-## 📱 SendToDeviceButtonComponent
+## SendToDeviceButtonComponent
 
 ### Propósito
 
@@ -617,7 +617,7 @@ export default {
 
 ---
 
-## 🎨 Estilos de Botones
+## Estilos de Botones
 
 ### Clases CSS Disponibles
 
@@ -645,7 +645,7 @@ export default {
 
 ---
 
-## 📊 Configuración Automática
+## Configuración Automática
 
 ### En Application.setButtonList()
 
@@ -688,7 +688,7 @@ setButtonList() {
 
 ---
 
-## 💡 Crear Botón Custom
+## Crear Botón Custom
 
 ### Paso 1: Crear Componente
 
@@ -737,7 +737,7 @@ case ViewTypes.DETAILVIEW:
 
 ---
 
-## ⚠️ Consideraciones
+## Consideraciones
 
 ### 1. isPersistent() Check
 
@@ -772,7 +772,7 @@ saveItem() {
 
 ---
 
-## 🔗 Dependencias
+## Dependencias
 
 **Todos los botones dependen de:**
 - Application.View.value.entityObject
@@ -806,7 +806,7 @@ document.querySelector('.button.info').click();
 
 ---
 
-## 📚 Resumen
+## Resumen
 
 **Botones de Acción del Framework:**
 

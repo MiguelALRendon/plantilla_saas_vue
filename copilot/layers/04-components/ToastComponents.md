@@ -596,7 +596,7 @@ interface Toast {
 
 ---
 
-## 🎨 Tipos de Toast
+## Tipos de Toast
 
 ### setToastClass()
 
@@ -645,7 +645,7 @@ methods: {
 
 ---
 
-## ⏱️ Sistema de Auto-Dismiss
+## Sistema de Auto-Dismiss
 
 ### Data Properties
 
@@ -731,7 +731,7 @@ dismissToast() {
 
 ---
 
-## 🔄 Ciclo de Vida
+## Ciclo de Vida
 
 ### Mounted
 
@@ -759,7 +759,7 @@ beforeUnmount() {
 
 ---
 
-## 📊 Flujo Completo
+## Flujo Completo
 
 ```
 1. Código llama showToast()
@@ -794,7 +794,7 @@ beforeUnmount() {
 
 ---
 
-## 🎨 Animaciones
+## Animaciones
 
 ### Fade In/Out
 
@@ -816,7 +816,7 @@ beforeUnmount() {
 
 ---
 
-## 📝 Uso desde el Código
+## Uso desde el Código
 
 ### ApplicationUIService
 
@@ -860,7 +860,7 @@ Application.ApplicationUIService.showToast(
 
 ---
 
-## 💡 Características Avanzadas
+## Características Avanzadas
 
 ### Duración Personalizada
 
@@ -890,7 +890,7 @@ Application.ToastList.value.push(customToast);
 
 ---
 
-## ⚠️ Consideraciones
+## Consideraciones
 
 ### 1. Z-Index
 
@@ -926,7 +926,7 @@ Application.ToastList.value.push(newToast);
 
 ---
 
-## 🔗 Integración con App.vue
+## Integración con App.vue
 
 ```vue
 <template>
@@ -962,7 +962,7 @@ Application.ApplicationUIService.showToast('Test message', ToastType.SUCCESS);
 
 ---
 
-## 📚 Resumen
+## Resumen
 
 Sistema de **notificaciones toast**:
 

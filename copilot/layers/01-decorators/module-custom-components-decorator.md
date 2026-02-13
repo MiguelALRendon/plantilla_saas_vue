@@ -1956,7 +1956,7 @@ export class User extends BaseEntity {
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. Component Resolution Order (Precedence)
 
@@ -2062,7 +2062,7 @@ export class Product extends BaseEntity {
 
 ---
 
-## 📊 Comparación: ModuleCustomComponents vs ModuleDefaultComponent vs Type-based
+## Comparación: ModuleCustomComponents vs ModuleDefaultComponent vs Type-based
 
 | Característica | ModuleCustomComponents | ModuleDefaultComponent | Type-based Component |
 |----------------|------------------------|------------------------|----------------------|
@@ -2110,7 +2110,7 @@ export class Product extends BaseEntity {
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `module-default-component-decorator.md` - Componente default por módulo
 - `module-detail-component-decorator.md` - Componente para DetailView

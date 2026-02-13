@@ -493,7 +493,7 @@ console.log('Is disabled:', this.metadata.disabled.value);
 
 ---
 
-## 🎨 Template
+## Template
 
 ```vue
 <template>
@@ -530,7 +530,7 @@ console.log('Is disabled:', this.metadata.disabled.value);
 
 ---
 
-## 🔧 Script
+## Script
 
 ### Computed: value
 
@@ -558,7 +558,7 @@ Al hacer click, alterna el valor y emite el evento.
 
 ---
 
-## 🎨 Estados Visuales
+## Estados Visuales
 
 ### Estado FALSE (❌)
 
@@ -637,7 +637,7 @@ Animación suave al cambiar de estado.
 
 ---
 
-## ✅ Sistema de Validación
+## Sistema de Validación
 
 ### isValidated()
 
@@ -682,7 +682,7 @@ async isValidated(): Promise<boolean> {
 
 ---
 
-## 🎓 Ejemplos de Uso
+## Ejemplos de Uso
 
 ### 1. Checkbox Simple
 
@@ -729,7 +729,7 @@ sendNotifications!: boolean;
 
 ---
 
-## 🎨 Estilos Personalizados (Scoped)
+## Estilos Personalizados (Scoped)
 
 ### Contenedor
 
@@ -829,7 +829,7 @@ $emit('update:modelValue', newValue: boolean)
 
 ---
 
-## 📝 Notas Importantes
+## Notas Importantes
 
 1. **Default false:** Valor por defecto es `false`
 2. **Required = true:** Valida que el valor sea `true`, no solo que exista
@@ -840,7 +840,7 @@ $emit('update:modelValue', newValue: boolean)
 
 ---
 
-## 🔧 Alternativas
+## Alternativas
 
 Para casos especiales, considera:
 - **Checkbox HTML nativo:** Si necesitas compatibilidad con formularios HTML
@@ -849,7 +849,7 @@ Para casos especiales, considera:
 
 ---
 
-## 🎨 Personalización de Iconos
+## Personalización de Iconos
 
 Los iconos se pueden cambiar modificando:
 
@@ -871,7 +871,7 @@ Los iconos se pueden cambiar modificando:
 
 ---
 
-## 🔗 Referencias
+## Referencias
 
 - **Overview:** `form-inputs.md`
 - **Composable:** `useInputMetadata-composable.md`

@@ -558,7 +558,7 @@ openCalendar() {
 
 ---
 
-## 📐 Template
+## Template
 
 ```vue
 <template>
@@ -621,7 +621,7 @@ openCalendar() {
 
 ---
 
-## 🎨 Arquitectura de Doble Input
+## Arquitectura de Doble Input
 
 ### Input Visual (Display)
 ```vue
@@ -673,7 +673,7 @@ Input visual muestra "DD/MM/YYYY"
 
 ---
 
-## 🔄 Computed Property: formattedDate
+## Computed Property: formattedDate
 
 ```typescript
 computed: {
@@ -706,7 +706,7 @@ modelValue: 'invalid'    → formattedDate: ''
 
 ---
 
-## 🔧 Métodos Principales
+## Métodos Principales
 
 ### updateDate()
 
@@ -741,7 +741,7 @@ openCalendar() {
 
 ---
 
-## ✅ Sistema de Validación (3 Niveles)
+## Sistema de Validación (3 Niveles)
 
 ### Nivel 1: Required
 
@@ -798,7 +798,7 @@ if (!isAsyncValid) {
 
 ---
 
-## 🎓 Ejemplo Completo
+## Ejemplo Completo
 
 ### Definición de Entidad
 
@@ -878,7 +878,7 @@ export class Employee extends BaseEntity {
 
 ---
 
-## 💡 Buenas Prácticas
+## Buenas Prácticas
 
 ### ✅ DO:
 
@@ -927,7 +927,7 @@ endDate!: string;
 
 ---
 
-## 🧪 Casos de Uso Comunes
+## Casos de Uso Comunes
 
 ### 1. Fecha de Nacimiento
 
@@ -971,7 +971,7 @@ reservationDate!: string;
 
 ---
 
-## 🔗 Referencias
+## Referencias
 
 - **TextInputComponent:** [text-input-component.md](text-input-component.md)
 - **Validation Decorator:** `../../01-decorators/validation-decorator.md`

@@ -608,7 +608,7 @@ console.log('Selected items:', this.selectedItems);
 
 ---
 
-## 📋 Props
+## Props
 
 ```typescript
 props: {
@@ -665,7 +665,7 @@ props: {
 
 ---
 
-## 📐 Template
+## Template
 
 ### Header Row
 
@@ -791,7 +791,7 @@ props: {
 
 ---
 
-## 🔧 Métodos Principales
+## Métodos Principales
 
 ### openModal() - Agregar Item
 
@@ -942,7 +942,7 @@ search = ''     →  Muestra: [todos]
 
 ---
 
-## ✅ Sistema de Validación (2 Niveles)
+## Sistema de Validación (2 Niveles)
 
 **Alcance:** ArrayInputComponent implementa validación required y validación síncrona. No incluye validación asíncrona.
 
@@ -1003,7 +1003,7 @@ items!: Array<OrderItem>;
 
 ---
 
-## 🎓 Ejemplo Completo
+## Ejemplo Completo
 
 ### Definición de Entidades
 
@@ -1142,7 +1142,7 @@ export class Order extends BaseEntity {
 
 ---
 
-## 💡 Buenas Prácticas
+## Buenas Prácticas
 
 ### ✅ DO:
 
@@ -1191,7 +1191,7 @@ Application.ModuleList.value.push(Order); // ❌ OrderItem falta
 
 ---
 
-## 🧪 Casos de Uso Comunes
+## Casos de Uso Comunes
 
 ### 1. Order → OrderItems
 
@@ -1233,7 +1233,7 @@ teamMembers?: Array<Employee>;
 
 ---
 
-## ⚠️ Limitaciones Actuales
+## Limitaciones Actuales
 
 ### 1. No hay paginación
 
@@ -1261,7 +1261,7 @@ teamMembers?: Array<Employee>;
 
 ---
 
-## 🔗 Referencias
+## Referencias
 
 - **Tutorial Relaciones:** `../../tutorials/03-relations.md`
 - **ObjectInputComponent:** [object-input-component.md](object-input-component.md) - Para relaciones 1:1

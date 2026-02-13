@@ -584,7 +584,7 @@ public getKeys(): string[] {
 
 ---
 
-## 🎨 Impacto en UI
+## Impacto en UI
 
 ### En ListView (Tabla)
 
@@ -653,7 +653,7 @@ items!: Array<Item>;
 
 ---
 
-## 🔗 Decoradores Relacionados
+## Decoradores Relacionados
 
 ### Usados Frecuentemente Juntos
 
@@ -675,7 +675,7 @@ name!: string;
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. Es Obligatorio
 
@@ -741,7 +741,7 @@ category!: Category;
 
 ---
 
-## 🧪 Ejemplos Avanzados
+## Ejemplos Avanzados
 
 ### Relaciones Múltiples
 
@@ -798,7 +798,7 @@ export class Task extends BaseEntity {
 
 ---
 
-## 🔧 Implementación Interna
+## Implementación Interna
 
 ### Código del Decorador
 
@@ -850,7 +850,7 @@ export function ArrayOf<T extends BaseEntity>(
 
 ---
 
-## 📊 Flujo de Datos
+## Flujo de Datos
 
 ```
 1. Decorador se aplica en tiempo de definición de clase
@@ -874,7 +874,7 @@ export function ArrayOf<T extends BaseEntity>(
 
 ---
 
-## 🎓 Casos de Uso Comunes
+## Casos de Uso Comunes
 
 ### 1. CRUD Básico
 ```typescript
@@ -908,7 +908,7 @@ get fullName(): string {
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `property-index-decorator.md` - Orden de propiedades
 - `string-type-decorator.md` - Subtipos de String

@@ -1210,7 +1210,7 @@ public static isDisabled(propertyKey: string): boolean {
 
 ---
 
-## 🎨 Impacto en UI
+## Impacto en UI
 
 ### FormInput Renderizado
 
@@ -1286,7 +1286,7 @@ public toDictionary(): Record<string, any> {
 
 ---
 
-## 🧪 Ejemplos de Uso
+## Ejemplos de Uso
 
 ### 1. Deshabilitar Siempre (Primary Key)
 
@@ -1529,7 +1529,7 @@ export class Product extends BaseEntity {
 
 ---
 
-## 🔄 Comparación: @Disabled vs @ReadOnly
+## Comparación: @Disabled vs @ReadOnly
 
 | Aspecto | @Disabled | @ReadOnly |
 |---------|-----------|-----------|
@@ -1581,7 +1581,7 @@ await product.save();
 
 ---
 
-## ⚠️ Consideraciones Importantes
+## Consideraciones Importantes
 
 ### 1. Disabled vs Hidden
 
@@ -1642,7 +1642,7 @@ id!: number;
 
 ---
 
-## 📚 Referencias Adicionales
+## Referencias Adicionales
 
 - `readonly-decorator.md` - Diferencias entre Disabled y ReadOnly
 - `required-decorator.md` - Disabled ignora Required
