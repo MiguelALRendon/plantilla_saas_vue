@@ -1,8 +1,8 @@
 # CONTRATO DE DESARROLLO - Framework SaaS Vue
 
-**Versión:** 2.1.0  
+**Versión:** 2.2.0  
 **Fecha de Creación:** 10 de Febrero, 2026  
-**Última Actualización:** 12 de Febrero, 2026  
+**Última Actualización:** 13 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
 
 ## 1. Propósito
@@ -35,6 +35,8 @@ Este contrato aplica a:
 **Cambio Menor:** Extensión que no modifica componentes existentes: decoradores adicionales, componentes personalizados, entidades nuevas, estilos, utilidades.
 
 **Documentación Sincronizada:** Estado en el que código y documentación reflejan exactamente la misma realidad técnica.
+
+**Índice de Carpeta:** Archivo README.md o INDEX.md ubicado en carpetas contenedoras que lista y describe todos los elementos técnicos de esa carpeta, mantiene referencias actualizadas y facilita navegación documental.
 
 ## 4. Descripción Técnica
 
@@ -142,9 +144,93 @@ Tipos de documentación requerida:
 - Actualizar 02-FLOW-ARCHITECTURE.md
 - Documentar migración si aplica
 
-### 6.4 Estructura Documental Obligatoria
+**Mantenimiento de índices:**
+- Actualizar README.md o INDEX.md de la carpeta contenedora
+- Agregar entrada para nuevo elemento creado
+- Mantener orden consistente (alfabético o por categoría)
+- Incluir descripción breve del elemento
+- Verificar integridad de referencias
 
-Cada archivo MD debe contener:
+### 6.4 Índices de Carpetas Contenedoras
+
+#### 6.4.1 Propósito de los Índices
+
+Cada carpeta contenedora de elementos técnicos (decoradores, componentes, entidades, enums, etc.) DEBE mantener un archivo de índice que liste todos sus elementos.
+
+Propósito:
+- Facilitar descubrimiento de elementos disponibles
+- Mantener catálogo actualizado de funcionalidades
+- Proporcionar punto de entrada para navegación documental
+- Validar completitud de cobertura documental
+
+#### 6.4.2 Ubicación Obligatoria
+
+Índices DEBEN existir en:
+- `/copilot/layers/01-decorators/README.md` o `INDEX.md`
+- `/copilot/layers/02-base-entity/README.md` o `INDEX.md`
+- `/copilot/layers/03-application/README.md` o `INDEX.md`
+- `/copilot/layers/04-components/README.md` o `INDEX.md`
+- `/copilot/layers/05-advanced/README.md` o `INDEX.md`
+- `/copilot/layers/06-composables/README.md` o `INDEX.md`
+- `/copilot/tutorials/README.md` o `INDEX.md`
+- `/copilot/examples/README.md` o `INDEX.md`
+- `/src/entities/README.md` o `INDEX.md` (opcional pero recomendado)
+- `/src/decorations/README.md` o `INDEX.md` (opcional pero recomendado)
+- `/src/components/Form/README.md` o `INDEX.md` (opcional pero recomendado)
+
+#### 6.4.3 Contenido Obligatorio del Índice
+
+Cada índice DEBE contener:
+
+1. **Título descriptivo** de la carpeta
+2. **Descripción breve** del propósito de los elementos contenidos
+3. **Lista completa** de elementos con:
+   - Nombre del elemento
+   - Enlace al archivo (código o documentación)
+   - Descripción breve de una línea
+   - Estado (si aplica: estable, experimental, deprecated)
+4. **Organización consistente** (alfabética, por categoría o por propósito)
+5. **Fecha de última actualización**
+
+#### 6.4.4 Formato Sugerido
+
+```markdown
+# [Nombre de la Carpeta]
+
+## Propósito
+Breve descripción de qué contiene esta carpeta.
+
+## Elementos
+
+### [Categoría si aplica]
+
+- **[ElementoNombre]** ([enlace](./archivo.md)) - Descripción breve de una línea.
+- **[OtroElemento]** ([enlace](./otro.md)) - Descripción breve.
+
+## Última Actualización
+[Fecha]
+```
+
+#### 6.4.5 Momento de Actualización
+
+Los índices DEBEN actualizarse:
+- Al crear nuevo elemento en la carpeta
+- Al eliminar elemento existente
+- Al renombrar elemento
+- Al cambiar propósito significativo de elemento
+- Durante procesos de reestructuración documental
+
+#### 6.4.6 Verificación de Integridad
+
+Antes de considerar completada cualquier modificación:
+1. Verificar que todos los archivos en carpeta estén listados en índice
+2. Verificar que todos los enlaces en índice sean válidos
+3. Confirmar que descripciones sean actuales y precisas
+4. Validar orden consistente de listado
+
+### 6.5 Estructura Documental Obligatoria
+
+Cada archivo MD de documentación técnica debe contener:
 
 ```
 # Título
@@ -186,9 +272,11 @@ Documentación sin actualizar = Documentación inválida
 
 **Después de codificar:**
 1. Actualizar/crear documentación
-2. Actualizar referencias cruzadas
-3. Probar en contexto completo
-4. Verificar no ruptura de funcionalidad existente
+2. Actualizar índice de carpeta contenedora
+3. Actualizar referencias cruzadas
+4. Probar en contexto completo
+5. Verificar no ruptura de funcionalidad existente
+6. Validar integridad de índices afectados
 
 ### 6.7 RÉGIMEN DE REESTRUCTURACIÓN DOCUMENTAL PARA CONSUMO POR IA
 
@@ -303,9 +391,11 @@ Cada vez que el sistema considere alcanzado el 100% de procesamiento, DEBE OBLIG
 
 1. Reanalizar listado completo de archivos .md en el repositorio
 2. Verificar uno por uno que todos fueron modificados
-3. Confirmar que todos cumplen estructura obligatoria de 11 secciones
+3. Confirmar que todos cumplen estructura obligatoria de 11 secciones (excepto índices)
 4. Validar coherencia terminológica global
 5. Validar integridad de referencias cruzadas
+6. Verificar actualización de índices de carpetas contenedoras
+7. Confirmar que índices listan todos los elementos de sus carpetas
 
 Si se detecta UN SOLO archivo no adaptado:
 - La tarea se considera INCOMPLETA
@@ -404,9 +494,10 @@ Todo archivo de documentación técnica del framework DEBE cumplir obligatoriame
 
 **Excepciones:**
 
-- README.md de índices (naturaleza específica de índice documental)
+- README.md o INDEX.md de carpetas contenedoras (naturaleza específica de índice documental)
 - Archivos de estado temporal (ESTADO-*.md)
 - Archivos de auditoría (AUDITORIA-*.md)
+- Archivos de índices estructurales (INDICE-*.md)
 
 **Validación:**
 
@@ -560,6 +651,9 @@ Prohibido absolutamente:
 - Documentación sin actualizar tras cambios
 - Referencias cruzadas rotas o inexistentes
 - Omisión de estructura documental obligatoria
+- Índices de carpetas desactualizados u omitidos
+- Crear/eliminar elementos sin actualizar índice de carpeta contenedora
+- Enlaces rotos en índices
 
 ## 8. Dependencias
 
@@ -589,7 +683,16 @@ Este contrato sigue versionamiento semántico:
 - **Minor:** Aclaraciones o nuevas reglas
 - **Patch:** Correcciones tipográficas
 
-Versión actual: **2.1.0**
+Versión actual: **2.2.0**
+
+Cambios en versión 2.2.0 (13 de Febrero, 2026):
+- Adición de Cláusula 6.4: Índices de Carpetas Contenedoras
+- Establecimiento de obligación de mantener archivos README.md o INDEX.md en carpetas contenedoras
+- Definición de estructura, contenido y momento de actualización de índices
+- Integración de mantenimiento de índices en workflow de desarrollo (sección 6.6)
+- Adición de verificación de índices en cláusula de completitud (6.7.8)
+- Actualización de prohibiciones documentales (7.2) para incluir índices
+- Adición de "Índice de Carpeta" en Definiciones Clave (sección 3)
 
 Cambios en versión 2.1.0 (12 de Febrero, 2026):
 - Adición de Cláusula 6.7.12: Formato Documental Obligatorio de 11 Secciones
@@ -651,7 +754,7 @@ Documentos vinculados contractualmente:
 
 Este contrato mantiene integridad, consistencia y mantenibilidad del framework. Constituye protección de arquitectura deliberada.
 
-**Versión:** 2.1.0  
+**Versión:** 2.2.0  
 **Fecha de Vigencia:** Desde el 10 de Febrero, 2026  
-**Última Actualización:** 12 de Febrero, 2026  
+**Última Actualización:** 13 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
