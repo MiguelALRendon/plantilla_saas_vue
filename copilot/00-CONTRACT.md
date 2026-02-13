@@ -412,6 +412,123 @@ Todo archivo de documentación técnica del framework DEBE cumplir obligatoriame
 
 Durante cualquier proceso de reestructuración, auditoría o creación de documentación, el cumplimiento de este formato debe verificarse ANTES de considerar el archivo como completo.
 
+## 6.8 – Cláusula de Indexación Estructural Profunda
+
+### 6.8.1 Naturaleza Obligatoria
+
+Todo documento del Spec Kit debe ser completamente indexable a nivel estructural interno.
+
+La indexación no se limita al archivo como unidad, sino que debe incluir cada nivel jerárquico declarado explícitamente en su estructura.
+
+---
+
+### 6.8.2 Alcance de la Indexación
+
+La indexación estructural profunda incluye obligatoriamente:
+
+1. Secciones numeradas principales (ej. 1, 2, 3…).
+2. Subcláusulas jerárquicas (ej. 6.7, 6.7.2, 6.7.2.a).
+3. Encabezados secundarios no numerados.
+4. Firmas de funciones documentadas.
+5. Interfaces y tipos declarados.
+6. Propiedades documentadas.
+7. Símbolos exportados.
+8. Métodos públicos relevantes.
+9. Reglas obligatorias y prohibiciones.
+10. Dependencias explícitas.
+11. Relaciones jerárquicas.
+12. Referencias cruzadas declaradas.
+
+Queda prohibido indexar únicamente el documento raíz omitiendo su estructura interna.
+
+---
+
+### 6.8.3 Profundidad Jerárquica
+
+Cuando un documento posea estructura numerada jerárquica, el índice deberá reflejarla íntegramente sin simplificación.
+
+Ejemplo válido:
+
+- 6  
+- 6.7  
+- 6.7.2  
+- 6.7.2.a  
+
+Cada nivel constituye una unidad indexable independiente.
+
+No se permite agrupar niveles en forma resumida.
+
+---
+
+### 6.8.4 Indexación de Elementos Técnicos
+
+Cuando un documento contenga:
+
+- Código fuente
+- Firmas de funciones
+- Interfaces
+- Tipos
+- Enumeraciones
+- Métodos públicos
+- Constantes exportadas
+
+Cada elemento técnicamente declarable debe poder recibir una referencia estructural dentro del sistema de índices.
+
+No se permite indexar únicamente la sección contenedora ignorando los elementos definidos en ella.
+
+---
+
+### 6.8.5 Identificador Subestructural
+
+Cada elemento interno deberá poder ser referenciado mediante un identificador derivado del ID del documento.
+
+Formato obligatorio:
+
+ID-DOC::SECCION  
+ID-DOC::6.8.2  
+ID-DOC::fn:isRequired  
+ID-DOC::prop:REQUIRED_KEY  
+ID-DOC::type:RequiredMetadata  
+
+La notación debe ser determinista y reproducible.
+
+---
+
+### 6.8.6 Separación del Formato de Índices
+
+Los documentos cuyo propósito sea exclusivamente indexación estructural:
+
+- No están obligados a cumplir la plantilla estándar de 11 secciones.
+- Deben cumplir la presente cláusula.
+- Deben mantener coherencia con la numeración real del documento origen.
+- No pueden modificar, reinterpretar ni renombrar secciones.
+
+---
+
+### 6.8.7 Prohibiciones
+
+Está estrictamente prohibido:
+
+1. Simplificar jerarquías numeradas.
+2. Reescribir encabezados para normalizarlos.
+3. Fusionar subcláusulas.
+4. Omitir funciones documentadas.
+5. Omitir propiedades relevantes.
+6. Inventar estructura inexistente.
+7. Reordenar numeración original.
+8. Interpretar semánticamente lo que no esté explícito.
+
+---
+
+### 6.8.8 Verificación de Completitud
+
+El sistema de índices deberá garantizar:
+
+- Correspondencia 1:1 entre estructura real y estructura indexada.
+- Cobertura total de niveles jerárquicos.
+- Trazabilidad entre documento e índice.
+- Declaración explícita de completitud verificable.
+
 ## 7. Prohibiciones
 
 ### 7.1 Prohibiciones Arquitectónicas
