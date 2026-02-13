@@ -1358,6 +1358,35 @@ console.log(product.getKeys());
 console.log(product.isReadOnly('createdAt')); // true (heredado)
 ```
 
+### Nota sobre getMask() - Método Sin Implementar
+
+**Estado:** El decorador `@Mask` existe y está documentado en [../01-decorators/mask-decorator.md](../01-decorators/mask-decorator.md), pero BaseEntity NO tiene método accessor `getMask(propertyKey: string)` implementado.
+
+**Inconsistencia detectada:**
+- Otros decoradores similares como `@HelpText`, `@DisplayFormat`, `@CSSColumnClass` tienen métodos de acceso correspondientes: `getHelpText()`, `getDisplayFormat()`, `getCSSClasses()`
+- El decorador `@Mask` almacena metadatos en `MASK_KEY` Symbol pero no hay método público para leerlos desde BaseEntity
+
+**Workaround actual:**
+Los componentes UI probablemente leen directamente del prototipo:
+```typescript
+// Acceso directo (bypass de patrón establecido)
+const proto = (entity.constructor as any).prototype;
+const mask = proto[MASK_KEY]?.[propertyKey];
+```
+
+**Implementación recomendada:**
+```typescript
+// En BaseEntity (NO IMPLEMENTADO ACTUALMENTE)
+public getMask(propertyKey: string): string | undefined {
+    const proto = (this.constructor as any).prototype;
+    return proto[MASK_KEY]?.[propertyKey];
+}
+```
+
+**Ubicación esperada:** Debería agregarse en BaseEntity alrededor de línea 345, junto con otros métodos de UI como `getHelpText()`.
+
+**Referencia:** Ver [AUDITORIA-INCONSISTENCIAS.md](../../AUDITORIA-INCONSISTENCIAS.md) inconsistencia IM-03 para más detalles.
+
 ## 11. Referencias Cruzadas
 
 **Documentos relacionados:**

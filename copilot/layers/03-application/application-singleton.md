@@ -200,11 +200,15 @@ Patrón Singleton con constructor privado, getInstance() retorna única instanci
 - Ubicación: Líneas 214-220
 
 **setButtonList()**
-- Determina isPersistent: View.entityObject?.isPersistent() ?? false
-- LISTVIEW: [NewButtonComponent, RefreshButtonComponent]
-- DETAILVIEW persistent: [New, Refresh, Validate, Save, SaveAndNew, SendToDevice]
-- DETAILVIEW not persistent: [New, Refresh, Validate, SendToDevice]
-- markRaw: Marca componentes como non-reactive para performance
+- Actualiza ListButtons según viewType Y estado de persistencia de la entidad
+- Determina isPersistent: `View.entityClass?.isPersistent() ?? false`
+- Lógica de asignación de botones:
+  - LISTVIEW: `[NewButtonComponent, RefreshButtonComponent]`
+  - DETAILVIEW + isPersistent: `[New, Refresh, Validate, Save, SaveAndNew, SendToDevice]`
+  - DETAILVIEW + !isPersistent: `[New, Refresh, Validate, SendToDevice]` (sin Save/SaveAndNew)
+  - Otros viewTypes: `[]` (array vacío)
+- markRaw: Marca componentes como non-reactive para optimizar performance
+- **Nota importante:** Los botones Save, SaveAndNew solo aparecen si la entidad tiene `@Persistent()` configurado
 - Ubicación: Líneas 222-259
 
 **initializeRouter(router: Router)**

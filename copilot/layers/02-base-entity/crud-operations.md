@@ -232,6 +232,57 @@ public toObject(): Record<string, any> {
 - No hace transformaciones especiales de tipos
 - El backend es responsable de parsear correctamente los valores
 
+### 4.7. Método refresh()
+
+**Firma:** `public async refresh(filter: string = ''): Promise<this[]>`
+
+**Ubicación:** `src/entities/base_entitiy.ts` (líneas 872-881)
+
+**Parámetros:**
+- `filter: string = ''` - Filtro opcional para query (igual que getElementList)
+
+**Retorno:** `Promise<this[]>` - Array de instancias actualizadas de la misma clase
+
+**Comportamiento:**
+- Método de instancia (no estático) que recarga lista completa de entidades del mismo tipo
+- Ejecuta internamente `getElementList(filter)` usando el constructor de la entidad
+- Llama hook `afterRefresh()` en caso de éxito  
+- Llama hook `refreshFailed()` en caso de error
+- Útil para recargar datos tras operaciones CRUD de otras entidades
+
+**Flujo de ejecución:**
+1. Ejecuta `(this.constructor as typeof BaseEntity).getElementList(filter)`
+2. Si éxito: Llama `this.afterRefresh()` y retorna array de entidades
+3. Si error: Llama `this.refreshFailed()` y lanza excepción
+
+**Implementación:**
+```typescript
+public async refresh(filter: string = ''): Promise<this[]> {
+    try {
+        const data = await (this.constructor as typeof BaseEntity).getElementList(filter);
+        this.afterRefresh();
+        return data;
+    } catch (error) {
+        this.refreshFailed();
+        throw error;
+    }
+}
+```
+
+**Uso correcto:**
+```typescript
+const product = new Product({ id: 1 });
+const allProducts = await product.refresh(); // Recarga lista completa
+const filtered = await product.refresh('?category=electronics'); // Con filtro
+```
+
+**Caso de uso típico:**
+```typescript
+// Después de crear una entidad, recargar la lista
+await newProduct.save();
+const updatedList = await newProduct.refresh();
+```
+
 ## 5. Flujo de Funcionamiento
 
 ### 5.1. Flujo Completo de save()

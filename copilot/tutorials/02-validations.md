@@ -419,9 +419,9 @@ import {
 import { StringType } from '@/enums/string_type';
 import Application from '@/models/application';
 
-@ModuleName('User', 'Users')
+@ModuleName('Users')
 @ApiEndpoint('/api/users')
-@Persistent(true, 'id')
+@Persistent()
 export class User extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('ID', Number)
@@ -498,9 +498,9 @@ export class User extends BaseEntity {
 ### Ejemplo 2: Producto con Validaciones de Negocio
 
 ```typescript
-@ModuleName('Product', 'Products')
+@ModuleName('Products')
 @ApiEndpoint('/api/products')
-@Persistent(true, 'id')
+@Persistent()
 export class Product extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('SKU', String)
@@ -565,7 +565,7 @@ export class Product extends BaseEntity {
 ### Ejemplo 3: Orden con Validación Condicional
 
 ```typescript
-@ModuleName('Order', 'Orders')
+@ModuleName('Orders')
 export class Order extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('Type', String)

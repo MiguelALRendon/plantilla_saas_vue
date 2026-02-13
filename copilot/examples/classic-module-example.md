@@ -70,7 +70,8 @@ import {
     UniquePropertyKey,
     CSSColumnClass,
     HelpText,
-    ViewGroup
+    ViewGroup,
+    HideInDetailView
 } from '@/decorations';
 import ICONS from '@/constants/icons';
 

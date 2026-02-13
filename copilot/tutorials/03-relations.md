@@ -504,10 +504,10 @@ import ICONS from '@/constants/icons';
 
 @DefaultProperty('name')
 @UniquePropertyKey('id')
-@ModuleName('Customer', 'Customers')
+@ModuleName('Customers')
 @ModuleIcon(ICONS.USERS)
 @ApiEndpoint('/api/customers')
-@Persistent(true, 'id')
+@Persistent()
 export class Customer extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('ID', Number)
@@ -642,10 +642,10 @@ import ICONS from '@/constants/icons';
 
 @DefaultProperty('productName')
 @UniquePropertyKey('id')
-@ModuleName('Order Item', 'Order Items')
+@ModuleName('Order Items')
 @ModuleIcon(ICONS.LIST)
 @ApiEndpoint('/api/order-items')
-@Persistent(true, 'id')
+@Persistent()
 export class OrderItem extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('ID', Number)
@@ -774,10 +774,10 @@ import ICONS from '@/constants/icons';
 
 @DefaultProperty('orderNumber')
 @UniquePropertyKey('id')
-@ModuleName('Order', 'Orders')
+@ModuleName('Orders')
 @ModuleIcon(ICONS.ORDERS)
 @ApiEndpoint('/api/orders')
-@Persistent(true, 'id')
+@Persistent()
 export class Order extends BaseEntity {
     @ViewGroup('Basic Information')
     @PropertyIndex(1)

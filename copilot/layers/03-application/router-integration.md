@@ -706,6 +706,60 @@ if (moduleClass) {
 }
 ```
 
+### 10.5 BaseEntity Hook: onBeforeRouteLeave()
+
+**Ubicación en código:** `src/entities/base_entitiy.ts` (líneas 883-885)
+
+**Propósito:** Hook de integración con Vue Router guards para detectar navegación fuera de vista de detalle con cambios sin guardar.
+
+**Firma:**
+```typescript
+public onBeforeRouteLeave(): boolean
+```
+
+**Retorno:** 
+- `true` - Hay cambios sin guardar (dirty state)
+- `false` - No hay cambios, navegación permitida
+
+**Implementación:**
+```typescript
+public onBeforeRouteLeave(): boolean {
+    return this.getDirtyState();
+}
+```
+
+**Uso en componentes de detalle:**
+```typescript
+// En default_detailview.vue o componente custom de detalle
+import { onBeforeRouteLeave } from 'vue-router';
+
+// Setup hook
+onBeforeRouteLeave((to, from) => {
+    const entity = Application.View.value.entityObject;
+    if (entity && entity.onBeforeRouteLeave()) {
+        // Hay cambios sin guardar
+        const answer = window.confirm('¿Descartar cambios sin guardar?');
+        if (!answer) return false; // Bloquear navegación
+    }
+    return true; // Permitir navegación
+});
+```
+
+**Integración con Application:**
+El método `Application.changeView()` ya verifica dirty state internamente:
+```typescript
+changeView = (entityClass, component, viewType, entity = null) => {
+    if (this.View.value.entityObject?.getDirtyState()) {
+        // Muestra confirmación antes de navegar
+        this.ApplicationUIService.openConfirmationMenu(...);
+        return;
+    }
+    // Continúa con navegación
+}
+```
+
+**Nota:** Este hook permite implementar guards personalizados en componentes que necesiten control fino sobre navegación. No es necesario implementarlo en componentes que usan `Application.changeView()` ya que esta verificación está integrada.
+
 ## 11. Referencias Cruzadas
 
 ### 11.1 Application Layer
