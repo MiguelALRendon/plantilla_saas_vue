@@ -241,9 +241,8 @@ export class PurchaseOrder extends BaseEntity {
     @CSSColumnClass('table-length-medium')
     @Required(true)
     @Disabled((entity) => {
-        // Solo admin o owner puede cambiar status
-        const currentUser = Application.currentUser;
-        return !(currentUser?.isAdmin || entity.createdBy?.id === currentUser?.id);
+        // Solo draft puede modificarse (lógica simplificada sin autenticación)
+        return entity.status !== OrderStatus.DRAFT;
     })
     @DisplayFormat((value) => {
         const statusIcons: Record<OrderStatus, string> = {
@@ -429,8 +428,9 @@ export class PurchaseOrder extends BaseEntity {
     )
     @DisplayFormat('-${value} USD')
     @Disabled((entity) => {
-        // Solo admin puede aplicar descuentos
-        return !Application.currentUser?.isAdmin;
+        // Solo admin puede aplicar descuentos (simplificado sin autenticación)
+        // TODO: Implementar sistema de permisos con Application.currentUser cuando exista
+        return false;  // Por ahora, permitir descuentos
     })
     @HelpText('Discount applied to order')
     discount?: number;
@@ -513,12 +513,14 @@ export class PurchaseOrder extends BaseEntity {
         if (this.isNew()) {
             this.orderDate = new Date();
             this.createdAt = new Date();
-            this.createdBy = Application.currentUser as any;
+            // TODO: Asignar createdBy cuando Application.currentUser esté implementado
+            // this.createdBy = Application.currentUser as any;
         }
         
         // Actualizar modificación
         this.lastModifiedAt = new Date();
-        this.lastModifiedBy = Application.currentUser as any;
+        // TODO: Asignar lastModifiedBy cuando Application.currentUser esté implementado
+        // this.lastModifiedBy = Application.currentUser as any;
     }
     
     override onSaving() {
@@ -801,10 +803,11 @@ await order.save();
 
 Campo status Disabled excepto para admin o owner:
 ```typescript
-// Usuario regular (no admin, no owner)
+// Simplificado sin sistema de autenticación
+// TODO: Implementar cuando Application.currentUser exista
 @Disabled((entity) => {
-    const currentUser = Application.currentUser;
-    return !(currentUser?.isAdmin || entity.createdBy?.id === currentUser?.id);
+    // Por ahora, solo permitir cambios en draft
+    return entity.status !== OrderStatus.DRAFT;
 })
 status!: OrderStatus;
 ```
@@ -817,7 +820,8 @@ customer!: Customer;
 
 Campo discount Disabled para no-admins:
 ```typescript
-@Disabled((entity) => !Application.currentUser?.isAdmin)
+// TODO: Implementar permisos cuando Application.currentUser exista
+@Disabled((entity) => false)  // Por ahora permitido
 discount?: number;
 ```
 
@@ -1113,7 +1117,8 @@ ModulePermission controla acceso al módulo completo:
 
 Decoradores condicionales implementan permisos a nivel de campo:
 ```typescript
-@Disabled((entity) => !Application.currentUser?.isAdmin)
+// TODO: Implementar cuando Application.currentUser exista
+@Disabled((entity) => false)  // Por ahora permitido
 discount?: number;
 ```
 

@@ -37,10 +37,12 @@ El decorator AsyncValidation define validaciones asíncronas que requieren petic
 
 ```typescript
 export interface AsyncValidationMetadata {
-    validation: (instance: any) => Promise<boolean>;
-    message: string;
+    condition: (instance: any) => Promise<boolean>;
+    message?: string;
 }
 ```
+
+**NOTA CRÍTICA:** La propiedad se llama **condition**, NO "validation". Esta es la implementación real del framework.
 
 **Decorator Signature:** `function AsyncValidation(validation: (instance: any) => Promise<boolean>, message: string): PropertyDecorator`. Recibe async function que retorna Promise boolean y error message string.
 

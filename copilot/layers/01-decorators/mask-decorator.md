@@ -54,17 +54,19 @@ El decorador `@Mask()` aplica formateo automático de entrada a campos de texto 
 ```typescript
 interface MaskConfig {
     mask: string;      // Patrón de máscara
-    side: MaskSide;    // Dirección de aplicación
+    side: MaskSides;   // Dirección de aplicación
 }
 ```
 
-**MaskSide (Enum):**
+**MaskSides (Enum):**
 ```typescript
-enum MaskSide {
+enum MaskSides {
     LEFT = 'left',     // Aplicar máscara de izquierda a derecha
     RIGHT = 'right'    // Aplicar máscara de derecha a izquierda (default)
 }
 ```
+
+**NOTA CRÍTICA:** El nombre correcto del enum es **MaskSides** (plural), NO MaskSide (singular).
 
 **Caracteres especiales de máscara:**
 - `#`: Dígito numérico (0-9)

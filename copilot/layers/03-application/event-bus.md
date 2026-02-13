@@ -33,7 +33,7 @@ Proporcionar sistema de comunicación desacoplada entre componentes, servicios y
 
 **Events Type**: Type definition en `src/types/events.ts` definiendo eventos disponibles y sus payloads (validate-inputs, toggle-sidebar, show-loading, etc).
 
-**System Events**: Eventos emitidos automáticamente por framework (entity-saved, entity-deleted, validation-failed, view-changed), no requieren código custom.
+**System Events**: Eventos emitidos automáticamente por framework (validation-failed, view-changed). **TODO:** entity-saved y entity-deleted aún no implementados en BaseEntity - documentación preparada para implementación futura.
 
 **Emit**: Publicar evento con `Application.eventBus.emit(eventName, payload)`, ejecuta todos los listeners registrados para ese evento.
 

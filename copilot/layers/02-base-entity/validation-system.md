@@ -48,11 +48,27 @@ BaseEntity implementa un sistema de validación de tres niveles que ejecuta auto
 
 ## 4. Descripción Técnica
 
-### Arquitectura de Tres Niveles
+### Arquitectura Event-Driven con Tres Niveles
 
-El sistema implementa arquitectura de validación en cascada con tres niveles jerárquicos que se ejecutan secuencialmente por propiedad:
+El sistema implementa arquitectura **event-driven** donde validateInputs() emite evento y los componentes ejecutan validación en cascada de tres niveles:
 
 ```
+┌──────────────────────────────────────────────────┐
+│  BaseEntity.validateInputs()                     │
+│  Application.eventBus.emit('validate-inputs')    │
+└────────────────┬─────────────────────────────────┘
+                │
+                ↓ (Evento broadcast)
+        ┌───────┴────────┐
+        │                │
+┌───────▼───────┐  ┌──────▼──────┐
+│ TextInput     │  │ NumberInput │  ... (Todos los components)
+│ Component     │  │ Component   │
+└───────┬───────┘  └──────┬──────┘
+        │                │
+        └───────┬────────┘
+                │
+                ↓ (Cada componente valida)
 ┌─────────────────────────────────────────┐
 │   NIVEL 1: Required Validation          │  ← Más básico
 │   ¿Campo obligatorio tiene valor?       │
@@ -69,8 +85,15 @@ El sistema implementa arquitectura de validación en cascada con tres niveles je
 │   NIVEL 3: Async Validation             │  ← Validaciones con API
 │   ¿Valor único/disponible en servidor?  │
 └─────────────┬───────────────────────────┘
-              │ ✓ Todas pasan
+              │ Si falla: Application.View.value.isValid = false
               ↓
+┌─────────────────────────────────────────┐
+│  Application.View.value.isValid         │
+│  (Estado acumulado de todos los inputs) │
+└─────────────┬───────────────────────────┘
+              │
+              ↓
+    validateInputs() retorna isValid
          VÁLIDO → Procede save()
 ```
 
@@ -104,71 +127,51 @@ console.log(product.validationErrors);
 // }
 ```
 
-#### Implementación Interna Simplificada
+#### Implementación Real (Event-Driven)
 
 ```typescript
 public async validateInputs(): Promise<boolean> {
-    this.validationErrors = {};
-    let hasErrors = false;
+    // 1. Inicializar estado de validación como válido
+    Application.View.value.isValid = true;
     
-    const properties = this.getProperties();
+    // 2. Mostrar loading durante validación
+    Application.ApplicationUIService.showLoadingMenu();
     
-    for (const key of properties) {
-        const errors: string[] = [];
-        
-        // NIVEL 1: Required
-        if (this.isRequired(key)) {
-            const value = (this as any)[key];
-            
-            if (value === null || value === undefined || value === '') {
-                errors.push(this.requiredMessage(key));
-                hasErrors = true;
-            }
-        }
-        
-        // NIVEL 2: Validation (sync)
-        if (this.isValidation(key)) {
-            const isValid = this.isValidation(key);
-            
-            if (!isValid) {
-                errors.push(this.validationMessage(key));
-                hasErrors = true;
-            }
-        }
-        
-        // NIVEL 3: AsyncValidation
-        if (this.isAsyncValidation) {
-            const isValid = await this.isAsyncValidation(key);
-            
-            if (!isValid) {
-                errors.push(this.asyncValidationMessage(key));
-                hasErrors = true;
-            }
-        }
-        
-        // Guardar errores de esta propiedad
-        if (errors.length > 0) {
-            this.validationErrors[key] = errors;
-        }
-    }
+    // 3. Esperar tick para que loading se muestre
+    await new Promise(resolve => setTimeout(resolve, 50));
     
-    // Emitir evento
-    if (hasErrors) {
-        Application.eventBus.emit('validation-failed', {
-            entity: this,
-            errors: this.validationErrors
-        });
-    } else {
-        Application.eventBus.emit('validation-passed', {
-            entity: this
-        });
-    }
+    // 4. EMISIÓN DEL EVENTO - Los componentes escuchan y validan
+    Application.eventBus.emit('validate-inputs');
     
-    return !hasErrors;
+    // 5. Esperar validaciones asíncronas de todos los campos
+    const keys = this.getKeys();
+    const asyncValidationPromises = keys.map(key => this.isAsyncValidation(key));
+    await Promise.all(asyncValidationPromises);
+    
+    // 6. Esperar procesamiento de resultados de validación
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // 7. Ejecutar hook post-validación
+    this.onValidated();
+    
+    // 8. Ocultar loading
+    Application.ApplicationUIService.hideLoadingMenu();
+    
+    // 9. Retornar estado final (actualizado por componentes)
+    return Application.View.value.isValid;
 }
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~350)
+**Ubicación:** src/entities/base_entitiy.ts líneas 567-590.
+
+**IMPORTANTE:** validateInputs() NO ejecuta validaciones directamente. En su lugar:
+1. Emite evento `'validate-inputs'` al EventBus
+2. Los **componentes de formulario** (TextInputComponent, NumberInputComponent, etc.) escuchan el evento
+3. Cada componente ejecuta sus propias validaciones (Required, Validation, AsyncValidation)
+4. Si un componente falla, actualiza `Application.View.value.isValid = false`
+5. validateInputs() retorna el estado final acumulado por todos los componentes
+
+Esta arquitectura **event-driven** permite validación descentralizada donde cada input es responsable de validarse a sí mismo.
 
 ### Métodos de Nivel 1: Required Validation
 

@@ -20,10 +20,10 @@ export const CSS_COLUMN_CLASS_KEY = Symbol('cssColumnClass');
 
 ### Firma
 ```typescript
-function CssColumnClass(className: string): PropertyDecorator
+function CSSColumnClass(cssClass: string): PropertyDecorator
 ```
 
-### Almacenamiento
+**NOTA:** El nombre correcto es **CSSColumnClass** (CSS en uppercase), NO CssColumnClass (mixed case).
 
 ### Almacenamiento
 ```typescript

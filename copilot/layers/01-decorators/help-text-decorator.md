@@ -35,7 +35,9 @@ El decorator HelpText agrega texto de ayuda descriptivo que se muestra permanent
 
 **HelpText Type:** Type union `string | ((entity: BaseEntity) => string)`. String estático para help text fijo, function para help text dinámico evaluado en runtime.
 
-**Decorator Signature:** `function HelpText(text: string | ((entity: BaseEntity) => string)): PropertyDecorator`. Parámetro único text es string o function que retorna string.
+**Decorator Signature:** `function HelpText(text: string): PropertyDecorator`. Parámetro único text es string. NO acepta functions - solo strings literales.
+
+**NOTA CRÍTICA:** El decorador SOLO acepta strings, NO acepta funciones. No hay soporte para help text dinámico via functions.
 
 **Static Help Text:** String constante almacenado en metadata, siempre retorna mismo texto. Ejemplo: `'Format: YYYY-MM-DD (e.g., 2025-01-15)'`.
 

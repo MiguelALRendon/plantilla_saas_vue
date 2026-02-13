@@ -62,12 +62,13 @@ if (isNew) {
 
 **Flujo de ejecución:**
 1. Ejecuta hook beforeSave()
-2. Llama validateInputs() que ejecuta validaciones required, sync y async
-3. Si validación falla: muestra toast, retorna instancia sin cambios
-4. Verifica isPersistent() - lanza error si entity no tiene @Persistent()
-5. Obtiene endpoint vía getApiEndpoint()
-6. Serializa instancia con toObject()
-7. Discrimina entre POST (isNew = true) o PUT (isNew = false)
+2. Muestra loading menu con Application.ApplicationUIService.showLoadingMenu()  
+3. Llama validateInputs() que ejecuta validaciones required, sync y async
+4. Si validación falla: muestra toast, retorna instancia sin cambios
+5. Verifica isPersistent() - lanza error si entity no tiene @Persistent()
+6. Obtiene endpoint vía getApiEndpoint()
+7. Serializa instancia con toObject()
+8. Discrimina entre POST (isNew = true) o PUT (isNew = false)
 8. Construye URL: POST usa `${endpoint}`, PUT usa `${endpoint}/${pkValue}`
 9. Ejecuta request HTTP con Application.axiosInstance
 10. Actualiza this con Object.assign(this, response.data)

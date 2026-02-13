@@ -44,9 +44,9 @@ export enum HttpMethod {
 }
 ```
 
-**Decorator Signature:** `function ApiMethods(methods: string[] | string): ClassDecorator`. Acepta array de strings o string separado por comas, retorna function que decora clase.
+**Decorator Signature:** `function ApiMethods(methods: HttpMethod[]): ClassDecorator`. Acepta ÚNICAMENTE array de tipo HttpMethod ('GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'), NO acepta strings genéricos ni strings separados por comas.
 
-**Method Normalization:** Proceso de convertir methods a uppercase y filtrar inválidos. Input `['get', 'Post', 'invalid']` → Output `['GET', 'POST']`. Methods inválidos removidos silenciosamente sin error.
+**Type Safety:** TypeScript valida en compile-time que solo métodos HTTP válidos se pasen. Ejemplo válido: `@ApiMethods(['GET', 'POST'])`. Ejemplo inválido: `@ApiMethods(['get', 'INVALID'])` → error de compilación.
 
 **getApiMethods() Accessor:** Método estático en BaseEntity que retorna `this.prototype[API_METHODS_METADATA]` (string[] o undefined). undefined significa NO hay restricciones (all methods permitidos).
 

@@ -30,11 +30,13 @@ El decorator Disabled marca propiedad como deshabilitada en interfaz de usuario,
 
 ## 3. Definiciones Clave
 
-**DISABLED_KEY Symbol:** Identificador único usado como property key en prototype para almacenar object map de disabled conditions. Definido como `export const DISABLED_KEY = Symbol('disabled')`. Estructura: `{ [propertyKey: string]: boolean | ((entity: BaseEntity) => boolean) }`.
+**DISABLED_KEY Symbol:** Identificador único usado como property key en prototype para almacenar object map de disabled metadata objects. Definido como `export const DISABLED_KEY = Symbol('disabled')`. Estructura: `{ [propertyKey: string]: { condition: DisabledCondition } }`.
 
-**Disabled Condition Type:** Type union `boolean | ((entity: BaseEntity) => boolean)`. Valor true deshabilita siempre, false nunca deshabilita, function evaluada en runtime que retorna boolean.
+**DisabledCondition Type:** Type union `boolean | ((instance: any) => boolean)`. Valor true deshabilita siempre, false nunca deshabilita, function evaluada en runtime que retorna boolean.
 
-**Decorator Signature:** `function Disabled(condition?: boolean | ((entity: BaseEntity) => boolean) = true): PropertyDecorator`. Default value true si NO se pasa parámetro.
+**DisabledMetadata Interface:** Interface que define estructura de metadata: `{ condition: DisabledCondition }`. La metadata NO almacena el boolean/function directamente, sino envuelto en objeto con propiedad condition.
+
+**Decorator Signature:** `function Disabled(condition: DisabledCondition): PropertyDecorator`. Recibe condition (boolean o function), envuelve en { condition } object, almacena en prototype.
 
 **Static Disabling:** Valor boolean true en metadata que deshabilita propiedad permanentemente. Usado para IDs, audit fields, auto-generated values.
 

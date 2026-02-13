@@ -2,62 +2,52 @@
 
 ## 1. Propósito
 
-El decorator DefaultProperty asigna valor inicial automático a una propiedad cuando se crea nueva instancia de BaseEntity. El valor se aplica en constructor mediante applyDefaults() ANTES de Object.assign(data), permitiendo sobrescritura explícita por caller. Soporta valores estáticos (strings, numbers, booleans) y dinámicos (functions ejecutadas en cada instantiation). Los valores default mejoran developer experience reduciendo boilerplate en constructores, garantizan valores sensatos para campos opcionales (status='active', stock=0, isActive=true), previenen undefined/null en propiedades críticas, y soportan computed defaults contextuales mediante function access a this. Critical para auto-generated IDs (UUID, timestamps), valores de inicialización de estado (status enums, empty arrays), defaults de configuración (theme=light, language=es), y reducción de lógica condicional en código cliente. DefaultProperty NO satisface validación @Required (usuario puede clear valor post-instantiation), pero complementa Required proporcionando valor inicial válido.
+Marcar la propiedad de una entidad que se utilizará como representación textual por defecto de la instancia. Similar al método `__str__` en Python o `toString()` en Java, este decorador designa qué propiedad debe usarse para mostrar la entidad como texto cuando se requiera una representación legible por humanos. El valor de esta propiedad es retornado por el método `getDefaultPropertyValue()` de BaseEntity y es utilizado por componentes UI para mostrar opciones en selects, referencias en relaciones, breadcrumbs y cualquier contexto donde la entidad necesite representación textual concisa.
 
 ## 2. Alcance
 
 **Responsabilidades cubiertas:**
-- Definir valor default para propiedad específica en clase entity
-- Almacenar default value como Symbol metadata en prototype de clase decorada
-- Soportar valores estáticos (primitives: string, number, boolean, null) y valores dinámicos (functions que retornan computed value)
-- Aplicar defaults automáticamente en constructor BaseEntity mediante applyDefaults() invocado ANTES de Object.assign
-- Solo aplicar default si propiedad es undefined o null en momento de construction (no sobrescribir valores existentes)
-- Proveer getDefaultValue(propertyKey) accessor estático e instancia que retorna default value o undefined
-- Ejecutar function defaults en cada instantiation con context de instancia (this binding) permitiendo computed values
-- Permitir override de defaults mediante data parameter en constructor: new Product({status:'custom'}) sobrescribe default 'active'
-- Soportar defaults complejos: arrays vacíos (() => []), objects vacíos (() => ({})), timestamps (() => new Date()), UUIDs (() => uuidv4())
+- Marcar una propiedad específica como representación textual de la entidad
+- Almacenar el nombre de la propiedad como metadata a nivel de clase (no de instancia)
+- Proveer accessor `getDefaultPropertyValue()` que retorna el valor de la propiedad marcada
+- Soportar uso en componentes de UI para mostrar entidades relacionadas
+- Permitir identificación rápida de entidades en logs y debugging
 
 **Límites del alcance:**
-- Decorator NO valida el tipo del valor default (developer responsable de asegurar type compatibility con propiedad)
-- NO verifica que default satisfaga @Required validation (Required valida EN save, DefaultProperty asigna EN construction)
-- NO previene que usuario modifique/elimine valor post-construction (product.status=null es permitido después de constructor)
-- Function defaults NO reciben parámetros (context solo mediante this binding)
-- NO aplica defaults a propiedades ya asignadas en data constructor parameter (explicit values siempre ganan)
-- NO re-aplica defaults después de construction (applyDefaults() llamado solo UNA vez en constructor)
-- NO soporta defaults condicionales basados en otras propiedades SIN usar function (static values evaluados en decoration time)
-- Arrays/objects literales NO son wrapped automáticamente en function (developer debe usar () => [] para evitar shared references)
-- NO garantiza que function default retorne value del tipo correcto (responsabilidad de developer)
+- NO establece valores por defecto para propiedades (ese no es su propósito)
+- NO asigna valores automáticamente en el constructor
+- Solo puede marcarse UNA propiedad por clase (última aplicación del decorador gana)
+- NO valida que la propiedad exista o tenga valor
+- NO formatea el valor (se retorna tal como está)
 
 ## 3. Definiciones Clave
 
-**DEFAULT_PROPERTY_METADATA Symbol:** Identificador único usado como property key en prototype para almacenar object map de defaults. Evita colisiones con propiedades normales. Definido como `export const DEFAULT_PROPERTY_METADATA = Symbol('defaultProperty')`. Estructura: `{ [propertyKey: string]: any | (() => any) }`.
+**DEFAULT_PROPERTY_KEY Symbol:** Identificador único usado como property key directo en la clase (NO en prototype) para almacenar el nombre de la propiedad que representa textualmente la entidad. Definido como `export const DEFAULT_PROPERTY_KEY = Symbol('default_property')`.
 
-**Default Value Type:** Type union `any | (() => any)`. Puede ser valor primitivo directo (string, number, boolean, null) o function que retorna valor. Function ejecutada en cada new constructor invocation para computed/dynamic defaults.
+**Decorator Signature:** `function DefaultProperty(propertyName: string): ClassDecorator`. Recibe el nombre de la propiedad como string, retorna decorator que almacena metadata a nivel de clase.
 
-**Decorator Signature:** `function DefaultProperty(defaultValue: any | (() => any)): PropertyDecorator`. Recibe valor o function, retorna decorator que almacena metadata en prototype.
+**Class-Level Decorator:** Este es un ClassDecorator que se aplica a la clase completa, NO a propiedades individuales. Se coloca antes de la declaración de clase, no antes de una propiedad específica.
 
-**Static Default:** Valor literal almacenado en metadata que es asignado directamente a propiedad. Ejemplo: `@DefaultProperty('active')` asigna string 'active' a cada nueva instancia. PELIGRO: Si valor es array/object literal, todas las instancias comparten MISMA referencia.
+**getDefaultPropertyValue() Accessor:** Método de instancia en BaseEntity que lee el nombre de la propiedad desde la metadata de clase y retorna el valor de esa propiedad en la instancia actual. Si no hay metadata o la propiedad no tiene valor, retorna undefined.
 
-**Dynamic Default:** Function almacenada en metadata que se ejecuta EN cada constructor invocation retornando computed value. Ejemplo: `@DefaultProperty(() => new Date())` ejecuta function en cada new Product(), generando timestamp único para cada instancia.
-
-**applyDefaults() Method:** Método de instancia en BaseEntity invocado en constructor que itera todas las properties obtenidas de getProperties(), verificando si cada property es undefined/null, y si lo es, obteniendo default value mediante getDefaultValue(prop) y asignando a this[prop]. Ejecutado ANTES de Object.assign(this, data) para permitir override.
-
-**getDefaultValue(propertyKey) Accessor:** Método estático e instancia en BaseEntity que retorna default value para propiedad específica. Si metadata contiene function, la ejecuta (con this binding en version de instancia, sin context en estática). Si no hay default metadata, retorna undefined.
-
-**Function Context (this binding):** En defaults de tipo function, this refiere a instancia de entity siendo construida, permitiendo access a otras propiedades para computed defaults contextuales. Ejemplo: `@DefaultProperty(function(this: Product) { return this.type === 'digital' ? 9999 : 0; })`.
-
-**Shared Reference Problem:** Problema cuando developer usa array/object literal como default (`@DefaultProperty([])`) en lugar de function (`@DefaultProperty(() => [])`). Todas las instancias comparten MISMA referencia de array/object, causando mutations inesperadas cross-instance. SIEMPRE usar function para arrays/objects.
-
-**Override Behavior:** Cuando constructor recibe data parameter con valor para property que tiene default, Object.assign(this, data) sobrescribe valor default aplicado por applyDefaults(). Explicit values en constructor tienen PRECEDENCIA sobre defaults.
+**Representación Textual:** El valor usado para mostrar la entidad de forma legible. Comúnmente propiedades como 'name', 'title', 'fullName', 'description', etc.
 
 ## 4. Descripción Técnica
 
-### Implementación del Decorator
+### 4.1 Implementación del Decorador
+
+**Ubicación:** `src/decorations/default_property_decorator.ts` líneas 1-20.
 
 ```typescript
-// src/decorations/default_property_decorator.ts
-export const DEFAULT_PROPERTY_KEY = Symbol('default_property');
+import { DEFAULT_PROPERTY_KEY } from './decorator_keys';
 
+/**
+ * ClassDecorator que marca una propiedad como representación textual por defecto
+ * de la entidad. El valor de esta propiedad se usa para mostrar la entidad en UI.
+ * 
+ * @param propertyName - Nombre de la propiedad que representa textualmente la entidad
+ * @returns ClassDecorator que configura la metadata de representación textual
+ */
 export function DefaultProperty(propertyName: string): ClassDecorator {
     return function (target: Function) {
         (target as any)[DEFAULT_PROPERTY_KEY] = propertyName;
@@ -65,174 +55,533 @@ export function DefaultProperty(propertyName: string): ClassDecorator {
 }
 ```
 
-**IMPORTANTE:** Este decorador NO establece valores por defecto para propiedades. Su función real es marcar cuál propiedad se debe usar como representación textual por defecto de la entidad (similar a `__str__` en Python).
+**Key Points:**
+- Es un **ClassDecorator** (se aplica antes de `export class`)
+- Recibe **un parámetro obligatorio:** el nombre de la propiedad (string)
+- Almacena en **target directo** (la clase), NO en prototype
+- La sintaxis de aplicación es `@DefaultProperty('name')` antes de la declaración de clase
+- **NO asigna valores por defecto** a propiedades (ese NO es su propósito)
 
 **Ejemplo de uso correcto:**
 ```typescript
-@DefaultProperty('name')  // 'name' será la propiedad usada para mostrar la entidad
+@DefaultProperty('name')  // ClassDecorator que marca 'name' como representación textual
 @ModuleName('Products')
 export class Product extends BaseEntity {
+    @PropertyName('ID', Number)
     id!: number;
+    
+    @PropertyName('Name', String)
     name!: string;
+    
+    @PropertyName('Description', String)
     description!: string;
 }
 
-// Cuando se necesite representar un Product como texto, se usará product.name
+// Ahora product.getDefaultPropertyValue() retornará this.name
+const product = new Product({ id: 1, name: 'Laptop', description: 'Gaming laptop' });
+console.log(product.getDefaultPropertyValue());  // 'Laptop'
 ```
 
-### Accessor en BaseEntity
+### 4.2 Almacenamiento de Metadata
+
+**Storage Location:** Directamente en la clase (Function target), no en prototype.
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 1630
-public getDefaultValue(propertyKey: string): any {
-    const constructor = this.constructor as typeof BaseEntity;
-    const defaultMetadata = constructor.prototype[DEFAULT_PROPERTY_METADATA];
-    
-    if (!defaultMetadata || !defaultMetadata[propertyKey]) {
-        return undefined;
-    }
-    
-    const defaultValue = defaultMetadata[propertyKey];
-    
-    // Si es función, ejecutarla con context de instancia
-    if (typeof defaultValue === 'function') {
-        return defaultValue.call(this);  // ← this binding
-    }
-    
-    return defaultValue;
-}
-
-// Método estático (sin context)
-public static getDefaultValue(propertyKey: string): any {
-    const defaultMetadata = this.prototype[DEFAULT_PROPERTY_METADATA];
-    
-    if (!defaultMetadata || !defaultMetadata[propertyKey]) {
-        return undefined;
-    }
-    
-    const defaultValue = defaultMetadata[propertyKey];
-    
-    if (typeof defaultValue === 'function') {
-        return defaultValue();  // ← Sin this binding
-    }
-    
-    return defaultValue;
-}
-```
-
-### applyDefaults Method
-
-```typescript
-// src/entities/base_entitiy.ts - Línea 1680
-public applyDefaults(): void {
-    const constructor = this.constructor as typeof BaseEntity;
-    const properties = constructor.getProperties();
-    
-    properties.forEach(prop => {
-        // Solo aplicar si la propiedad está vacía
-        if (this[prop] === undefined || this[prop] === null) {
-            const defaultValue = this.getDefaultValue(prop);
-            if (defaultValue !== undefined) {
-                this[prop] = defaultValue;
-            }
-        }
-    });
-}
-```
-
-### Integración en Constructor
-
-```typescript
-// src/entities/base_entitiy.ts - Línea 50
-constructor(data?: Partial<T>) {
-    // 1. Aplicar valores por defecto PRIMERO
-    this.applyDefaults();
-    
-    // 2. Sobrescribir con data si existe
-    if (data) {
-        Object.assign(this, data);
-    }
-    
-    // 3. Inicializar errors
-    this.errors = {};
-}
-```
-
-### Ejemplo Completo - Static Defaults
-
-```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
-import { PropertyName, Required, DefaultProperty } from '@/decorations';
-
+// Después de decorar:
+@DefaultProperty('name')
 export class Product extends BaseEntity {
-    @PropertyName('Product ID', Number)
-    id?: number;
-    
-    @PropertyName('Product Name', String)
-    @Required()
     name!: string;
-    
-    @PropertyName('Status', String)
-    @DefaultProperty('active')  // ← Static default
-    status!: string;
-    
-    @PropertyName('Stock', Number)
-    @DefaultProperty(0)  // ← Numeric default
-    stock!: number;
-    
-    @PropertyName('Is Featured', Boolean)
-    @DefaultProperty(false)  // ← Boolean default
-    isFeatured!: boolean;
 }
 
-// Uso:
-const product = new Product();
-console.log(product.status);      // 'active'
-console.log(product.stock);       // 0
-console.log(product.isFeatured);  // false
-
-// Override defaults:
-const product2 = new Product({ status: 'inactive', stock: 10 });
-console.log(product2.status);  // 'inactive' (sobrescrito)
-console.log(product2.stock);   // 10 (sobrescrito)
+// La metadata queda almacenada así:
+Product[DEFAULT_PROPERTY_KEY] === 'name'  // true
 ```
 
-### Ejemplo Completo - Dynamic Defaults (Functions)
+**Razón del almacenamiento en clase directa:** El decorador almacena en la clase porque la configuración de representación textual es una decisión de tipo (type-level), no de instancia (instance-level). Todas las instancias de Product usan 'name' como representación textual.
+
+### 4.3 Lectura de Metadata en BaseEntity
+
+**Ubicación:** `src/entities/base_entitiy.ts` líneas 232-239.
 
 ```typescript
-export class Order extends BaseEntity {
-    @PropertyName('Order Number', String)
-    @DefaultProperty(() => {
-        const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        return `ORD-${timestamp}-${random}`;
-    })
-    orderNumber!: string;
-    
-    @PropertyName('Created At', Date)
-    @DefaultProperty(() => new Date())  // ← Nueva fecha en cada instancia
-    createdAt!: Date;
+/**
+ * Retorna el valor de la propiedad configurada como representación textual.
+ * Si no hay decorador aplicado, retorna undefined.
+ */
+public getDefaultPropertyValue(): any {
+    const propertyName = (this.constructor as any)[DEFAULT_PROPERTY_KEY];
+    if (!propertyName) {
+        return undefined;
+    }
+    return (this as any)[propertyName];
+}
+```
+
+**Comportamiento:**
+- Lee la metadata DEFAULT_PROPERTY_KEY de la clase
+- Extrae el valor de esa propiedad de la instancia actual
+- Si no hay decorador aplicado, retorna undefined
+- Si la propiedad no tiene valor, retorna undefined también
+
+### 4.4 Uso en Componentes UI
+
+**Select/Dropdown Options:**
+
+```typescript
+// FormFieldInputSelectComponent.vue
+const options = await Product.getElementList();
+// options = [
+//   { id: 1, name: 'Laptop', description: '...' },
+//   { id: 2, name: 'Mouse', description: '...' }
+// ]
+
+// El componente muestra:
+<option v-for="product in options" :value="product.id">
+    {{ product.getDefaultPropertyValue() }}  <!-- Muestra: 'Laptop', 'Mouse' -->
+</option>
+```
+
+**Breadcrumbs:**
+
+```typescript
+// Navigation.vue
+const currentEntity = await Product.getElement(productId);
+const breadcrumb = `${currentEntity.getDefaultPropertyValue()}`;  
+// breadcrumb = 'Laptop'
+```
+
+**Referencias en Relaciones:**
+
+```typescript
+// Order.vue - Mostrando productos relacionados
+@DefaultProperty('name')
+export class Product extends BaseEntity {
+    name!: string;
 }
 
-// Cada instancia obtiene valores únicos:
-const order1 = new Order();
-console.log(order1.orderNumber);  // 'ORD-1234567890123-456'
-console.log(order1.createdAt);    // 2025-02-10T10:30:00.000Z
+const products = order.products;  // Array de Product instances
+products.forEach(product => {
+    console.log(product.getDefaultPropertyValue());  // Imprime el nombre de cada producto
+});
+```
 
-const order2 = new Order();
-console.log(order2.orderNumber);  // 'ORD-1234567890456-789' (diferente)
-console.log(order2.createdAt);    // 2025-02-10T10:30:05.000Z (diferente)
+### 4.5 Diferencia con Otros Conceptos
+
+**NO es lo mismo que Default Values:**
+
+```typescript
+// INCORRECTO - DefaultProperty NO asigna valores por defecto
+@DefaultProperty('active')  // ❌ Esto NO asigna 'active' como valor inicial
+status!: string;
+
+// Para asignar valores iniciales, simplemente use:
+status: string = 'active';  // ✅ Correcto
+
+// DefaultProperty marca CUÁL PROPIEDAD USAR para representar la entidad:
+@DefaultProperty('name')  // ✅ Correcto - marca que 'name' representa la entidad
+export class Product extends BaseEntity {
+    name!: string;  // Esta es la propiedad que se usará como texto representativo
+}
 ```
 
 ## 5. Flujo de Funcionamiento
 
-
-### Flujo de Aplicación del Decorator
+### 5.1 Decoración en Tiempo de Compilación
 
 ```
-Developer define propiedad con @DefaultProperty
-@DefaultProperty('active')
-status!: string
+[Código TypeScript]
+@DefaultProperty('name')
+export class Product extends BaseEntity {
+    name!: string;
+}
+         |
+         v
+[Compiler ejecuta decorator]
+         |
+         v
+[DefaultProperty('name'): ClassDecorator]
+         |
+         v
+[target = Product (clase)]
+         |
+         v
+[Product[DEFAULT_PROPERTY_KEY] = 'name']
+         |
+         v
+[Metadata almacenada en clase]
+```
+
+### 5.2 Lectura en Runtime - Componente UI
+
+```
+[Componente necesita mostrar entidad]
+const product = await Product.getElement(123);
+// product = { id: 123, name: 'Laptop', description: 'Gaming laptop' }
+         |
+         v
+[Componente llama getDefaultPropertyValue()]
+         |
+         v
+[getDefaultPropertyValue() lee metadata]
+const propertyName = Product[DEFAULT_PROPERTY_KEY];  // 'name'
+         |
+         v
+[Extrae valor de esa propiedad]
+return this['name'];  // this.name
+         |
+         v
+[Retorna 'Laptop']
+         |
+         v
+[UI muestra "Laptop" como texto representativo]
+```
+
+### 5.3 Uso en Select/Dropdown
+
+```
+[Formulario con campo de productos relacionados]
+const products = await Product.getElementList();
+// products = [
+//   { id: 1, name: 'Laptop', ... },
+//   { id: 2, name: 'Mouse', ... },
+//   { id: 3, name: 'Keyboard', ... }
+// ]
+         |
+         v
+[Componente itera para generar options]
+<option v-for="product in products" :value="product.id">
+    {{ product.getDefaultPropertyValue() }}
+</option>
+         |
+         v
+[Cada producto retorna su 'name']
+product1.getDefaultPropertyValue() → 'Laptop'
+product2.getDefaultPropertyValue() → 'Mouse'
+product3.getDefaultPropertyValue() → 'Keyboard'
+         |
+         v
+[UI renderiza:]
+<option value="1">Laptop</option>
+<option value="2">Mouse</option>
+<option value="3">Keyboard</option>
+```
+
+### 5.4 Fallback cuando NO hay decorador
+
+```
+[Entidad SIN @DefaultProperty]
+export class SimpleEntity extends BaseEntity {
+    name!: string;
+}
+         |
+         v
+[getDefaultPropertyValue() llamado]
+         |
+         v
+[constructor[DEFAULT_PROPERTY_KEY] === undefined]
+         |
+         v
+[return undefined]
+         |
+         v
+[UI debe manejar caso sin representación textual]
+// Puede usar id, toString(), o mensaje "Sin nombre"
+```
+
+## 6. Reglas Obligatorias
+
+1. **Parámetro obligatorio:** El decorador DEBE recibir el nombre de la propiedad como string parameter: `@DefaultProperty('name')`, `@DefaultProperty('title')`, etc.
+
+2. **Class-level decoration:** DEBE aplicarse antes de la declaración de clase con `export class`, NO sobre propiedades individuales. Es un ClassDecorator, no PropertyDecorator.
+
+3. **Propiedad debe existir:** El nombre de propiedad pasado al decorador DEBE corresponder a una propiedad real definida en la entidad. Si se especifica `@DefaultProperty('name')`, la clase debe tener `name!: string`.
+
+4. **Único decorador por clase:** Solo UNA invocación de @DefaultProperty permitida por entidad. Si necesita combinar múltiples propiedades, implemente método custom.
+
+5. **Propiedad debe tener valor legible:** La propiedad marcada debería contener valores que sean legibles por humanos (generalmente strings). Evite usar propiedades numéricas o booleanas.
+
+6. **NO es para default values:** Este decorador NO asigna valores por defecto a propiedades. Solo marca cuál propiedad usar como representación textual.
+
+7. **Verificar en UI:** Componentes que usan getDefaultPropertyValue() DEBEN manejar caso cuando retorna undefined (entidad sin decorador o propiedad sin valor).
+
+8. **Propiedad importante:** La propiedad marcada debe ser significativa para usuarios (name, title, description), no propiedades técnicas (id, createdAt, internalCode).
+
+## 7. Prohibiciones
+
+1. **NO usar como PropertyDecorator:** Jamás escribir `@DefaultProperty('name') name!: string` decorando la propiedad directamente. Es un ClassDecorator que se aplica a la clase.
+
+2. **NO omitir parámetro:** Nunca escribir `@DefaultProperty()` sin parámetro. El decorador REQUIERE el nombre de la propiedad como string.
+
+3. **NO decorar múltiples propiedades:** No puede haber más de una representación textual por entidad. Si necesita combinar campos, implemente getter custom.
+
+4. **NO confundir con asignación de valores:** Este decorador NO asigna valores. No espere que `@DefaultProperty('active')` asigne 'active' a ninguna propiedad.
+
+5. **NO usar propiedades no-string:** Aunque técnicamente posible, evite marcar propiedades numéricas (`id`), booleanas (`isActive`), o fechas (`createdAt`) como representación textual.
+
+6. **NO asumir siempre tiene valor:** La propiedad marcada puede estar vacía (undefined, null, ''). getDefaultPropertyValue() retornará ese valor vacío sin validar.
+
+7. **NO usar para formateo:** El decorador retorna el valor crudo sin formatear. Si necesita formato (`formatCurrency(price)`), hágalo en el componente UI.
+
+8. **NO cambiar metadata en runtime:** Una vez decorada la clase, no modificar `constructor[DEFAULT_PROPERTY_KEY]`. La metadata es inmutable post-decoración.
+
+## 8. Dependencias
+
+### 8.1 Decoradores Relacionados
+
+**PropertyName (FUNDAMENTAL):**  
+La propiedad especificada en @DefaultProperty DEBE estar decorada con @PropertyName para que esté registrada en metadata del framework.
+
+**ModuleName (COMÚN):**  
+Generalmente aplicado en conjunto con @DefaultProperty ya que las entidades modulares necesitan representación textual para UI.
+
+### 8.2 Framework Dependencies
+
+**BaseEntity.getDefaultPropertyValue():**  
+Método que lee la metadata DEFAULT_PROPERTY_KEY y extrae el valor de la propiedad marcada.
+
+**decorator_keys.ts:**  
+Define DEFAULT_PROPERTY_KEY Symbol usado para almacenar metadata.
+
+**Componentes UI:**  
+FormFieldInputSelectComponent, RelationDisplay y otros componentes usan getDefaultPropertyValue() para mostrar entidades.
+
+## 9. Relaciones
+
+### 9.1 Con Componentes UI
+
+Los componentes de formulario y visualización usan getDefaultPropertyValue() para renderizar entidades de forma legible:
+
+```typescript
+// FormFieldInputSelectComponent.vue
+<template>
+  <select v-model="selectedId">
+    <option v-for="entity in entities" :key="entity.id" :value="entity.id">
+      {{ entity.getDefaultPropertyValue() || entity.id }}
+    </option>
+  </select>
+</template>
+```
+
+### 9.2 Con PropertyName
+
+Relación 1:1 - La propiedad especificada en @DefaultProperty debe estar registrada vía @PropertyName:
+
+```typescript
+@DefaultProperty('name')  // Marca 'name' como representación textual
+@ModuleName('Products')
+export class Product extends BaseEntity {
+    @PropertyName('Name', String)  // REQUERIDO - registra la propiedad
+    name!: string;
+}
+```
+
+### 9.3 Con Relaciones entre Entidades
+
+Cuando una entidad referencia otra vía relación 1:N o N:N, @DefaultProperty permite mostrar la entidad relacionada de forma legible:
+
+```typescript
+@DefaultProperty('name')
+export class Category extends BaseEntity {
+    name!: string;
+}
+
+export class Product extends BaseEntity {
+    category!: Category;
+}
+
+// En UI:
+const product = await Product.getElement(1);
+console.log(product.category.getDefaultPropertyValue());  // Muestra nombre de categoría
+```
+
+### 9.4 Con Búsqueda y Filtros
+
+Los componentes de búsqueda pueden buscar sobre la propiedad marcada como default para filtrado intuitivo.
+
+## 10. Notas de Implementación
+
+### 10.1 Caso Común - Entidad con 'name'
+
+```typescript
+@DefaultProperty('name')
+@ModuleName('Products')
+export class Product extends BaseEntity {
+    @PropertyName('ID', Number)
+    id!: number;
+    
+    @PropertyName('Name', String)
+    name!: string;
+    
+    @PropertyName('Description', String)
+    description!: string;
+}
+
+// Uso:
+const product = new Product({ id: 1, name: 'Laptop', description: 'Gaming laptop' });
+console.log(product.getDefaultPropertyValue());  // 'Laptop'
+
+// En select/dropdown UI muestra "Laptop"
+```
+
+### 10.2 Caso Alternativo -title'
+
+```typescript
+@DefaultProperty('title')
+@ModuleName('Articles')
+export class Article extends BaseEntity {
+    @PropertyName('ID', Number)
+    id!: number;
+    
+    @PropertyName('Title', String)
+    title!: string;
+    
+    @PropertyName('Content', String)
+    content!: string;
+}
+
+// Uso:
+const article = new Article({ id: 1, title: 'Introduction to Vue', content: '...' });
+console.log(article.getDefaultPropertyValue());   // 'Introduction to Vue'
+```
+
+### 10.3 Sin Decorador - Fallback Behavior
+
+```typescript
+// Entidad SIN @DefaultProperty
+@ModuleName('Users')
+export class User extends BaseEntity {
+    @PropertyName('ID', Number)
+    id!: number;
+    
+    @PropertyName('Username', String)
+    username!: string;
+}
+
+// Uso:
+const user = new User({ id: 1, username: 'john_doe' });
+console.log(user.getDefaultPropertyValue());  // undefined
+
+// El componente UI debe manejar:
+const display = user.getDefaultPropertyValue() || user.id || 'Sin nombre';
+// display = 1 (usa id como fallback)
+```
+
+### 10.4 Propiedad Compuesta - Alternativa
+
+Si necesita combinar múltiples campos, implemente getter custom en lugar de @DefaultProperty:
+
+```typescript
+@ModuleName('Users')
+export class User extends BaseEntity {
+    @PropertyName('First Name', String)
+    firstName!: string;
+    
+    @PropertyName('Last Name', String)
+    lastName!: string;
+    
+    // Custom getter para representación textual
+    public getDisplayName(): string {
+        return `${this.firstName} ${this.lastName}`;
+    }
+}
+
+// Uso en componentes:
+const user = new User({ firstName: 'John', lastName: 'Doe' });
+console.log(user.getDisplayName());  // 'John Doe'
+
+// Nota: getDisplayName() es custom, NO getDefaultPropertyValue()
+// Si quiere usar getDefaultPropertyValue(), marque una propiedad con @DefaultProperty
+```
+
+### 10.5 Caso Real - Categories y Products
+
+```typescript
+@DefaultProperty('name')
+@ModuleName('Categories')
+export class Category extends BaseEntity {
+    @PropertyName('ID', Number)
+    id!: number;
+    
+    @PropertyName('Name', String)
+    name!: string;
+}
+
+@DefaultProperty('name')
+@ModuleName('Products')
+export class Product extends BaseEntity {
+    @PropertyName('ID', Number)
+    id!: number;
+    
+    @PropertyName('Name', String)
+    name!: string;
+    
+    @PropertyName('Category', Object)
+    category!: Category;
+}
+
+// En formulario de producto:
+<template>
+  <div class="product-form">
+    <input v-model="product.name" placeholder="Product name" />
+    
+    <select v-model="product.categoryId">
+      <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+        {{ cat.getDefaultPropertyValue() }}  <!-- Muestra nombre de categoría -->
+      </option>
+    </select>
+  </div>
+</template>
+
+<script>
+const categories = await Category.getElementList();
+// UI muestra: "Electronics", "Books", "Clothing", etc.
+</script>
+```
+
+### 10.6 Manejo de Valores Vacíos
+
+```typescript
+@DefaultProperty('name')
+@ModuleName('Products')
+export class Product extends BaseEntity {
+    name!: string;
+}
+
+// Producto sin nombre:
+const product = new Product({ id: 1 });  // name es undefined
+console.log(product.getDefaultPropertyValue());  // undefined
+
+// Componente UI debe manejar:
+const displayText = product.getDefaultPropertyValue() || 
+                    `Product #${product.id}` || 
+                    'Unnamed';
+// displayText = 'Product #1'
+```
+
+## 11. Referencias Cruzadas
+
+**property-name-decorator.md:**  
+La propiedad especificada en @DefaultProperty DEBE estar decorada con @PropertyName. Relación 1:1 explicada en sección 9.2.
+
+**module-name-decorator.md:**  
+Entidades modulares típicamente usan @DefaultProperty para definir cómo se muestran en UI. Generalmente aplicados juntos.
+
+**primary-property-decorator.md:**  
+Diferencia: @PrimaryProperty marca identidad única, @DefaultProperty marca representación legible. Distintos propósitos.
+
+**../02-base-entity/base-entity-core.md:**  
+Documenta implementación de getDefaultPropertyValue() método (líneas 232-239 de base_entitiy.ts).
+
+**../04-components/form-field-input-select.md:**  
+Componente que usa getDefaultPropertyValue() para renderizar options de select/dropdown.
+
+**03-relations.md (Tutorials):**  
+Tutorial que muestra cómo @DefaultProperty mejora visualización de entidades relacionadas en formularios.
+
+**01-basic-crud.md (Tutorials):**  
+Tutorial básico donde se aplica @DefaultProperty para mejorar usabilidad de listas y formularios.
+
+
         ↓
 Decorator function ejecuta en tiempo de clase
         ↓

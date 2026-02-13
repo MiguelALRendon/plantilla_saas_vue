@@ -518,6 +518,362 @@ Hooks acceden a Application.ApplicationUIService para operaciones UI como hideLo
 **Relación con Cache Services (N:1):**
 Hooks post-operación (afterSave, afterDelete) típicamente invalidan cachés. Múltiples entidades pueden acceder al mismo cache service.
 
+### Hooks Adicionales de Operaciones CRUD
+
+Además de los hooks principales documentados arriba, BaseEntity define hooks adicionales para casos específicos de CRUD operations:
+
+#### onSaving(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 896  
+**Ejecutado:** En create() método antes del HTTP POST request  
+**Propósito:** Hook específico para operaciones de creación (POST), ejecutado después de beforeSave() y validateInputs()
+
+```typescript
+public async create(): Promise<this> {
+    this.onSaving();  // ← Ejecuta aquí
+    
+    const response = await Application.axiosInstance.post(endpoint, this.toObject());
+    Object.assign(this, response.data);
+    return this;
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public onSaving(): void {
+        console.log('Creating new product...');
+        // Lógica específica para creación
+    }
+}
+```
+
+#### saveFailed(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 902  
+**Ejecutado:** En create() cuando HTTP POST request falla  
+**Propósito:** Permite ejecutar lógica cuando una operación de creación falla
+
+```typescript
+public async create(): Promise<this> {
+    try {
+        this.onSaving();
+        const response = await Application.axiosInstance.post(endpoint, this.toObject());
+        Object.assign(this, response.data);
+    } catch (error) {
+        this.saveFailed();  // ← Ejecuta aquí en error
+        throw error;
+    }
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public saveFailed(): void {
+        console.error('Failed to create product');
+        Application.showToast('Failed to save product', 'error');
+    }
+}
+```
+
+#### onUpdating(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 909  
+**Ejecutado:** En update() método antes del HTTP PUT request  
+**Propósito:** Hook específico para operaciones de actualización (PUT), ejecutado después de beforeSave() y validateInputs()
+
+```typescript
+public async update(): Promise<this> {
+    this.onUpdating();  // ← Ejecuta aquí
+    
+    const primaryValue = this.getPrimaryPropertyValue();
+    const response = await Application.axiosInstance.put(
+        `${endpoint}/${primaryValue}`,
+        this.toObject()
+    );
+    Object.assign(this, response.data);
+    return this;
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public onUpdating(): void {
+        this.updatedAt = new Date();
+        console.log('Updating existing product...');
+    }
+}
+```
+
+#### updateFailed(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 915  
+**Ejecutado:** En update() cuando HTTP PUT request falla  
+**Propósito:** Permite ejecutar lógica cuando una operación de actualización falla
+
+```typescript
+public async update(): Promise<this> {
+    try {
+        this.onUpdating();
+        const primaryValue = this.getPrimaryPropertyValue();
+        const response = await Application.axiosInstance.put(
+            `${endpoint}/${primaryValue}`,
+            this.toObject()
+        );
+        Object.assign(this, response.data);
+    } catch (error) {
+        this.updateFailed();  // ← Ejecuta aquí en error
+        throw error;
+    }
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public updateFailed(): void {
+        console.error('Failed to update product');
+        Application.showToast('Failed to update product', 'error');
+    }
+}
+```
+
+#### onDeleting(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 922  
+**Ejecutado:** En delete() después de beforeDelete() y antes del HTTP DELETE request  
+**Propósito:** Hook adicional antes de eliminación, ejecutado después de beforeDelete()
+
+```typescript
+public async delete(): Promise<boolean> {
+    this.beforeDelete();
+    this.onDeleting();  // ← Ejecuta aquí
+    
+    const primaryValue = this.getPrimaryPropertyValue();
+    await Application.axiosInstance.delete(`${endpoint}/${primaryValue}`);
+    
+    return true;
+}
+```
+
+#### deleteFailed(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 928  
+**Ejecutado:** En delete() cuando HTTP DELETE request falla  
+**Propósito:** Permite ejecutar lógica cuando una operación de eliminación falla
+
+```typescript
+public async delete(): Promise<boolean> {
+    try {
+        this.beforeDelete();
+        this.onDeleting();
+        const primaryValue = this.getPrimaryPropertyValue();
+        await Application.axiosInstance.delete(`${endpoint}/${primaryValue}`);
+    } catch (error) {
+        this.deleteFailed();  // ← Ejecuta aquí en error
+        throw error;
+    }
+}
+```
+
+#### afterGetElement(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 932  
+**Ejecutado:** En getElement() static method después de HTTP GET exitoso  
+**Propósito:** Permite ejecutar lógica después de cargar una entidad individual desde el servidor
+
+```typescript
+public static async getElement<T extends BaseEntity>(
+    this: new () => T,
+    id: any
+): Promise<T> {
+    const endpoint = (this as any).getApiEndpoint();
+    const response = await Application.axiosInstance.get(`${endpoint}/${id}`);
+    
+    const instance = new this();
+    Object.assign(instance, response.data);
+    
+    (instance as any).afterGetElement();  // ← Ejecuta aquí
+    
+    return instance;
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public afterGetElement(): void {
+        console.log(`Product ${this.id} loaded from server`);
+        this.trackChanges(); // Iniciar tracking de cambios
+    }
+}
+```
+
+#### getElementFailed(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 935  
+**Ejecutado:** En getElement() cuando HTTP GET request falla  
+**Propósito:** Permite ejecutar lógica cuando falla cargar una entidad individual
+
+```typescript
+public static async getElement<T extends BaseEntity>(
+    this: new () => T,
+    id: any
+): Promise<T> {
+    try {
+        const endpoint = (this as any).getApiEndpoint();
+        const response = await Application.axiosInstance.get(`${endpoint}/${id}`);
+        
+        const instance = new this();
+        Object.assign(instance, response.data);
+        (instance as any).afterGetElement();
+        
+        return instance;
+    } catch (error) {
+        const tempInstance = new this();
+        (tempInstance as any).getElementFailed();  // ← Ejecuta aquí en error
+        throw error;
+    }
+}
+```
+
+#### afterGetElementList(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 694  
+**Ejecutado:** En getElementList() static method después de HTTP GET exitoso  
+**Propósito:** Permite ejecutar lógica después de cargar lista de entidades desde el servidor
+
+```typescript
+public static async getElementList<T extends BaseEntity>(
+    this: new () => T
+): Promise<T[]> {
+    const endpoint = (this as any).getApiEndpoint();
+    const response = await Application.axiosInstance.get(endpoint);
+    
+    const instances = response.data.map((item: any) => {
+        const instance = new this();
+        Object.assign(instance, item);
+        return instance;
+    });
+    
+    if (instances.length > 0) {
+        (instances[0] as any).afterGetElementList();  // ← Ejecuta en primera instancia
+    }
+    
+    return instances;
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public afterGetElementList(): void {
+        console.log('Products list loaded from server');
+        // Lógica post-carga de lista
+    }
+}
+```
+
+#### getElementListFailed(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 699  
+**Ejecutado:** En getElementList() cuando HTTP GET request falla  
+**Propósito:** Permite ejecutar lógica cuando falla cargar lista de entidades
+
+```typescript
+public static async getElementList<T extends BaseEntity>(
+    this: new () => T
+): Promise<T[]> {
+    try {
+        const endpoint = (this as any).getApiEndpoint();
+        const response = await Application.axiosInstance.get(endpoint);
+        
+        const instances = response.data.map((item: any) => {
+            const instance = new this();
+            Object.assign(instance, item);
+            return instance;
+        });
+        
+        if (instances.length > 0) {
+            (instances[0] as any).afterGetElementList();
+        }
+        
+        return instances;
+    } catch (error) {
+        const tempInstance = new this();
+        (tempInstance as any).getElementListFailed();  // ← Ejecuta aquí en error
+        throw error;
+    }
+}
+```
+
+#### afterRefresh(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 866  
+**Ejecutado:** En refresh() method después de HTTP GET exitoso  
+**Propósito:** Permite ejecutar lógica después de recargar entidad actual desde el servidor
+
+```typescript
+public async refresh(): Promise<void> {
+    const primaryValue = this.getPrimaryPropertyValue();
+    const endpoint = (this.constructor as typeof BaseEntity).getApiEndpoint();
+    
+    const response = await Application.axiosInstance.get(
+        `${endpoint}/${primaryValue}`
+    );
+    
+    Object.assign(this, response.data);
+    this.afterRefresh();  // ← Ejecuta aquí
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public afterRefresh(): void {
+        console.log('Product data refreshed from server');
+        this.trackChanges(); // Reiniciar tracking después de refresh
+    }
+}
+```
+
+#### refreshFailed(): void
+
+**Ubicación:** src/entities/base_entitiy.ts línea 869  
+**Ejecutado:** En refresh() cuando HTTP GET request falla  
+**Propósito:** Permite ejecutar lógica cuando falla refrescar una entidad
+
+```typescript
+public async refresh(): Promise<void> {
+    try {
+        const primaryValue = this.getPrimaryPropertyValue();
+        const endpoint = (this.constructor as typeof BaseEntity).getApiEndpoint();
+        
+        const response = await Application.axiosInstance.get(
+            `${endpoint}/${primaryValue}`
+        );
+        
+        Object.assign(this, response.data);
+        this.afterRefresh();
+    } catch (error) {
+        this.refreshFailed();  // ← Ejecuta aquí en error
+        throw error;
+    }
+}
+```
+
+**Uso example:**
+```typescript
+export class Product extends BaseEntity {
+    public refreshFailed(): void {
+        console.error('Failed to refresh product data');
+        Application.showToast('Failed to refresh data', 'error');
+    }
+}
+```
+
 ## 10. Notas de Implementación
 
 ### Ejemplo 1: Timestamps Automáticos

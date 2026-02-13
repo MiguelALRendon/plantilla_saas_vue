@@ -35,7 +35,9 @@ Beneficios operacionales: consistencia visual across entire application todos lo
 
 ### MODULE_ICON_KEY
 
-Symbol único que identifica la metadata del module icon alamacenada en prototype de la entity class. Implementación: `export const MODULE_ICON_KEY = Symbol('moduleIcon')`. Storage: `Product.prototype[MODULE_ICON_KEY] = 'box'`. Este Symbol proporciona collision-free key para metadata storage evitando conflicts con properties reales de la entidad o metadata de otros decorators, permitiendo lookup O(1) eficiente durante rendering de UI components sin iterar propiedades.
+Symbol único que identifica la metadata del module icon alamacenada **directamente en la clase** (NO en prototype). Implementación: `export const MODULE_ICON_KEY = Symbol('moduleIcon')`. Storage: `Product[MODULE_ICON_KEY] = 'box'`. Este Symbol proporciona collision-free key para metadata storage evitando conflicts con properties reales de la entidad o metadata de otros decorators, permitiendo lookup O(1) eficiente durante rendering de UI components sin iterar propiedades.
+
+**NOTA CRÍTICA:** La metadata se almacena en **target** directo (la clase), NO en target.prototype. Esto es diferente a la mayoría de decorators que usan prototype.
 
 ### getModuleIcon()
 

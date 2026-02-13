@@ -99,13 +99,14 @@ El computed property determina qué componente Vue renderizar dinámicamente. Pa
         </div>
         
         <div class="modal-footer">
-            <button @click="closeModal" class="button alert fill">Close</button>
+            <button class="button info fill">Aceptar</button>
+            <button @click="closeModal" class="button alert fill">Cerrar</button>
         </div>
     </div>
 </div>
 ```
 
-modal-background overlay fullscreen con event listener @click.self="closeModal" cerrando modal al hacer click fuera. modal-structure card central conteniendo head (icono + título + botón close), body (componente dinámico), footer (botón Close). El :is="modalView" renderiza componente determinado por computed property.
+modal-background overlay fullscreen con event listener @click.self="closeModal" cerrando modal al hacer click fuera. modal-structure card central conteniendo head (icono + título + botón close), body (componente dinámico), footer (2 botones: Aceptar y Cerrar). El :is="modalView" renderiza componente determinado por computed property. CSS: max-width 60vw, max-height calc(60vh + 55px) maintaining responsive dimensions preventing overflow on smaller screens.
 
 **Event Listeners:**
 ```typescript
@@ -173,9 +174,12 @@ closeModal delega a ApplicationUIService que emite hide-modal, espera 300ms anim
 .modal-structure {
     background: var(--white);
     border-radius: var(--border-radius);
-    width: 90%;
-    max-width: 1200px;
-    max-height: 90vh;
+    box-shadow: var(--shadow-dark);
+    max-width: 60vw;
+    max-height: calc(60vh + 55px);
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     transform: scale(1);
@@ -183,6 +187,8 @@ closeModal delega a ApplicationUIService que emite hide-modal, espera 300ms anim
 }
 
 .modal-background.closed .modal-structure {
+    max-width: 0px;
+    max-height: 0px;
     transform: scale(0.9);
 }
 ```
