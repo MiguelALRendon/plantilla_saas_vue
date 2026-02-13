@@ -1,568 +1,566 @@
-# Índice Maestro de Documentación - Framework SaaS Vue
+# Framework SaaS Vue - Spec Kit Documentation
 
+**Propósito:** Punto de entrada central a la documentación contractual y técnica del framework  
 **Versión:** 1.0.0  
-**Última actualización:** 13 de Febrero, 2026
+**Última Actualización:** 13 de Febrero, 2026  
+**Total Documentos:** 50+ archivos  
+**ID Base:** DOC
 
 ---
 
-## 1. Propósito
+## Navegación Principal
 
-Este documento constituye el índice maestro de la documentación técnica del Framework SaaS Vue. Su función es proporcionar un punto de entrada centralizado para la navegación, búsqueda y referencia de toda la documentación del sistema. Facilita el acceso organizado a documentos fundamentales, tutoriales, guías de implementación, especificaciones de componentes y referencias de API.
+### Sistema de Índices
 
-El índice opera como mecanismo de localización de información técnica, permitiendo a desarrolladores identificar rápidamente recursos relevantes según contexto de desarrollo, nivel de experiencia o dominio técnico específico.
+| Índice | Propósito | Acceso |
+|---|---|---|
+| **INDEX-MASTER.md** | Navegación semántica (IA-optimized) | [Ver](INDEX-MASTER.md) |
+| **layers/README.md** | Índice de 6 capas arquitectónicas | [Ver](layers/README.md) |
+| **examples/README.md** | Índice de 2 ejemplos completos | [Ver](examples/README.md) |
+| **tutorials/README.md** | Índice de 3 tutoriales prácticos | [Ver](tutorials/README.md) |
+| **01-decorators/README.md** | Índice de 31 decoradores | [Ver](layers/01-decorators/README.md) |
+| **02-base-entity/README.md** | Índice de especificaciones BaseEntity | [Ver](layers/02-base-entity/README.md) |
+| **03-application/README.md** | Índice de singleton Application | [Ver](layers/03-application/README.md) |
 
----
-
-## 2. Alcance
-
-### Cobertura de Documentación
-
-**Versión del Framework:** 1.0.0  
-**Documentos totales:** 31+ documentos técnicos (objetivo: 50+ documentos)  
-**Última actualización del índice:** 13 de Febrero, 2026
-
-### Áreas Documentadas
-
-- Sistema de decoradores (31 decoradores documentados)
-- Arquitectura BaseEntity (5 documentos)
-- Sistema Application (4 documentos)
-- Componentes de interfaz (16 componentes documentados)
-- Tutoriales de implementación (3 tutoriales)
-- Ejemplos de referencia (2 implementaciones completas)
-- Documentos fundamentales (5 documentos: Contrato, Overview, Arquitectura, Quick Start, UI/CSS Contract)
-
-### Documentación Reciente
-
-- Tutorial Relaciones (objetos y arrays)
-- 10 componentes de entrada (Text, Number, Boolean, Email, Password, Date, TextArea, List, Object, Array)
-- Buttons Overview
-- Modal Components
-- DetailViewTableComponent
+**Recomendación:** Usar [INDEX-MASTER.md](INDEX-MASTER.md) para navegación semántica optimizada para IA
 
 ---
 
-## 3. Definiciones Clave
+## Arquitectura de Documentación
 
-### Decorador
-Función TypeScript que modifica el comportamiento de propiedades de clase, agregando metadatos que definen validaciones, formato de UI, persistencia y comportamiento de API.
+### Jerarquía Contractual
 
-### BaseEntity
-Clase base abstracta que implementa operaciones CRUD, sistema de validación, gestión de estado y ciclo de vida de entidades. Todas las entidades de dominio heredan de esta clase.
+```
+MI LÓGICA (4 Axiomas: A1-A4)
+    ↓
+00-CONTRACT.md (CORE)
+    ├─→ 05-ENFORCEMENT-TECHNICAL-CONTRACT.md (ENF)
+    └─→ 04-UI-DESIGN-SYSTEM-CONTRACT.md (UI)
+    
+01-FRAMEWORK-OVERVIEW.md (FWK)
+02-FLOW-ARCHITECTURE.md (FLOW)
+03-QUICK-START.md (QS)
+```
 
-### Application
-Singleton que gestiona navegación entre vistas, sistema de eventos, servicios de UI (toasts, modales, loading) e integración con router.
-
-### Módulo
-Entidad de dominio registrada en el sistema que representa una funcionalidad de negocio completa, incluyendo su modelo de datos, vistas y operaciones.
-
-### Metadatos
-Información estructurada asociada a propiedades y clases mediante decoradores, utilizada por el framework para generar UI, validar datos y gestionar persistencia.
-
-### CRUD Operations
-Operaciones básicas de persistencia: Create (POST), Read (GET), Update (PUT), Delete (DELETE), implementadas en BaseEntity mediante métodos `save()`, `getElement()`, `getElementList()`, `update()`, `delete()`.
-
-### Lifecycle Hooks
-Métodos callback ejecutados en momentos específicos del ciclo de vida de operaciones CRUD: `beforeSave()`, `onSaving()`, `afterSave()`, `saveFailed()`, `beforeUpdate()`, `onUpdating()`, `afterUpdate()`, `updateFailed()`, `beforeDelete()`, `onDeleting()`, `afterDelete()`, `deleteFailed()`.
-
-### ViewGroup
-Agrupación lógica de propiedades para organización de formularios en secciones, definida mediante decorador `@ViewGroup`.
-
-### Persistent Entity
-Entidad configurada con decorador `@Persistent` que habilita sincronización automática con backend mediante operaciones HTTP.
+**Prioridad Absoluta:** MI LÓGICA > 00-CONTRACT.md > Contratos Subordinados
 
 ---
 
-## 4. Descripción Técnica
+## Contratos Principales (6)
 
-### Arquitectura en Capas
+### 1. Contrato de Desarrollo (00-CONTRACT.md)
 
-El framework implementa arquitectura de 5 capas con responsabilidades claramente definidas:
+**ID:** CORE  
+**Líneas:** 866  
+**Estado:** ACTIVO - Obligatorio  
+**Versión:** 2.0.0
 
-#### Capa 1: Decoradores
-Sistema de metadatos basado en decoradores TypeScript para definición declarativa de comportamiento de propiedades y módulos.
+**Secciones Críticas:**
+- **L27-89:** MI LÓGICA - 4 Axiomas Inmutables (`CORE-3.1`)
+  - **L34:** A1 - Arquitectura de Capas (`CORE-3.1.A1`)
+  - **L42:** A2 - Flujo Unidireccional (`CORE-3.1.A2`)
+  - **L56:** A3 - Generación desde Metadatos (`CORE-3.1.A3`)
+  - **L72:** A4 - Inmutabilidad Estructural (`CORE-3.1.A4`)
+- **L161-167:** Prioridad Absoluta de MI LÓGICA (`CORE-6.1`)
+- **L169-181:** Autorización para Cambios Mayores (`CORE-6.2`)
+- **L243-304:** Índices de Carpetas Contenedoras (`CORE-6.4`)
+- **L536-567:** Formato Documental de 11 Secciones (`CORE-6.7.12`)
+- **L621-639:** Indexación Estructural Profunda (`CORE-6.8`)
 
-**Decoradores de Propiedades Básicas:**
-- [PropertyName](layers/01-decorators/property-name-decorator.md) - Define nombre y tipo de propiedad (FUNDAMENTAL)
-- [PropertyIndex](layers/01-decorators/property-index-decorator.md) - Orden de aparición en UI
-- [DefaultProperty](layers/01-decorators/default-property-decorator.md) - Identificador por defecto
-- [PrimaryProperty](layers/01-decorators/primary-property-decorator.md) - Clave primaria
+**Conceptos Definidos:**
+- Cambio Mayor vs. Menor
+- Documentación Sincronizada
+- Índice de Carpeta Obligatorio
+- Sistema de IDs estables
 
-**Decoradores de Validación:**
-- [Required](layers/01-decorators/required-decorator.md) - Campo obligatorio
-- [Validation](layers/01-decorators/validation-decorator.md) - Validación síncrona
-- [AsyncValidation](layers/01-decorators/async-validation-decorator.md) - Validación asíncrona
-- [Unique](layers/01-decorators/unique-decorator.md) - Valor único
+**Cuándo Consultar:** Antes de cualquier cambio arquitectónico, al crear documentación nueva, al establecer procesos de desarrollo
 
-**Decoradores de UI y Layout:**
-- [ViewGroup](layers/01-decorators/view-group-decorator.md) - Agrupación de campos
-- [ViewGroupRowDecorator](layers/01-decorators/view-group-row-decorator.md) - Layout de filas
-- [HelpText](layers/01-decorators/help-text-decorator.md) - Texto de ayuda
-- [DisplayFormat](layers/01-decorators/display-format-decorator.md) - Formato de display
-- [CSSColumnClass](layers/01-decorators/css-column-class-decorator.md) - Ancho de columna
-- [HideInListView / HideInDetailView](layers/01-decorators/hide-decorators.md) - Visibilidad condicional
-- [TabOrder](layers/01-decorators/tab-order-decorator.md) - Orden de tabulación
+### 2. Framework Overview (01-FRAMEWORK-OVERVIEW.md)
 
-**Decoradores de Estado:**
-- [Disabled](layers/01-decorators/disabled-decorator.md) - Deshabilitar campo
-- [ReadOnly](layers/01-decorators/readonly-decorator.md) - Solo lectura
+**ID:** FWK  
+**Líneas:** 792  
+**Estado:** ACTIVO  
+**Versión:** 1.0.0
 
-**Decoradores de Tipos Específicos:**
-- [StringTypeDef](layers/01-decorators/string-type-decorator.md) - Subtipo de string (EMAIL, PASSWORD, TEXTAREA)
-- [ArrayOf](layers/01-decorators/array-of-decorator.md) - Arrays tipados
-- [Mask](layers/01-decorators/mask-decorator.md) - Máscara de entrada
+**Propósito:** Visión completa del framework, arquitectura de 5 capas, flujos principales
 
-**Decoradores de Módulo:**
-- [ModuleName](layers/01-decorators/module-name-decorator.md) - Nombre del módulo
-- [ModuleIcon](layers/01-decorators/module-icon-decorator.md) - Icono
-- [ModulePermission](layers/01-decorators/module-permission-decorator.md) - Permisos
-- [ModuleListComponent](layers/01-decorators/module-list-component-decorator.md) - Vista lista custom
-- [ModuleDetailComponent](layers/01-decorators/module-detail-component-decorator.md) - Vista detalle custom
-- [ModuleDefaultComponent](layers/01-decorators/module-default-component-decorator.md) - Vista por defecto
+**Secciones Críticas:**
+- **L45-130:** Arquitectura 5 Capas (`FWK-4.1`)
+- **L135-245:** Sistema de Decoradores (`FWK-4.2`)
+- **L250-380:** BaseEntity Core (`FWK-4.3`)
+- **L385-480:** Application Singleton (`FWK-4.4`)
+- **L485-620:** Componentes UI (`FWK-4.5`)
 
-**Decoradores de API y Persistencia:**
-- [ApiEndpoint](layers/01-decorators/api-endpoint-decorator.md) - Endpoint de API
-- [ApiMethods](layers/01-decorators/api-methods-decorator.md) - Métodos HTTP permitidos
-- [Persistent](layers/01-decorators/persistent-decorator.md) - Habilitar persistencia
-- [PersistentKey](layers/01-decorators/persistent-key-decorator.md) - Mapeo de claves
+**Cuándo Consultar:** Al iniciar desarrollo, para entender arquitectura general, al onboardear nuevos desarrolladores
 
-#### Capa 2: BaseEntity
-Clase base abstracta que implementa lógica de entidades de dominio.
+### 3. Flow Architecture (02-FLOW-ARCHITECTURE.md)
 
-- [BaseEntity Core](layers/02-base-entity/base-entity-core.md) - Estructura fundamental
-- [CRUD Operations](layers/02-base-entity/crud-operations.md) - Operaciones de persistencia
-- [Validation System](layers/02-base-entity/validation-system.md) - Sistema de validación
-- [Lifecycle Hooks](layers/02-base-entity/lifecycle-hooks.md) - Hooks de ciclo de vida
-- [Metadata Access](layers/02-base-entity/metadata-access.md) - Acceso a metadatos
+**ID:** FLOW  
+**Líneas:** 921  
+**Estado:** ACTIVO  
+**Versión:** 1.0.0
 
-**Métodos CRUD:**
-- `save()` - Guardar (POST/PUT)
-- `update()` - Actualizar (PUT)
-- `delete()` - Eliminar (DELETE)
-- `getElementList()` - Obtener lista (GET)
-- `getElement()` - Obtener uno (GET)
+**Propósito:** Diagramas y flujos detallados de operaciones (CRUD, validación, navegación)
 
-**Métodos de Validación:**
-- `validateInputs()` - Validar todos los campos
-- `isRequired()` - Verificar si campo es required
-- `isValidation()` - Evaluar validación
-- `isAsyncValidation()` - Evaluar async validation
+**Secciones Críticas:**
+- **L78-189:** Flujo CRUD Completo (`FLOW-5.1`)
+- **L192-304:** Flujo de Validación Tri-Nivel (`FLOW-5.2`)
+- **L307-420:** Flujo de Navegación entre Vistas (`FLOW-5.3`)
+- **L423-567:** Lifecycle Hooks Detallados (`FLOW-5.4`)
+- **L570-712:** EventBus y Comunicación (`FLOW-5.5`)
 
-**Métodos de Estado:**
-- `getDirtyState()` - Verificar cambios sin guardar
-- `resetChanges()` - Descartar cambios
-- `isNew()` - Verificar si es nueva instancia
+**Cuándo Consultar:** Al implementar CRUD, al diagnosticar bugs de flujo, al personalizar comportamiento de validación/navegación
 
-#### Capa 3: Application
-Singleton de gestión global de aplicación.
+### 4. Quick Start (03-QUICK-START.md)
 
-- [Application Singleton](layers/03-application/application-singleton.md) - Singleton central
-- [Router Integration](layers/03-application/router-integration.md) - Integración con router
-- [Event Bus](layers/03-application/event-bus.md) - Sistema de eventos
-- [UI Services](layers/03-application/ui-services.md) - Servicios de interfaz
+**ID:** QS  
+**Líneas:** 564  
+**Estado:** ACTIVO  
+**Versión:** 1.0.0
+
+**Propósito:** Guía paso a paso para iniciar desarrollo (setup, primera entidad, CRUD básico)
+
+**Secciones Críticas:**
+- **L35-78:** Setup de Proyecto (`QS-5.1`)
+- **L81-167:** Crear Primera Entidad (`QS-5.2`)
+- **L170-304:** Registro en Application (`QS-5.3`)
+- **L307-420:** Probar CRUD Automático (`QS-5.4`)
+- **L423-530:** Personalizar UI Básica (`QS-5.5`)
+
+**Cuándo Consultar:** Al iniciar proyecto nuevo, para verificar setup correcto, como checklist de implementación básica
+
+### 5. UI/Design System Contract (04-UI-DESIGN-SYSTEM-CONTRACT.md)
+
+**ID:** UI  
+**Líneas:** 894  
+**Estado:** ACTIVO - Obligatorio para desarrollo UI  
+**Versión:** 2.0.0
+
+**Propósito:** Regula sistema UI/CSS, tokens, anti-hardcode, z-index, responsive design
+
+**Secciones Críticas:**
+- **L199-233:** Archivos CSS Centralizados Obligatorios (`UI-6.2`)
+- **L235-335:** Sistema Universal de Tokens (`UI-6.3`)
+- **L337-455:** Política de Tokenización Obligatoria (`UI-6.4`)
+  - **L373-387:** Tabla de Valores Prohibidos (`UI-6.4.2`)
+  - **L389-405:** Detección de Hardcode con Scripts (`UI-6.4.3`)
+- **L473-497:** Sistema Z-Index Contractual (`UI-6.6`)
+- **L499-539:** Estrategia Desktop-First Adaptativo (`UI-6.7`)
+- **L557-591:** Manejo de Estados Visuales (`UI-6.9`)
+
+**Símbolos Regulados:**
+- **Tokens:** `--ui-*`, `--color-*`, `--space-*`, `--radius-*`, `--shadow-*`
+- **Z-Index:** 10 niveles (10=base → 100=toast)
+- **Breakpoints:** `--bp-mobile` (768px), `--bp-tablet` (1024px), `--bp-desktop` (1440px)
+
+**Prohibiciones:**
+- ❌ Hardcode de colores, espaciados, radios, sombras
+- ❌ Z-index arbitrarios fuera del sistema contractual
+- ❌ Media queries sin usar tokens de breakpoints
+
+**Cuándo Consultar:** Antes de estilizar componentes, al crear CSS nuevo, al modificar layout responsivo
+
+### 6. Enforcement Technical Contract (05-ENFORCEMENT-TECHNICAL-CONTRACT.md)
+
+**ID:** ENF  
+**Líneas:** 1678  
+**Estado:** ACTIVO - Obligatorio para desarrollo con IA  
+**Versión:** 2.0.0
+
+**Propósito:** Regula desarrollo asistido por IA: AOM, VCC, breaking changes, registro de excepciones
+
+**Secciones Críticas:**
+- **L134-155:** Diagrama 3 Fases de Enforcement (`ENF-5.1`)
+- **L200-284:** Flujo Completo de Enforcement (`ENF-5.2`)
+- **L286-322:** Flujo de Autoverificación Obligatoria (AOM) (`ENF-5.3`)
+- **L404-485:** Regla AOM Obligatorio (`ENF-6.2`)
+  - **L410-467:** Formato Declaración de Cumplimiento (`ENF-6.2.2`)
+- **L487-570:** Validación Cruzada entre Capas (VCC) (`ENF-6.4`)
+- **L572-751:** Política de Breaking Changes (`ENF-6.5`)
+- **L753-841:** Responsabilidad del Arquitecto (`ENF-6.6`)
+- **L843-900+:** Registro de Excepciones (`ENF-6.7`)
+
+**Procesos Definidos:**
+1. **AOM:** Autoverificación Obligatoria del Modelo antes de finalizar
+2. **VCC:** Validación Cruzada entre Capas para breaking changes
+3. **Breaking Change Detection:** Log de cambios que rompen contratos
+4. **Exception Registry:** Registro formal de excepciones contractuales
+
+**Cuándo Consultar:** Antes de usar IA para desarrollo, al hacer cambios mayores, al registrar excepciones
+
+---
+
+## Capas del Framework (6 Capas)
+
+### Capa 1: Decoradores (31 decoradores)
+
+**Índice:** [layers/01-decorators/README.md](layers/01-decorators/README.md)  
+**ID Base:** DEC
+
+**Categorías:**
+- **Propiedad (11):** PropertyName, PropertyIndex, PrimaryProperty, DefaultProperty, etc.
+- **Validación (3):** Required, Validation, AsyncValidation
+- **UI/Layout (8):** ViewGroup, DisplayFormat, CSSColumnClass, HelpText, TabOrder, etc.
+- **Módulo (8):** ModuleName, ModuleIcon, ApiEndpoint, Persistent, etc.
+- **API (4):** ApiEndpoint, ApiMethods, Persistent, PersistentKey
+
+**Decoradores Obligatorios por Escenario:**
+- **Entidad básica:** `@ModuleName`, `@PropertyName`, `@PropertyIndex`
+- **Con persistencia:** + `@ApiEndpoint`, `@Persistent`, `@PersistentKey`
+- **Con validación:** + `@Required`, `@Validation`, `@AsyncValidation`
+
+**Búsqueda Rápida:**
+- **Definir propiedades:** `@PropertyName` (`DEC::property-name`)
+- **Validar datos:** `@Required`, `@Validation`, `@AsyncValidation`
+- **Personalizar UI:** `@ViewGroup`, `@DisplayFormat`, `@HelpText`
+- **Integrar API:** `@ApiEndpoint`, `@Persistent`
+
+### Capa 2: BaseEntity (9 especificaciones)
+
+**Índice:** [layers/02-base-entity/README.md](layers/02-base-entity/README.md)  
+**ID Base:** BE
+
+**Especificaciones:**
+1. **base-entity-core.md** - Estructura fundamental (`BE::core`)
+2. **crud-operations.md** - Métodos CRUD (`BE::crud`)
+3. **validation-system.md** - Sistema de validación (`BE::validation`)
+4. **lifecycle-hooks.md** - Hooks de ciclo de vida (`BE::hooks`)
+5. **metadata-access.md** - Acceso a metadatos (`BE::metadata`)
+6. **dirty-state.md** - Detección de cambios (`BE::dirty-state`)
+7. **ui-services.md** - Servicios de UI (toasts, modals) (`BE::ui-services`)
+8. **api-http.md** - Integración HTTP (`BE::http`)
+9. **advanced-crud.md** - CRUD avanzado (relaciones) (`BE::advanced-crud`)
+
+**Métodos Principales (40+):**
+- **CRUD:** `save`, `update`, `delete`, `getElement`, `getElementList`
+- **Validación:** `validateInputs`, `isRequired`, `isValidation`, `isAsyncValidation`
+- **Estado:** `getDirtyState`, `resetChanges`, `isNew`
+- **Metadatos:** `getProperties`, `getPropertyType`, `getViewGroups`
+
+**Lifecycle Hooks (23):**
+- **Save:** `beforeSave`, `onSaving`, `afterSave`, `saveFailed`
+- **Update:** `beforeUpdate`, `onUpdating`, `afterUpdate`, `updateFailed`
+- **Delete:** `beforeDelete`, `onDeleting`, `afterDelete`, `deleteFailed`
+- **Load:** `beforeLoad`, `onLoading`, `afterLoad`, `loadFailed`
+
+### Capa 3: Application (4 especificaciones)
+
+**Índice:** [layers/03-application/README.md](layers/03-application/README.md)  
+**ID Base:** APP
+
+**Especificaciones:**
+1. **application-singleton.md** - Singleton central (`APP::singleton`)
+2. **router-integration.md** - Integración Vue Router (`APP::router`)
+3. **event-bus.md** - Sistema de eventos (Mitt) (`APP::eventbus`)
+4. **ui-services.md** - Servicios UI globales (`APP::ui-services`)
+
+**Propiedades Principales:**
+- `View`: Vista actual (LOADING, HOME, LIST_VIEW, DETAIL_VIEW, DEFAULT_VIEW)
+- `ModuleList`: Lista de módulos registrados (BaseEntity[])
+- `router`: Instancia de Vue Router
+- `axiosInstance`: Cliente HTTP configurado
+- `eventBus`: Instancia de Mitt para eventos
 
 **Métodos de Navegación:**
-- `changeView()` - Cambiar vista
-- `changeViewToListView()` - Ir a lista
-- `changeViewToDetailView()` - Ir a detalle
-- `changeViewToDefaultView()` - Ir a vista por defecto
+- `changeView(view)` - Cambiar vista arbitraria
+- `changeViewToListView(module)` - Ir a lista
+- `changeViewToDetailView(module, element?)` - Ir a detalle
+- `changeViewToDefaultView(module)` - Ir a vista por defecto
 
 **Métodos de UI Services:**
-- `showToast()` - Mostrar notificación
-- `showModal()` - Abrir modal
-- `openConfirmationMenu()` - Menú de confirmación
-- `showLoadingMenu()` - Mostrar loading
+- `showToast(message, type, duration)` - Notificación toast
+- `showModal(component, props)` - Abrir modal
+- `openConfirmationMenu(message, onConfirm)` - Menú de confirmación
+- `showLoadingMenu(show)` - Toggle loading global
 
-#### Capa 4: Components
-Componentes Vue para interfaz de usuario.
+### Capa 4: Components (16+ componentes)
+
+**Ubicación:**`/src/components/`  
+**Subdirectorios:** `Form/`, `Buttons/`, `Modal/`, `Informative/`
 
 **Composables:**
-- [useInputMetadata](layers/04-components/useInputMetadata-composable.md) - Composable de metadatos
+- `useInputMetadata.ts` - Extrae metadatos de decoradores
 
-**Inputs de Formulario:**
-- [Form Inputs Overview](layers/04-components/form-inputs.md) - Visión general
-- [TextInputComponent](layers/04-components/text-input-component.md) - Input texto
-- [NumberInputComponent](layers/04-components/number-input-component.md) - Input numérico
-- [BooleanInputComponent](layers/04-components/boolean-input-component.md) - Input booleano
-- [EmailInputComponent](layers/04-components/email-input-component.md) - Input email
-- [PasswordInputComponent](layers/04-components/password-input-component.md) - Input password
-- [DateInputComponent](layers/04-components/date-input-component.md) - Input fecha
-- [TextAreaComponent](layers/04-components/textarea-input-component.md) - TextArea
-- [ListInputComponent](layers/04-components/list-input-component.md) - Input lista
-- [ObjectInputComponent](layers/04-components/object-input-component.md) - Input objeto
-- [ArrayInputComponent](layers/04-components/array-input-component.md) - Input array
+**Inputs de Formulario (10):**
+- TextInputComponent, NumberInputComponent, BooleanInputComponent
+- EmailInputComponent, PasswordInputComponent, DateInputComponent
+- TextAreaComponent, ListInputComponent
+- ObjectInputComponent, ArrayInputComponent
 
-**Botones:**
-- [Buttons Overview](layers/04-components/buttons-overview.md) - Visión general de botones
+**Botones (5+):**
+- AddButton, SaveButton, DeleteButton, EditButton, CancelButton
 
-**Modales:**
-- [Modal Components](layers/04-components/modal-components.md) - Componentes de modal
+**Modales (3+):**
+- ConfirmationModal, LoadingModal, CustomModal
 
-**Informativos:**
-- [DetailViewTableComponent](layers/04-components/DetailViewTableComponent.md) - Tabla de detalle
+**Informativos (3+):**
+- DetailViewTableComponent, ToastComponent, ErrorComponent
 
-**Layout:**
-- [SideBarComponent](layers/04-components/SideBarComponent.md) - Barra lateral
-- [TopBarComponent](layers/04-components/TopBarComponent.md) - Barra superior
+### Capa 5: Advanced (9 especificaciones)
 
-#### Capa 5: Avanzado
-Extensiones y personalización del framework.
+**Subdirectorios:** `/src/enums/`, `/src/models/`, `/src/router/`, `/src/types/`
 
-- [Enums](layers/05-advanced/Enums.md) - Enumeraciones del sistema
-- [Models](layers/05-advanced/Models.md) - Modelos del framework
-- [Router](layers/05-advanced/Router.md) - Sistema de enrutamiento
-- [Types](layers/05-advanced/Types.md) - Tipos TypeScript del framework
+**Especificaciones:**
+1. **Enums.md** - Enumeraciones del sistema (View, ViewType, APIMethod)
+2. **Models.md** - Modelos del framework (ModuleMetadata, PropertyMetadata)
+3. **Router.md** - Sistema de enrutamiento Vue Router
+4. **Types.md** - Tipos TypeScript del framework
+
+### Capa 6: Composables (1+ composables)
+
+**Ubicación:** `/src/composables/`
+
+**Composables:**
+- `useInputMetadata.ts` - Composable de metadatos (`COMP::input-metadata`)
 
 ---
 
-## 5. Flujo de Funcionamiento
+## Recursos de Aprendizaje
 
-### Rutas de Aprendizaje por Nivel
+### Tutoriales (3)
 
-#### Nivel Básico (Día 1)
-Tiempo estimado: 1.5 horas
+**Índice Completo:** [tutorials/README.md](tutorials/README.md)
 
-1. [Contrato de Desarrollo](00-CONTRACT.md) - 10 minutos - Lectura obligatoria prioritaria
-2. [Framework Overview](01-FRAMEWORK-OVERVIEW.md) - 20 minutos
-3. [Quick Start](03-QUICK-START.md) - 15 minutos
-4. [Contrato UI/Design System](04-UI-DESIGN-SYSTEM-CONTRACT.md) - 15 minutos - Lectura obligatoria para desarrollo UI
-5. [Contrato de Enforcement Técnico](05-ENFORCEMENT-TECHNICAL-CONTRACT.md) - 20 minutos - Lectura obligatoria para desarrollo con IA
-6. [Tutorial CRUD Básico](tutorials/01-basic-crud.md) - 30 minutos
-7. [Ejemplo Clásico - Inventario](examples/classic-module-example.md) - 20 minutos
+| ID | Archivo | Nivel | Tiempo | Descripción |
+|---|---|---|---|---|
+| TUT::01 | [01-basic-crud.md](tutorials/01-basic-crud.md) | Básico | 30 min | CRUD completo paso a paso |
+| TUT::02 | [02-validations.md](tutorials/02-validations.md) | Intermedio | 45 min | Sistema de validaciones tri-nivel |
+| TUT::03 | [03-relations.md](tutorials/03-relations.md) | Intermedio | 60 min | Relaciones 1:1 y 1:N entre entidades |
 
-#### Nivel Intermedio (Semana 1)
-Tiempo estimado: 6 horas
+**Ruta de Aprendizaje Recomendada:**
+1. **Día 1:** Leer CORE + FWK + QS (45 min) → Hacer TUT::01 (30 min)
+2. **Semana 1:** Leer FLOW (30 min) → Hacer TUT::02 + TUT::03 (1.75 hrs) → Explorar decoradores (2 hrs)
+3. **Mes 1:** Estudiar ejemplos (3 hrs) → Explorar BaseEntity y Application (3 hrs)
 
-1. [Arquitectura de Flujos](02-FLOW-ARCHITECTURE.md) - 30 minutos
-2. [Tutorial Validaciones](tutorials/02-validations.md) - 45 minutos
-3. [Tutorial Relaciones](tutorials/03-relations.md) - 45 minutos
-4. [Decoradores Principales](layers/01-decorators/) - 2 horas
-5. [BaseEntity Core](layers/02-base-entity/base-entity-core.md) - 45 minutos
-6. [Componentes de Formulario](layers/04-components/) - 1 hora
+### Ejemplos (2)
 
-#### Nivel Avanzado (Mes 1)
-Tiempo estimado: 6 horas
+**Índice Completo:** [examples/README.md](examples/README.md)
 
-1. [Ejemplo Avanzado - Órdenes](examples/advanced-module-example.md) - 1 hora
-2. [Todos los Decoradores](layers/01-decorators/) - 3 horas
-3. [Enums](layers/05-advanced/Enums.md) - 0.5 horas
-4. [Models](layers/05-advanced/Models.md) - 0.5 horas
-5. [Router](layers/05-advanced/Router.md) - 0.5 horas
-6. [Types](layers/05-advanced/Types.md) - 0.5 horas
+| ID | Archivo | Complejidad | Descripción |
+|---|---|---|---|
+| EX::classic | [classic-module-example.md](examples/classic-module-example.md) | Intermedia | Módulo Inventario (CRUD clásico, 18 decoradores) |
+| EX::advanced | [advanced-module-example.md](examples/advanced-module-example.md) | Avanzada | Módulo Órdenes (relaciones, validaciones async, máscaras, 25+ decoradores) |
 
-### Flujos de Trabajo por Tipo de Tarea
-
-#### Setup Inicial
-- [Framework Overview](01-FRAMEWORK-OVERVIEW.md)
-- [Quick Start](03-QUICK-START.md)
-- Registrar módulos en Application
-
-#### Crear Entidades
-- [PropertyName](layers/01-decorators/property-name-decorator.md)
-- [Required](layers/01-decorators/required-decorator.md)
-- [PropertyIndex](layers/01-decorators/property-index-decorator.md)
-- [Tutorial CRUD](tutorials/01-basic-crud.md)
-
-#### Validar Datos
-- [Required](layers/01-decorators/required-decorator.md)
-- [Validation](layers/01-decorators/validation-decorator.md)
-- [AsyncValidation](layers/01-decorators/async-validation-decorator.md)
-- [Tutorial Validaciones](tutorials/02-validations.md)
-
-#### Personalizar UI
-- [ViewGroup](layers/01-decorators/view-group-decorator.md)
-- [DisplayFormat](layers/01-decorators/display-format-decorator.md)
-- [HelpText](layers/01-decorators/help-text-decorator.md)
-- [ModuleListComponent](layers/01-decorators/module-list-component-decorator.md)
-- [ModuleDetailComponent](layers/01-decorators/module-detail-component-decorator.md)
-
-#### Integrar API
-- [ApiEndpoint](layers/01-decorators/api-endpoint-decorator.md)
-- [Persistent](layers/01-decorators/persistent-decorator.md)
-- [CRUD Operations](layers/02-base-entity/crud-operations.md)
-
-#### Optimizar
-- Best Practices (documentados en ejemplos y tutoriales)
+**Diferencias Clave:**
+- **Classic:** CRUD simple, validaciones básicas (Required), formateo básico (DisplayFormat), sin relaciones
+- **Advanced:** CRUD con relaciones (1:1 Customer, 1:N OrderItems), validaciones async (stock), máscaras (orderNumber), campos calculados (total), ViewGroups
 
 ---
 
-## 6. Reglas Obligatorias
+## Búsqueda por Necesidad
 
-### Creación de Nuevo Decorador
+### Empezar Desarrollo
 
-1. Crear archivo en directorio `layers/01-decorators/`
-2. Seguir template estructurado:
-   ```markdown
-   # Nombre del Decorador
-   **Referencias:** [archivos relacionados]
-   ## Ubicación en el Código
-   ## Propósito
-   ## Símbolo de Metadatos
-   ## Firma del Decorador
-   ## Uso Básico
-   ## Funciones Accesoras en BaseEntity
-   ## Impacto en UI
-   ## Consideraciones Importantes
-   ## Ejemplos Avanzados
-   ```
-3. Actualizar este índice maestro
-4. Actualizar referencias cruzadas en documentos relacionados
+1. Leer: [03-QUICK-START.md](03-QUICK-START.md) - 15 min
+2. Hacer: [tutorials/01-basic-crud.md](tutorials/01-basic-crud.md) - 30 min
+3. Estudiar: [examples/classic-module-example.md](examples/classic-module-example.md) - 1 hr
 
-### Reporte de Errores en Documentación
+### Crear Entidad Simple
 
-1. Identificar archivo y sección específica
-2. Describir error detectado con precisión técnica
-3. Proponer corrección fundamentada
-4. Actualizar documentación según contrato
+**Decoradores Obligatorios:**
+- `@ModuleName` → [layers/01-decorators/module-name-decorator.md](layers/01-decorators/module-name-decorator.md)
+- `@PropertyName` → [layers/01-decorators/property-name-decorator.md](layers/01-decorators/property-name-decorator.md)
+- `@PropertyIndex` → [layers/01-decorators/property-index-decorator.md](layers/01-decorators/property-index-decorator.md)
 
-### Requisito Contractual
+**Decoradores Recomendados:**
+- `@Required` → [layers/01-decorators/required-decorator.md](layers/01-decorators/required-decorator.md)
+- `@PropertyPrimaryKey` → [layers/01-decorators/primary-property-decorator.md](layers/01-decorators/primary-property-decorator.md)
 
-Por contrato de desarrollo, todo cambio en código debe documentarse. La documentación no es opcional sino parte integral del proceso de desarrollo.
+**Tutorial:** [tutorials/01-basic-crud.md](tutorials/01-basic-crud.md) → `TUT::01::create`
 
----
+### Validar Datos
 
-## 7. Prohibiciones
+**Validación Básica (Required):**
+- Decorador: `@Required` → [layers/01-decorators/required-decorator.md](layers/01-decorators/required-decorator.md)
 
-### Prohibiciones Absolutas
+**Validación Síncrona (Custom):**
+- Decorador: `@Validation` → [layers/01-decorators/validation-decorator.md](layers/01-decorators/validation-decorator.md)
+- Tutorial: [tutorials/02-validations.md](tutorials/02-validations.md) → `TUT::02::sync`
 
-- NO modificar arquitectura sin documentar cambios
-- NO implementar features sin actualizar documentación
-- NO omitir actualización de índice maestro
-- NO crear decoradores sin seguir template
-- NO alterar metadatos sin verificar impacto en UI
-- NO realizar cambios en BaseEntity sin probar lifecycle hooks
-- NO modificar Application singleton sin considerar efectos globales
-- NO crear componentes custom sin documentar interfaz
-- NO implementar validaciones asíncronas sin gestión de errores
-- NO alterar referencias cruzadas sin verificar consistencia
+**Validación Asíncrona (API):**
+- Decorador: `@AsyncValidation` → [layers/01-decorators/async-validation-decorator.md](layers/01-decorators/async-validation-decorator.md)
+- Tutorial: [tutorials/02-validations.md](tutorials/02-validations.md) → `TUT::02::async`
+- Ejemplo: [examples/advanced-module-example.md](examples/advanced-module-example.md) → `EX::advanced::validations`
 
----
+### Relacionar Entidades
 
-## 8. Dependencias
+**Relación 1:1 (Objeto):**
+- Decorador: `@PropertyName(typeof BaseEntity)` → [layers/01-decorators/property-name-decorator.md](layers/01-decorators/property-name-decorator.md)
+- Tutorial: [tutorials/03-relations.md](tutorials/03-relations.md) → `TUT::03::one-to-one`
+- Ejemplo: [examples/advanced-module-example.md](examples/advanced-module-example.md) → `EX::advanced::relations` (Customer)
 
-### Stack Tecnológico
+**Relación 1:N (Array):**
+- Decorador: `@PropertyName(Array)` → [layers/01-decorators/property-name-decorator.md](layers/01-decorators/property-name-decorator.md)
+- Tutorial: [tutorials/03-relations.md](tutorials/03-relations.md) → `TUT::03::one-to-many`
+- Ejemplo: [examples/advanced-module-example.md](examples/advanced-module-example.md) → `EX::advanced::relations` (OrderItems)
 
-**Framework Frontend:**
-- [Vue 3](https://vuejs.org/) - Framework reactivo principal
-- [TypeScript](https://www.typescriptlang.org/) - Sistema de tipos
+### Personalizar UI
 
-**Build Tool:**
-- [Vite](https://vitejs.dev/) - Build tool y dev server
+**Agrupar Campos (ViewGroups):**
+- Decorador: `@ViewGroup` → [layers/01-decorators/view-group-decorator.md](layers/01-decorators/view-group-decorator.md)
+- Ejemplo: [examples/advanced-module-example.md](examples/advanced-module-example.md) → `EX::advanced::ui`
 
-**Comunicación HTTP:**
-- [Axios](https://axios-http.com/) - Cliente HTTP
+**Formatear Display:**
+- Decorador: `@DisplayFormat` → [layers/01-decorators/display-format-decorator.md](layers/01-decorators/display-format-decorator.md)
+- Uso: Currency, Date, Percentage
 
-**Event Bus:**
-- [Mitt](https://github.com/developit/mitt) - Event emitter
+**Ayuda al Usuario:**
+- Decorador: `@HelpText` → [layers/01-decorators/help-text-decorator.md](layers/01-decorators/help-text-decorator.md)
 
-### Recursos Adicionales
+**Layout Responsive:**
+- Decorador: `@CssColumnClass` → [layers/01-decorators/css-column-class-decorator.md](layers/01-decorators/css-column-class-decorator.md)
+- Contrato: [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) → `UI-6.7` (Mobile- First)
 
-- Vue 3 Composition API - API de composición de Vue
-- TypeScript Decorators - Sistema de decoradores
-- REST API Design - Patrones de diseño de API
-- SaaS Architecture - Arquitectura de aplicaciones SaaS
+### Integrar API REST
 
----
+**Configurar Endpoint:**
+- Decorador: `@ApiEndpoint` → [layers/01-decorators/api-endpoint-decorator.md](layers/01-decorators/api-endpoint-decorator.md)
+- Ejemplo: `@ApiEndpoint('/api/products')`
 
-## 9. Relaciones
+**Habilitar Persistencia:**
+- Decorador: `@Persistent` → [layers/01-decorators/persistent-decorator.md](layers/01-decorators/persistent-decorator.md)
+- Decorador: `@PersistentKey` → [layers/01-decorators/persistent-key-decorator.md](layers/01-decorators/persistent-key-decorator.md)
 
-### Clasificación por Complejidad
+**Usar Métodos CRUD:**
+- Métodos: [layers/02-base-entity/crud-operations.md](layers/02-base-entity/crud-operations.md) → `BE::crud`
+- `save()`, `update()`, `delete()`, `getElement()`, `getElementList()`
 
-#### Básico
-- [Quick Start](03-QUICK-START.md)
-- [Tutorial CRUD Básico](tutorials/01-basic-crud.md)
-- [Ejemplo Clásico](examples/classic-module-example.md)
-- Decoradores: PropertyName, Required, PropertyIndex
+### Diagnosticar Errores
 
-#### Intermedio
-- [Tutorial Validaciones](tutorials/02-validations.md)
-- [Tutorial Relaciones](tutorials/03-relations.md)
-- Decoradores: ViewGroup, StringTypeDef
-- Métodos de BaseEntity
+**Ver Flujos Completos:**
+- CRUD: [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) → `FLOW-5.1`
+- Validación: [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) → `FLOW-5.2`
+- Navegación: [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) → `FLOW-5.3`
 
-#### Avanzado
-- [Validaciones Asíncronas](layers/01-decorators/async-validation-decorator.md)
-- [Ejemplo Avanzado - Órdenes de Compra](examples/advanced-module-example.md)
-- [Enums del Sistema](layers/05-advanced/Enums.md)
-- [Models del Framework](layers/05-advanced/Models.md)
-- [Router](layers/05-advanced/Router.md)
-- [Types TypeScript](layers/05-advanced/Types.md)
+**Lifecycle Hooks:**
+- Spec: [layers/02-base-entity/lifecycle-hooks.md](layers/02-base-entity/lifecycle-hooks.md) → `BE::hooks`
+- Flujo: [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) → `FLOW-5.4`
 
-### Búsqueda por Componente del Framework
+**EventBus:**
+- Spec: [layers/03-application/event-bus.md](layers/03-application/event-bus.md) → `APP::eventbus`
+- Flujo: [02-FLOW-ARCHITECTURE.md](02-FLOW-ARCHITECTURE.md) → `FLOW-5.5`
 
-#### Sistema de Decoradores
+### Cumplir Contratos
 
-**Propiedades Básicas:**
-- `@PropertyName` - Define nombre y tipo
-- `@PropertyIndex` - Orden de aparición
-- `@DefaultProperty` - Identificador por defecto
-- `@PrimaryProperty` - Clave primaria
+**Antes de Cambios Arquitectónicos:**
+- Leer: [00-CONTRACT.md](00-CONTRACT.md) → `CORE-6.2` (Autorización Cambios Mayores)
+- Leer: [05-ENFORCEMENT-TECHNICAL-CONTRACT.md](05-ENFORCEMENT-TECHNICAL-CONTRACT.md) → `ENF-6.5` (Política Breaking Changes)
 
-**Validación:**
-- `@Required` - Campo obligatorio
-- `@Validation` - Validación síncrona
-- `@AsyncValidation` - Validación asíncrona
-- `@Unique` - Valor único
+**Antes de Estilizar UI:**
+- Leer: [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) → `UI-6.4` (Política Anti-Hardcode)
+- Verificar: Tabla de Valores Prohibidos (`UI-6.4.2`)
 
-**UI y Layout:**
-- `@ViewGroup` - Agrupación de campos
-- `@ViewGroupRowDecorator` - Layout de filas
-- `@HelpText` - Texto de ayuda
-- `@DisplayFormat` - Formato de display
-- `@CSSColumnClass` - Ancho de columna
-- `@HideInListView` - Ocultar en lista
-- `@HideInDetailView` - Ocultar en detalle
-- `@TabOrder` - Orden de tabs
-
-**Estado:**
-- `@Disabled` - Deshabilitar campo
-- `@ReadOnly` - Solo lectura
-
-**Tipos Específicos:**
-- `@StringTypeDef` - Subtipo de string (EMAIL, PASSWORD, TEXTAREA)
-- `@ArrayOf` - Arrays tipados
-- `@Mask` - Máscara de entrada
-
-**Módulo:**
-- `@ModuleName` - Nombre del módulo
-- `@ModuleIcon` - Icono
-- `@ModulePermission` - Permisos
-- `@ModuleListComponent` - Vista lista custom
-- `@ModuleDetailComponent` - Vista detalle custom
-- `@ModuleDefaultComponent` - Vista por defecto
-
-**API y Persistencia:**
-- `@ApiEndpoint` - Endpoint de API
-- `@ApiMethods` - Métodos HTTP permitidos
-- `@Persistent` - Habilitar persistencia
-- `@PersistentKey` - Mapeo de claves
-
-#### Sistema de Componentes
-
-**Inputs de Formulario:**
-- TextInputComponent
-- NumberInputComponent
-- DateInputComponent
-- BooleanInputComponent
-- EmailInputComponent
-- PasswordInputComponent
-- TextAreaComponent
-- ObjectInputComponent
-- ListInputComponent
-- ArrayInputComponent
-
-**Componentes Informativos:**
-- DetailViewTableComponent
-- FormGroupComponent
-- ToastContainerComponent
+**Antes de Finalizar Desarrollo con IA:**
+- Ejecutar: AOM (Autoverificación Obligatoria del Modelo) → `ENF-6.2`
+- Formato: [05-ENFORCEMENT-TECHNICAL-CONTRACT.md](05-ENFORCEMENT-TECHNICAL-CONTRACT.md) → `ENF-6.2.2` (Declaración de Cumplimiento)
 
 ---
 
-## 10. Notas de Implementación
+## Convenciones del Sistema de Índices
 
-### Estado de Documentación
+### Sistema de IDs Estables
 
-#### Documentación Completada
+**Formato:** `{CONTRATO}-{SECCION}[.{SUBSECCION}]*`
 
-- Contrato de Desarrollo
-- Framework Overview
-- Arquitectura de Flujos
-- Quick Start
-- Sistema completo de decoradores (31/31)
-- Ejemplos: Clásico y Avanzado
-- BaseEntity: Core, Metadata Access, UI Services, CRUD Operations, Validation System, Lifecycle Hooks
-- Application: Singleton, Router Integration, Event Bus
-- Tutorial 01: CRUD Básico
-- Tutorial 02: Validaciones
-- Tutorial 03: Relaciones
-- Composable: useInputMetadata
-- 10 Componentes de Input: Text, Number, Boolean, Email, Password, Date, TextArea, List, Object, Array
-- Buttons Overview
-- Modal Components
-- DetailViewTableComponent
-- Índice Maestro
+**Ejemplos:**
+- `CORE-3.1.A1` = Contrato 00 → Sección 3.1 → Axioma A1
+- `FWK-4.2` = Framework Overview → Sección 4.2 (Decoradores)
+- `FLOW-5.1` = Flow Architecture → Sección 5.1 (Flujo CRUD)
+- `UI-6.4.2` = UI Contract → Sección 6.4.2 (Tabla Valores Prohibidos)
 
-#### Documentación Planificada (Futuro)
+**IDs por Elemento:**
+- `DEC::property-name` = Decorador PropertyName
+- `BE::save` = Método save de BaseEntity
+- `APP::singleton` = Application Singleton
+- `TUT::01` = Tutorial 01
+- `EX::classic` = Ejemplo Clásico
 
-- Ejemplos interactivos
-- Troubleshooting guide
-- Migration guide
-- API reference expandida
+### Categorización por Tipo
 
-### Canales de Soporte
-
-**Uso básico:**
-- [Quick Start](03-QUICK-START.md)
-- Tutoriales 01-03
-
-**Decoradores:**
-- Directorio `layers/01-decorators/`
-
-**BaseEntity:**
-- Directorio `layers/02-base-entity/`
-
-**Errores:**
-- Troubleshooting guide (en desarrollo)
-
-**Contribución:**
-- [Contrato](00-CONTRACT.md)
-- Este índice maestro
+- **Regla:** Prohibición o exigencia ("NO hacer X", "DEBE hacer Y")
+- **Proceso:** Secuencia de pasos o flujo
+- **Definición:** Concepto, clase, interfaz
+- **Flujo:** Diagrama o secuencia temporal
+- **Prohibición:** Restricción técnica explícita
 
 ---
 
-## 11. Referencias Cruzadas
+## Reglas de Mantenimiento
 
-### Documentos Fundamentales
+### Actualización de Índices
 
-**Lectura obligatoria prioritaria:**
-1. [Contrato de Desarrollo](00-CONTRACT.md)
-2. [Framework Overview](01-FRAMEWORK-OVERVIEW.md)
-3. [Arquitectura de Flujos](02-FLOW-ARCHITECTURE.md)
-4. [Quick Start](03-QUICK-START.md)
-5. [Contrato UI/Design System](04-UI-DESIGN-SYSTEM-CONTRACT.md)
-6. [Contrato de Enforcement Técnico](05-ENFORCEMENT-TECHNICAL-CONTRACT.md)
+**OBLIGATORIO** (según `CORE-6.4`):
+- Actualizar índice maestro al agregar/modificar documentación
+- Actualizar índices de carpeta al agregar/modificar archivos en carpeta
+- Mantener líneas exactas sincronizadas con archivos fuente
+- Revisar referencias cruzadas entre índices
 
-### Tutoriales de Implementación
+**Proceso:**
+1. Modificar archivo fuente
+2. Actualizar `README.md` de carpeta correspondiente
+3. Actualizar `INDEX-MASTER.md` si es cambio significativo
+4. Actualizar este `README.md` principal si es documento contractual o capa nueva
 
-- [Tutorial 1: CRUD Básico](tutorials/01-basic-crud.md)
-- [Tutorial 2: Validaciones](tutorials/02-validations.md)
-- [Tutorial 3: Relaciones - Objetos y Arrays](tutorials/03-relations.md)
+### Creación de Documentación Nueva
 
-### Ejemplos de Referencia
+**Template para Decoradores:**
+- Usar template de 11 secciones (según `CORE-6.7.12`)
+- Ubicar en `/copilot/layers/01-decorators/`
+- Actualizar `layers/01-decorators/README.md`
 
-- [Módulo Clásico - Inventario](examples/classic-module-example.md)
-- [Módulo Avanzado - Órdenes](examples/advanced-module-example.md)
+**Template para Especificaciones:**
+- Usar template de 11 secciones
+- Ubicar en carpeta de capa correspondiente
+- Actualizar README de carpeta
 
-### Capas del Sistema
-
-**Capa 1 - Decoradores:** Directorio `layers/01-decorators/` (31 decoradores documentados)
-
-**Capa 2 - BaseEntity:**
-- [BaseEntity Core](layers/02-base-entity/base-entity-core.md)
-- [CRUD Operations](layers/02-base-entity/crud-operations.md)
-- [Validation System](layers/02-base-entity/validation-system.md)
-- [Lifecycle Hooks](layers/02-base-entity/lifecycle-hooks.md)
-- [Metadata Access](layers/02-base-entity/metadata-access.md)
-
-**Capa 3 - Application:**
-- [Application Singleton](layers/03-application/application-singleton.md)
-- [Router Integration](layers/03-application/router-integration.md)
-- [Event Bus](layers/03-application/event-bus.md)
-- [UI Services](layers/03-application/ui-services.md)
-
-**Capa 4 - Components:**
-- Composables: [useInputMetadata](layers/04-components/useInputMetadata-composable.md)
-- Inputs: [Form Inputs Overview](layers/04-components/form-inputs.md), 10 componentes específicos
-- Botones: [Buttons Overview](layers/04-components/buttons-overview.md)
-- Modales: [Modal Components](layers/04-components/modal-components.md)
-- Informativos: [DetailViewTableComponent](layers/04-components/DetailViewTableComponent.md)
-- Layout: [SideBarComponent](layers/04-components/SideBarComponent.md), [TopBarComponent](layers/04-components/TopBarComponent.md)
-
-**Capa 5 - Avanzado:**
-- [Enums](layers/05-advanced/Enums.md)
-- [Models](layers/05-advanced/Models.md)
-- [Router](layers/05-advanced/Router.md)
-- [Types](layers/05-advanced/Types.md)
+**Template para Tutoriales:**
+- Formato paso a paso con secciones numeradas
+- Ubicar en `/copilot/tutorials/`
+- Actualizar `tutorials/README.md`
 
 ---
 
-**Nota Técnica:** Esta documentación está en evolución continua. Verificar fecha de última actualización de cada documento antes de implementar funcionalidades basadas en documentación específica.
+## Stack Tecnológico
+
+**Frontend:**
+- **Vue 3** - Framework reactivo
+- **TypeScript** - Sistema de tipos y decoradores
+- **Vite** - Build tool
+
+**Comunicación:**
+- **Axios** - Cliente HTTP para API REST
+
+**Utilidades:**
+- **Mitt** - Event Bus para comunicación desacoplada
+
+**Routing:**
+- **Vue Router** - Sistema de enrutamiento SPA
+
+---
+
+## Estado de Documentación
+
+**Completado (50+ documentos):**
+- ✓ 6 Contratos principales
+- ✓ 31 Decoradores (100%)
+- ✓ 9 Especificaciones BaseEntity
+- ✓ 4 Especificaciones Application
+- ✓ 16+ Componentes UI
+- ✓ 3 Tutoriales prácticos
+- ✓ 2 Ejemplos completos
+- ✓ 7 Índices semánticos
+
+**Planificado (Futuro):**
+- ⏳ Troubleshooting guide
+- ⏳ Migration guide (upgrades)
+- ⏳ API reference expandida
+- ⏳ Ejemplos interactivos
+- ⏳ Video tutoriales
+
+---
+
+**Última Actualización:** 13 de Febrero, 2026  
+**Versión del Framework:** 1.0.0  
+**Versión de Documentación:** 2.0.0  
+**Total Archivos:** 50+  
+**Mantenimiento:** Actualizar al agregar/modificar documentación
