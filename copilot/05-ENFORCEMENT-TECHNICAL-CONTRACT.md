@@ -1,6 +1,6 @@
 # CONTRATO DE ENFORCEMENT TÉCNICO - Framework SaaS Vue
 
-**Versión:** 1.2.0  
+**Versión:** 1.3.0  
 **Fecha de Creación:** 13 de Febrero, 2026  
 **Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
@@ -1353,6 +1353,400 @@ export default {
 
 - **IA:** Verificar unicidad antes de proponer nombres en core, reportar violaciones detectadas
 - **Arquitecto:** Validar que nombres propuestos cumplan con unicidad estricta, autorizar excepciones solo si están técnicamente justificadas y registradas en `/copilot/EXCEPCIONES.md`
+
+---
+
+### 6.9 Orden de Modificación y Principio Spec-First Design
+
+**REGLA OBLIGATORIA:**
+
+Toda modificación al framework DEBERÁ seguir el principio **Spec-First Design**: la documentación técnica en archivos `.md` es el **source of truth aspiracional** y ninguna modificación de código `.ts` puede realizarse sin validar o actualizar el spec correspondiente PRIMERO.
+
+#### 6.9.1 Principio Fundamental Spec-First
+
+**Declaración Contractual:**
+
+```
+∀ modificación ∈ Framework:
+  PRIMERO: Validar/Actualizar Spec (.md)
+  DESPUÉS: Implementar/Corregir Código (.ts)
+  FINALMENTE: Verificar Coherencia (Spec ↔ Código)
+```
+
+**Jerarquía de Autoridad:**
+
+```
+MI LÓGICA (Axiomas A1-A4)
+    ↓
+Contratos (.md) ← Source of Truth Aspiracional
+    ↓
+Código (.ts) ← Implementación que cumple contratos
+```
+
+**Cuando existe desincronización entre Spec y Código:**
+
+El código está en **violación contractual** hasta que se determine mediante clasificación formal si el error está en el spec o en la implementación.
+
+**Flujo Obligatorio:**
+
+```
+┌─────────────────────────────────────────┐
+│ Detectar necesidad de modificación      │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│ Clasificar tipo de modificación         │
+│ (Ver sección 6.9.2 a 6.9.5)            │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│ Ejecutar workflow según tipo            │
+│ (.md PRIMERO en todos los casos)       │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│ Validar coherencia Spec ↔ Código        │
+└─────────────────────────────────────────┘
+```
+
+#### 6.9.2 Workflow para Nueva Funcionalidad
+
+**Tipo:** Extensión del framework con capacidad nueva no existente.
+
+**Workflow OBLIGATORIO:**
+
+```
+1. DISEÑAR SPEC (.md):
+   ├─> Identificar archivo .md correspondiente a la capa afectada
+   ├─> Escribir especificación completa de la funcionalidad
+   ├─> Incluir: Propósito, Alcance, Definiciones, Reglas, Ejemplos
+   ├─> Validar que no contradice MI LÓGICA (A1-A4)
+   ├─> Validar que es consistente con contratos existentes
+   └─> Solicitar aprobación del arquitecto si es Cambio Mayor (00-CONTRACT 6.2)
+
+2. APROBAR SPEC:
+   ├─> Arquitecto revisa diseño propuesto en .md
+   ├─> Arquitecto valida coherencia arquitectónica
+   └─> Si APROBADO → Continuar, Si RECHAZADO → Rediseñar spec
+
+3. IMPLEMENTAR CÓDIGO (.ts):
+   ├─> Generar código siguiendo EXACTAMENTE el spec aprobado
+   ├─> NO desviarse del diseño documentado en .md
+   └─> Implementar ejemplos documentados en el spec
+
+4. VALIDAR COHERENCIA:
+   ├─> Verificar que código cumple spec al 100%
+   ├─> Ejecutar Validación Cruzada entre Capas (VCC) si aplica
+   └─> Actualizar referencias cruzadas e índices
+```
+
+**PROHIBIDO:**
+
+- Codificar (.ts) antes de documentar (.md)
+- "Codificar rápido y documentar después"
+- Implementar comportamiento no especificado en .md
+- Desviarse del spec durante implementación sin actualizar .md PRIMERO
+
+**CONSECUENCIAS DE INCUMPLIMIENTO:**
+
+Código generado sin spec previo DEBERÁ ser rechazado por el arquitecto sin revisión técnica detallada.
+
+#### 6.9.3 Workflow para Anomalías Detectadas
+
+**Tipo:** Desincronización entre Spec (.md) y Código (.ts) existente.
+
+**Clasificación Obligatoria:**
+
+Toda anomalía DEBERÁ clasificarse como **Tipo A** o **Tipo B** antes de corrección.
+
+**TIPO A - Error de Especificación:**
+
+El archivo .md contiene error conceptual, arquitectónico o de diseño.
+
+**Indicadores de Tipo A:**
+
+- ✓ Spec contradice MI LÓGICA (A1-A4)
+- ✓ Spec describe comportamiento técnicamente inviable
+- ✓ Spec contradice otros contratos del framework
+- ✓ Código funciona correctamente en producción según expectativas
+- ✓ Implementar el spec causaría Breaking Change no justificado
+- ✓ Spec está desactualizado respecto a decisión arquitectónica aprobada previamente
+
+**Workflow para Tipo A:**
+
+```
+1. DOCUMENTAR ERROR DE SPEC:
+   ├─> Describir exactamente qué está mal en el .md
+   ├─> Explicar por qué el spec actual es incorrecto
+   ├─> Proponer corrección del spec
+   └─> Justificar por qué el código actual es correcto
+
+2. SOLICITAR APROBACIÓN:
+   ├─> Presentar análisis al arquitecto
+   ├─> Arquitecto evalúa usando Tabla de Clasificación (6.9.6)
+   └─> Arquitecto decide: APROBAR corrección de spec o RECHAZAR clasificación
+
+3. SI APROBADO - CORREGIR SPEC PRIMERO (.md):
+   ├─> Modificar archivo .md con spec corregido
+   ├─> Actualizar referencias cruzadas afectadas
+   ├─> Registrar en BREAKING-CHANGES.md si aplica
+   └─> Documentar decisión arquitectónica
+
+4. SI APROBADO - ACTUALIZAR CÓDIGO (.ts):
+   ├─> Ajustar código para cumplir spec corregido
+   ├─> Validar coherencia con nuevo spec
+   └─> Probar que funcionalidad mantiene expectativas
+
+5. SI RECHAZADO:
+   └─> Reclasificar como Tipo B (el spec estaba correcto)
+```
+
+**TIPO B - Error de Implementación:**
+
+El archivo .ts no cumple un spec bien diseñado.
+
+**Indicadores de Tipo B:**
+
+- ✓ Spec es coherente con MI LÓGICA
+- ✓ Spec describe comportamiento técnicamente viable
+- ✓ Spec es consistente con otros contratos
+- ✓ Código implementa comportamiento diferente al especificado
+- ✓ Código tiene bug que contradice spec correcto
+- ✓ Código viola reglas establecidas en documentación
+
+**Workflow para Tipo B:**
+
+```
+1. VALIDAR QUE SPEC ES CORRECTO (.md):
+   ├─> Verificar coherencia con MI LÓGICA
+   ├─> Verificar consistencia con contratos
+   ├─> Confirmar que describe comportamiento esperado correcto
+   └─> Validar que es técnicamente viable
+
+2. CORREGIR CÓDIGO (.ts):
+   ├─> Modificar implementación para cumplir spec
+   ├─> NO modificar el spec para "justificar" el código incorrecto
+   ├─> Seguir exactamente lo especificado en .md
+   └─> Conservar type safety y patrones establecidos
+
+3. VALIDAR COHERENCIA:
+   ├─> Verificar que código ahora cumple spec al 100%
+   ├─> Ejecutar Validación Cruzada entre Capas (VCC) si aplica
+   ├─> Probar funcionalidad completa
+   └─> Verificar no ruptura de otras funcionalidades
+
+(NO requiere autorización del arquitecto - es corrección de bug)
+```
+
+**TABLA DE DECISIÓN:**
+
+| Pregunta | Tipo A (Error Spec) | Tipo B (Error Código) |
+|----------|---------------------|----------------------|
+| ¿Spec contradice MI LÓGICA? | SÍ | NO |
+| ¿Spec técnicamente imposible? | SÍ | NO |
+| ¿Código funciona bien en producción? | Evaluar contexto | NO |
+| ¿Implementar spec causa Breaking Change injustificado? | SÍ | NO |
+| ¿Spec contradice otros contratos? | SÍ | NO |
+| ¿Código simplemente no cumple regla válida? | NO | SÍ |
+| ¿Código tiene bug vs comportamiento esperado? | NO | SÍ |
+
+#### 6.9.4 Workflow para Bug Fixes
+
+**Tipo:** Corrección de comportamiento defectuoso en código existente.
+
+**Workflow OBLIGATORIO:**
+
+```
+1. REPRODUCIR Y DOCUMENTAR BUG:
+   ├─> Identificar comportamiento defectuoso
+   ├─> Reproducir bug consistentemente
+   └─> Documentar comportamiento actual vs esperado
+
+2. CONSULTAR SPEC (.md):
+   ├─> Leer especificación de la funcionalidad afectada
+   └─> Determinar comportamiento esperado según spec
+
+3. CLASIFICAR ORIGEN DEL BUG:
+   ├─> ¿El spec describe el comportamiento defectuoso como correcto?
+   │   └─> SÍ → Bug Type A (Error de Spec)
+   └─> ¿El spec describe comportamiento correcto pero código no lo cumple?
+       └─> SÍ → Bug Type B (Error de Implementación)
+
+4. EJECUTAR WORKFLOW SEGÚN TIPO:
+   ├─> Bug Type A → Seguir workflow 6.9.3 Tipo A
+   └─> Bug Type B → Seguir workflow 6.9.3 Tipo B
+```
+
+**CASOS ESPECIALES:**
+
+**Bug crítico en producción:**
+- Aplicar hotfix inmediato en código
+- **OBLIGATORIO:** Actualizar spec dentro de 24 horas
+- Documentar en EXCEPCIONES.md temporalmente
+- Validar coherencia post-fix
+
+**Bug donde spec no existe:**
+- Comportamiento está sin documentar
+- **OBLIGATORIO:** Documentar comportamiento correcto en .md PRIMERO
+- Después corregir código
+- NO asumir que código actual es "correcto por default"
+
+#### 6.9.5 Workflow para Refactoring
+
+**Tipo:** Reestructuración de código sin cambio de comportamiento observable.
+
+**Workflow OBLIGATORIO:**
+
+```
+1. VALIDAR SPEC ACTUAL (.md):
+   ├─> Leer especificación de comportamiento actual
+   ├─> Confirmar que spec describe comportamiento correcto
+   └─> Identificar si refactoring afecta contrato público
+
+2. EVALUAR IMPACTO EN SPEC:
+   ├─> ¿Refactoring cambia contrato público documentado?
+   │   ├─> SÍ → Es Breaking Change, seguir proceso 6.4
+   │   └─> NO → Continuar
+   ├─> ¿Refactoring cambia nombres de métodos/clases públicas?
+   │   ├─> SÍ → Actualizar .md PRIMERO con nuevos nombres
+   │   └─> NO → Continuar
+   └─> ¿Refactoring altera arquitectura descrita en .md?
+       ├─> SÍ → Actualizar .md PRIMERO con nueva estructura
+       └─> NO → Continuar sin modificar .md
+
+3. ACTUALIZAR SPEC SI APLICA (.md):
+   ├─> Modificar documentación de estructura interna si cambió
+   ├─> Actualizar diagramas si aplica
+   ├─> Actualizar ejemplos de uso si cambió API pública
+   └─> Mantener inalterada descripción de comportamiento observable
+
+4. EJECUTAR REFACTORING (.ts):
+   ├─> Reestructurar código interno
+   ├─> Mantener comportamiento observable EXACTAMENTE igual
+   ├─> Preservar contratos públicos o actualizar según spec
+   └─> Mantener type safety y patrones establecidos
+
+5. VALIDAR PRESERVACIÓN DE COMPORTAMIENTO:
+   ├─> Verificar que comportamiento sigue cumpliendo spec
+   ├─> Probar que funcionalidad observable no cambió
+   ├─> Validar que contratos públicos se mantienen
+   └─> Ejecutar Validación Cruzada entre Capas (VCC)
+```
+
+**PRINCIPIO FUNDAMENTAL:**
+
+Refactoring NO justifica desviación del spec. Si el refactoring requiere cambio de comportamiento documentado, es un Cambio Mayor y requiere autorización (00-CONTRACT 6.2).
+
+#### 6.9.6 Tabla de Clasificación Universal
+
+**Uso:** Tabla de decisión para clasificar cualquier modificación propuesta.
+
+| Situación | Tipo de Modificación | Workflow Aplicable | Requiere Autorización Arquitecto |
+|-----------|----------------------|-------------------|----------------------------------|
+| Crear nueva entidad | Nueva Funcionalidad | 6.9.2 | NO (si es Cambio Menor) |
+| Crear nuevo decorador | Nueva Funcionalidad | 6.9.2 | NO (si no modifica BaseEntity) |
+| Modificar BaseEntity | Cambio Mayor | 6.9.2 + 00-CONTRACT 6.2 | SÍ (SIEMPRE) |
+| Modificar Application | Cambio Mayor | 6.9.2 + 00-CONTRACT 6.2 | SÍ (SIEMPRE) |
+| Código no cumple spec correcto | Anomalía Tipo B | 6.9.3 Tipo B | NO (es corrección de bug) |
+| Spec incorrecto o inviable | Anomalía Tipo A | 6.9.3 Tipo A | SÍ (SIEMPRE) |
+| Bug en implementación | Bug Fix Tipo B | 6.9.4 + 6.9.3-B | NO |
+| Bug en diseño del spec | Bug Fix Tipo A | 6.9.4 + 6.9.3-A | SÍ (SIEMPRE) |
+| Refactoring sin cambio de API | Refactoring | 6.9.5 | NO (si preserva comportamiento) |
+| Refactoring con cambio de API | Breaking Change | 6.4 + 6.9.5 | SÍ (SIEMPRE) |
+| Agregar componente UI personalizado | Nueva Funcionalidad | 6.9.2 | NO (si no afecta core) |
+| Modificar sistema de decoradores | Cambio Mayor | 6.9.2 + 00-CONTRACT 6.2 | SÍ (SIEMPRE) |
+| Optimización de performance | Refactoring | 6.9.5 | Evaluar impacto |
+| Cambio de naming convention | Cambio Mayor | 6.8.3 | SÍ (SIEMPRE) |
+| Agregar validación a entidad | Nueva Funcionalidad | 6.9.2 | NO |
+| Modificar validación existente | Evaluar | 6.9.3 o 6.9.5 | Según clasificación |
+
+#### 6.9.7 Validaciones Obligatorias Pre-Modificación
+
+**Checklist OBLIGATORIO antes de cualquier modificación:**
+
+```markdown
+□ He leído el spec (.md) correspondiente a la funcionalidad
+□ He clasificado el tipo de modificación (6.9.2 a 6.9.5)
+□ He verificado coherencia con MI LÓGICA (A1-A4)
+□ He verificado coherencia con contratos existentes
+□ He determinado si requiere autorización del arquitecto
+□ SI requiere autorización: He solicitado y obtenido aprobación
+□ SI es nueva funcionalidad: He actualizado .md PRIMERO
+□ SI es anomalía: He clasificado Tipo A o Tipo B
+□ SI es Tipo A: He obtenido aprobación para corregir spec
+□ He planificado actualización de índices y referencias
+□ He planificado pruebas de validación post-modificación
+```
+
+**SI algún checkbox está sin marcar:**
+
+La modificación NO puede proceder hasta completar el prerequisito.
+
+#### 6.9.8 Consecuencias del Incumplimiento
+
+**Violaciones al Principio Spec-First:**
+
+| Violación | Consecuencia |
+|-----------|-------------|
+| Codificar sin spec previo (nueva funcionalidad) | RECHAZO total sin revisión |
+| Codificar sin validar/actualizar spec (modificación) | RECHAZO hasta corregir orden |
+| Modificar código antes de clasificar anomalía | RECHAZO y requerir clasificación |
+| Asumir que código actual define comportamiento correcto | RECHAZO por violación de jerarquía |
+| Modificar spec para "justificar" código incorrecto (Tipo B) | RECHAZO por manipulación contractual |
+| Implementar comportamiento no documentado en spec | RECHAZO por desviación no autorizada |
+| Omitir autorización en Tipo A o Cambio Mayor | RECHAZO hasta obtener autorización |
+
+**Proceso de corrección:**
+
+1. Arquitecto rechaza modificación que viola Spec-First
+2. Arquitecto señala específicamente la violación
+3. IA/Desarrollador debe reiniciar proceso desde paso correcto
+4. Nueva propuesta debe incluir Declaración de Cumplimiento (6.2)
+5. Nueva propuesta debe demostrar adherencia a workflow correcto
+
+#### 6.9.9 Integración con Otros Procesos Contractuales
+
+**Relación con Autoverificación Obligatoria (AOM - 6.2):**
+
+AOM DEBE incluir sección adicional:
+
+```markdown
+### Cumplimiento de Spec-First Design
+- Tipo de modificación: [Nueva Funcionalidad / Anomalía / Bug Fix / Refactoring]
+- Workflow aplicado: [Sección 6.9.X]
+- Spec actualizado PRIMERO: [SÍ/NO]
+- Si NO: [Justificación excepcional o reconocimiento de rechazo]
+- Clasificación (si aplica): [Tipo A / Tipo B / N/A]
+- Autorización requerida: [SÍ/NO]
+- Si SÍ: [Estado de autorización]
+```
+
+**Relación con Validación Cruzada entre Capas (VCC - 6.3):**
+
+VCC DEBE validar adicionalmente:
+- Coherencia entre Spec documentado y Código implementado
+- Que comportamiento observable cumple spec
+- Que metadatos declarados coinciden con documentación
+
+**Relación con Política de Breaking Changes (6.4):**
+
+Todo Breaking Change DEBE:
+1. Actualizar spec (.md) PRIMERO con cambio propuesto
+2. Documentar en BREAKING-CHANGES.md
+3. Obtener aprobación del arquitecto
+4. Implementar código según spec actualizado
+
+**Relación con Pre-Commit Verification (6.7):**
+
+Pre-Commit DEBE verificar:
+
+```bash
+# Verificación adicional Spec-First
+□ Para cada archivo .ts modificado, existe .md correspondiente
+□ .md fue modificado en mismo commit o previamente
+□ No existe desincronización evidente Spec ↔ Código
+□ Clasificación de anomalía está documentada si aplica
+```
 
 ---
 

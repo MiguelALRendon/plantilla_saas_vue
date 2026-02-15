@@ -1,6 +1,6 @@
 # INDEX MASTER - Framework SaaS Vue Spec Kit
 
-**Versión:** 1.0.0  
+**Versión:** 1.1.0  
 **Generado:** 13 de Febrero, 2026  
 **Última Actualización:** 15 de Febrero, 2026  
 **Propósito:** Sistema de navegación semántica determinista para localización rápida por IA
@@ -27,15 +27,15 @@ QS: 03-QUICK-START.md (Guía)
 
 ### Contratos Principales (Layer 0)
 
-| ID | Archivo | Tipo | Propósito | Líneas | Estado |
-|---|---|---|---|---|---|
-| CORE | 00-CONTRACT.md | Contrato Vinculante | Reglas obligatorias y MI LÓGICA | 866 | ACTIVO |
-| FWK | 01-FRAMEWORK-OVERVIEW.md | Documento Descriptivo | Visión general arquitectura | 792 | ACTIVO |
-| FLOW | 02-FLOW-ARCHITECTURE.md | Documento Descriptivo | Flujos del sistema | 921 | ACTIVO |
-| QS | 03-QUICK-START.md | Guía Práctica | Tutorial inicio rápido | 564 | ACTIVO |
-| UI | 04-UI-DESIGN-SYSTEM-CONTRACT.md | Contrato Subordinado | Sistema UI/CSS | 894 | ACTIVO |
-| ENF | 05-ENFORCEMENT-TECHNICAL-CONTRACT.md | Contrato Subordinado | Enforcement técnico | 1847+ | ACTIVO |
-| CST | 06-CODE-STYLING-STANDARDS.md | Contrato Subordinado | Estándares de code styling | 1850+ | ACTIVO |
+| ID | Archivo | Tipo | Propósito | Líneas | Versión | Estado |
+|---|---|---|---|---|---|---|
+| CORE | 00-CONTRACT.md | Contrato Vinculante | Reglas obligatorias y MI LÓGICA | 950+ | v2.3.0 | ACTIVO |
+| FWK | 01-FRAMEWORK-OVERVIEW.md | Documento Descriptivo | Visión general arquitectura | 792 | v1.0.0 | ACTIVO |
+| FLOW | 02-FLOW-ARCHITECTURE.md | Documento Descriptivo | Flujos del sistema | 921 | v1.0.0 | ACTIVO |
+| QS | 03-QUICK-START.md | Guía Práctica | Tutorial inicio rápido | 564 | v1.0.0 | ACTIVO |
+| UI | 04-UI-DESIGN-SYSTEM-CONTRACT.md | Contrato Subordinado | Sistema UI/CSS | 894 | v2.0.0 | ACTIVO |
+| ENF | 05-ENFORCEMENT-TECHNICAL-CONTRACT.md | Contrato Subordinado | Enforcement técnico | 2150+ | v1.3.0 | ACTIVO |
+| CST | 06-CODE-STYLING-STANDARDS.md | Contrato Subordinado | Estándares de code styling | 1850+ | v1.0.0 | ACTIVO |
 
 ### Documentación de Capas (Layer 1-6)
 
@@ -103,25 +103,31 @@ QS: 03-QUICK-START.md (Guía)
 | CORE-4 | Descripción Técnica | Especificación | 100-143 | Naturaleza y arquitectura del framework |
 | CORE-4.2 | Arquitectura en Capas | Diagrama | 108-120 | Diagrama visual de 5 capas |
 | CORE-5 | Flujo de Funcionamiento | Proceso | 145-157 | Flujo principal de operación |
-| CORE-6 | Reglas Obligatorias | Regla | 159-639 | 10 reglas obligatorias principales |
+| CORE-6 | Reglas Obligatorias | Regla | 159-720+ | 11 reglas obligatorias principales |
 | CORE-6.1 | Prioridad Absoluta MI LÓGICA | Regla | 161-167 | MI LÓGICA tiene prioridad absoluta |
 | CORE-6.2 | Autorización Cambios Mayores | Proceso | 169-181 | Proceso obligatorio de autorización |
 | CORE-6.3 | Documentación Mandatoria | Regla | 183-241 | Sincronización código-documentación |
 | CORE-6.4 | Índices de Carpetas | Regla | 243-304 | Obligación de mantener README.md |
 | CORE-6.4.3 | Contenido Obligatorio Índice | Especificación | 267-283 | Estructura de índices |
-| CORE-6.5 | Estructura Documental | Formato | 306-318 | 11 secciones obligatorias |
-| CORE-6.7 | Régimen Reestructuración | Prohibición | 360-533 | Reglas para reestructuración documental |
-| CORE-6.7.2 | Principio Inmutabilidad | Axioma | 366-380 | Inmutabilidad arquitectónica |
-| CORE-6.7.3 | Principio Anti-Alucinación | Prohibición | 382-400 | Prohibición de inferir información |
-| CORE-6.7.12 | Formato 11 Secciones | Formato | 536-567 | Plantilla documental obligatoria |
-| CORE-6.8 | Sistema UI/CSS | Referencia | 569-578 | Referencia a contrato UI |
-| CORE-6.9 | Enforcement Técnico | Referencia | 580-619 | Referencia a contrato enforcement |
-| CORE-6.10 | Indexación Estructural | Regla | 621-639 | Indexación profunda obligatoria |
-| CORE-7 | Prohibiciones | Prohibición | 641-679 | Prohibiciones arquitectónicas y documentales |
-| CORE-8 | Dependencias | Especificación | 681-686 | Dependencias del contrato |
-| CORE-9 | Relaciones | Especificación | 688-698 | Relaciones con otros elementos |
-| CORE-10 | Notas de Implementación | Guía | 700-803 | Versionamiento y aplicabilidad |
-| CORE-11 | Referencias Cruzadas | Índice | 805-866 | Documentos vinculados |
+| CORE-6.5 | Sincronización Código-Docs | Axioma | 305-308 | Código sin docs = inválido |
+| CORE-6.6 | Workflow de Desarrollo | Proceso | 310-392 | **[NUEVO v2.3.0]** Principio Spec-First Design |
+| CORE-6.6.1 | Principio Spec-First | Axioma | 312-328 | Spec (.md) es source of truth aspiracional |
+| CORE-6.6.2 | Antes de Codificar | Checklist | 330-347 | Diseñar/Validar Spec PRIMERO |
+| CORE-6.6.3 | Durante Desarrollo | Checklist | 349-358 | Implementar según spec exacto |
+| CORE-6.6.4 | Después de Codificar | Checklist | 360-370 | Validar coherencia Spec ↔ Código |
+| CORE-6.6.5 | Tabla Orden Modificación | Tabla | 372-392 | Referencia rápida 5 situaciones |
+| CORE-6.7 | Régimen Reestructuración | Prohibición | 394-615 | Reglas para reestructuración documental |
+| CORE-6.7.2 | Principio Inmutabilidad | Axioma | 400-414 | Inmutabilidad arquitectónica |
+| CORE-6.7.3 | Principio Anti-Alucinación | Prohibición | 416-434 | Prohibición de inferir información |
+| CORE-6.7.12 | Formato 11 Secciones | Formato | 570-601 | Plantilla documental obligatoria |
+| CORE-6.8 | Sistema UI/CSS | Referencia | 603-612 | Referencia a contrato UI |
+| CORE-6.9 | Enforcement Técnico | Referencia | 614-653 | Referencia a contrato enforcement |
+| CORE-6.10 | Indexación Estructural | Regla | 655-673 | Indexación profunda obligatoria |
+| CORE-7 | Prohibiciones | Prohibición | 675-713 | Prohibiciones arquitectónicas y documentales |
+| CORE-8 | Dependencias | Especificación | 715-720 | Dependencias del contrato |
+| CORE-9 | Relaciones | Especificación | 722-732 | Relaciones con otros elementos |
+| CORE-10 | Notas de Implementación | Guía | 734-837 | Versionamiento y aplicabilidad |
+| CORE-11 | Referencias Cruzadas | Índice | 839-900+ | Documentos vinculados |
 
 ### FWK: 01-FRAMEWORK-OVERVIEW.md
 
@@ -263,7 +269,7 @@ QS: 03-QUICK-START.md (Guía)
 | ENF-5.3 | Flujo VCC | Proceso | 324-350 | Validación cruzada capas |
 | ENF-5.4 | Flujo Breaking Changes | Proceso | 352-382 | Gestión breaking changes |
 | ENF-5.5 | Flujo Excepciones | Proceso | 384-392 | Registro de excepciones |
-| ENF-6 | Reglas Obligatorias | Regla | 394-1200+ | 8 reglas enforcement |
+| ENF-6 | Reglas Obligatorias | Regla | 394-1850+ | **[ACTUALIZADO v1.3.0]** 9 reglas enforcement |
 | ENF-6.1 | Subordinación | Regla | 396-402 | Jerarquía contractual |
 | ENF-6.2 | AOM Obligatorio | Regla | 404-485 | Autoverificación mandatoria |
 | ENF-6.2.1 | Formato Declaración | Formato | 410-467 | Template declaración cumplimiento |
@@ -276,11 +282,23 @@ QS: 03-QUICK-START.md (Guía)
 | ENF-6.6 | Registro Excepciones | Regla | 843-970+ | Procedimiento excepciones |
 | ENF-6.7 | Pre-Commit Verification | Regla | ~975-1034 | Checklist obligatorio pre-commit |
 | ENF-6.7.1 | Checklist Obligatoria | Checklist | ~979-1015 | Verificaciones obligatorias |
-| ENF-6.8 | Coherencia Naming | Regla | ~1036-1350+ | Naming conventions y descriptibilidad |
+| ENF-6.8 | Coherencia Naming | Regla | ~1036-1357 | Naming conventions y descriptibilidad |
 | ENF-6.8.1 | Naming Autorizadas | Especificación | ~1044-1176 | Convenciones por tipo + descriptibilidad |
 | ENF-6.8.2 | Prohibición No Autorizado | Prohibición | ~1178-1194 | Naming no autorizadas |
 | ENF-6.8.3 | Autorización Nueva | Proceso | ~1196-1202 | Proceso autorización convención |
-| ENF-6.8.4 | Unicidad Core | Regla | ~1204-1348 | Unicidad nombres en core arquitectónico |
+| ENF-6.8.4 | Unicidad Core | Regla | ~1204-1355 | Unicidad nombres en core arquitectónico |
+| **ENF-6.9** | **Orden Modificación Spec-First** | **Regla** | **~1359-1850+** | **[NUEVO v1.3.0]** Principio Spec-First Design |
+| ENF-6.9.1 | Principio Fundamental | Axioma | ~1361-1403 | Spec (.md) es source of truth aspiracional |
+| ENF-6.9.2 | Workflow Nueva Funcionalidad | Proceso | ~1405-1452 | Spec PRIMERO → Código DESPUÉS |
+| ENF-6.9.3 | Workflow Anomalías | Proceso | ~1454-1598 | Clasificación Tipo A/B + workflows |
+| ENF-6.9.3.A | Tipo A: Error de Spec | Proceso | ~1464-1526 | Corregir .md PRIMERO, después .ts |
+| ENF-6.9.3.B | Tipo B: Error de Código | Proceso | ~1528-1570 | Validar .md, corregir .ts según spec |
+| ENF-6.9.4 | Workflow Bug Fixes | Proceso | ~1600-1650 | Clasificar origen + aplicar workflow |
+| ENF-6.9.5 | Workflow Refactoring | Proceso | ~1652-1706 | Validar spec → Refactorizar código |
+| ENF-6.9.6 | Tabla Clasificación Universal | Tabla | ~1708-1746 | Matriz de decisión para toda modificación |
+| ENF-6.9.7 | Validaciones Pre-Modificación | Checklist | ~1748-1772 | Checklist obligatorio antes de modificar |
+| ENF-6.9.8 | Consecuencias Incumplimiento | Sanciones | ~1774-1802 | Violaciones y proceso de corrección |
+| ENF-6.9.9 | Integración con AOM/VCC | Especificación | ~1804-1848 | Relación con otros procesos contractuales |
 
 ---
 

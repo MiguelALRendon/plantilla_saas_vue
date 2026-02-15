@@ -1,8 +1,8 @@
 # CONTRATO DE DESARROLLO - Framework SaaS Vue
 
-**Versión:** 2.2.0  
+**Versión:** 2.3.0  
 **Fecha de Creación:** 10 de Febrero, 2026  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
 
 ## 1. Propósito
@@ -309,26 +309,63 @@ Documentación sin actualizar = Documentación inválida
 
 ### 6.6 Workflow de Desarrollo
 
-**Antes de codificar:**
-1. Leer documentación relevante
-2. Verificar existencia de funcionalidad similar
-3. Determinar si requiere autorización
-4. Planificar documentación necesaria
+**PRINCIPIO FUNDAMENTAL - SPEC-FIRST DESIGN:**
 
-**Durante el desarrollo:**
-1. Seguir patrones establecidos
+La documentación técnica en archivos `.md` constituye el **source of truth aspiracional** del framework. Ninguna modificación de código `.ts` puede realizarse sin validar o actualizar el spec correspondiente PRIMERO.
+
+```
+Spec (.md) → Define comportamiento esperado
+    ↓
+Código (.ts) → Implementa spec
+    ↓
+Validación → Verifica coherencia
+```
+
+**ANTES DE CODIFICAR (OBLIGATORIO):**
+
+1. **Diseñar/Validar Spec:**
+   - Leer documentación relevante (contratos, layers/*.md)
+   - Verificar existencia de funcionalidad similar
+   - Determinar si requiere autorización (ver sección 6.2)
+   - **SI es nueva funcionalidad:** Actualizar archivo .md correspondiente PRIMERO con diseño completo
+   - **SI es modificación:** Validar que el spec actual sea correcto o actualizarlo PRIMERO
+   - **SI es anomalía:** Clasificar según sección 6.9 de 05-ENFORCEMENT-TECHNICAL-CONTRACT.md
+
+2. **Planificar Documentación:**
+   - Identificar archivos .md afectados
+   - Planificar estructura de documentación necesaria
+   - Validar que no contradiga MI LÓGICA
+
+**DURANTE EL DESARROLLO:**
+
+1. Seguir patrones establecidos en spec
 2. No duplicar lógica (DRY)
 3. Mantener type safety
-4. Respetar convenciones de nombres
+4. Respetar convenciones de nombres (según contratos)
 5. Usar hooks cuando corresponda
+6. **Implementar exactamente lo especificado en .md**
 
-**Después de codificar:**
-1. Actualizar/crear documentación
+**DESPUÉS DE CODIFICAR:**
+
+1. **Sincronizar documentación:**
+   - Verificar que código cumple spec al 100%
+   - Si spec cambió durante implementación, actualizar .md
+   - Actualizar ejemplos de código en documentación
 2. Actualizar índice de carpeta contenedora
 3. Actualizar referencias cruzadas
 4. Probar en contexto completo
 5. Verificar no ruptura de funcionalidad existente
 6. Validar integridad de índices afectados
+
+**ORDEN DE MODIFICACIÓN (referencia completa en 05-ENFORCEMENT-TECHNICAL-CONTRACT.md sección 6.9):**
+
+| Situación | Acción Primero | Acción Después |
+|-----------|----------------|----------------|
+| Nueva característica | Actualizar .md | Codificar .ts |
+| Anomalía (error de spec) | Corregir .md | Actualizar .ts |
+| Anomalía (error de código) | Validar .md | Corregir .ts |
+| Bug fix | Clasificar error | Corregir según clasificación |
+| Refactoring | Validar/actualizar .md | Refactorizar .ts |
 
 ### 6.7 RÉGIMEN DE REESTRUCTURACIÓN DOCUMENTAL PARA CONSUMO POR IA
 
