@@ -1,8 +1,8 @@
 # CONTRATO DE ENFORCEMENT TÉCNICO - Framework SaaS Vue
 
-**Versión:** 1.1.0  
+**Versión:** 1.2.0  
 **Fecha de Creación:** 13 de Febrero, 2026  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
 
 ## 1. Propósito
@@ -981,6 +981,9 @@ Antes de ejecutar `git commit`, DEBERÁ ejecutarse Pre-Commit Verification segú
 - [ ] Sin z-index numéricos arbitrarios
 - [ ] Naming conventions respetadas (formato + descriptibilidad total según 6.8.1)
 - [ ] Nombres auto-explicativos sin ambigüedad
+- [ ] Unicidad de nombres en core arquitectónico verificada (6.8.4)
+- [ ] Sin nombres duplicados o ambiguamente similares en core
+- [ ] Sin sinónimos confundibles para operaciones del core
 - [ ] Sin duplicación de lógica
 - [ ] Type safety preservado
 - [ ] Sin errores de compilación TypeScript
@@ -1189,6 +1192,170 @@ Si se requiere naming convention no listada en 6.8.1:
 4. Si APROBADO, arquitecto actualiza sección 6.8.1 de este contrato
 5. Nueva convención se aplica consistentemente en código futuro
 
+#### 6.8.4 Unicidad de Nombres en Core Arquitectónico
+
+**REGLA OBLIGATORIA:**
+
+No se PODRÁ utilizar nombres de propiedades, funciones, métodos o variables ambiguamente parecidos, duplicados o confundibles dentro del core arquitectónico del framework. Todo elemento del core DEBE tener nombres estrictamente únicos y diferenciables de cualquier otro elemento existente en el sistema core.
+
+**Definición de Core Arquitectónico:**
+
+El core arquitectónico comprende:
+
+- **Application (Singleton):** Clase `Application` y todos sus métodos, propiedades y variables internas
+- **BaseEntity:** Clase `BaseEntity` y todos sus métodos, propiedades y variables internas, incluyendo métodos override
+- **Sistema de Decoradores:** Todos los decoradores en `/src/decorations/`, sus funciones, constantes de símbolos (`*_KEY`), funciones auxiliares y tipos asociados
+- **Tipos Core:** Interfaces y tipos en `/src/types/` que definen contratos públicos del framework
+- **Composables Core:** Composables en `/src/composables/` que implementan lógica fundamental del framework (ej: `useInputMetadata`)
+- **Constantes del Sistema:** Constantes en `/src/constants/` que definen valores fundamentales del framework
+
+**EXCLUIDO del Core Arquitectónico:**
+
+- Componentes UI individuales (`/src/components/`) pueden tener propiedades comunes como `id`, `index`, `value`, `label` dentro de su contexto local
+- Entidades de dominio (`/src/entities/`) que extienden BaseEntity pueden tener propiedades de negocio comunes
+- Utilidades auxiliares no fundamentales
+- Views y routers específicos de aplicación
+
+**Principio Fundamental:**
+
+```
+∀ elemento₁, elemento₂ ∈ CoreArquitectónico:
+  nombre(elemento₁) ≠ nombre(elemento₂) ∧ 
+  ¬∃ ambigüedad(nombre(elemento₁), nombre(elemento₂))
+```
+
+**PROHIBIDO en Core Arquitectónico:**
+
+- **Nombres duplicados exactos:** Dos propiedades/métodos/funciones con el mismo nombre en distintos archivos del core
+- **Nombres ambiguamente similares:** Nombres que difieren mínimamente y pueden confundirse:
+  - `getMetadata` vs `getMetaData` vs `fetchMetadata`
+  - `isRequired` vs `checkRequired` vs `validateRequired`
+  - `propertyName` vs `propName` vs `propertyNameValue`
+- **Sobrecarga semántica:** Usar el mismo nombre para funciones con propósitos distintos en diferentes partes del core
+- **Sinónimos confundibles:** Usar sinónimos para la misma operación:
+  - `retrieve`, `fetch`, `get`, `obtain` para obtener datos
+  - `validate`, `check`, `verify`, `ensure` para validaciones
+- **Abreviaturas inconsistentes:** `calc` en un lugar, `calculate` en otro para la misma operación
+
+**PERMITIDO en Core Arquitectónico:**
+
+- Nombres completamente distintos y descriptivos: `getPropertyMetadata` vs `registerDecorator` vs `validateInputValue`
+- Prefijos/sufijos que diferencian claramente: `validateRequired` vs `isRequired` vs `checkRequiredDecorator`
+- Nombres que incluyen contexto completo: `baseEntityGetMetadata` vs `decoratorGetMetadata` (aunque preferible evitar este patrón)
+
+**VALIDACIÓN OBLIGATORIA:**
+
+Antes de nombrar cualquier elemento del core arquitectónico, verificar:
+
+1. ¿Existe otro elemento en el core con nombre exactamente igual? [SÍ/NO]
+2. ¿Existe otro elemento en el core con nombre ambiguamente similar? [SÍ/NO]
+3. ¿El nombre podría confundirse con otro elemento existente? [SÍ/NO]
+4. ¿Se está usando un sinónimo de una operación ya nombrada en el core? [SÍ/NO]
+
+SI alguna respuesta es SÍ → RECHAZAR nombre y elegir uno estrictamente único y diferenciable.
+
+**PROCESO DE VERIFICACIÓN:**
+
+```
+PARA TODO nuevo elemento en CoreArquitectónico:
+  1. Listar TODOS los nombres existentes en el archivo actual del core
+  2. Listar TODOS los nombres públicos en TODOS los archivos del core
+  3. Comparar nombre propuesto contra lista completa
+  4. SI existe coincidencia exacta → RECHAZAR
+  5. SI existe similitud ambigua → RECHAZAR  
+  6. SI existe sinónimo del mismo concepto → EVALUAR y preferir consistencia
+  7. SI es completamente único → APROBAR
+```
+
+**REPORTAR VIOLACIONES:**
+
+La IA DEBERÁ reportar al arquitecto cuando detecte:
+
+- Violación de unicidad de nombres en código existente del core
+- Propuesta de nombre que viole esta regla
+- Conflicto de nombres entre archivos del core
+- Uso inconsistente de sinónimos en el core
+- Abreviaturas inconsistentes para la misma operación
+
+**EJEMPLOS DE VIOLACIÓN:**
+
+```typescript
+// VIOLACIÓN - Core Arquitectónico
+// En BaseEntity:
+getMetadata() { ... }
+
+// En decorators/api_endpoint_decorator.ts:
+getMetadata() { ... }  // ❌ Nombre duplicado en core
+
+// VIOLACIÓN - Nombres ambiguamente similares
+// En Application:
+registerModule() { ... }
+
+// En decorators/module_name_decorator.ts:
+registerModuleName() { ... }  // ❌ Muy similar, confundible
+
+// VIOLACIÓN - Sinónimos confundibles
+// En BaseEntity:
+fetchData() { ... }
+
+// En decorators/persistent_decorator.ts:
+retrieveData() { ... }  // ❌ Sinónimo, usar nomenclatura consistente
+getData() { ... }        // ❌ Otro sinónimo
+```
+
+**EJEMPLOS CORRECTOS:**
+
+```typescript
+// CORRECTO - Nombres únicos y diferenciables en core
+// En BaseEntity:
+getPropertyMetadataByKey(key: symbol): any { ... }
+
+// En decorators/api_endpoint_decorator.ts:
+extractApiEndpointFromMetadata(target: any): string { ... }
+
+// En Application:
+registerEntityModule(entity: typeof BaseEntity): void { ... }
+
+// CORRECTO - Consistencia en nomenclatura de core
+// Todas las funciones de obtención de metadata en core usan "get":
+getPropertyMetadata()
+getDecoratorMetadata()
+getClassMetadata()
+// NO mezclar con: fetchPropertyMetadata, retrieveDecoratorMetadata
+```
+
+**EXCEPCIONES LIMITADAS:**
+
+Componentes UI (fuera del core) SÍ PUEDEN compartir nombres comunes:
+
+```typescript
+// PERMITIDO - Componentes fuera del core
+// En TextInputComponent.vue:
+export default {
+  props: {
+    id: String,      // ✓ Común en componentes
+    value: String,   // ✓ Común en componentes
+    label: String    // ✓ Común en componentes
+  }
+}
+
+// En NumberInputComponent.vue:
+export default {
+  props: {
+    id: String,      // ✓ Permitido, no es core arquitectónico
+    value: Number,   // ✓ Permitido
+    label: String    // ✓ Permitido
+  }
+}
+```
+
+**RESPONSABILIDAD:**
+
+- **IA:** Verificar unicidad antes de proponer nombres en core, reportar violaciones detectadas
+- **Arquitecto:** Validar que nombres propuestos cumplan con unicidad estricta, autorizar excepciones solo si están técnicamente justificadas y registradas en `/copilot/EXCEPCIONES.md`
+
+---
+
 ## 7. Prohibiciones
 
 ### 7.1 Prohibiciones Arquitectónicas
@@ -1203,6 +1370,8 @@ Si se requiere naming convention no listada en 6.8.1:
 - Modificar contratos base sin estar trabajando explícitamente en ellos
 - Introducir naming conventions no autorizadas
 - Usar nombres ambiguos o no descriptivos que violen 6.8.1
+- Usar nombres duplicados o ambiguamente similares en core arquitectónico que violen 6.8.4
+- Introducir sinónimos confundibles para operaciones ya nombradas en el core
 - Saltarse Pre-Commit Verification
 
 ### 7.2 Prohibiciones de IA
@@ -1369,7 +1538,18 @@ Este contrato sigue versionamiento semántico:
 - **Minor:** Nuevas verificaciones, extensiones de proceso, aclaraciones
 - **Patch:** Correcciones tipográficas, actualización de ejemplos
 
-**Versión actual:** 1.1.0
+**Versión actual:** 1.2.0
+
+**Cambios en versión 1.2.0 (15 de Febrero, 2026):**
+- **Nueva Regla de Unicidad en Core Arquitectónico:** Agregada sección 6.8.4
+- Establecimiento de regla obligatoria: no puede haber nombres duplicados o ambiguamente similares en el core arquitectónico del framework
+- Definición explícita de qué constituye el "core arquitectónico" (Application, BaseEntity, Decoradores, Tipos Core, Composables Core, Constantes del Sistema)
+- Prohibición de nombres duplicados exactos, nombres ambiguamente similares, sobrecarga semántica y sinónimos confundibles en el core
+- Proceso de verificación obligatorio de unicidad antes de nombrar elementos del core
+- Obligación de reportar violaciones de unicidad detectadas
+- Exclusión explícita de componentes UI y entidades de dominio de esta regla (pueden tener propiedades comunes)
+- Actualización de Prohibiciones Arquitectónicas (§7.1) para incluir violaciones de unicidad
+- Actualización de Pre-Commit Verification Checklist (§6.7.1) para incluir verificación de unicidad en core
 
 **Cambios en versión 1.1.0 (13 de Febrero, 2026):**
 - **Extensión de Naming Conventions:** Agregada Nota Obligatoria de Descriptibilidad Total en 6.8.1

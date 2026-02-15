@@ -34,7 +34,7 @@ QS: 03-QUICK-START.md (Guía)
 | FLOW | 02-FLOW-ARCHITECTURE.md | Documento Descriptivo | Flujos del sistema | 921 | ACTIVO |
 | QS | 03-QUICK-START.md | Guía Práctica | Tutorial inicio rápido | 564 | ACTIVO |
 | UI | 04-UI-DESIGN-SYSTEM-CONTRACT.md | Contrato Subordinado | Sistema UI/CSS | 894 | ACTIVO |
-| ENF | 05-ENFORCEMENT-TECHNICAL-CONTRACT.md | Contrato Subordinado | Enforcement técnico | 1678 | ACTIVO |
+| ENF | 05-ENFORCEMENT-TECHNICAL-CONTRACT.md | Contrato Subordinado | Enforcement técnico | 1847+ | ACTIVO |
 | CST | 06-CODE-STYLING-STANDARDS.md | Contrato Subordinado | Estándares de code styling | 1850+ | ACTIVO |
 
 ### Documentación de Capas (Layer 1-6)
@@ -263,7 +263,7 @@ QS: 03-QUICK-START.md (Guía)
 | ENF-5.3 | Flujo VCC | Proceso | 324-350 | Validación cruzada capas |
 | ENF-5.4 | Flujo Breaking Changes | Proceso | 352-382 | Gestión breaking changes |
 | ENF-5.5 | Flujo Excepciones | Proceso | 384-392 | Registro de excepciones |
-| ENF-6 | Reglas Obligatorias | Regla | 394-900+ | 7 reglas enforcement |
+| ENF-6 | Reglas Obligatorias | Regla | 394-1200+ | 8 reglas enforcement |
 | ENF-6.1 | Subordinación | Regla | 396-402 | Jerarquía contractual |
 | ENF-6.2 | AOM Obligatorio | Regla | 404-485 | Autoverificación mandatoria |
 | ENF-6.2.1 | Formato Declaración | Formato | 410-467 | Template declaración cumplimiento |
@@ -273,7 +273,14 @@ QS: 03-QUICK-START.md (Guía)
 | ENF-6.4.2 | Procedimiento | Proceso | 641-738 | 5 pasos obligatorios |
 | ENF-6.4.3 | Prohibición Silenciosos | Prohibición | 740-751 | Breaking changes ocultos |
 | ENF-6.5 | Responsabilidad Arquitecto | Regla | 753-841 | Facultades y obligaciones |
-| ENF-6.6 | Registro Excepciones | Regla | 843-900+ | Procedimiento excepciones |
+| ENF-6.6 | Registro Excepciones | Regla | 843-970+ | Procedimiento excepciones |
+| ENF-6.7 | Pre-Commit Verification | Regla | ~975-1034 | Checklist obligatorio pre-commit |
+| ENF-6.7.1 | Checklist Obligatoria | Checklist | ~979-1015 | Verificaciones obligatorias |
+| ENF-6.8 | Coherencia Naming | Regla | ~1036-1350+ | Naming conventions y descriptibilidad |
+| ENF-6.8.1 | Naming Autorizadas | Especificación | ~1044-1176 | Convenciones por tipo + descriptibilidad |
+| ENF-6.8.2 | Prohibición No Autorizado | Prohibición | ~1178-1194 | Naming no autorizadas |
+| ENF-6.8.3 | Autorización Nueva | Proceso | ~1196-1202 | Proceso autorización convención |
+| ENF-6.8.4 | Unicidad Core | Regla | ~1204-1348 | Unicidad nombres en core arquitectónico |
 
 ---
 
