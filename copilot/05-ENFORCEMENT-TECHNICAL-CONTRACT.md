@@ -1,6 +1,6 @@
 # CONTRATO DE ENFORCEMENT TÉCNICO - Framework SaaS Vue
 
-**Versión:** 1.3.0  
+**Versión:** 1.4.0  
 **Fecha de Creación:** 13 de Febrero, 2026  
 **Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
@@ -987,6 +987,22 @@ Antes de ejecutar `git commit`, DEBERÁ ejecutarse Pre-Commit Verification segú
 - [ ] Sin duplicación de lógica
 - [ ] Type safety preservado
 - [ ] Sin errores de compilación TypeScript
+
+### Verificación de Estilos en Componentes Vue (04-UI-CONTRACT § 6.13)
+- [ ] Componentes usan `<style scoped>` por defecto (o `<style>` justificado)
+- [ ] **SIN definición de variables CSS locales en componentes** (prohibición absoluta)
+- [ ] **SIN variables tipo `--local-*`, `--component-*`, `:root` en `<style scoped>`**
+- [ ] Todo valor CSS consume tokens de constants.css mediante `var(--token-name)`
+- [ ] Sin colores hardcoded en `<style scoped>` (#hex, rgb, rgba, hsl)
+- [ ] Sin dimensiones hardcoded repetidas (16px, 20px, etc.)
+- [ ] Sin sombras hardcoded (box-shadow literales)
+- [ ] Sin z-index numéricos (solo var(--z-*))
+- [ ] Sin duraciones hardcoded (solo var(--transition-*), var(--duration-*))
+- [ ] Anidación de selectores no excede 3 niveles
+- [ ] Orden correcto: raíz → elementos → modificadores → pseudo-clases → media queries
+- [ ] Bloque `<style scoped>` al final del archivo (después de `<template>` y `<script>`)
+- [ ] Si se agregó token nuevo, constants.css actualizado en mismo commit
+- [ ] Excepciones de hardcode documentadas con comentario /* Excepción: razón */
 
 ### Verificación de Documentación
 - [ ] Documentación sincronizada con código modificado

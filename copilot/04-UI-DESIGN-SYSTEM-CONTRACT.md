@@ -1,8 +1,8 @@
 # CONTRATO DE SISTEMA DE DISEÑO UI/CSS - Framework SaaS Vue
 
-**Versión:** 1.0.0  
+**Versión:** 2.0.0  
 **Fecha de Creación:** 13 de Febrero, 2026  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
 
 ## 1. Propósito
@@ -78,6 +78,42 @@ Estructura obligatoria:
 ├── form.css         (Estilos formularios)
 └── table.css        (Estilos tablas)
 ```
+
+### 4.2.1 Estilos en Componentes Vue
+
+Los estilos CSS del framework NO se limitan a `/src/css/`. Los componentes Vue constituyen fuentes adicionales obligatorias de estilos:
+
+```
+/src/components/**/*.vue
+├── <style scoped>    ← Estilos encapsulados al componente (OBLIGATORIO)
+└── <style>           ← Estilos globales (EXCEPCIONAL, requiere justificación)
+```
+
+**Arquitectura Visual Unificada:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 FUENTE ÚNICA DE VERDAD                  │
+│                  /src/css/constants.css                 │
+│          (Todas las variables CSS del sistema)          │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+         ┌─────────────┴─────────────┐
+         │                           │
+    ┌────▼────┐              ┌───────▼────────┐
+    │ main.css│              │ Componentes Vue│
+    │ form.css│              │  <style scoped>│
+    │ table.css              │                │
+    └─────────┘              └────────────────┘
+```
+
+**Regla Fundamental:**
+
+Todo estilo scoped en componentes Vue está sujeto a las mismas reglas de tokenización, política anti-hardcode y optimización de performance establecidas en este contrato.
+
+**Principio de Centralización Absoluta:**
+
+Los componentes Vue NO son fuentes de definición de tokens. Son ÚNICAMENTE consumidores de tokens definidos en `constants.css`.
 
 ### 4.3 Sistema de Layout
 
@@ -570,6 +606,268 @@ Todo cambio, extensión o creación en sistema UI/CSS debe documentarse según l
 - Mantener referencias cruzadas actualizadas
 - Sincronizar código CSS con documentación
 
+### 6.13 Reglas para Estilos en Componentes Vue
+
+#### 6.13.1 Obligatoriedad de Scoped por Defecto
+
+**REGLA OBLIGATORIA:**
+
+Todo componente Vue DEBE usar `<style scoped>` por defecto.
+
+Uso de `<style>` sin scoped está **PROHIBIDO** salvo casos excepcionales justificados:
+- Definición de clases globales reusables autorizadas
+- Override de estilos de librerías externas (documentado)
+- Estilos de layout estructural compartido core
+
+**Excepción:** Requiere comentario de justificación obligatorio:
+
+```vue
+<!-- Justificación: Estilos globales para modales que renderizan fuera del componente -->
+<style>
+.modal-overlay {
+    position: fixed;
+    z-index: var(--z-modal);
+}
+</style>
+```
+
+#### 6.13.2 Prohibición Absoluta de Variables CSS Locales
+
+**REGLA OBLIGATORIA:**
+
+Los componentes Vue **NO PUEDEN DEFINIR VARIABLES CSS PROPIAS**.
+
+TODO valor CSS debe consumirse exclusivamente desde `constants.css` mediante `var(--token-name)`.
+
+**Aplicación:**
+
+```vue
+<!-- CORRECTO - Consumo exclusivo de tokens centralizados -->
+<style scoped>
+.input {
+    padding: var(--spacing-medium);
+    border-radius: var(--border-radius);
+    color: var(--gray-medium);
+    transition: border-color var(--transition-normal) ease;
+}
+
+.input--focus {
+    border-color: var(--btn-primary);
+    box-shadow: var(--shadow-medium);
+}
+</style>
+
+<!-- INCORRECTO - Definición de variables locales PROHIBIDA -->
+<style scoped>
+:root {
+    --local-padding: 16px;  /* ← PROHIBIDO ABSOLUTAMENTE */
+    --local-color: #3b82f6; /* ← PROHIBIDO ABSOLUTAMENTE */
+}
+
+.input {
+    padding: var(--local-padding);  /* ← PROHIBIDO */
+    color: var(--local-color);       /* ← PROHIBIDO */
+}
+</style>
+
+<!-- INCORRECTO - Valores hardcoded PROHIBIDOS -->
+<style scoped>
+.input {
+    padding: 16px;                  /* ← PROHIBIDO */
+    border-radius: 8px;             /* ← PROHIBIDO */
+    color: #6b7280;                 /* ← PROHIBIDO */
+    transition: all 0.3s ease;      /* ← PROHIBIDO */
+}
+</style>
+```
+
+**Razón contractual:**
+
+La definición de variables CSS locales fragmenta el sistema de diseño, crea duplicación no controlada, y rompe la fuente única de verdad establecida en `constants.css`.
+
+Si un valor no existe en tokens: **DEBE agregarse a `constants.css` primero**, NO definirse localmente.
+
+#### 6.13.3 Tokenización Obligatoria en Estilos Scoped
+
+**EXTENSIÓN DE § 6.4:**
+
+La política de tokenización de § 6.4 aplica **obligatoriamente** a estilos scoped.
+
+Toda categoría tokenizable DEBE usar tokens:
+
+| Categoría | Obligatorio | Ejemplo Válido |
+|-----------|-------------|----------------|
+| **Colores** | `var(--color-*)` | `color: var(--gray-medium)` |
+| **Espaciados** | `var(--spacing-*)` o `var(--padding-*)` | `padding: var(--spacing-medium)` |
+| **Sombras** | `var(--shadow-*)` | `box-shadow: var(--shadow-medium)` |
+| **Radios** | `var(--border-radius*)` | `border-radius: var(--border-radius)` |
+| **Z-index** | `var(--z-*)` | `z-index: var(--z-modal)` |
+| **Transiciones** | `var(--transition-*)` | `transition: all var(--transition-normal)` |
+| **Duraciones** | `var(--duration-*)` o `var(--transition-*)` | `animation-duration: var(--duration-slow)` |
+| **Opacidades** | `var(--opacity-*)` | `opacity: var(--opacity-disabled)` |
+| **Breakpoints** | `var(--breakpoint-*)` | `@media (max-width: var(--breakpoint-mobile))` |
+
+**Valores permitidos sin tokenización:**
+
+- Cálculos derivados: `calc(100% - var(--spacing-medium))`
+- Porcentajes responsive: `width: 50%`, `height: 100%`
+- Viewport units: `height: 100vh`, `width: 100vw`
+- Valores únicos absolutos: `opacity: 0`, `opacity: 1`, `display: none`
+
+Todo otro valor literal está **PROHIBIDO**.
+
+#### 6.13.4 Estructura de Selectores en Componentes Vue
+
+**REGLAS OBLIGATORIAS:**
+
+**Anidación máxima:**
+- Máximo 3 niveles de anidación
+- Preferir clases planas sobre descendientes profundos
+
+**Orden de selectores:**
+
+```vue
+<style scoped>
+/* 1. Selector raíz del componente */
+.component-root {
+    display: flex;
+}
+
+/* 2. Elementos estructurales */
+.component-root .header {
+    padding: var(--spacing-medium);
+}
+
+.component-root .body {
+    flex-grow: 1;
+}
+
+.component-root .footer {
+    border-top: 1px solid var(--border-gray);
+}
+
+/* 3. Modificadores y estados */
+.component-root--disabled {
+    opacity: var(--opacity-disabled);
+    cursor: not-allowed;
+}
+
+.component-root--active {
+    border-color: var(--btn-primary);
+}
+
+/* 4. Pseudo-clases */
+.component-root:hover {
+    background-color: var(--overlay-light);
+}
+
+.component-root:focus-within {
+    box-shadow: var(--shadow-medium);
+}
+
+/* 5. Media queries (al final) */
+@media (max-width: 767px) {
+    .component-root {
+        flex-direction: column;
+    }
+}
+</style>
+```
+
+**Convención de nombres BEM simplificada:**
+
+- Bloque: `.component-name`
+- Elemento: `.component-name .element` o `.component-name__element`
+- Modificador: `.component-name--modifier`
+
+#### 6.13.5 Prohibiciones Específicas en Estilos Scoped
+
+**Prohibido absolutamente:**
+
+- Definición de variables CSS mediante `:root`, `.selector`, o cualquier otro método
+- Valores literales de colores: `#hex`, `rgb()`, `rgba()`, `hsl()`
+- Valores literales de dimensiones repetidas: `16px`, `20px`, `1rem` (salvo únicos)
+- Valores literales de sombras: `box-shadow: 0 2px 4px rgba(...)`
+- Valores literales de z-index: `z-index: 999`, `z-index: 100`
+- Duraciones hardcoded: `transition: all 0.3s`, `animation-duration: 500ms`
+- Border-radius literales: `border-radius: 8px`, `border-radius: 4px`
+- Opacidades literales: `opacity: 0.5`, `opacity: 0.7` (salvo 0 y 1)
+- Selectores con ID: `#elementId { }`
+- Selector universal sin especificidad: `* { transition: all 5s }`
+- `!important` sin justificación documentada
+- Anidación mayor a 3 niveles
+
+**Permitido con restricciones:**
+
+- Porcentajes: `width: 50%`, `height: 100%`
+- Viewport units: `height: 100vh`
+- Cálculos: `calc(100% - var(--spacing-large))`
+- Flexbox valores: `flex: 1`, `flex-grow: 1`
+- Display: `display: flex`, `display: none`
+- Position: `position: absolute`, `position: relative`
+- Valores absolutos: `opacity: 0`, `opacity: 1`, `z-index: 0`
+
+#### 6.13.6 Auditoría de Conformidad
+
+**Checklist obligatorio para componentes Vue:**
+
+```markdown
+[ ] `<style scoped>` usado (o `<style>` justificado con comentario)
+[ ] Sin definición de variables CSS locales (`:root`, variables inline)
+[ ] Sin colores hardcoded (#hex, rgb, rgba, hsl)
+[ ] Sin dimensiones hardcoded repetidas (16px, 20px, etc.)
+[ ] Sin sombras hardcoded (box-shadow literales)
+[ ] Sin z-index numéricos (solo var(--z-*))
+[ ] Sin duraciones hardcoded (solo var(--transition-*), var(--duration-*))
+[ ] Anidación máxima 3 niveles
+[ ] Orden de selectores: raíz → elementos → modificadores → media queries
+[ ] Excepciones documentadas con comentario /* Excepción: razón */
+```
+
+**Detección automatizable:**
+
+```bash
+# Buscar variables CSS locales (PROHIBIDAS)
+grep -rn "--.*:" src/components/**/*.vue
+→ Si encuentra matches → BLOQUEAR commit
+
+# Buscar colores hex
+grep -rE "#[0-9a-fA-F]{3,6}" src/components/**/*.vue
+→ Si encuentra matches en <style> → BLOQUEAR commit
+
+# Buscar valores numéricos sospechosos
+grep -rE "(padding|margin|width|height):[^;]*[0-9]+px" src/components/**/*.vue
+→ Si encuentra matches sin var() → REVISAR
+```
+
+#### 6.13.7 Flujo de Trabajo Correcto
+
+**Proceso obligatorio para estilos en componentes:**
+
+```
+1. Desarrollador necesita aplicar estilo a componente
+   ↓
+2. Identifica categoría (color, espaciado, sombra, etc.)
+   ↓
+3. Busca token existente en constants.css
+   ├─→ SI existe: usa var(--token-name)
+   └─→ SI NO existe: IR A PASO 4
+   ↓
+4. Agregar token a constants.css:
+   - Seguir naming convention
+   - Agregar en sección apropiada
+   - Documentar con comentario
+   - Definir valor para dark-mode si aplica
+   ↓
+5. Usar token recién creado en componente
+   ↓
+6. Verificar ausencia de valores hardcoded
+   ↓
+7. Commit con ambos archivos: constants.css + ComponenteX.vue
+```
+
+**PROHIBIDO:** Crear estilo en componente con valor hardcoded "temporalmente" con intención de tokenizarlo después. Tokenizar PRIMERO, usar DESPUÉS.
+
 ## 7. Prohibiciones
 
 ### 7.1 Prohibiciones Arquitectónicas
@@ -586,8 +884,8 @@ Prohibido sin autorización explícita según `00-CONTRACT.md`:
 ### 7.2 Prohibiciones de Hardcode
 
 Prohibido absolutamente:
-- Colores literales fuera de `constants.css`
-- Dimensiones fijas repetidas no tokenizadas
+- Colores literales fuera de `constants.css` o en componentes Vue
+- Dimensiones fijas repetidas no tokenizadas en cualquier archivo CSS o componente
 - Sombras inline repetidas
 - Z-index numéricos arbitrarios
 - Duraciones de transición hardcodeadas
@@ -596,6 +894,8 @@ Prohibido absolutamente:
 - Transformaciones literales repetidas
 - Breakpoints inline no tokenizados
 - Gradientes inline no centralizados
+- **Definición de variables CSS locales en componentes Vue** (PROHIBICIÓN ABSOLUTA NUEVA)
+- **Cualquier valor tokenizable en `<style scoped>` sin usar `var(--token)`** (PROHIBICIÓN ABSOLUTA NUEVA)
 
 ### 7.3 Prohibiciones de Estados
 
@@ -684,7 +984,23 @@ Este contrato sigue versionamiento semántico:
 - **Minor:** Nuevos tokens, reglas adicionales, aclaraciones
 - **Patch:** Correcciones tipográficas, actualización de ejemplos
 
-Versión actual: **1.0.0**
+Versión actual: **2.0.0**
+
+Cambios en versión 2.0.0 (15 de Febrero, 2026):
+- **BREAKING CHANGE:** Prohibición absoluta de definición de variables CSS locales en componentes Vue
+- Agregado § 4.2.1: Estilos en Componentes Vue - Visibilidad estructural de estilos scoped
+- Agregado § 6.13: Reglas específicas para estilos en componentes Vue (7 subsecciones)
+- § 6.13.1: Obligatoriedad de `<style scoped>` por defecto
+- § 6.13.2: Prohibición absoluta de variables CSS locales en componentes
+- § 6.13.3: Tokenización obligatoria en estilos scoped
+- § 6.13.4: Estructura de selectores en componentes Vue
+- § 6.13.5: Prohibiciones específicas en estilos scoped
+- § 6.13.6: Auditoría de conformidad con checklist
+- § 6.13.7: Flujo de trabajo correcto para estilos en componentes
+- Actualizado § 7.2: Prohibiciones de hardcode - incluye prohibiciones específicas para componentes Vue
+- Enfatizado principio de centralización absoluta: constants.css como fuente única de verdad
+- Documentado diagrama de arquitectura visual unificada
+- Agregadas reglas de detección automatizable de violaciones
 
 Cambios en versión 1.0.0 (13 de Febrero, 2026):
 - Creación inicial del contrato UI/Design System
@@ -829,15 +1145,21 @@ const handleBlur = () => { isFocused.value = false; };
 ### 10.5 Aplicabilidad
 
 Al trabajar con sistema UI/CSS de este framework, se acepta contractualmente:
-- Consumir tokens centralizados obligatoriamente
-- Prohibir valores hardcodeados repetidos
+- Consumir tokens centralizados obligatoriamente desde `constants.css`
+- **Prohibir definición de variables CSS locales en componentes Vue** (ABSOLUTO)
+- Prohibir valores hardcodeados repetidos en cualquier archivo CSS o componente
+- Usar `<style scoped>` por defecto en componentes Vue
+- TODO valor tokenizable en componentes debe usar `var(--token-name)`
 - Seguir estrategia Desktop-First Adaptativo
 - Mantener box-sizing: border-box universal
 - Usar jerarquía z-index contractual
 - Manejar estados mediante clases
 - Optimizar animaciones (transform + opacity)
+- Limitar anidación de selectores a 3 niveles máximo
 - Documentar extensiones del sistema
 - Actualizar índices de carpetas afectadas
+- Agregar tokens a `constants.css` ANTES de usarlos en componentes
+- Validar ausencia de hardcode antes de commit
 
 ### 10.6 Reconocimiento en Contrato Principal
 
@@ -886,8 +1208,14 @@ Este contrato mantiene consistencia visual, mantenibilidad estructural y escalab
 
 Este contrato es subordinado a MI LÓGICA y no modifica arquitectura core del framework. Regula exclusivamente aspectos de presentación visual.
 
-**Versión:** 1.0.0  
+**Versión:** 2.0.0  
 **Fecha de Vigencia:** Desde el 13 de Febrero, 2026  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE  
 **Subordinado a:** MI LÓGICA y 00-CONTRACT.md
+
+**Cambios Mayores en v2.0.0:**
+- Prohibición absoluta de definición de variables CSS locales en componentes Vue
+- Reglas específicas para estilos scoped en componentes (§ 6.13)
+- Visibilidad estructural de componentes Vue como fuentes de estilos (§ 4.2.1)
+- Enforcement de tokenización universal en todos los archivos Vue

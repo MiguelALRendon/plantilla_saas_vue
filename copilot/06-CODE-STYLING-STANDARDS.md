@@ -1,6 +1,6 @@
 # CONTRATO DE ESTÁNDARES DE CODE STYLING - Framework SaaS Vue
 
-**Versión:** 1.0.0  
+**Versión:** 1.1.0  
 **Fecha de Creación:** 15 de Febrero, 2026  
 **Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
@@ -1087,6 +1087,304 @@ async function loadEntity(entityClass: typeof BaseEntity): Promise<void> {
     }
 }
 </script>
+```
+
+### 6.3.4 Estructura del Bloque `<style>` en Componentes Vue
+
+**REGLA OBLIGATORIA:**
+
+Todo componente Vue DEBE colocar el bloque `<style scoped>` al **final del archivo**, después de `<template>` y `<script>`.
+
+Orden obligatorio de secciones:
+
+```vue
+<template>
+  <!-- 1. Template -->
+</template>
+
+<script setup lang="ts">
+// 2. Script
+</script>
+
+<style scoped>
+/* 3. Estilos (al final) */
+</style>
+```
+
+**Organización interna obligatoria del bloque `<style scoped>`:**
+
+```vue
+<style scoped>
+/* 1. Selector raíz del componente */
+
+/* 2. Elementos estructurales hijos */
+
+/* 3. Modificadores y estados (--disabled, --active, --error, etc.) */
+
+/* 4. Pseudo-clases (:hover, :focus, :active, etc.) */
+
+/* 5. Media queries (responsive, al final) */
+</style>
+```
+
+**Aplicación completa:**
+
+```vue
+<template>
+    <div :class="['text-input-component', { 'text-input-component--disabled': disabled, 'text-input-component--error': hasError }]">
+        <label :for="inputId" class="label">{{ label }}</label>
+        <input
+            :id="inputId"
+            v-model="localValue"
+            :type="type"
+            :disabled="disabled"
+            class="input"
+        />
+        <span v-if="errorMessage" class="error-message">{{ errorMessage }}</span>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, Ref, ComputedRef } from 'vue';
+
+interface Props {
+    label: string;
+    modelValue: string;
+    type?: string;
+    disabled?: boolean;
+    error?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    type: 'text',
+    disabled: false,
+    error: ''
+});
+
+const emit = defineEmits<{
+    'update:modelValue': [value: string];
+}>();
+
+const localValue: ComputedRef<string> = computed({
+    get: (): string => props.modelValue,
+    set: (value: string): void => emit('update:modelValue', value)
+});
+
+const inputId: string = `text-input-${Math.random().toString(36).substring(7)}`;
+const hasError: ComputedRef<boolean> = computed(() => !!props.error);
+const errorMessage: ComputedRef<string> = computed(() => props.error);
+</script>
+
+<style scoped>
+/* 1. Raíz */
+.text-input-component {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-small);
+}
+
+/* 2. Elementos */
+.label {
+    color: var(--gray-medium);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+}
+
+.input {
+    padding: var(--padding-medium);
+    border: 1px solid var(--border-gray);
+    border-radius: var(--border-radius);
+    background-color: var(--white);
+    color: var(--gray-medium);
+    font-size: var(--font-size-base);
+    transition: border-color var(--transition-normal) ease,
+                box-shadow var(--transition-normal) ease;
+}
+
+.error-message {
+    color: var(--accent-red);
+    font-size: var(--font-size-small);
+}
+
+/* 3. Modificadores */
+.text-input-component--disabled {
+    opacity: var(--opacity-disabled);
+    cursor: not-allowed;
+}
+
+.text-input-component--error .input {
+    border-color: var(--accent-red);
+}
+
+/* 4. Pseudo-clases */
+.input:focus {
+    outline: none;
+    border-color: var(--btn-primary);
+    box-shadow: 0 0 0 3px var(--focus-light);
+}
+
+.input:hover:not(:disabled) {
+    border-color: var(--gray-dark);
+}
+
+.input:disabled {
+    background-color: var(--gray-lighter);
+    cursor: not-allowed;
+}
+
+/* 5. Media queries */
+@media (max-width: 767px) {
+    .text-input-component {
+        gap: var(--spacing-xsmall);
+    }
+    
+    .input {
+        padding: var(--padding-small);
+        font-size: var(--font-size-small);
+    }
+}
+</style>
+```
+
+#### 6.3.4.1 Prohibición Absoluta de Variables CSS Locales
+
+**REGLA FUNDAMENTAL:**
+
+Los componentes Vue **NO PUEDEN DEFINIR VARIABLES CSS PROPIAS**.
+
+Prohibido absolutamente:
+
+```vue
+<!-- PROHIBIDO - Variables locales -->
+<style scoped>
+:root {
+    --local-spacing: 16px;  /* ← PROHIBIDO */
+    --local-color: #3b82f6; /* ← PROHIBIDO */
+}
+
+.component {
+    --component-padding: 20px;  /* ← PROHIBIDO */
+    padding: var(--component-padding);
+}
+</style>
+
+<!-- PROHIBIDO - Cualquier definición de variable -->
+<style scoped>
+.selector {
+    --any-variable: value;  /* ← PROHIBIDO EN CUALQUIER FORMA */
+}
+</style>
+```
+
+Obligatorio:
+
+```vue
+<!-- CORRECTO - Solo consumo de tokens centralizados -->
+<style scoped>
+.component {
+    padding: var(--spacing-medium);     /* ← Token de constants.css */
+    color: var(--gray-medium);          /* ← Token de constants.css */
+    border-radius: var(--border-radius); /* ← Token de constants.css */
+}
+</style>
+```
+
+**Razón contractual:**
+
+La definición de variables CSS en componentes:
+- Fragmenta el sistema de diseño unificado
+- Crea duplicación no controlada de valores
+- Rompe la fuente única de verdad (`constants.css`)
+- Impide auditoría centralizada de tokens
+- Viola el principio de tokenización universal establecido en `04-UI-DESIGN-SYSTEM-CONTRACT.md` § 6.4
+
+**Flujo correcto:**
+
+```
+Desarrollador necesita valor CSS
+    ↓
+¿Existe en constants.css?
+    ├─→ SÍ: Usar var(--token-name)
+    └─→ NO: Agregar a constants.css PRIMERO, luego usar
+    ↓
+NUNCA definir variable local en componente
+```
+
+#### 6.3.4.2 Convención de Nombres de Clases
+
+**REGLA OBLIGATORIA:**
+
+Usar convención BEM simplificada o clases semánticas:
+
+**Opción 1 - BEM simplificado:**
+
+```vue
+<style scoped>
+/* Bloque */
+.component-name { }
+
+/* Elemento */
+.component-name__element { }
+
+/* Modificador */
+.component-name--modifier { }
+
+/* Elemento con modificador */
+.component-name__element--modifier { }
+</style>
+```
+
+**Opción 2 - Clases semánticas anidadas:**
+
+```vue
+<style scoped>
+.component-name { }
+.component-name .header { }
+.component-name .body { }
+.component-name.disabled { }
+</style>
+```
+
+**Prohibido:**
+
+- Clases genéricas sin prefijo: `.button`, `.input`, `.container` (colisionan)
+- Clases abreviadas cripícas: `.btn-pri`, `.txt-inp`, `.cmp` (no descriptivas)
+- Selectores por ID: `#elementId` (no reutilizables)
+- Selectores de tipo sin clase: `div`, `span`, `button` (demasiado genéricos)
+
+#### 6.3.4.3 Limitación de Anidación
+
+**REGLA OBLIGATORIA:**
+
+Máximo **3 niveles de anidación** de selectores.
+
+```vue
+<!-- CORRECTO - Máximo 3 niveles -->
+<style scoped>
+.component { }
+.component .child { }
+.component .child .grandchild { }
+</style>
+
+<!-- INCORRECTO - 4+ niveles -->
+<style scoped>
+.component .child .grandchild .great-grandchild { } /* ← PROHIBIDO */
+</style>
+```
+
+**Refactorización obligatoria si excede 3 niveles:**
+
+```vue
+<!-- Antes (INCORRECTO) -->
+<style scoped>
+.form .row .input .icon { }  /* 4 niveles */
+</style>
+
+<!-- Después (CORRECTO) -->
+<style scoped>
+.form .row .input { }
+.input-icon { }  /* Clase directa */
+</style>
 ```
 
 ### 6.4 Reglas TypeScript Strict
