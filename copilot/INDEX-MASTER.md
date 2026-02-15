@@ -2,6 +2,7 @@
 
 **Versión:** 1.0.0  
 **Generado:** 13 de Febrero, 2026  
+**Última Actualización:** 15 de Febrero, 2026  
 **Propósito:** Sistema de navegación semántica determinista para localización rápida por IA
 
 ## Mapa Jerárquico de Contratos
@@ -14,6 +15,8 @@ MI LÓGICA (Axiomas A1-A4)
 CORE: 00-CONTRACT.md (Contrato Principal)
     ↓
 ENF: 05-ENFORCEMENT-TECHNICAL-CONTRACT.md (Enforcement)
+    ↓
+CST: 06-CODE-STYLING-STANDARDS.md (Code Styling)
     ↓
 UI: 04-UI-DESIGN-SYSTEM-CONTRACT.md (UI/CSS)
     ↓
@@ -32,6 +35,7 @@ QS: 03-QUICK-START.md (Guía)
 | QS | 03-QUICK-START.md | Guía Práctica | Tutorial inicio rápido | 564 | ACTIVO |
 | UI | 04-UI-DESIGN-SYSTEM-CONTRACT.md | Contrato Subordinado | Sistema UI/CSS | 894 | ACTIVO |
 | ENF | 05-ENFORCEMENT-TECHNICAL-CONTRACT.md | Contrato Subordinado | Enforcement técnico | 1678 | ACTIVO |
+| CST | 06-CODE-STYLING-STANDARDS.md | Contrato Subordinado | Estándares de code styling | 1850+ | ACTIVO |
 
 ### Documentación de Capas (Layer 1-6)
 

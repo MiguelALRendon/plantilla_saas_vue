@@ -2,7 +2,7 @@
 
 **Propósito:** Punto de entrada central a la documentación contractual y técnica del framework  
 **Versión:** 1.0.0  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 15 de Febrero, 2026  
 **Total Documentos:** 50+ archivos  
 **ID Base:** DOC
 
@@ -35,6 +35,8 @@ MI LÓGICA (4 Axiomas: A1-A4)
     ↓
 00-CONTRACT.md (CORE)
     ├─→ 05-ENFORCEMENT-TECHNICAL-CONTRACT.md (ENF)
+    │       ↓
+    │   06-CODE-STYLING-STANDARDS.md (CST)
     └─→ 04-UI-DESIGN-SYSTEM-CONTRACT.md (UI)
     
 01-FRAMEWORK-OVERVIEW.md (FWK)
@@ -46,7 +48,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 
 ---
 
-## Contratos Principales (6)
+## Contratos Principales (7)
 
 ### 1. Contrato de Desarrollo (00-CONTRACT.md)
 
@@ -178,6 +180,55 @@ MI LÓGICA (4 Axiomas: A1-A4)
 - **L487-570:** Validación Cruzada entre Capas (VCC) (`ENF-6.4`)
 - **L572-751:** Política de Breaking Changes (`ENF-6.5`)
 - **L753-841:** Responsabilidad del Arquitecto (`ENF-6.6`)
+
+### 7. Code Styling Standards Contract (06-CODE-STYLING-STANDARDS.md)
+
+**ID:** CST  
+**Líneas:** 1850+  
+**Estado:** ACTIVO - Obligatorio para todo código  
+**Versión:** 1.0.0
+
+**Propósito:** Regula formateo, estructura y estilo de código TypeScript/JavaScript/Vue, garantizando consistencia absoluta y prevención de alucinaciones mediante reglas explícitas
+
+**Secciones Críticas:**
+- **L80-142:** Reglas de Formateo (`CST-6.1`)
+  - **L88-111:** Indentación: 4 espacios obligatorios (`CST-6.1.1`)
+  - **L113-145:** Comillas simples por defecto (`CST-6.1.2`)
+  - **L147-221:** PROHIBIDO concatenación con +, OBLIGATORIO template literals (`CST-6.1.3`)
+  - **L223-255:** Semicolons obligatorios (`CST-6.1.4`)
+  - **L327-382:** Trailing commas obligatorias (`CST-6.1.6`)
+  - **L384-451:** Spacing en operadores y llaves (`CST-6.1.7`)
+- **L453-751:** Estructura de Código (`CST-6.2`)
+  - **L455-545:** Import Order jerárquico estricto (`CST-6.2.1`)
+  - **L692-869:** Regions obligatorias: PROPERTIES, METHODS, METHODS OVERRIDES (`CST-6.2.4`)
+- **L871-1067:** TypeScript Strict (`CST-6.4`)
+  - **L873-938:** PROHIBICIÓN ABSOLUTA de 'any' (`CST-6.4.1`)
+  - **L940-1006:** Tipos de retorno explícitos obligatorios (`CST-6.4.2`)
+  - **L1056-1134:** Enums sin valores explícitos (`CST-6.4.4`)
+- **L1169-1407:** Documentación Obligatoria (`CST-6.5`)
+  - **L1171-1229:** JSDoc en propiedades de clases (`CST-6.5.1`)
+  - **L1231-1339:** JSDoc en métodos: @param, @returns, @throws (`CST-6.5.2`)
+- **L1409-1518:** Git Conventions (`CST-6.6`)
+  - **L1411-1477:** Commits en inglés con formato estructurado (`CST-6.6.1`)
+  - **L1493-1518:** Autorización obligatoria del usuario para commits (`CST-6.6.3`)
+- **L1520-1589:** Integración con tsconfig.json (`CST-6.7`)
+
+**Reglas Obligatorias:**
+- ✅ Indentación: 4 espacios (no tabs)
+- ✅ Template literals para strings con variables
+- ✅ Tipado explícito, prohibido 'any'
+- ✅ Regions en clases
+- ✅ JSDoc obligatorio en propiedades y métodos públicos
+- ✅ Commits en inglés solo con autorización
+
+**Prohibiciones:**
+- ❌ Concatenación con + en strings dinámicos
+- ❌ Uso de tipo 'any'
+- ❌ Enums con valores asignados
+- ❌ Commits sin autorización del usuario
+- ❌ Código sin documentación JSDoc
+
+**Cuándo Consultar:** Antes de escribir código, al generar código con IA, en code reviews, antes de commits
 - **L843-900+:** Registro de Excepciones (`ENF-6.7`)
 
 **Procesos Definidos:**

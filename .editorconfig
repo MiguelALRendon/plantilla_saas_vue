@@ -1,0 +1,24 @@
+# EditorConfig - Framework SaaS Vue
+# Regulado por 06-CODE-STYLING-STANDARDS.md § 6.8.1
+
+root = true
+
+# Configuración global
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# TypeScript, JavaScript, Vue - 4 espacios (CST § 6.1.1)
+[*.{ts,js,vue}]
+indent_style = space
+indent_size = 4
+
+# JSON y Markdown - 2 espacios para compatibilidad
+[*.{json,md}]
+indent_size = 2
+
+# Vue específico - 4 espacios en todos los bloques
+[*.vue]
+indent_size = 4
