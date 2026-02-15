@@ -1,5 +1,5 @@
 import { ViewTypes } from '@/enums/view_type';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 
 export interface Modal {
     modalView: typeof BaseEntity | null;

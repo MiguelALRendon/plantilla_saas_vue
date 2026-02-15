@@ -40,7 +40,7 @@ Symbol único que identifica metadata del module list component almacenada en en
 
 ### getModuleListComponent()
 
-Accessor estático definido en BaseEntity que retorna Vue component custom ListView o undefined si no configurado. Implementación: `public static getModuleListComponent(): Component | undefined { return (this as any)[MODULE_LIST_COMPONENT_KEY]; }`. Ubicación: src/entities/base_entitiy.ts líneas ~260-280. Retorno undefined (no fallback default) permite Router layer decidir fallback a DefaultListView externally separation concerns accessor solo retrieves metadata no decide defaults. Usage: `Product.getModuleListComponent() // → ProductCardListView` retorna component reference para Router rendering.
+Accessor estático definido en BaseEntity que retorna Vue component custom ListView o undefined si no configurado. Implementación: `public static getModuleListComponent(): Component | undefined { return (this as any)[MODULE_LIST_COMPONENT_KEY]; }`. Ubicación: src/entities/base_entity.ts líneas ~260-280. Retorno undefined (no fallback default) permite Router layer decidir fallback a DefaultListView externally separation concerns accessor solo retrieves metadata no decide defaults. Usage: `Product.getModuleListComponent() // → ProductCardListView` retorna component reference para Router rendering.
 
 ### Router currentListViewComponent
 
@@ -105,7 +105,7 @@ Storage en class object directly (not prototype) porque component definition ún
 ### BaseEntity Accessor
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el componente ListView del módulo (método estático)
@@ -126,7 +126,7 @@ public getModuleListComponent(): Component | undefined {
 }
 ```
 
-Static method accesses class-level metadata `(this as any)[MODULE_LIST_COMPONENT_KEY]` retornando component or undefined. Instance method wrapper delegates to static method via constructor reference allowing call pattern `entity.getModuleListComponent()` or `EntityClass.getModuleListComponent()` both functional convenience. Return type `Component | undefined` explicitly nullable permitting Router layer handle fallback DefaultListView external logic separation concerns. Ubicación: src/entities/base_entitiy.ts líneas ~260-280.
+Static method accesses class-level metadata `(this as any)[MODULE_LIST_COMPONENT_KEY]` retornando component or undefined. Instance method wrapper delegates to static method via constructor reference allowing call pattern `entity.getModuleListComponent()` or `EntityClass.getModuleListComponent()` both functional convenience. Return type `Component | undefined` explicitly nullable permitting Router layer handle fallback DefaultListView external logic separation concerns. Ubicación: src/entities/base_entity.ts líneas ~260-280.
 
 ### Router View Resolution Integration
 
@@ -579,7 +579,7 @@ User interacts with ListView custom component: clicking card triggers `editProdu
 ## 8. Dependencias
 
 ### BaseEntity
-Import MODULE_LIST_COMPONENT_KEY Symbol y proporciona getModuleListComponent() accessor estático retornando component reference or undefined. Ubicación src/entities/base_entitiy.ts líneas ~260-280. Accessor punto acceso único UI components query ListView metadata sin acceder Symbol directamente encapsulation protecting namespace symbol private contract framework.
+Import MODULE_LIST_COMPONENT_KEY Symbol y proporciona getModuleListComponent() accessor estático retornando component reference or undefined. Ubicación src/entities/base_entity.ts líneas ~260-280. Accessor punto acceso único UI components query ListView metadata sin acceder Symbol directamente encapsulation protecting namespace symbol private contract framework.
 
 ### Vue Component Type
 Import `import type { Component } from 'vue'` TypeScript type annotation decorator parameter ensuring type-safety component references. Custom ListView components MUST be valid Vue SFCs .vue files default-exported defineComponent configuration making them renderable Vue dynamic `<component :is>` binding. Framework expects standard Vue component contracts props emits lifecycle hooks compatible Vue ecosystem.

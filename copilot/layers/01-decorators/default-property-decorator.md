@@ -101,7 +101,7 @@ Product[DEFAULT_PROPERTY_KEY] === 'name'  // true
 
 ### 4.3 Lectura de Metadata en BaseEntity
 
-**Ubicación:** `src/entities/base_entitiy.ts` líneas 232-239.
+**Ubicación:** `src/entities/base_entity.ts` líneas 232-239.
 
 ```typescript
 /**
@@ -570,7 +570,7 @@ Entidades modulares típicamente usan @DefaultProperty para definir cómo se mue
 Diferencia: @PrimaryProperty marca identidad única, @DefaultProperty marca representación legible. Distintos propósitos.
 
 **../02-base-entity/base-entity-core.md:**  
-Documenta implementación de getDefaultPropertyValue() método (líneas 232-239 de base_entitiy.ts).
+Documenta implementación de getDefaultPropertyValue() método (líneas 232-239 de base_entity.ts).
 
 **../04-components/form-field-input-select.md:**  
 Componente que usa getDefaultPropertyValue() para renderizar options de select/dropdown.
@@ -869,7 +869,7 @@ applyDefaults() depende de getProperties() para obtener lista de properties a ve
 
 ```typescript
 import { v4 as uuidv4 } from 'uuid';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { PropertyName, PrimaryProperty, DefaultProperty } from '@/decorations';
 
 export class User extends BaseEntity {
@@ -1361,13 +1361,13 @@ console.log(feature.debugMode);  // false
 
 **Archivos fuente:**
 - src/decorations/default_property_decorator.ts: Implementación del decorator (línea 5-30), Symbol DEFAULT_PROPERTY_METADATA
-- src/entities/base_entitiy.ts: Constructor (línea 50-65), applyDefaults() método (línea 1680-1710), getDefaultValue() estático e instancia (línea 1630-1680)
+- src/entities/base_entity.ts: Constructor (línea 50-65), applyDefaults() método (línea 1680-1710), getDefaultValue() estático e instancia (línea 1630-1680)
 
 **Líneas relevantes en código:**
 - Línea 5 (default_property_decorator.ts): Definición de DEFAULT_PROPERTY_METADATA Symbol
 - Línea 10 (default_property_decorator.ts): Función DefaultProperty que almacena metadata
-- Línea 50 (base_entitiy.ts): Constructor que invoca applyDefaults() como primer paso
-- Línea 1680 (base_entitiy.ts): applyDefaults() itera properties y asigna defaults
-- Línea 1630 (base_entitiy.ts): getDefaultValue() accessor que maneja static values y functions
+- Línea 50 (base_entity.ts): Constructor que invoca applyDefaults() como primer paso
+- Línea 1680 (base_entity.ts): applyDefaults() itera properties y asigna defaults
+- Línea 1630 (base_entity.ts): getDefaultValue() accessor que maneja static values y functions
 
 **Última actualización:** 11 de Febrero, 2026

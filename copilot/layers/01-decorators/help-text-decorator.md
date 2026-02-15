@@ -43,7 +43,7 @@ El decorator HelpText agrega texto de ayuda descriptivo que se muestra permanent
 
 **Dynamic Help Text:** Function en metadata evaluada EN CADA render del input component. Retorna string diferente según entity state. Ejemplo: `(entity: Product) => entity.id ? 'Edit mode' : 'Create mode'`.
 
-**getHelpText(propertyKey) Accessor:** Método de instancia en BaseEntity que retorna help text string o undefined. Si metadata es function, ejecuta con entity instance. Ubicado en línea ~810 de base_entitiy.ts.
+**getHelpText(propertyKey) Accessor:** Método de instancia en BaseEntity que retorna help text string o undefined. Si metadata es function, ejecuta con entity instance. Ubicado en línea ~810 de base_entity.ts.
 
 **Static getHelpText(propertyKey):** Método estático en BaseEntity que retorna help text string o undefined. Si metadata es function, retorna undefined (necesita instance para evaluar).
 
@@ -108,7 +108,7 @@ Product.prototype[HELP_TEXT_METADATA] = {
 ### Accessor Método getHelpText() en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el texto de ayuda de una propiedad (método de instancia)
@@ -159,7 +159,7 @@ public static getHelpText(propertyKey: string): string | undefined {
 }
 ```
 
-Ubicación: `src/entities/base_entitiy.ts` (líneas ~810-855)
+Ubicación: `src/entities/base_entity.ts` (líneas ~810-855)
 
 ### Integración en Form Input Component
 
@@ -199,7 +199,7 @@ Ubicación: `src/entities/base_entitiy.ts` (líneas ~810-855)
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type BaseEntity from '@/entities/base_entitiy';
+import type BaseEntity from '@/entities/base_entity';
 
 const props = defineProps<{
     modelValue: string;
@@ -535,7 +535,7 @@ deleteConfirmation!: string;
 
 ```typescript
 // BaseEntity provee getHelpText() accessor
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 export class Product extends BaseEntity {
     @HelpText('Enter product name')
@@ -909,7 +909,7 @@ password!: string;
 
 - `src/decorations/help_text_decorator.ts` - Implementación decorator
 - `src/decorations/index.ts` - Export HELP_TEXT_METADATA Symbol
-- `src/entities/base_entitiy.ts` - getHelpText() accessor methods
+- `src/entities/base_entity.ts` - getHelpText() accessor methods
 
 ### Tutorials
 
@@ -937,7 +937,7 @@ Product.prototype[HELP_TEXT_METADATA] = {
 ### Acceso desde BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el texto de ayuda de una propiedad
@@ -985,7 +985,7 @@ public static getHelpText(propertyKey: string): string | undefined {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~810-850)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~810-850)
 
 ---
 
@@ -1029,7 +1029,7 @@ public static getHelpText(propertyKey: string): string | undefined {
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type BaseEntity from '@/entities/base_entitiy';
+import type BaseEntity from '@/entities/base_entity';
 
 const props = defineProps<{
     modelValue: string;
@@ -1086,7 +1086,7 @@ const isRequired = computed(() => {
 import { HelpText } from '@/decorations/help_text_decorator';
 import { PropertyName } from '@/decorations/property_name_decorator';
 import { Required } from '@/decorations/required_decorator';
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 export class Product extends BaseEntity {
     @PropertyName('Product Name', String)

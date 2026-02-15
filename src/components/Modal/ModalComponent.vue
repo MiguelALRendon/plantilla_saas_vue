@@ -27,7 +27,7 @@
 <script lang="ts">
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import ICONS from '@/constants/icons';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import { Modal } from '@/models/modal';

@@ -120,7 +120,7 @@ Componentes Vue generados dinámicamente:
 
 ### Componentes Principales
 
-#### BaseEntity (src/entities/base_entitiy.ts)
+#### BaseEntity (src/entities/base_entity.ts)
 
 Clase base abstracta. Toda entidad debe heredar de ella.
 
@@ -714,7 +714,7 @@ name!: string;
 plantilla_saas_vue/
 ├── src/
 │   ├── entities/          # Modelos de datos
-│   │   ├── base_entitiy.ts
+│   │   ├── base_entity.ts
 │   │   ├── products.ts
 │   │   └── managers/      # Lógica backend (futuro)
 │   │

@@ -50,13 +50,13 @@ El decorador `@HideInListView()` oculta una propiedad en vistas de lista (ListVi
 - Accessor de BaseEntity que verifica si una propiedad debe ocultarse en ListView
 - Parámetros: `propertyKey: string`
 - Retorno: `boolean` (true si oculta en ListView)
-- Ubicación: `src/entities/base_entitiy.ts` línea ~1230
+- Ubicación: `src/entities/base_entity.ts` línea ~1230
 
 **getListViewProperties() (Método estático):**
 - Obtiene lista filtrada de propiedades visibles en ListView
 - Retorno: `string[]` con nombres de propiedades no ocultas
 - Filtra usando isHideInListView() sobre resultado de getProperties()
-- Ubicación: `src/entities/base_entitiy.ts` línea ~1260
+- Ubicación: `src/entities/base_entity.ts` línea ~1260
 
 **ListView vs DetailView:**
 - ListView: Vista de tabla para mostrar múltiples entidades simultáneamente, optimizada para escaneo rápido
@@ -147,7 +147,7 @@ Product.prototype[HIDE_IN_LIST_VIEW_KEY] = [
 
 ### 4.3. Accessors en BaseEntity
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~1230-1280)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~1230-1280)
 
 ```typescript
 /**
@@ -747,7 +747,7 @@ export class Order extends BaseEntity {
 
 **Dependencias:**
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 import { HIDE_IN_LIST_VIEW_KEY } from '@/decorations/hide_in_list_view_decorator';
 
 public isHideInListView(propertyKey: string): boolean

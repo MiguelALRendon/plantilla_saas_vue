@@ -275,7 +275,7 @@ BaseEntity consume servicios de Application:
 
 ### Código Fuente
 
-- **Implementación:** `/src/entities/base_entitiy.ts`
+- **Implementación:** `/src/entities/base_entity.ts`
 - **Tipos:** `/src/types/property_type.ts`
 
 ---

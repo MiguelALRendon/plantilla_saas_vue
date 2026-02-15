@@ -425,7 +425,7 @@ console.log(existingUser.isNew()); // false
 **Uso en save():**
 
 ```typescript
-// base_entitiy.ts - Línea 744
+// base_entity.ts - Línea 744
 if (this.isNew()) {
     // POST /api/users
     response = await Application.axiosInstance.post(endpoint!, dataToSend);
@@ -843,7 +843,7 @@ console.log('Back to Internal:', backToInternal);
 - base-entity-core.md: Arquitectura general de BaseEntity
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación de métodos de persistencia (líneas 512-600)
+- src/entities/base_entity.ts: Implementación de métodos de persistencia (líneas 512-600)
 - src/decorations/persistent_key_decorator.ts: Decorador @PersistentKey
 - src/decorations/persistent_decorator.ts: Decorador @Persistent  
 - src/application/application.ts: Uso de isPersistent() en setButtonList() (línea 221)

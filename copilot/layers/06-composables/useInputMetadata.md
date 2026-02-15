@@ -113,7 +113,7 @@ export interface InputMetadata {
 ### Implementación Completa Código Fuente
 
 ```typescript
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import { computed, type ComputedRef } from 'vue';
 
 export interface InputMetadata {
@@ -427,7 +427,7 @@ console.log(phoneMetadata.helpText.value); // undefined
 ```vue
 <script setup lang="ts">
 import { useInputMetadata } from '@/composables/useInputMetadata';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -1024,7 +1024,7 @@ NO recomendado porque:
 
 ### Código Fuente Ubicación
 - src/composables/useInputMetadata.ts (líneas 1-38 implementación completa composable + interface)
-- src/entities/base_entitiy.ts (métodos metadata estáticos e instancia invocados composable)
+- src/entities/base_entity.ts (métodos metadata estáticos e instancia invocados composable)
 - src/components/Form/TextInputComponent.vue (ejemplo uso composable setup)
 - src/components/Form/NumberInputComponent.vue (ejemplo uso composable setup)
 - src/components/Form/BooleanInputComponent.vue (ejemplo uso composable setup)

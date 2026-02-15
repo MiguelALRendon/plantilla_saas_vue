@@ -89,7 +89,7 @@ Un archivo de entidad típico contiene:
 ### Código Completo de Entidad Customer
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { 
     PropertyName, 
     ModuleName, 
@@ -363,7 +363,7 @@ Resultado: Formulario con secciones colapsables:
 
 ### Dependencias de Imports
 
-- BaseEntity desde './base_entitiy'
+- BaseEntity desde './base_entity'
 - Decoradores desde '@/decorations'
 - StringType desde '@/enums/string_type'
 - ICONS desde '@/constants/icons'

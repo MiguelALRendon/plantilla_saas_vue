@@ -65,7 +65,7 @@ export function ApiEndpoint(path: string): ClassDecorator {
 ### Accessor en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 416-422
+// src/entities/base_entity.ts - Línea 416-422
 public static getApiEndpoint(): string | undefined {
     return (this as any)[API_ENDPOINT_KEY];
 }
@@ -79,7 +79,7 @@ public getApiEndpoint(): string | undefined {
 ### Uso en save() - CREATE
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 710
+// src/entities/base_entity.ts - Línea 710
 public async save(): Promise<this> {
     const endpoint = (this.constructor as typeof BaseEntity).getApiEndpoint();
     
@@ -114,7 +114,7 @@ public async save(): Promise<this> {
 ### Uso en delete() - DELETE
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 819
+// src/entities/base_entity.ts - Línea 819
 public async delete(): Promise<void> {
     if (!this.validateApiMethod('DELETE')) {
         return;
@@ -137,7 +137,7 @@ public async delete(): Promise<void> {
 ### Uso en getElement() - READ
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 650
+// src/entities/base_entity.ts - Línea 650
 public static async getElement<T extends BaseEntity>(
     this: new () => T,
     id: any
@@ -156,7 +156,7 @@ public static async getElement<T extends BaseEntity>(
 ### Uso en getElementList() - LIST
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 615
+// src/entities/base_entity.ts - Línea 615
 public static async getElementList<T extends BaseEntity>(
     this: new () => T,
     filters?: any
@@ -175,7 +175,7 @@ public static async getElementList<T extends BaseEntity>(
 ### Ejemplo Completo
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { ApiEndpoint, Persistent, PropertyName, PrimaryProperty } from '@/decorations';
 
 @ApiEndpoint('/api/customers')
@@ -526,7 +526,7 @@ Cada @ApiEndpoint('/api/products') espera que backend tenga routes implementadas
 ### Ejemplo 1: Stack Completo de Persistencia
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { 
     ApiEndpoint, 
     Persistent, 
@@ -850,14 +850,14 @@ await product.save(false);  // POST /api/products (normal)
 
 **Archivos fuente:**
 - src/decorations/api_endpoint_decorator.ts: Implementación del decorator (línea 10)
-- src/entities/base_entitiy.ts: getApiEndpoint() accessor (línea 110), save() método (línea 710), delete() método (línea 790), getElement() método (línea 650), getElementList() método (línea 615)
+- src/entities/base_entity.ts: getApiEndpoint() accessor (línea 110), save() método (línea 710), delete() método (línea 790), getElement() método (línea 650), getElementList() método (línea 615)
 
 **Líneas relevantes en código:**
 - Línea 10 (api_endpoint_decorator.ts): Definición de API_ENDPOINT_KEY Symbol y función ApiEndpoint
-- Línea 110 (base_entitiy.ts): getApiEndpoint() estático que lee metadata
-- Línea 615 (base_entitiy.ts): getElementList() usa getApiEndpoint() para GET list
-- Línea 650 (base_entitiy.ts): getElement() usa getApiEndpoint() para GET detail
-- Línea 710 (base_entitiy.ts): save() usa getApiEndpoint() para POST/PUT
-- Línea 790 (base_entitiy.ts): delete() usa getApiEndpoint() + uniqueKey para DELETE
+- Línea 110 (base_entity.ts): getApiEndpoint() estático que lee metadata
+- Línea 615 (base_entity.ts): getElementList() usa getApiEndpoint() para GET list
+- Línea 650 (base_entity.ts): getElement() usa getApiEndpoint() para GET detail
+- Línea 710 (base_entity.ts): save() usa getApiEndpoint() para POST/PUT
+- Línea 790 (base_entity.ts): delete() usa getApiEndpoint() + uniqueKey para DELETE
 
 **Última actualización:** 11 de Febrero, 2026

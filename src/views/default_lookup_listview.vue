@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { Products } from '@/entities/products';
 import LookupItem from '@/components/Informative/LookupItem.vue';
 import Application from '@/models/application';

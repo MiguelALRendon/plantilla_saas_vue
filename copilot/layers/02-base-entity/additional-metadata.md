@@ -229,7 +229,7 @@ await invoice.delete();
 **Uso en delete():**
 
 ```typescript
-// base_entitiy.ts - Línea 821
+// base_entity.ts - Línea 821
 const uniqueKey = this.getUniquePropertyValue();
 await Application.axiosInstance.delete(`${endpoint}/${uniqueKey}`);
 ```
@@ -922,7 +922,7 @@ console.log(product.isApiMethodAllowed('DELETE')); // false
 **Uso en delete():**
 
 ```typescript
-// base_entitiy.ts - Línea 808
+// base_entity.ts - Línea 808
 if (!this.validateApiMethod('DELETE')) {
     return;  // No ejecutar DELETE si no permitido
 }
@@ -1757,7 +1757,7 @@ const changeStatus = (newStatus: string) => {
 - ../06-composables/useInputMetadata.md: Integración de metadata en inputs
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación de todos los métodos (líneas 232-466)
+- src/entities/base_entity.ts: Implementación de todos los métodos (líneas 232-466)
 - src/views/default_listview.vue: Uso de getFormattedValue/isHideInListView
 - src/views/default_detailview.vue: Uso de getViewGroups/getViewGroupRows/getTabOrders/isHideInDetailView
 - src/composables/useInputMetadata.ts: Uso de getStringType/getHelpText/isReadOnly

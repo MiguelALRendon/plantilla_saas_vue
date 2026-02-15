@@ -46,7 +46,7 @@ BaseEntity implementa el patrón Active Record proporcionando métodos CRUD comp
 
 **Firma:** `public async save(): Promise<this>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~710)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~710)
 
 **Algoritmo de discriminación:**
 ```typescript
@@ -89,7 +89,7 @@ catch (error: any) {
 
 **Firma:** `public async update(): Promise<this>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (líneas 767-830)
+**Ubicación:** `src/entities/base_entity.ts` (líneas 767-830)
 
 **Descripción:** Método con implementación independiente que ejecuta actualización mediante PUT request.
 
@@ -134,7 +134,7 @@ catch (error: any) {
 
 **Firma:** `public async delete(): Promise<void>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (líneas 833-870)
+**Ubicación:** `src/entities/base_entity.ts` (líneas 833-870)
 
 **Retorno:** `Promise<void>`
 
@@ -158,7 +158,7 @@ catch (error: any) {
 
 **Firma:** `public static async getElementList<T extends BaseEntity>(this: new (data: Record<string, any>) => T, filter: string = ''): Promise<T[]>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (líneas 698-725)
+**Ubicación:** `src/entities/base_entity.ts` (líneas 698-725)
 
 **Parámetros:**
 - Constructor signature: `new (data: Record<string, any>) => T` - Constructor que recibe data
@@ -180,7 +180,7 @@ const filtered = await Product.getElementList('?active=true');
 
 **Firma:** `public static async getElement<T extends BaseEntity>(this: new (data: Record<string, any>) => T, oid: string): Promise<T>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (líneas 669-696)
+**Ubicación:** `src/entities/base_entity.ts` (líneas 669-696)
 
 **Parámetros:**
 - Constructor signature: `new (data: Record<string, any>) => T` - Constructor que recibe data
@@ -206,7 +206,7 @@ try {
 
 ### 4.6. Método toObject()
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~74)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~74)
 
 **Algoritmo de serialización:**
 ```typescript
@@ -233,7 +233,7 @@ public toObject(): Record<string, any> {
 
 **Firma:** `public async refresh(filter: string = ''): Promise<this[]>`
 
-**Ubicación:** `src/entities/base_entitiy.ts` (líneas 872-881)
+**Ubicación:** `src/entities/base_entity.ts` (líneas 872-881)
 
 **Parámetros:**
 - `filter: string = ''` - Filtro opcional para query (igual que getElementList)

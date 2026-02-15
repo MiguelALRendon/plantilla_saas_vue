@@ -803,7 +803,7 @@ if (!isAsyncValid) {
 ### Definición de Entidad
 
  ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,

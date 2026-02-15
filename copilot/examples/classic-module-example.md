@@ -55,7 +55,7 @@ Este ejemplo implementa:
 Archivo: src/entities/category.ts
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -142,7 +142,7 @@ Decoradores utilizados en Category:
 Archivo: src/entities/supplier.ts
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -254,7 +254,7 @@ Validaciones implementadas en Supplier:
 Archivo: src/entities/product.ts
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { Category } from './category';
 import { Supplier } from './supplier';
 import {
@@ -675,7 +675,7 @@ No registrar módulos antes de su definición completa.
 
 ## 8. Dependencias
 
-BaseEntity: Clase base de la que todas las entidades deben heredar (./base_entitiy).
+BaseEntity: Clase base de la que todas las entidades deben heredar (./base_entity).
 
 Decorators: Conjunto completo de decoradores del framework (@/decorations).
 

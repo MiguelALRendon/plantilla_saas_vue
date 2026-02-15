@@ -162,7 +162,7 @@ public async validateInputs(): Promise<boolean> {
 }
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts líneas 567-590.
+**Ubicación:** src/entities/base_entity.ts líneas 567-590.
 
 **IMPORTANTE:** validateInputs() NO ejecuta validaciones directamente. En su lugar:
 1. Emite evento `'validate-inputs'` al EventBus
@@ -190,7 +190,7 @@ entity.isRequired('name');  // true
 entity.isRequired('description');  // false
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~275)
+**Ubicación:** src/entities/base_entity.ts (línea ~275)
 
 #### requiredMessage(key: string): string
 
@@ -201,7 +201,7 @@ entity.requiredMessage('name');
 // Retorna: "Name is required"
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~285)
+**Ubicación:** src/entities/base_entity.ts (línea ~285)
 
 ### Métodos de Nivel 2: Sync Validation
 
@@ -224,7 +224,7 @@ product.isValidation('email');
 // Retorna: false (no pasa regex)
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~360)
+**Ubicación:** src/entities/base_entity.ts (línea ~360)
 
 #### validationMessage(key: string): string
 
@@ -235,7 +235,7 @@ product.validationMessage('email');
 // Retorna: "Invalid email format"
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~375)
+**Ubicación:** src/entities/base_entity.ts (línea ~375)
 
 ### Métodos de Nivel 3: Async Validation
 
@@ -261,7 +261,7 @@ const isAvailable = await user.isAsyncValidation('username');
 // Retorna: true (disponible) o false (tomado)
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~395)
+**Ubicación:** src/entities/base_entity.ts (línea ~395)
 
 #### asyncValidationMessage(key: string): string
 
@@ -272,7 +272,7 @@ user.asyncValidationMessage('username');
 // Retorna: "Username already taken"
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~410)
+**Ubicación:** src/entities/base_entity.ts (línea ~410)
 
 ### Almacenamiento de Errores: validationErrors
 
@@ -317,7 +317,7 @@ public async save(): Promise<this> {
 }
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts (línea ~720)
+**Ubicación:** src/entities/base_entity.ts (línea ~720)
 
 ### Métodos de Validación de Configuración
 
@@ -1066,7 +1066,7 @@ export class Product extends BaseEntity {
 - ../../02-FLOW-ARCHITECTURE.md: Arquitectura de flujos incluyendo validación
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación completa del sistema de validación
+- src/entities/base_entity.ts: Implementación completa del sistema de validación
 - src/components/Form/TextInputComponent.vue: Binding reactivo de validationErrors en UI
 
 **Líneas relevantes en código:**

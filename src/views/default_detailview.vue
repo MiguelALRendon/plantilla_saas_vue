@@ -104,7 +104,7 @@ import * as FormComponents from '@/components/Form';
 import TabControllerComponent from '@/components/TabControllerComponent.vue';
 import TabComponent from '@/components/TabComponent.vue';
 import Application from '@/models/application';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import { EnumAdapter } from '@/models/enum_adapter';

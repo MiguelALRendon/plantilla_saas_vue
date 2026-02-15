@@ -63,7 +63,7 @@ public onValidated(): void
 
 Todos los hooks tienen implementación default vacía (no-op) en BaseEntity. Subclases hacen override según necesidad.
 
-**Ubicación en código:** src/entities/base_entitiy.ts (líneas 860-920 para hooks CRUD, línea 953 para onValidated)
+**Ubicación en código:** src/entities/base_entity.ts (líneas 860-920 para hooks CRUD, línea 953 para onValidated)
 
 ### beforeSave() - Implementación
 
@@ -524,7 +524,7 @@ Además de los hooks principales documentados arriba, BaseEntity define hooks ad
 
 #### onSaving(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 896  
+**Ubicación:** src/entities/base_entity.ts línea 896  
 **Ejecutado:** En create() método antes del HTTP POST request  
 **Propósito:** Hook específico para operaciones de creación (POST), ejecutado después de beforeSave() y validateInputs()
 
@@ -550,7 +550,7 @@ export class Product extends BaseEntity {
 
 #### saveFailed(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 902  
+**Ubicación:** src/entities/base_entity.ts línea 902  
 **Ejecutado:** En create() cuando HTTP POST request falla  
 **Propósito:** Permite ejecutar lógica cuando una operación de creación falla
 
@@ -579,7 +579,7 @@ export class Product extends BaseEntity {
 
 #### onUpdating(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 909  
+**Ubicación:** src/entities/base_entity.ts línea 909  
 **Ejecutado:** En update() método antes del HTTP PUT request  
 **Propósito:** Hook específico para operaciones de actualización (PUT), ejecutado después de beforeSave() y validateInputs()
 
@@ -609,7 +609,7 @@ export class Product extends BaseEntity {
 
 #### updateFailed(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 915  
+**Ubicación:** src/entities/base_entity.ts línea 915  
 **Ejecutado:** En update() cuando HTTP PUT request falla  
 **Propósito:** Permite ejecutar lógica cuando una operación de actualización falla
 
@@ -642,7 +642,7 @@ export class Product extends BaseEntity {
 
 #### onDeleting(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 922  
+**Ubicación:** src/entities/base_entity.ts línea 922  
 **Ejecutado:** En delete() después de beforeDelete() y antes del HTTP DELETE request  
 **Propósito:** Hook adicional antes de eliminación, ejecutado después de beforeDelete()
 
@@ -660,7 +660,7 @@ public async delete(): Promise<boolean> {
 
 #### deleteFailed(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 928  
+**Ubicación:** src/entities/base_entity.ts línea 928  
 **Ejecutado:** En delete() cuando HTTP DELETE request falla  
 **Propósito:** Permite ejecutar lógica cuando una operación de eliminación falla
 
@@ -680,7 +680,7 @@ public async delete(): Promise<boolean> {
 
 #### afterGetElement(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 932  
+**Ubicación:** src/entities/base_entity.ts línea 932  
 **Ejecutado:** En getElement() static method después de HTTP GET exitoso  
 **Propósito:** Permite ejecutar lógica después de cargar una entidad individual desde el servidor
 
@@ -713,7 +713,7 @@ export class Product extends BaseEntity {
 
 #### getElementFailed(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 935  
+**Ubicación:** src/entities/base_entity.ts línea 935  
 **Ejecutado:** En getElement() cuando HTTP GET request falla  
 **Propósito:** Permite ejecutar lógica cuando falla cargar una entidad individual
 
@@ -741,7 +741,7 @@ public static async getElement<T extends BaseEntity>(
 
 #### afterGetElementList(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 694  
+**Ubicación:** src/entities/base_entity.ts línea 694  
 **Ejecutado:** En getElementList() static method después de HTTP GET exitoso  
 **Propósito:** Permite ejecutar lógica después de cargar lista de entidades desde el servidor
 
@@ -778,7 +778,7 @@ export class Product extends BaseEntity {
 
 #### getElementListFailed(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 699  
+**Ubicación:** src/entities/base_entity.ts línea 699  
 **Ejecutado:** En getElementList() cuando HTTP GET request falla  
 **Propósito:** Permite ejecutar lógica cuando falla cargar lista de entidades
 
@@ -811,7 +811,7 @@ public static async getElementList<T extends BaseEntity>(
 
 #### afterRefresh(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 866  
+**Ubicación:** src/entities/base_entity.ts línea 866  
 **Ejecutado:** En refresh() method después de HTTP GET exitoso  
 **Propósito:** Permite ejecutar lógica después de recargar entidad actual desde el servidor
 
@@ -841,7 +841,7 @@ export class Product extends BaseEntity {
 
 #### refreshFailed(): void
 
-**Ubicación:** src/entities/base_entitiy.ts línea 869  
+**Ubicación:** src/entities/base_entity.ts línea 869  
 **Ejecutado:** En refresh() cuando HTTP GET request falla  
 **Propósito:** Permite ejecutar lógica cuando falla refrescar una entidad
 
@@ -1288,7 +1288,7 @@ class Product extends BaseAuditEntity {
 - base-entity-core.md: Arquitectura general de BaseEntity y estructura de clase
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación completa de todos los hooks
+- src/entities/base_entity.ts: Implementación completa de todos los hooks
 
 **Líneas relevantes en código:**
 - Línea 715: beforeSave() invocado en save()

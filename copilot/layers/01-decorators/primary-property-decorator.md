@@ -99,7 +99,7 @@ Product[PRIMARY_PROPERTY_KEY] === 'id'  // true
 
 ### 4.3 Lectura de Metadata en BaseEntity
 
-**Ubicación:** `src/entities/base_entitiy.ts` líneas 200-220.
+**Ubicación:** `src/entities/base_entity.ts` líneas 200-220.
 
 ```typescript
 /**
@@ -140,7 +140,7 @@ public async save(): Promise<this> {
 }
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts líneas 250-280. El método save() usa getPrimaryPropertyValue() para determinar si la entidad es nueva (sin valor en clave primaria) o existente (con valor en clave primaria), decidiendo así el método HTTP apropiado.
+**Ubicación:** src/entities/base_entity.ts líneas 250-280. El método save() usa getPrimaryPropertyValue() para determinar si la entidad es nueva (sin valor en clave primaria) o existente (con valor en clave primaria), decidiendo así el método HTTP apropiado.
 
 **delete() Method:** Construye URL de eliminación usando primary key.
 
@@ -156,7 +156,7 @@ public async delete(): Promise<void> {
 }
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts líneas 340-360. El método delete() usa getPrimaryPropertyValue() para construir la URL DELETE específica del recurso.
+**Ubicación:** src/entities/base_entity.ts líneas 340-360. El método delete() usa getPrimaryPropertyValue() para construir la URL DELETE específica del recurso.
 
 **refresh() Method:** Recarga entidad desde servidor usando primary key.
 
@@ -175,7 +175,7 @@ public async refresh(): Promise<void> {
 }
 ```
 
-**Ubicación:** src/entities/base_entitiy.ts líneas 873-880. El método refresh() usa getPrimaryPropertyValue() para recargar los datos actuales del servidor.
+**Ubicación:** src/entities/base_entity.ts líneas 873-880. El método refresh() usa getPrimaryPropertyValue() para recargar los datos actuales del servidor.
 
 ## 5. Flujo de Funcionamiento
 

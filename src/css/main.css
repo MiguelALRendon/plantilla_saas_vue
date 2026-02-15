@@ -7,7 +7,8 @@ body, html {
 
 * {
     scrollbar-width: none;
-    transition: background-color 0.5s ease, color 0.5s ease;
+    transition: background-color var(--transition-slow) var(--timing-ease), 
+                color var(--transition-slow) var(--timing-ease);
 }
 
 button {
@@ -49,8 +50,8 @@ table, span{color: var(--gray-medium);}
     background-color: var(--white);
     border: 1px solid var(--button-color);
     color: var(--button-color);
-    height: 2rem;
-    padding-inline: 1rem;
+    height: var(--button-height);
+    padding-inline: var(--padding-large);
     border-radius: var(--border-radius);
 }
 .button span{

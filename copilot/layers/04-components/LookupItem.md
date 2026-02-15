@@ -152,7 +152,7 @@ El @DefaultProperty('name') marca name como propiedad display. LookupItem muestr
 import { defineComponent } from 'vue';
 import LookupItem from '@/components/Informative/LookupItem.vue';
 import { Application } from '@/constants/application';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 
 export default defineComponent({
     name: 'default_lookup_listview',
@@ -240,7 +240,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 ## 8. Dependencias
 
 **Dependencias Directas:**
-- @/entities/base_entitiy.ts: BaseEntity clase base proporciona método getDefaultPropertyValue() invocado en template de LookupItem para extraer valor display
+- @/entities/base_entity.ts: BaseEntity clase base proporciona método getDefaultPropertyValue() invocado en template de LookupItem para extraer valor display
 - @/decorations/default_property_decorator.ts: @DefaultProperty decorator almacena metadata DEFAULT_PROPERTY_KEY indicando qué propiedad usar para display
 - Vue 3 Reactivity: Reactive rendering del valor display cuando itemFromList cambia
 
@@ -303,7 +303,7 @@ Si necesitas mostrar más que solo DefaultProperty:
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 
 export default defineComponent({
     name: 'CustomLookupItem',

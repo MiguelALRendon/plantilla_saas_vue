@@ -93,7 +93,7 @@ export class Product extends BaseEntity {
 ### Accessors en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 1040
+// src/entities/base_entity.ts - Línea 1040
 public static getApiMethods(): string[] | undefined {
     return this.prototype[API_METHODS_METADATA];
 }
@@ -123,7 +123,7 @@ public isMethodAllowed(method: string): boolean {
 ### Integración en save()
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 710
+// src/entities/base_entity.ts - Línea 710
 public async save(): Promise<this> {
     const constructor = this.constructor as typeof BaseEntity;
     const primaryKey = constructor.getPrimaryProperty();
@@ -161,7 +161,7 @@ public async save(): Promise<this> {
 ### Integración en delete()
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 819
+// src/entities/base_entity.ts - Línea 819
 public async delete(): Promise<void> {
     const constructor = this.constructor as typeof BaseEntity;
     
@@ -191,7 +191,7 @@ public async delete(): Promise<void> {
 ### Integración en getElementList()
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 615
+// src/entities/base_entity.ts - Línea 615
 public static async getElementList<T extends BaseEntity>(
     this: new () => T,
     filters?: any
@@ -219,7 +219,7 @@ public static async getElementList<T extends BaseEntity>(
 ### Ejemplo Completo: Read-Only Entity
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { 
     ApiEndpoint, 
     ApiMethods, 
@@ -935,14 +935,14 @@ export class Order extends BaseEntity {
 
 **Archivos fuente:**
 - src/decorations/api_methods_decorator.ts: Implementación del decorator (línea 5), API_METHODS_METADATA Symbol, HttpMethod enum, ApiMethods function
-- src/entities/base_entitiy.ts: getApiMethods() accessor (línea 1040), isMethodAllowed() validator (línea 1050), save() integration (línea 710), delete() integration (línea 790), getElementList() integration (línea 615)
+- src/entities/base_entity.ts: getApiMethods() accessor (línea 1040), isMethodAllowed() validator (línea 1050), save() integration (línea 710), delete() integration (línea 790), getElementList() integration (línea 615)
 
 **Líneas relevantes en código:**
 - Línea 5 (api_methods_decorator.ts): Definición de API_METHODS_METADATA Symbol, HttpMethod enum, función ApiMethods con normalization/validation
-- Línea 1040 (base_entitiy.ts): getApiMethods() estático que lee metadata
-- Línea 1050 (base_entitiy.ts): isMethodAllowed() valida si method permitido
-- Línea 710 (base_entitiy.ts): save() verifica isMethodAllowed('POST'/'PUT')
-- Línea 790 (base_entitiy.ts): delete() verifica isMethodAllowed('DELETE')
-- Línea 615 (base_entitiy.ts): getElementList() verifica isMethodAllowed('GET')
+- Línea 1040 (base_entity.ts): getApiMethods() estático que lee metadata
+- Línea 1050 (base_entity.ts): isMethodAllowed() valida si method permitido
+- Línea 710 (base_entity.ts): save() verifica isMethodAllowed('POST'/'PUT')
+- Línea 790 (base_entity.ts): delete() verifica isMethodAllowed('DELETE')
+- Línea 615 (base_entity.ts): getElementList() verifica isMethodAllowed('GET')
 
 **Última actualización:** 11 de Febrero, 2026

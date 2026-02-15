@@ -339,7 +339,7 @@ Cadena if/else-if verificando:
 
 <script>
 import LookupItem from '@/components/LookupItem.vue';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 
 export default {
     components: {
@@ -449,7 +449,7 @@ export default {
 
 <script>
 import { Application } from '@/libs/application/application';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { GGICONS } from '@/constants/ggicons';
 import { Product } from '@/entities/products';
 

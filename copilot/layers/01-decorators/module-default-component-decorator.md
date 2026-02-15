@@ -105,7 +105,7 @@ El componente default se almacena a nivel de clase como propiedad directa usando
 ### BaseEntity Accessors
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el componente default del módulo
@@ -127,7 +127,7 @@ public getModuleDefaultComponent(): Component | undefined {
 
 BaseEntity proporciona dos accessors: el método estático accede directamente a la metadata de la clase usando el Symbol key y retorna `Component | undefined`; el método de instancia delega al método estático obteniendo el constructor de la instancia y llamando a su método estático. Esto permite consultar el componente tanto desde contexto de clase (`Product.getModuleDefaultComponent()`) como desde instancia (`productInstance.getModuleDefaultComponent()`).
 
-Ubicación: líneas ~240-260 de `src/entities/base_entitiy.ts`.
+Ubicación: líneas ~240-260 de `src/entities/base_entity.ts`.
 
 ### DetailView Integration
 
@@ -275,7 +275,7 @@ Uso en entidad:
 import { ModuleDefaultComponent } from '@/decorations/module_default_component_decorator';
 import { ModuleName } from '@/decorations/module_name_decorator';
 import { PropertyName } from '@/decorations/property_name_decorator';
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 import CustomTextInput from '@/components/Form/CustomTextInput.vue';
 
 @ModuleName('Products')
@@ -781,7 +781,7 @@ DetailView renderiza el campo usando el componente resuelto: `<component :is="re
 
 ### BaseEntity
 
-Importa el Symbol `MODULE_DEFAULT_COMPONENT_KEY` y proporciona los métodos accessor `getModuleDefaultComponent()` tanto estático como de instancia para consultar el componente default del módulo desde cualquier contexto. El método estático retorna directamente `(this as any)[MODULE_DEFAULT_COMPONENT_KEY]` - Component | undefined. El método de instancia delega al estático: `return (this.constructor as typeof BaseEntity).getModuleDefaultComponent()`. Estos accessors son la interface pública para consultar la metadata almacenada por el decorador. Ubicación: `src/entities/base_entitiy.ts` líneas ~240-260.
+Importa el Symbol `MODULE_DEFAULT_COMPONENT_KEY` y proporciona los métodos accessor `getModuleDefaultComponent()` tanto estático como de instancia para consultar el componente default del módulo desde cualquier contexto. El método estático retorna directamente `(this as any)[MODULE_DEFAULT_COMPONENT_KEY]` - Component | undefined. El método de instancia delega al estático: `return (this.constructor as typeof BaseEntity).getModuleDefaultComponent()`. Estos accessors son la interface pública para consultar la metadata almacenada por el decorador. Ubicación: `src/entities/base_entity.ts` líneas ~240-260.
 
 ### Vue Component
 

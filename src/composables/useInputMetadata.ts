@@ -1,4 +1,4 @@
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import { computed, type ComputedRef } from 'vue';
 
 export interface InputMetadata {

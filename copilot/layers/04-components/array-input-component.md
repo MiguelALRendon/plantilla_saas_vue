@@ -383,7 +383,7 @@ User select items + click Eliminar → ArrayInputComponent.showDeleteModal() →
 
 ```typescript
 // entities/order_item.ts
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -426,7 +426,7 @@ export class OrderItem extends BaseEntity {
 }
 
 // entities/order.ts
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { OrderItem } from './order_item';
 import {
     PropertyName,
@@ -1009,7 +1009,7 @@ items!: Array<OrderItem>;
 
 ```typescript
 // entities/order_item.ts
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -1052,7 +1052,7 @@ export class OrderItem extends BaseEntity {
 }
 
 // entities/order.ts
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { OrderItem } from './order_item';
 import {
     PropertyName,

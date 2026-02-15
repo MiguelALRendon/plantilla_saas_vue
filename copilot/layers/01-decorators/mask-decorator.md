@@ -80,7 +80,7 @@ enum MaskSides {
 - Accessor de BaseEntity que obtiene configuración de máscara para propiedad
 - Parámetros: `propertyKey: string`
 - Retorno: `MaskConfig | undefined`
-- Ubicación: `src/entities/base_entitiy.ts` línea ~890
+- Ubicación: `src/entities/base_entity.ts` línea ~890
 
 **Valor crudo vs valor formateado:**
 - Valor crudo: Caracteres sin formato (ej: "5551234567")
@@ -241,7 +241,7 @@ Customer.prototype[MASK_KEY] = {
 
 ### 4.4. Accessors en BaseEntity
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~890-920)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~890-920)
 
 ```typescript
 /**
@@ -418,7 +418,7 @@ export function useMask(initialValue: string, maskConfig: MaskConfig) {
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useMask } from '@/composables/useMask';
-import type BaseEntity from '@/entities/base_entitiy';
+import type BaseEntity from '@/entities/base_entity';
 
 const props = defineProps<{
     modelValue: string;
@@ -833,7 +833,7 @@ phone!: string;
 
 **Dependencias:**
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 import { MASK_KEY, type MaskConfig } from '@/decorations/mask_decorator';
 
 public getMask(propertyKey: string): MaskConfig | undefined

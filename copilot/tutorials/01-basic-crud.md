@@ -321,7 +321,7 @@ Frontend procesa como response real
 ### Dependencias de Código
 
 **Obligatorias:**
-- `BaseEntity` de `@/entities/base_entitiy` - Clase base para todas las entidades
+- `BaseEntity` de `@/entities/base_entity` - Clase base para todas las entidades
 - Decoradores de `@/decorations/index` - Sistema de metadatos
 - `Application` de `@/models/application` - Singleton de aplicación
 
@@ -405,7 +405,7 @@ Frontend procesa como response real
 Crear archivo `src/entities/book.ts` con la siguiente implementación:
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -844,7 +844,7 @@ Resultado: El formulario se organiza en 3 secciones colapsables.
 **Código Completo de src/entities/book.ts:**
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,

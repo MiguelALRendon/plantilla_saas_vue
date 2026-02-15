@@ -1205,9 +1205,9 @@ const cancel = () => {
 - persistence-methods.md: mapToPersistentKeys() usa toObject() internamente
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación de todos los métodos de estado (líneas 57-887)
+- src/entities/base_entity.ts: Implementación de todos los métodos de estado (líneas 57-887)
 - src/application/application.ts: Uso de getDirtyState() en changeView() (línea 135)
-- src/entities/base_entitiy.ts: EmptyEntity class (línea 959)
+- src/entities/base_entity.ts: EmptyEntity class (línea 959)
 
 **Líneas relevantes en código:**
 - Línea 57: setLoading()

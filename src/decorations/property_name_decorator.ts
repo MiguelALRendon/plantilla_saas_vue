@@ -1,4 +1,4 @@
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import { EnumAdapter } from '@/models/enum_adapter';
 
 export const PROPERTY_NAME_KEY = Symbol('property_name');

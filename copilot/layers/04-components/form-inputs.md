@@ -466,7 +466,7 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 ## 8. Dependencias
 
 **Dependencias Directas:**
-- @/entities/base_entitiy.ts: BaseEntity clase base proporciona métodos isRequired(), isValidation(), isAsyncValidation(), isDisabled(), isReadOnly(), getHelpText(), validateInputs() que los inputs invocan vía entity prop
+- @/entities/base_entity.ts: BaseEntity clase base proporciona métodos isRequired(), isValidation(), isAsyncValidation(), isDisabled(), isReadOnly(), getHelpText(), validateInputs() que los inputs invocan vía entity prop
 - @/composables/useInputMetadata.ts: Composable que extrae metadatos reactivos de entityClass y entity retornando refs propertyName, required, validated, disabled, readonly, helpText
 - @/constants/application.ts: Application singleton exporta eventBus para eventos validate-inputs, View.value.isValid para estado global
 - @/enums/string_type.ts: StringType enum (TEXT, EMAIL, PASSWORD, TEXTAREA) usado para seleccionar input especializado de String
@@ -557,7 +557,7 @@ Si necesitas un input especializado no cubierto por los 10 componentes existente
 import { defineComponent } from 'vue';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import { Application } from '@/constants/application';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 
 export default defineComponent({
     name: 'CustomPhoneInputComponent',

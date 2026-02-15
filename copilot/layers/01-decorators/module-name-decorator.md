@@ -66,7 +66,7 @@ El storage es a nivel de clase (no prototype estrictamente, pero accesible desde
 
 ### BaseEntity Accessor Implementation
 
-**Archivo:** `src/entities/base_entitiy.ts`
+**Archivo:** `src/entities/base_entity.ts`
 
 ```typescript
 public static getModuleName(): string | undefined {
@@ -91,7 +91,7 @@ No existe fallback automático. Si el decorador no fue aplicado, el método reto
 ### Uso Típico
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { ModuleName, ModuleIcon, ApiEndpoint, Persistent } from '@/decorations';
 
 @ModuleName('Products')
@@ -166,7 +166,7 @@ Si `getModuleName()` retorna `undefined`, el SideBarComponent debe manejar este 
 
 **Dependencias Directas:**
 - `src/decorations/module_name_decorator.ts`: Exporta MODULE_NAME_KEY Symbol y función ModuleName
-- `src/entities/base_entitiy.ts`: Implementa método accessor `getModuleName()`
+- `src/entities/base_entity.ts`: Implementa método accessor `getModuleName()`
 - TypeScript Decorators: Requiere experimentalDecorators enabled en tsconfig.json
 
 **Dependencias en Runtime:**
@@ -195,7 +195,7 @@ Si `getModuleName()` retorna `undefined`, el SideBarComponent debe manejar este 
 ### Ejemplo Completo de Módulo
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import {
     ModuleName,
     ModuleIcon,
@@ -280,7 +280,7 @@ console.log('Symbol value:', (Product as any)[MODULE_NAME_KEY]);
 
 **Archivos de código:**
 - `src/decorations/module_name_decorator.ts`: Implementación del decorador
-- `src/entities/base_entitiy.ts`: Implementación del método accessor
+- `src/entities/base_entity.ts`: Implementación del método accessor
 - `src/components/SideBarComponent.vue`: Uso principal del module name
 
 **Ejemplos relacionados:**

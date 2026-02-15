@@ -1,37 +1,37 @@
 .table-length-short {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
+    width: var(--table-width-short);
+    min-width: var(--table-width-short);
+    max-width: var(--table-width-short);
 }
 
 .table-length-xs {
-    width: 50px;
-    min-width: 50px;
-    max-width: 50px;
+    width: var(--table-width-very-small);
+    min-width: var(--table-width-very-small);
+    max-width: var(--table-width-very-small);
 }
 
 .table-length-small {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+    width: var(--table-width-small);
+    min-width: var(--table-width-small);
+    max-width: var(--table-width-small);
 }
 
 .table-length-medium {
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
+    width: var(--table-width-medium);
+    min-width: var(--table-width-medium);
+    max-width: var(--table-width-medium);
 }
 
 .table-length-large {
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
+    width: var(--table-width-large);
+    min-width: var(--table-width-large);
+    max-width: var(--table-width-large);
 }
 
 .table-length-xl {
-    width: 300px;
-    min-width: 300px;
-    max-width: 300px;
+    width: var(--table-width-extra-large);
+    min-width: var(--table-width-extra-large);
+    max-width: var(--table-width-extra-large);
 }
 
 .table-length-full {

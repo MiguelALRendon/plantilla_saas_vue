@@ -106,7 +106,7 @@ public isRequired(key: string): boolean {
 }
 ```
 
-Ubicación: src/entities/base_entitiy.ts (línea aproximada 350)
+Ubicación: src/entities/base_entity.ts (línea aproximada 350)
 
 #### requiredMessage(key: string): string
 Obtiene mensaje de validación required personalizado o mensaje por defecto.
@@ -118,7 +118,7 @@ public requiredMessage(key: string): string {
 }
 ```
 
-Ubicación: src/entities/base_entitiy.ts (línea aproximada 365)
+Ubicación: src/entities/base_entity.ts (línea aproximada 365)
 
 ### Ejemplos de Uso
 
@@ -289,7 +289,7 @@ Application.eventBus.emit('validate-inputs') desencadena validación en todos lo
 
 EntityPágina completa alcanzada. Método validateInputs() en BaseEntity orquesta validación required global antes de operaciones save/update.
 
-Ubicación: src/entities/base_entitiy.ts (línea aproximada 630)
+Ubicación: src/entities/base_entity.ts (línea aproximada 630)
 
 ## 10. Notas de Implementación
 
@@ -418,7 +418,7 @@ Documentos relacionados:
 
 Archivos de código fuente:
 - src/decorations/required_decorator.ts - Implementación del decorador
-- src/entities/base_entitiy.ts - Métodos isRequired() y requiredMessage()
+- src/entities/base_entity.ts - Métodos isRequired() y requiredMessage()
 - src/composables/useInputMetadata.ts - Exposición de metadata required
 - src/components/Form/TextInputComponent.vue - Implementación de validación en inputs
 

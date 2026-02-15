@@ -41,7 +41,7 @@ Symbol único que identifica la metadata del module icon alamacenada **directame
 
 ### getModuleIcon()
 
-Accessor estático definido en BaseEntity que retorna icon name string del módulo o fallback 'circle' default si no configurado. Implementación: `public static getModuleIcon(): string { const icon = this.prototype[MODULE_ICON_KEY]; return icon || 'circle'; }`. Ubicación: `src/entities/base_entitiy.ts` líneas ~950-960. Uso: `Product.getModuleIcon() // → 'box'` retorna icon name para resolución en icon service que mapea a Vue icon component.
+Accessor estático definido en BaseEntity que retorna icon name string del módulo o fallback 'circle' default si no configurado. Implementación: `public static getModuleIcon(): string { const icon = this.prototype[MODULE_ICON_KEY]; return icon || 'circle'; }`. Ubicación: `src/entities/base_entity.ts` líneas ~950-960. Uso: `Product.getModuleIcon() // → 'box'` retorna icon name para resolución en icon service que mapea a Vue icon component.
 
 ### Icon Name String
 
@@ -101,7 +101,7 @@ Storage en prototype (no en class directamente) permite que todas las instancias
 ### BaseEntity Accessor
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el icono del módulo (método estático)
@@ -114,7 +114,7 @@ public static getModuleIcon(): string {
 }
 ```
 
-Method estático accede prototype de la class (this.prototype) y retrieva icon name usando Symbol key. Si metadata NO existe (decorador no aplicado), nullish coalescing operator `||` retorna 'circle' string como fallback default. Ubicación: `src/entities/base_entitiy.ts` líneas ~950-960.
+Method estático accede prototype de la class (this.prototype) y retrieva icon name usando Symbol key. Si metadata NO existe (decorador no aplicado), nullish coalescing operator `||` retorna 'circle' string como fallback default. Ubicación: `src/entities/base_entity.ts` líneas ~950-960.
 
 ### SideBarComponent Implementation
 
@@ -218,7 +218,7 @@ User click en sidebar item dispara `@click="navigateToModule(entityClass)"` hand
 ## 8. Dependencias
 
 ### BaseEntity
-Import MODULE_ICON_KEY Symbol y proporciona getModuleIcon() accessor estático retornando icon name string o 'circle' fallback. Ubicación src/entities/base_entitiy.ts líneas ~950-960. Este accessor punto de acceso único para UI components query icon metadata sin acceder Symbol directamente encapsulation.
+Import MODULE_ICON_KEY Symbol y proporciona getModuleIcon() accessor estático retornando icon name string o 'circle' fallback. Ubicación src/entities/base_entity.ts líneas ~950-960. Este accessor punto de acceso único para UI components query icon metadata sin acceder Symbol directamente encapsulation.
 
 ### IconService  
 Service layer maneja mapping icon names a Vue icon components. Ubicación src/services/icon_service.ts. API: `IconService.getIcon(name)` retorna component o default, `registerIcon(name, component)` register customs, `hasIcon(name)` existence check. SideBarComponent depends on IconService para resolve icon names: `<component :is="IconService.getIcon(entityClass.getModuleIcon())" />`.

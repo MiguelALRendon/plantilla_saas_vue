@@ -1,6 +1,6 @@
 import { markRaw, type Component } from 'vue';
 import type { ApplicationUIContext } from './application_ui_context';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import { confMenuType } from '@/enums/conf_menu_type';
 import { Toast } from './Toast';

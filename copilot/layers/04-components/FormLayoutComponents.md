@@ -401,7 +401,7 @@ El método retorna dinámicamente el componente apropiado. component :is renderi
 - @/components/Form/: Todos los input components (TextInput, NumberInput, etc.) se proyectan como slot content en FormRow
 
 **Dependencias de Entidad:**
-- @/entities/base_entitiy.ts: BaseEntity proporciona métodos getViewGroups() y getViewGroupRows() que leen metadata para organizar layout
+- @/entities/base_entity.ts: BaseEntity proporciona métodos getViewGroups() y getViewGroupRows() que leen metadata para organizar layout
 
 ## 9. Relaciones
 

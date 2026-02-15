@@ -419,7 +419,7 @@ Solo items que contienen "widget" en cualquier propiedad se muestran
 ### Dependencias de Código
 
 **Obligatorias:**
-- `BaseEntity` de `@/entities/base_entitiy` - Clase base para todas las entidades
+- `BaseEntity` de `@/entities/base_entity` - Clase base para todas las entidades
 - `@DefaultProperty` de `@/decorations` - Decorador para propiedad por defecto
 - `@UniquePropertyKey` de `@/decorations` - Decorador para clave única
 - `@TabOrder` de `@/decorations` - Decorador para orden de tabs
@@ -486,7 +486,7 @@ Solo items que contienen "widget" en cualquier propiedad se muestran
 Crear `src/entities/customer.ts`:
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -537,7 +537,7 @@ export class Customer extends BaseEntity {
 Crear `src/entities/order.ts`:
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { Customer } from './customer';
 import {
     PropertyName,
@@ -632,7 +632,7 @@ Total Amount: [________________]
 Crear `src/entities/order_item.ts`:
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,
@@ -757,7 +757,7 @@ Application.ModuleList.value.push(Customer, Order, OrderItem);
 **Order Completo con Customer y Items:**
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { Customer } from './customer';
 import { OrderItem } from './order_item';
 import {

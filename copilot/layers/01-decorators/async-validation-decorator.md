@@ -127,7 +127,7 @@ export class Customer extends BaseEntity {
 ### Accessors en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 395
+// src/entities/base_entity.ts - Línea 395
 public async isAsyncValidation(key: string): Promise<boolean> {
     const asyncValidationData = (this.constructor as any)
         .prototype[ASYNC_VALIDATION_KEY]?.[key];
@@ -159,7 +159,7 @@ public asyncValidationMessage(key: string): string {
 ### Integración en validateInputs()
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 450
+// src/entities/base_entity.ts - Línea 450
 public async validateInputs(): Promise<boolean> {
     const constructor = this.constructor as typeof BaseEntity;
     const properties = constructor.getProperties();
@@ -192,7 +192,7 @@ public async validateInputs(): Promise<boolean> {
 ### Integración en save()
 
 ```typescript
-// src/entities/base_entitiy.ts - Línea 710
+// src/entities/base_entity.ts - Línea 710
 public async save(): Promise<this> {
     // Ejecutar validaciones (incluye async)
     const isValid = await this.validateInputs();
@@ -219,7 +219,7 @@ public async save(): Promise<this> {
 ### Ejemplo Completo: Verificar Unicidad de Email
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { 
     PropertyName, 
     Required, 
@@ -818,7 +818,7 @@ documentNumber!: string;
 ```vue
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 
 const props = defineProps<{
     entity: BaseEntity;
@@ -1116,15 +1116,15 @@ public override asyncValidationMessage(key: string): string {
 
 **Archivos fuente:**
 - src/decorations/async_validation_decorator.ts: Implementación del decorator (línea 5), ASYNC_VALIDATION_KEY Symbol, AsyncValidationMetadata interface, AsyncValidation function
-- src/entities/base_entitiy.ts: isAsyncValidation() método (línea 395), asyncValidationMessage() método (línea 410), validateInputs() integration (línea 450), save() integration (línea 710)
+- src/entities/base_entity.ts: isAsyncValidation() método (línea 395), asyncValidationMessage() método (línea 410), validateInputs() integration (línea 450), save() integration (línea 710)
 - src/components/Form/TextInputComponent.vue: UI implementation con debounce y loading state
 - src/views/default_detailview.vue: Vista donde se ejecutan validaciones async
 
 **Líneas relevantes en código:**
 - Línea 5 (async_validation_decorator.ts): Definición de ASYNC_VALIDATION_KEY Symbol, AsyncValidationMetadata interface, función AsyncValidation con storage en prototype
-- Línea 395 (base_entitiy.ts): isAsyncValidation() ejecuta validation function con try-catch, retorna boolean
-- Línea 410 (base_entitiy.ts): asyncValidationMessage() retorna error message o fallback
-- Línea 450 (base_entitiy.ts): validateInputs() ejecuta sequence Required → Validation → AsyncValidation
-- Línea 710 (base_entitiy.ts): save() llama validateInputs(), bloquea save si validation falla
+- Línea 395 (base_entity.ts): isAsyncValidation() ejecuta validation function con try-catch, retorna boolean
+- Línea 410 (base_entity.ts): asyncValidationMessage() retorna error message o fallback
+- Línea 450 (base_entity.ts): validateInputs() ejecuta sequence Required → Validation → AsyncValidation
+- Línea 710 (base_entity.ts): save() llama validateInputs(), bloquea save si validation falla
 
 **Última actualización:** 11 de Febrero, 2026

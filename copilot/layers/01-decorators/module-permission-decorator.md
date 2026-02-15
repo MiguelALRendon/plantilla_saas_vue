@@ -39,11 +39,11 @@ Symbol único identifica metadata module permission almacenada entity class (not
 
 ### getModulePermission()
 
-Accessor estático BaseEntity retornando permission string required or undefined if no permission configured. Implementación: `public static getModulePermission(): string | undefined { return (this as any)[MODULE_PERMISSION_KEY]; }`. Ubicación: src/entities/base_entitiy.ts líneas ~200-210. Retorno undefined explicitly nullable indicating public module no permission required allowing components distinguish between configured permissions vs missing decorator public access default. Usage: `Product.getModulePermission() // → 'products.manage'` or `PublicBlog.getModulePermission() // → undefined` checking access requirements.
+Accessor estático BaseEntity retornando permission string required or undefined if no permission configured. Implementación: `public static getModulePermission(): string | undefined { return (this as any)[MODULE_PERMISSION_KEY]; }`. Ubicación: src/entities/base_entity.ts líneas ~200-210. Retorno undefined explicitly nullable indicating public module no permission required allowing components distinguish between configured permissions vs missing decorator public access default. Usage: `Product.getModulePermission() // → 'products.manage'` or `PublicBlog.getModulePermission() // → undefined` checking access requirements.
 
 ### hasPermission(user)
 
-Método estático BaseEntity verificando if user tiene permission required access module. Implementación: `public static hasPermission(user: User): boolean { const requiredPermission = this.getModulePermission(); if (!requiredPermission) return true; // Public module return user.permissions?.includes(requiredPermission) || false; }`. Ubicación: src/entities/base_entitiy.ts líneas ~215-225. Logic: no permission required (undefined) returns true allowing access, permission required checks user.permissions array using includes() method exact string match, missing permissions array safety nullish coalescing false default. Usage: `Product.hasPermission(currentUser) // → true/false` authorization decision boolean.
+Método estático BaseEntity verificando if user tiene permission required access module. Implementación: `public static hasPermission(user: User): boolean { const requiredPermission = this.getModulePermission(); if (!requiredPermission) return true; // Public module return user.permissions?.includes(requiredPermission) || false; }`. Ubicación: src/entities/base_entity.ts líneas ~215-225. Logic: no permission required (undefined) returns true allowing access, permission required checks user.permissions array using includes() method exact string match, missing permissions array safety nullish coalescing false default. Usage: `Product.hasPermission(currentUser) // → true/false` authorization decision boolean.
 
 ### Application.currentUser
 
@@ -108,7 +108,7 @@ Storage class-level (not prototype) porque permission definition única per enti
 ### BaseEntity Accessor Implementation
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene permission requerido del módulo (método estático)
@@ -146,7 +146,7 @@ public hasPermission(user: User): boolean {
 }
 ```
 
-Three methods: getModulePermission() retrieves permission string, hasPermission(user) static verifies authorization, instance method delegates static via constructor reference allowing `entity.hasPermission(user)` pattern convenience. Logic: undefined permission returns true (public), defined permission checks user.permissions array includes() exact match nullish coalescing false if array missing. Ubicación: src/entities/base_entitiy.ts líneas ~200-240.
+Three methods: getModulePermission() retrieves permission string, hasPermission(user) static verifies authorization, instance method delegates static via constructor reference allowing `entity.hasPermission(user)` pattern convenience. Logic: undefined permission returns true (public), defined permission checks user.permissions array includes() exact match nullish coalescing false if array missing. Ubicación: src/entities/base_entity.ts líneas ~200-240.
 
 ### SideBarComponent Filtering Implementation
 
@@ -411,7 +411,7 @@ User clicks "+ New Product" button canCreate true authorized. Handler executes c
 ## 8. Dependencias
 
 ### BaseEntity
-Import MODULE_PERMISSION_KEY Symbol y proporciona getModulePermission() hasPermission(user) accessor methods estáticos verificando authorization. Ubicación src/entities/base_entitiy.ts líneas ~200-240. All entity classes inherit accessors automatically BaseEntity base class unified API consistent dependency foundational framework architecture authorization system integrated core.
+Import MODULE_PERMISSION_KEY Symbol y proporciona getModulePermission() hasPermission(user) accessor methods estáticos verificando authorization. Ubicación src/entities/base_entity.ts líneas ~200-240. All entity classes inherit accessors automatically BaseEntity base class unified API consistent dependency foundational framework architecture authorization system integrated core.
 
 ### Application Singleton
 Application.currentUser reactive ref containing authenticated user object including permissions array. Application.ModuleList reactive ref containing registered entity classes filtered by permissions SideBarComponent. Ubicación src/models/application.ts. Dependency critical centralized state management authentication context global access permissions verificación coordinated Application singleton state source truth authorization decisions.

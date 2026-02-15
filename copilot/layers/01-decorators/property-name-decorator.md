@@ -104,7 +104,7 @@ Los tres maps se almacenan separadamente en prototype usando Symbols únicos. Es
 ### BaseEntity Accessors
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 // Método estático
 public static getProperties(): Record<string, string> {
@@ -132,7 +132,7 @@ public getPropertyType(key: string): PropertyType | undefined {
 
 BaseEntity proporciona accessors estáticos (clase level) e instancia level. Los métodos estáticos acceden directamente a prototype metadata. Los métodos de instancia delegan a métodos estáticos obteniendo constructor.
 
-Ubicación: líneas ~120-180 de `src/entities/base_entitiy.ts`.
+Ubicación: líneas ~120-180 de `src/entities/base_entity.ts`.
 
 ---
 

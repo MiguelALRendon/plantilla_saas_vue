@@ -25,7 +25,7 @@ BaseEntity es la clase abstracta base del sistema, definida como el único punto
 
 ## 3. Definiciones Clave
 
-**BaseEntity:** Clase abstracta que sirve como superclase única para todas las entidades del sistema. Declarada en `src/entities/base_entitiy.ts` (líneas 1-962).
+**BaseEntity:** Clase abstracta que sirve como superclase única para todas las entidades del sistema. Declarada en `src/entities/base_entity.ts` (líneas 1-962).
 
 **Estado Original (_originalState):** Snapshot inmutable del estado de la entidad en el momento de construcción o tras operación exitosa, utilizado para detección de cambios.
 
@@ -393,7 +393,7 @@ Los siguientes métodos proveen acceso a metadatos de decoradores (documentació
 - `JSON.stringify()` / `JSON.parse()` - Serialización para comparación
 
 **Archivos:**
-- `src/entities/base_entitiy.ts` - Definición de BaseEntity
+- `src/entities/base_entity.ts` - Definición de BaseEntity
 - `src/decorations/` - Todos los decoradores aplicables
 - `src/models/Application.ts` - Singleton Application
 

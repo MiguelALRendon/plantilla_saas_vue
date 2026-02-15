@@ -1670,7 +1670,7 @@ console.log('API Payload:', mapped);
 - ../03-application/application-singleton.md: Uso de métodos estáticos en Application
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación de todos los métodos estáticos (líneas 130-287, 474-686)
+- src/entities/base_entity.ts: Implementación de todos los métodos estáticos (líneas 130-287, 474-686)
 - src/application/application.ts: Uso de métodos estáticos en navegación (líneas 135-221)
 - src/components/SideBarComponent.vue: Uso de getModuleName/getModuleIcon
 - src/components/Buttons/NewButtonComponent.vue: Uso de createNewInstance()

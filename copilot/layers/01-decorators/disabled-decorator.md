@@ -97,7 +97,7 @@ Product.prototype[DISABLED_KEY] = {
 ### Accessor Método isDisabled() en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Verifica si una propiedad está deshabilitada (método de instancia)
@@ -148,12 +148,12 @@ public static isDisabled(propertyKey: string): boolean {
 }
 ```
 
-Ubicación: `src/entities/base_entitiy.ts` (líneas 730-770)
+Ubicación: `src/entities/base_entity.ts` (líneas 730-770)
 
 ### Exclusión en toDictionary()
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Convierte la entidad a un objeto plano para enviar al servidor
@@ -181,7 +181,7 @@ public toDictionary(): Record<string, any> {
 }
 ```
 
-Ubicación: `src/entities/base_entitiy.ts` (líneas 180-210)
+Ubicación: `src/entities/base_entity.ts` (líneas 180-210)
 
 ### Integración en UI Components
 
@@ -199,7 +199,7 @@ Ubicación: `src/entities/base_entitiy.ts` (líneas 180-210)
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type BaseEntity from '@/entities/base_entitiy';
+import type BaseEntity from '@/entities/base_entity';
 
 const props = defineProps<{
     modelValue: string;
@@ -552,7 +552,7 @@ price!: number;
 
 ```typescript
 // BaseEntity provee isDisabled() accessor
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 export class Product extends BaseEntity {
     @Disabled()
@@ -1103,7 +1103,7 @@ describe('Disabled Decorator', () => {
 
 - `src/decorations/disabled_decorator.ts` - Implementación decorator
 - `src/decorations/index.ts` - Export DISABLED_KEY Symbol
-- `src/entities/base_entitiy.ts` - isDisabled() accessor methods
+- `src/entities/base_entity.ts` - isDisabled() accessor methods
 
 ### Ejemplos de Uso
 
@@ -1158,7 +1158,7 @@ Product.prototype[DISABLED_KEY] = {
 ### Acceso desde BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Verifica si una propiedad está deshabilitada
@@ -1206,7 +1206,7 @@ public static isDisabled(propertyKey: string): boolean {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~730-770)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~730-770)
 
 ---
 
@@ -1254,7 +1254,7 @@ const isDisabled = computed(() => {
 ### Excluir de toDictionary()
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Convierte la entidad a un objeto plano para enviar al servidor
@@ -1282,7 +1282,7 @@ public toDictionary(): Record<string, any> {
 }
 ```
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~180-210)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~180-210)
 
 ---
 
@@ -1293,7 +1293,7 @@ public toDictionary(): Record<string, any> {
 ```typescript
 import { Disabled } from '@/decorations/disabled_decorator';
 import { PropertyName } from '@/decorations/property_name_decorator';
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 export class Product extends BaseEntity {
     // ID siempre disabled (auto-generado por servidor)

@@ -117,7 +117,7 @@ Escucha TODOS los eventos, útil para debugging. `type` es string event name.
 
 ### 4.4 Eventos Emitidos por BaseEntity
 
-BaseEntity CRUD operations emiten eventos automáticamente (implementación en base_entitiy.ts, pero no está explícita en código proporcionado - patrón esperado):
+BaseEntity CRUD operations emiten eventos automáticamente (implementación en base_entity.ts, pero no está explícita en código proporcionado - patrón esperado):
 
 **Patrón de Emisión (esperado en save/delete/fetch methods):**
 ```typescript
@@ -513,7 +513,7 @@ Si validación FALLA:
 
 ### 8.4 Consumidores del Event Bus
 
-**BaseEntity (@/entities/base_entitiy)**
+**BaseEntity (@/entities/base_entity)**
 - Uso: Emite entity-saved, entity-deleted, validation-* eventos
 - Métodos: save(), delete(), validateInputs()
 
@@ -969,7 +969,7 @@ emitStockUpdated(product.id, product.stock);
 - Líneas 1-13: Events type definition completa
 - Event names: validate-inputs, toggle-sidebar, show-loading, etc
 
-**src/entities/base_entitiy.ts**
+**src/entities/base_entity.ts**
 - Eventos CRUD emitidos en save(), delete(), getElementList()
 - Eventos validation emitidos en validateInputs()
 

@@ -75,7 +75,7 @@
 </div>
 </template>
 <script lang="ts">
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { PropType } from 'vue';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';

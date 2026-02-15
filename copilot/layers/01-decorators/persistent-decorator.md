@@ -81,7 +81,7 @@ No existe método accessor público como existe para otros decoradores. La verif
 ### Uso Típico
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { ModuleName, ApiEndpoint, Persistent } from '@/decorations';
 
 @ModuleName('Products')
@@ -131,7 +131,7 @@ export class MockEntity extends BaseEntity {
 
 **Dependencias Directas:**
 - `src/decorations/persistent_decorator.ts`: Exporta PERSISTENT_KEY Symbol y función Persistent
-- `src/entities/base_entitiy.ts`: Verifica PERSISTENT_KEY en métodos CRUD
+- `src/entities/base_entity.ts`: Verifica PERSISTENT_KEY en métodos CRUD
 - TypeScript Decorators: Requiere experimentalDecorators enabled en tsconfig.json
 
 **Dependencias de Runtime:**
@@ -159,7 +159,7 @@ export class MockEntity extends BaseEntity {
 ### Ejemplo Completo
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import {
     ModuleName,
     ModuleIcon,
@@ -246,7 +246,7 @@ export class TestEntity extends BaseEntity { /* ... */ }
 
 **Archivos de código:**
 - `src/decorations/persistent_decorator.ts`: Implementación del decorador
-- `src/entities/base_entitiy.ts`: Métodos CRUD que verifican persistencia
+- `src/entities/base_entity.ts`: Métodos CRUD que verifican persistencia
 
 **Ejemplos relacionados:**
 - [../../examples/classic-module-example.md](../../examples/classic-module-example.md): Uso estándar de @Persistent

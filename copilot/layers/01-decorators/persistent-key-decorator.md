@@ -43,11 +43,11 @@ Function signature: `function PersistentKey(): PropertyDecorator`. Parameters: n
 
 ### getPersistentKey() Accessor
 
-Método estático BaseEntity retornando property name string usado identifier URLs or undefined when NO configured. Implementación: `public static getPersistentKey(): string { const persistentKey = this.prototype[PERSISTENT_KEY_KEY]; return persistentKey || this.getPrimaryProperty(); }`. Ubicación: src/entities/base_entitiy.ts líneas ~1040-1060. Fallback behavior: retorna primary property cuando persistent key metadata missing backward compatibility maintaining existing behavior. También existe instance method: `public getPersistentKey(): string { const constructor = this.constructor as typeof BaseEntity; return constructor.getPersistentKey(); }` delegating static method enabling same query instance or class level interchangeably.
+Método estático BaseEntity retornando property name string usado identifier URLs or undefined when NO configured. Implementación: `public static getPersistentKey(): string { const persistentKey = this.prototype[PERSISTENT_KEY_KEY]; return persistentKey || this.getPrimaryProperty(); }`. Ubicación: src/entities/base_entity.ts líneas ~1040-1060. Fallback behavior: retorna primary property cuando persistent key metadata missing backward compatibility maintaining existing behavior. También existe instance method: `public getPersistentKey(): string { const constructor = this.constructor as typeof BaseEntity; return constructor.getPersistentKey(); }` delegating static method enabling same query instance or class level interchangeably.
 
 ###get PersistentKeyValue() Accessor
 
-Método instancia BaseEntity retornando actual value persistent key property current entity instance. Implementación: `public getPersistentKeyValue(): any { const persistentKey = this.getPersistentKey(); return this[persistentKey]; }`. Ubicación: src/entities/base_entitiy.ts líneas ~1065-1070. Usage: obtaining identifier value appending URLs HTTP requests construction. Example: product.getPersistentKeyValue() retorna 'laptop-dell-xps-13' if slug persistent key contains slug string value.
+Método instancia BaseEntity retornando actual value persistent key property current entity instance. Implementación: `public getPersistentKeyValue(): any { const persistentKey = this.getPersistentKey(); return this[persistentKey]; }`. Ubicación: src/entities/base_entity.ts líneas ~1065-1070. Usage: obtaining identifier value appending URLs HTTP requests construction. Example: product.getPersistentKeyValue() retorna 'laptop-dell-xps-13' if slug persistent key contains slug string value.
 
 ## 4. Descripción Técnica
 
@@ -101,7 +101,7 @@ public getPersistentKeyValue(): any {
 }
 ```
 
-Ubicación: src/entities/base_entitiy.ts líneas ~1040-1070. Accessors proporcionan consistent API querying persistent key property name obtaining actual value from entity instance. Fallback primary key when decorator NO applied maintaining backward compatibility transparent integration.
+Ubicación: src/entities/base_entity.ts líneas ~1040-1070. Accessors proporcionan consistent API querying persistent key property name obtaining actual value from entity instance. Fallback primary key when decorator NO applied maintaining backward compatibility transparent integration.
 
 ### Integración con save() Method
 
@@ -151,7 +151,7 @@ public async save(): Promise<boolean> {
 }
 ```
 
-Ubicación: src/entities/base_entitiy.ts líneas ~250-330. Método save() usa getPersistentKeyValue() obtener identifier value appending PUT request URL when updating existing entity. NEW entities determined by absence persistent key value null undefined indicating POST request base endpoint creation. EXISTING entities have persistent key value appended endpoint forming complete URL targeted update.
+Ubicación: src/entities/base_entity.ts líneas ~250-330. Método save() usa getPersistentKeyValue() obtener identifier value appending PUT request URL when updating existing entity. NEW entities determined by absence persistent key value null undefined indicating POST request base endpoint creation. EXISTING entities have persistent key value appended endpoint forming complete URL targeted update.
 
 ### Integración con delete() Method
 
@@ -182,7 +182,7 @@ public async delete(): Promise<void> {
 }
 ```
 
-Ubicación: src/entities/base_entitiy.ts líneas ~340-380. Método delete() usa getPersistentKeyValue() construir DELETE request URL appending identifier value base endpoint targeting specific entity deletion backend removal.
+Ubicación: src/entities/base_entity.ts líneas ~340-380. Método delete() usa getPersistentKeyValue() construir DELETE request URL appending identifier value base endpoint targeting specific entity deletion backend removal.
 
 ### Integración con getElement() Static Method
 
@@ -211,7 +211,7 @@ public static async getElement(id: any): Promise<BaseEntity | null> {
 }
 ```
 
-Ubicación: src/entities/base_entitiy.ts líneas ~440-480. Método getElement() usa id parameter appending GET request URL constructing ApiEndpoint/{id} path retrieving single entity matching identifier backend response JSON single entity deserialized instance returned caller.
+Ubicación: src/entities/base_entity.ts líneas ~440-480. Método getElement() usa id parameter appending GET request URL constructing ApiEndpoint/{id} path retrieving single entity matching identifier backend response JSON single entity deserialized instance returned caller.
 
 ## 5. Flujo de Funcionamiento
 
@@ -367,7 +367,7 @@ import { PersistentKey } from '@/decorations/persistent_key_decorator';
 import { ApiEndpoint } from '@/decorations/api_endpoint_decorator';
 import { ModuleName } from '@/decorations/module_name_decorator';
 import { PropertyName } from '@/decorations/property_name_decorator';
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 @ModuleName('Product', 'Products')
 @ApiEndpoint('/api/products')

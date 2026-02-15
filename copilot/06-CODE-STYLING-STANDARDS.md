@@ -643,7 +643,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
 // 3. Imports aliased - Clases e interfaces
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import {
     PropertyName,
     ModuleName,
@@ -665,7 +665,7 @@ import { CustomerService } from '../services/customer';
 import type { LocalConfig } from './types';
 
 // INCORRECTO - Sin orden, mezclado
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import axios from 'axios';
 import type { Product } from '@/entities/product';
 import { ref } from 'vue';
@@ -715,7 +715,7 @@ Dentro de clases, seguir orden de § 6.2.4 (Regions).
 
 ```typescript
 // 1. Imports
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { PropertyName, Required } from '@/decorations';
 
 // 2. Interfaces locales (si no están en archivo separado)
@@ -839,7 +839,7 @@ Cada region DEBE marcarse con comentario estructurado.
 **Aplicación completa:**
 
 ```typescript
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import {
     PropertyName,
     ModuleName,
@@ -1018,7 +1018,7 @@ Componentes Vue con Composition API (setup) DEBEN seguir el siguiente orden:
 <script setup lang="ts">
 // 1. Imports
 import { ref, computed, onMounted, Ref, ComputedRef } from 'vue';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
 
 // 2. Props

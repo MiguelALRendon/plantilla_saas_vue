@@ -277,7 +277,7 @@ User[MODULE_CUSTOM_COMPONENTS_KEY] = Map {
 
 ### 4.3. Accessors en BaseEntity
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~280-310)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~280-310)
 
 ```typescript
 /**
@@ -347,7 +347,7 @@ public getCustomComponentForProperty(propertyName: string): Component | undefine
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import InputText from '@/components/Form/InputText.vue';
 import InputNumber from '@/components/Form/InputNumber.vue';
 
@@ -948,7 +948,7 @@ const RichTextEditor = defineAsyncComponent({
 
 **Dependencias:**
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 import { MODULE_CUSTOM_COMPONENTS_KEY } from '@/decorations/module_custom_components_decorator';
 
 public static getModuleCustomComponents(): Map<string, Component> | undefined
@@ -966,7 +966,7 @@ public getCustomComponentForProperty(propertyName: string): Component | undefine
 ```vue
 <!-- src/views/default_detailview.vue -->
 <script setup>
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 
 function resolveComponent(propertyName: string, propertyType: any): Component {
     const customComponent = entityClass.getCustomComponentForProperty(propertyName);

@@ -614,7 +614,7 @@ Si success:
 
 ### 8.3 Dependencias de Entidades
 
-**BaseEntity (@/entities/base_entitiy)**
+**BaseEntity (@/entities/base_entity)**
 - Relación: Application gestiona instancias de BaseEntity subclasses
 - Métodos usados: getModuleName(), getModuleDefaultComponent(), getModuleListComponent(), getModuleDetailComponent(), isPersistent(), getUniquePropertyValue(), getDirtyState()
 - Crítico: Sí, ModuleList contiene tipos BaseEntity

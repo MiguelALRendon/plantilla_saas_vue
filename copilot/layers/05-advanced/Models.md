@@ -70,7 +70,7 @@ export interface AppConfiguration {
 
 **VIEW INTERFACE:**
 ```typescript
-import { BaseEntity } from "@/entities/base_entitiy";
+import { BaseEntity } from "@/entities/base_entity";
 import { ViewTypes } from "@/enums/view_type";
 import { Component } from "vue";
 
@@ -90,7 +90,7 @@ export interface View {
 **MODAL INTERFACE:**
 ```typescript
 import { ViewTypes } from '@/enums/view_type';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 
 export interface Modal {
     modalView: typeof BaseEntity | null;              // Customer class lookup

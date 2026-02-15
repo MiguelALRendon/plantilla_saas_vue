@@ -60,6 +60,81 @@
     /* Border radius estándar */
     --border-radius: 1rem;
     --border-radius-circle: 100%;
+    
+    /* Transiciones y duraciones */
+    --transition-fast: 0.15s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.5s;
+    --timing-ease: ease;
+    --timing-ease-in-out: ease-in-out;
+    
+    /* Espaciados y dimensiones */
+    --padding-small: 0.5rem;
+    --padding-medium: 0.75rem;
+    --padding-large: 1rem;
+    --margin-small: 0.5rem;
+    --margin-medium: 1rem;
+    --margin-large: 1.5rem;
+    --spacing-xxs: 0.15rem;
+    --spacing-xs: 0.25rem;
+    --spacing-small: 0.5rem;
+    --spacing-helper: 0.7rem;
+    --spacing-medium: 1rem;
+    --spacing-large: 1.5rem;
+    
+    /* Tipografía */
+    --font-size-small: 0.75rem;
+    --font-size-base: 1rem;
+    --font-size-medium: 1.25rem;
+    --font-size-large: 1.5rem;
+    --font-size-h1: 2rem;
+    --font-size-h2: 1.75rem;
+    --font-size-h3: 1.5rem;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --line-height-base: 1.5;
+    --line-height-heading: 1.2;
+    
+    /* Z-Index */
+    --z-base: 1;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-overlay: 500;
+    --z-modal: 1000;
+    --z-toast: 1500;
+    --z-tooltip: 2000;
+    
+    /* Breakpoints */
+    --breakpoint-mobile: 768px;
+    --breakpoint-tablet: 1024px;
+    --breakpoint-laptop: 1440px;
+    --breakpoint-desktop: 1920px;
+    
+    /* Opacidades */
+    --opacity-hover: 0.8;
+    --opacity-disabled: 0.5;
+    
+    /* Anchos de tabla */
+    --table-width-very-small: 50px;
+    --table-width-short: 80px;
+    --table-width-small: 100px;
+    --table-width-medium: 150px;
+    --table-width-large: 200px;
+    --table-width-extra-large: 300px;
+    
+    /* Dimensiones de componentes */
+    --button-height: 2rem;
+    --input-padding: 0.75rem;
+    --textarea-min-height: 7rem;
+    --icon-button-width: 2.5rem;
+    --input-container-padding-top: 0.9rem;
+    --label-initial-top: 1.7rem;
+    --label-focused-top: -0.1rem;
+    --label-focused-left: 1.5rem;
+    --label-focused-padding: 0.1rem 0.25rem 0 0.25rem;
+    --number-input-label-left: 3.5rem;
 }
 
 .dark-mode {

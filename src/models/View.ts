@@ -1,4 +1,4 @@
-import { BaseEntity } from "@/entities/base_entitiy";
+import { BaseEntity } from "@/entities/base_entity";
 import { ViewTypes } from "@/enums/view_type";
 import { Component } from "vue";
 

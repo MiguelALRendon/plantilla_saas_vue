@@ -332,7 +332,7 @@ Al validar:
 ### Dependencias de Código
 
 **Obligatorias:**
-- `BaseEntity` de `@/entities/base_entitiy` - Métodos de validación
+- `BaseEntity` de `@/entities/base_entity` - Métodos de validación
 - `@Required` de `@/decorations` - Decorador Required
 - `@Validation` de `@/decorations` - Decorador Validation síncrona
 - `@AsyncValidation` de `@/decorations` - Decorador Validation asíncrona
@@ -404,7 +404,7 @@ Para validaciones asíncronas, se requiere:
 **Entidad User con Validaciones Completas:**
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import {
     PropertyName,
     PropertyIndex,

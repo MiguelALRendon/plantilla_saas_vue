@@ -288,7 +288,7 @@ NO usar este componente para propiedades con @StringTypeDef, usar componente esp
 
 **Application singleton** (src/models/application.ts): Proporciona eventBus para comunicación global validate-inputs, View.value.isValid para estado de validación global.
 
-**BaseEntity** (src/entities/base_entitiy.ts): Tipo de entity prop, proporciona métodos isAsyncValidation(propertyKey) y asyncValidationMessage(propertyKey).
+**BaseEntity** (src/entities/base_entity.ts): Tipo de entity prop, proporciona métodos isAsyncValidation(propertyKey) y asyncValidationMessage(propertyKey).
 
 ### Dependencias de Decoradores
 
@@ -406,7 +406,7 @@ Para emails usar EmailInputComponent con type="email" HTML y validación formato
 
 Documentos relacionados: form-inputs.md (overview de todos los componentes de formulario), useInputMetadata-composable.md (composable que extrae metadata), ../../02-base-entity/validation-system.md (sistema completo de validación de BaseEntity), ../../01-decorators/required-decorator.md (decorador @Required), ../../01-decorators/validation-decorator.md (decorador @Validation), ../../01-decorators/async-validation-decorator.md (decorador @AsyncValidation), ../../01-decorators/help-text-decorator.md (decorador @HelpText), ../../01-decorators/disabled-decorator.md (decorador @Disabled), ../../01-decorators/property-name-decorator.md (decorador @PropertyName obligatorio), ../../03-application/event-bus.md (sistema de eventos global).
 
-Archivos de código fuente: src/components/Form/TextInputComponent.vue (implementación del componente), src/composables/useInputMetadata.ts (composable de extracción de metadata), src/models/application.ts (Application singleton con eventBus y View), src/entities/base_entitiy.ts (métodos isAsyncValidation y asyncValidationMessage).
+Archivos de código fuente: src/components/Form/TextInputComponent.vue (implementación del componente), src/composables/useInputMetadata.ts (composable de extracción de metadata), src/models/application.ts (Application singleton con eventBus y View), src/entities/base_entity.ts (métodos isAsyncValidation y asyncValidationMessage).
 
 Componentes relacionados: email-input-component.md (input especializado para emails), password-input-component.md (input especializado para passwords), textarea-input-component.md (input especializado para texto multilinea), number-input-component.md (input para números), date-input-component.md (input para fechas), boolean-input-component.md (input para booleanos).
 

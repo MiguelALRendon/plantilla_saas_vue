@@ -81,7 +81,7 @@ Este ejemplo implementa:
 Archivo: src/entities/purchase_order.ts
 
 ```typescript
-import { BaseEntity } from './base_entitiy';
+import { BaseEntity } from './base_entity';
 import { Customer } from './customer';
 import { Address } from './address';
 import { User } from './user';
@@ -942,7 +942,7 @@ No omitir paymentReference cuando paymentMethod es BANK_TRANSFER o PAYPAL.
 
 ## 8. Dependencias
 
-BaseEntity: Clase base de framework (./base_entitiy)
+BaseEntity: Clase base de framework (./base_entity)
 
 Customer: Entidad de cliente (./customer)
 

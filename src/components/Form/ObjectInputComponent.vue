@@ -25,7 +25,7 @@
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import { BaseEntity, EmptyEntity } from '@/entities/base_entitiy';
+import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import { PropType } from 'vue';

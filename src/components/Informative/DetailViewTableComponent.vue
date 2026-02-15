@@ -32,7 +32,7 @@
 
 <script lang="ts">
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 import { Products } from '@/entities/products';
 import Application from '@/models/application';
 export default {

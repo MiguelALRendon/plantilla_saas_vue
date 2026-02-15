@@ -482,7 +482,7 @@ Opcional: Mostrar toast "Módulo no encontrado"
 
 ### 8.3 Dependencia de BaseEntity
 
-**BaseEntity (@/entities/base_entitiy)**
+**BaseEntity (@/entities/base_entity)**
 - Métodos usados: getModuleName(), createNewInstance()
 - Type: typeof BaseEntity en ModuleList.value
 - Crítico: Sí, module resolution depende de getModuleName()
@@ -708,7 +708,7 @@ if (moduleClass) {
 
 ### 10.5 BaseEntity Hook: onBeforeRouteLeave()
 
-**Ubicación en código:** `src/entities/base_entitiy.ts` (líneas 883-885)
+**Ubicación en código:** `src/entities/base_entity.ts` (líneas 883-885)
 
 **Propósito:** Hook de integración con Vue Router guards para detectar navegación fuera de vista de detalle con cambios sin guardar.
 

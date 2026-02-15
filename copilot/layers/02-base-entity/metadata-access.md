@@ -1398,7 +1398,7 @@ public getMask(propertyKey: string): string | undefined {
 - ../../04-components/DefaultViews.md: Componentes que consumen metadata
 
 **Archivos fuente:**
-- src/entities/base_entitiy.ts: Implementación de todos los métodos de acceso
+- src/entities/base_entity.ts: Implementación de todos los métodos de acceso
 - src/views/default_listview.vue: Uso de getKeys, getPropertyTypes para renderizado
 - src/views/default_detailview.vue: Uso de getArrayKeysOrdered, getViewGroups para tabs
 - src/components/Form/DynamicInputComponent.vue: Uso de getPropertyType para selección de input

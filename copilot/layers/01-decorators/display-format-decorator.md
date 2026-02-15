@@ -39,9 +39,9 @@ El decorator DisplayFormat define función de formateo para transformar valor de
 
 **Formatter Function:** Function almacenada en metadata que ejecuta transformación de valor. Recibe valor raw como parámetro, opcionalmente puede usar this binding para acceder a entity instance. DEBE retornar string.
 
-**getDisplayFormat(propertyKey) Accessor:** Método de instancia en BaseEntity que retorna formatter function o undefined. Ubicado en línea ~200 de base_entitiy.ts.
+**getDisplayFormat(propertyKey) Accessor:** Método de instancia en BaseEntity que retorna formatter function o undefined. Ubicado en línea ~200 de base_entity.ts.
 
-**getFormattedValue(propertyKey) Accessor:** Método de instancia en BaseEntity que ejecuta formatter si existe o aplica formateo por defecto, siempre retorna string. Ubicado en línea ~210 de base_entitiy.ts.
+**getFormattedValue(propertyKey) Accessor:** Método de instancia en BaseEntity que ejecuta formatter si existe o aplica formateo por defecto, siempre retorna string. Ubicado en línea ~210 de base_entity.ts.
 
 **Static Formatter:** Formatter function sin this binding, recibe solo value parameter. Ejemplo: `(value: number) => '$' + value.toFixed(2)`.
 
@@ -119,7 +119,7 @@ Product.prototype[DISPLAY_FORMAT_KEY] = {
 ### Accessor Método getDisplayFormat() en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene la función de formateo de una propiedad
@@ -139,12 +139,12 @@ public getDisplayFormat(key: string): DisplayFormatter | undefined {
 }
 ```
 
-Ubicación: `src/entities/base_entitiy.ts` (líneas ~200-215)
+Ubicación: `src/entities/base_entity.ts` (líneas ~200-215)
 
 ### Accessor Método getFormattedValue() en BaseEntity
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el valor formateado de una propiedad aplicando DisplayFormat si existe
@@ -188,7 +188,7 @@ public getFormattedValue(key: string): string {
 }
 ```
 
-Ubicación: `src/entities/base_entitiy.ts` (líneas ~220-255)
+Ubicación: `src/entities/base_entity.ts` (líneas ~220-255)
 
 ### Integración en ListView Component
 
@@ -217,7 +217,7 @@ Ubicación: `src/entities/base_entitiy.ts` (líneas ~220-255)
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type BaseEntity from '@/entities/base_entitiy';
+import type BaseEntity from '@/entities/base_entity';
 
 const props = defineProps<{
     entities: BaseEntity[];
@@ -483,7 +483,7 @@ phone!: string;
 
 ```typescript
 // BaseEntity provee getDisplayFormat() y getFormattedValue()
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 export class Product extends BaseEntity {
     @DisplayFormat((v) => `$${v}`)
@@ -695,7 +695,7 @@ fileSize!: number;  // 1048576 → "1.00 MB"
 
 - `src/decorations/display_format_decorator.ts` - Implementación decorator
 - `src/decorations/index.ts` - Export DISPLAY_FORMAT_KEY Symbol
-- `src/entities/base_entitiy.ts` - getDisplayFormat() y getFormattedValue()
+- `src/entities/base_entity.ts` - getDisplayFormat() y getFormattedValue()
 
 ### Utilities
 

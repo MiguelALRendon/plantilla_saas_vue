@@ -61,7 +61,7 @@ export function CssColumnClass(className: string): PropertyDecorator {
 
 ### Accesores en BaseEntity
 ```typescript
-// src/entities/base_entitiy.ts (línea ~1520-1560)
+// src/entities/base_entity.ts (línea ~1520-1560)
 
 public getCssColumnClass(propertyKey: string): string {
     const constructor = this.constructor as typeof BaseEntity;
@@ -192,7 +192,7 @@ sku!: string;
 
 ```typescript
 import { CssColumnClass, PropertyName, Required } from '@/decorations';
-import BaseEntity from '@/entities/base_entitiy';
+import BaseEntity from '@/entities/base_entity';
 
 export class User extends BaseEntity {
     @PropertyName('First Name', String)

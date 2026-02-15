@@ -37,7 +37,7 @@ Symbol único que identifica la metadata del componente DetailView custom del m�
 
 Accessor estático definido en BaseEntity que retorna el componente DetailView custom del módulo o `undefined` si no está configurado y debe usar default_detailview.vue. Implementación: `return (this as any)[MODULE_DETAIL_COMPONENT_KEY]`. También existe versión de instancia que delega al método estático: `constructor.getModuleDetailComponent()`. Permite consultar el componente desde cualquier contexto durante la resolución de vistas en Router para determinar si renderizar custom DetailView o default DetailView del framework.
 
-Ubicación: líneas ~240-260 de `src/entities/base_entitiy.ts`.
+Ubicación: líneas ~240-260 de `src/entities/base_entity.ts`.
 
 ### Entity Prop Requirement
 
@@ -120,7 +120,7 @@ El componente DetailView se almacena a nivel de clase como propiedad directa usa
 ### BaseEntity Accessors
 
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 
 /**
  * Obtiene el componente DetailView del módulo
@@ -142,7 +142,7 @@ public getModuleDetailComponent(): Component | undefined {
 
 BaseEntity proporciona dos accessors: el método estático accede directamente a la metadata de la clase usando el Symbol key y retorna `Component | undefined`; el método de instancia delega al método estático obteniendo el constructor de la instancia y llamando a su método estático. Esto permite consultar el componente tanto desde contexto de clase (`Product.getModuleDetailComponent()`) como desde instancia (`productInstance.getModuleDetailComponent()`).
 
-Ubicación: líneas ~240-260 de `src/entities/base_entitiy.ts`.
+Ubicación: líneas ~240-260 de `src/entities/base_entity.ts`.
 
 ### Router View Resolution Integration
 

@@ -100,7 +100,7 @@ export interface InputMetadata {
 ### Implementación Completa
 
 ```typescript
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 import { computed, type ComputedRef } from 'vue';
 
 export interface InputMetadata {
@@ -384,7 +384,7 @@ console.log(phoneMetadata.helpText.value); // undefined
 
 ```typescript
 import { useInputMetadata } from '@/composables/useInputMetadata';
-import type { BaseEntity } from '@/entities/base_entitiy';
+import type { BaseEntity } from '@/entities/base_entity';
 
 const props = defineProps<{
     entityClass: typeof BaseEntity;
@@ -855,7 +855,7 @@ describe('useInputMetadata', () => {
 
 ### Código Fuente
 - src/composables/useInputMetadata.ts (implementación composable)
-- src/entities/base_entitiy.ts (métodos metadata)
+- src/entities/base_entity.ts (métodos metadata)
 - src/components/Form/*.vue (todos inputs usan composable)
 
 ### Vue 3 Documentation

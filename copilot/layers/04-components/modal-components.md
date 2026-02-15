@@ -571,7 +571,7 @@ hideLoadingMenu() {
 - @/enums/conf_menu_type.ts: confMenuType enum (INFO, SUCCESS, WARNING, ERROR) define tipos confirmation dialog
 - @/constants/ggicons.ts: GGICONS objeto con iconos (INFO, CHECK, WARNING, CLOSE, REFRESH) para UI visual
 - @/views/default_lookup_listview.vue: Vista default para LOOKUPVIEW renderizada en modal para selección entidad
-- @/entities/base_entitiy.ts: BaseEntity proporciona getModuleName(), getModuleIcon(), getModuleListComponent(), getModuleDetailComponent() para metadata modal
+- @/entities/base_entity.ts: BaseEntity proporciona getModuleName(), getModuleIcon(), getModuleListComponent(), getModuleDetailComponent() para metadata modal
 - Vue 3 Reactivity: computed properties, reactive Application objects, component :is dynamic rendering
 
 **Dependencias de CSS:**

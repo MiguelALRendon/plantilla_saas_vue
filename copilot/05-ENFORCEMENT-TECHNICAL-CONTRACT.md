@@ -2222,7 +2222,7 @@ Documentos vinculados contractualmente:
 - layers/06-composables/ - Composables del sistema
 
 **Código Fuente:**
-- /src/entities/base_entitiy.ts - BaseEntity (contratos públicos)
+- /src/entities/base_entity.ts - BaseEntity (contratos públicos)
 - /src/models/application.ts - Application (interfaz pública)
 - /src/decorations/ - Sistema de decoradores
 - /src/css/constants.css - Sistema de tokens UI/CSS

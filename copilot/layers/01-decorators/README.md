@@ -297,7 +297,7 @@ Nuevos decoradores deben:
 
 - **Implementación:** `/src/decorations/`
 - **Símbolos:** `/src/decorations/index.ts`
-- **BaseEntity:** `/src/entities/base_entitiy.ts`
+- **BaseEntity:** `/src/entities/base_entity.ts`
 
 ---
 

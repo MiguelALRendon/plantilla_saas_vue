@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { BaseEntity } from '@/entities/base_entitiy';
+import { BaseEntity } from '@/entities/base_entity';
 
     export default {
         name: "DefaultLookupListView",

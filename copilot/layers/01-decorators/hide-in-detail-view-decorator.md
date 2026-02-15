@@ -50,13 +50,13 @@ El decorador `@HideInDetailView()` oculta una propiedad en vistas de detalle (De
 - Accessor de BaseEntity que verifica si una propiedad debe ocultarse en DetailView
 - Parámetros: `propertyKey: string`
 - Retorno: `boolean` (true si oculta en DetailView)
-- Ubicación: `src/entities/base_entitiy.ts` línea ~1280
+- Ubicación: `src/entities/base_entity.ts` línea ~1280
 
 **getDetailViewProperties() (Método estático):**
 - Obtiene lista filtrada de propiedades visibles en DetailView
 - Retorno: `string[]` con nombres de propiedades no ocultas
 - Filtra usando isHideInDetailView() sobre resultado de getProperties()
-- Ubicación: `src/entities/base_entitiy.ts` línea ~1310
+- Ubicación: `src/entities/base_entity.ts` línea ~1310
 
 **DetailView vs ListView:**
 - DetailView: Vista de formulario para crear/editar una entidad individual, enfocada en campos editables
@@ -147,7 +147,7 @@ Order.prototype[HIDE_IN_DETAIL_VIEW_KEY] = [
 
 ### 4.3. Accessors en BaseEntity
 
-**Ubicación:** `src/entities/base_entitiy.ts` (línea ~1280-1330)
+**Ubicación:** `src/entities/base_entity.ts` (línea ~1280-1330)
 
 ```typescript
 /**
@@ -713,7 +713,7 @@ export class Product extends BaseEntity {
 
 **Dependencias:**
 ```typescript
-// src/entities/base_entitiy.ts
+// src/entities/base_entity.ts
 import { HIDE_IN_DETAIL_VIEW_KEY } from '@/decorations/hide_in_detail_view_decorator';
 
 public isHideInDetailView(propertyKey: string): boolean
