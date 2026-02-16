@@ -1,27 +1,29 @@
 <template>
-<div :class="'modal-background ' + (isShowing ? '' : 'closed')">
-    <div :class="'modal-structure ' + (isShowing ? '' : 'closed')">
-        <div class="modal-head">
-            <div class="left-side">
-                <div class="icon">
-                    <img v-if="modalView && modalModule" :src="modalModule.getModuleIcon()" alt="">
+    <div :class="'modal-background ' + (isShowing ? '' : 'closed')">
+        <div :class="'modal-structure ' + (isShowing ? '' : 'closed')">
+            <div class="modal-head">
+                <div class="left-side">
+                    <div class="icon">
+                        <img v-if="modalView && modalModule" :src="modalModuleIcon" alt="" />
+                    </div>
+                    <span class="title" v-if="modalView && modalModule">{{ modalModuleName }}</span>
                 </div>
-                <span class="title" v-if="modalView && modalModule">{{ modalModule.getModuleName() }}</span>
+
+                <button class="close-button" @click="closeModal">
+                    <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                </button>
             </div>
 
-            <button class="close-button" @click="closeModal"><span :class="GGCLASS">{{ GGICONS.CLOSE }}</span></button>
-        </div>
+            <div class="modal-body">
+                <component :is="modalView" v-if="modalView && modalModule"></component>
+            </div>
 
-        <div class="modal-body">
-            <component :is="modalView" v-if="modalView && modalModule"></component>
-        </div>
-
-        <div class="modal-footer">
-            <button class="button info fill">Aceptar</button>
-            <button class="button alert fill" @click="closeModal">Cerrar</button>
+            <div class="modal-footer">
+                <button class="button info fill">Aceptar</button>
+                <button class="button alert fill" @click="closeModal">Cerrar</button>
+            </div>
         </div>
     </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -53,11 +55,17 @@ export default {
             GGICONS,
             Application,
             modalModule: null as typeof BaseEntity | null,
-            isShowing: false,
-        }
+            isShowing: false
+        };
     },
     computed: {
-        modalView() : Component | null {
+        modalModuleIcon(): string | undefined {
+            return this.modalModule?.getModuleIcon();
+        },
+        modalModuleName(): string | undefined {
+            return this.modalModule?.getModuleName();
+        },
+        modalView(): Component | null {
             const modal = Application.modal.value as Modal;
 
             if (!modal || !modal.modalView) return null;
@@ -93,8 +101,8 @@ export default {
         window.removeEventListener('keydown', this.handleKeydown);
         Application.eventBus.off('show-modal');
         Application.eventBus.off('hide-modal');
-    },
-}
+    }
+};
 </script>
 
 <style>
@@ -143,9 +151,11 @@ export default {
     align-items: center;
     justify-content: space-between;
 }
-.modal-head{box-sizing: border-box;}
+.modal-head {
+    box-sizing: border-box;
+}
 .modal-head .left-side {
-    width: 100%; 
+    width: 100%;
     height: 100%;
     display: flex;
     flex-direction: row;
@@ -153,7 +163,7 @@ export default {
     gap: var(--spacing-lg);
 }
 
-.modal-body{
+.modal-body {
     flex-grow: 1;
     max-height: calc(60vh - 55px);
     height: 100%;

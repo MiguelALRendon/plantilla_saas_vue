@@ -1,0 +1,21 @@
+# Prettier Ignore File
+# 06-CODE-STYLING-STANDARDS § 6.1
+
+# Dependencias
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Archivos de configuración
+.editorconfig
+.gitignore
+
+# Documentación en Markdown (usa 2 espacios por convención)
+*.md
+
+# Archivos de sistema
+.DS_Store

@@ -1,10 +1,10 @@
 <template>
-<div :class="'side-bar-item ' + (isActive ? ' active' : '')" @click="setNewView">
-    <div class="icon">
-        <img :src="module.getModuleIcon()" alt="">
+    <div :class="'side-bar-item ' + (isActive ? ' active' : '')" @click="setNewView">
+        <div class="icon">
+            <img :src="moduleIcon" alt="" />
+        </div>
+        <span class="module-title">{{ moduleName }}</span>
     </div>
-    <span class="module-title">{{module.getModuleName()}}</span>
-</div>
 </template>
 
 <script lang="ts">
@@ -21,6 +21,12 @@ export default {
         }
     },
     computed: {
+        moduleIcon(): string | undefined {
+            return this.module?.getModuleIcon();
+        },
+        moduleName(): string | undefined {
+            return this.module?.getModuleName();
+        },
         isActive(): boolean {
             return Application.View.value.entityClass?.getModuleName() === (this.module && this.module.getModuleName());
         }
@@ -29,8 +35,8 @@ export default {
         setNewView() {
             Application.changeViewToDefaultView(this.module as typeof BaseEntity);
         }
-    },
-}
+    }
+};
 </script>
 
 <style scoped>
@@ -51,15 +57,16 @@ export default {
     border-radius: 0;
 }
 
-.side-bar-item.active .icon img, .icon img {
+.side-bar-item.active .icon img,
+.icon img {
     filter: drop-shadow(var(--shadow-white));
 }
 
-.side-bar-item .icon{
+.side-bar-item .icon {
     width: var(--sidebar-min-width);
     height: var(--sidebar-min-width);
 }
-.side-bar-item .icon img{
+.side-bar-item .icon img {
     width: var(--sidebar-min-width);
     height: var(--sidebar-min-width);
 }

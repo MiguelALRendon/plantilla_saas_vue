@@ -4,6 +4,6 @@ import { BaseEntity } from '@/entities/base_entity';
 export interface Modal {
     modalView: typeof BaseEntity | null;
     modalOnCloseFunction: ((param: unknown) => void) | null;
-    viewType : ViewTypes;
+    viewType: ViewTypes;
     customViewId?: string;
 }

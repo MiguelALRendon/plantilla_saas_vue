@@ -15,19 +15,19 @@ export class ApplicationUIService {
 
     toggleDarkMode = () => {
         this.app.AppConfiguration.value.isDarkMode = !this.app.AppConfiguration.value.isDarkMode;
-    }
+    };
 
     toggleSidebar = () => {
         this.app.eventBus.emit('toggle-sidebar');
-    }
+    };
 
     setSidebar = (state: boolean) => {
         this.app.eventBus.emit('toggle-sidebar', state);
-    }
+    };
 
     showToast = (message: string, type: ToastType) => {
         this.app.ToastList.value.push(new Toast(message, type));
-    }
+    };
 
     showModal = (entity: typeof BaseEntity, viewType: ViewTypes, customViewId?: string) => {
         this.app.modal.value.modalView = entity;
@@ -35,22 +35,27 @@ export class ApplicationUIService {
         this.app.modal.value.viewType = viewType;
         this.app.modal.value.customViewId = customViewId;
         this.app.eventBus.emit('show-modal');
-    }
+    };
 
-    showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param: unknown) => void, viewType: ViewTypes, customViewId?: string): void => {
+    showModalOnFunction = (
+        entity: typeof BaseEntity,
+        onCloseFunction: (param: unknown) => void,
+        viewType: ViewTypes,
+        customViewId?: string
+    ): void => {
         this.app.modal.value.modalView = entity;
         this.app.modal.value.modalOnCloseFunction = onCloseFunction;
         this.app.modal.value.viewType = viewType;
         this.app.modal.value.customViewId = customViewId;
         this.app.eventBus.emit('show-modal');
-    }
+    };
 
     closeModal = () => {
         this.app.eventBus.emit('hide-modal');
         setTimeout(() => {
             this.app.modal.value.modalView = null;
         }, 150);
-    }
+    };
 
     closeModalOnFunction = (param: unknown): void => {
         if (this.app.modal.value.modalOnCloseFunction) {
@@ -61,7 +66,7 @@ export class ApplicationUIService {
             this.app.modal.value.modalView = null;
             this.app.modal.value.modalOnCloseFunction = null;
         }, 150);
-    }
+    };
 
     openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string) => {
         const rect = position.getBoundingClientRect();
@@ -75,7 +80,7 @@ export class ApplicationUIService {
             this.app.dropdownMenu.value.width = width;
         }
         this.app.dropdownMenu.value.showing = true;
-    }
+    };
 
     closeDropdownMenu = () => {
         this.app.dropdownMenu.value.showing = false;
@@ -83,9 +88,16 @@ export class ApplicationUIService {
             this.app.dropdownMenu.value.component = null;
             this.app.dropdownMenu.value.title = '';
         }, 500);
-    }
+    };
 
-    openConfirmationMenu = (type: confMenuType, title: string, message: string, onAccept?: () => void, acceptButtonText: string = 'Aceptar', cancelButtonText: string = 'Cancelar') => {
+    openConfirmationMenu = (
+        type: confMenuType,
+        title: string,
+        message: string,
+        onAccept?: () => void,
+        acceptButtonText: string = 'Aceptar',
+        cancelButtonText: string = 'Cancelar'
+    ) => {
         this.app.confirmationMenu.value = {
             type,
             title,
@@ -95,7 +107,7 @@ export class ApplicationUIService {
             cancelButtonText
         };
         this.app.eventBus.emit('show-confirmation');
-    }
+    };
 
     acceptConfigurationMenu = () => {
         if (this.app.confirmationMenu.value.confirmationAction) {
@@ -103,7 +115,7 @@ export class ApplicationUIService {
         }
 
         this.closeConfirmationMenu();
-    }
+    };
 
     closeConfirmationMenu = () => {
         this.app.eventBus.emit('hide-confirmation');
@@ -115,21 +127,21 @@ export class ApplicationUIService {
                 confirmationAction: () => {}
             };
         }, 500);
-    }
+    };
 
     showLoadingScreen = () => {
         this.app.eventBus.emit('show-loading');
-    }
+    };
 
     hideLoadingScreen = () => {
         this.app.eventBus.emit('hide-loading');
-    }
+    };
 
     showLoadingMenu = () => {
         this.app.eventBus.emit('show-loading-menu');
-    }
+    };
 
     hideLoadingMenu = () => {
         this.app.eventBus.emit('hide-loading-menu');
-    }
+    };
 }

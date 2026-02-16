@@ -1,44 +1,62 @@
 <template>
-<table>
-    <thead>
-        <tr>
-            <td v-for="(item, key) in Application.View.entityClass?.getProperties()" :class="Application.View.entityClass?.getCSSClasses()[key]">
-                {{ item }}
-            </td>
-        </tr>
-    </thead>
-
-    <tbody>
-        <tr v-for="item in data" @click="openDetailView(item)">
-            <template v-for="column in item.getKeys()">
-                <td :class="item.getCSSClasses()[column]" class="table-row" v-if="Application.View.entityClass?.getPropertyType(column) !== Array">
-                    <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
-                        {{ item[column] instanceof BaseEntity ? item[column].getDefaultPropertyValue() : item.getFormattedValue(column) }}
-                    </span>
-
-                    <span v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean" :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')" class="boolean-row">
-                        {{ item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL }}
-                    </span>
+    <table>
+        <thead>
+            <tr>
+                <td
+                    v-for="(item, key) in Application.View.entityClass?.getProperties()"
+                    :class="Application.View.entityClass?.getCSSClasses()[key]"
+                >
+                    {{ item }}
                 </td>
-            </template>
-        </tr>
-    </tbody>
+            </tr>
+        </thead>
 
-    <tfoot>
-        <tr></tr>
-    </tfoot>
-</table>
+        <tbody>
+            <tr v-for="item in data" @click="openDetailView(item)">
+                <template v-for="column in item.getKeys()">
+                    <td
+                        :class="item.getCSSClasses()[column]"
+                        class="table-row"
+                        v-if="Application.View.entityClass?.getPropertyType(column) !== Array"
+                    >
+                        <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
+                            {{
+                                item[column] instanceof BaseEntity
+                                    ? item[column].getDefaultPropertyValue()
+                                    : item.getFormattedValue(column)
+                            }}
+                        </span>
+
+                        <span
+                            v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean"
+                            :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')"
+                            class="boolean-row"
+                        >
+                            {{ getBooleanIcon(item, column) }}
+                        </span>
+                    </td>
+                </template>
+            </tr>
+        </tbody>
+
+        <tfoot>
+            <tr></tr>
+        </tfoot>
+    </table>
 </template>
 
 <script lang="ts">
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
-import { Products } from '@/entities/products';
+import { Product } from '@/entities/product';
 import Application from '@/models/application';
 export default {
     name: 'DetailViewTableComponent',
     methods: {
-        openDetailView(entity : any) {
+        getBooleanIcon(item: BaseEntity, column: string): string {
+            return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
+        },
+        openDetailView(entity: any) {
             // Setear entityOid antes de cambiar la vista
             const uniqueValue = entity.getUniquePropertyValue();
             if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
@@ -47,75 +65,75 @@ export default {
                 Application.View.value.entityOid = String(uniqueValue);
             }
             Application.changeViewToDetailView(entity as BaseEntity);
-        }  
+        }
     },
     data() {
-        const data : Products[] = [];
+        const data: Product[] = [];
         for (let i = 1; i <= 50; i++) {
             data.push(
-                new Products({
+                new Product({
                     id: i,
                     name: `Producto ${i}`,
                     description: `Descripción del producto asdf fasdfasdfasdf ta sdf sd fasdf   asdfasdfasdf asdfasfafsdf ${i}`,
                     stock: Math.floor(Math.random() * 50) + 1,
-                    Catedral: new Products({
+                    Catedral: new Product({
                         id: i + 100,
                         name: `Inner Producto ${i}`,
                         description: `Inner Descripción del producto ${i}`,
-                        stock: Math.floor(Math.random() * 50) + 1,
+                        stock: Math.floor(Math.random() * 50) + 1
                     }),
                     bolian: i % 2 === 0,
                     listaProductos: [
-                        new Products({
+                        new Product({
                             id: i + 200,
                             name: `List Producto A ${i}`,
                             description: `List Descripción del producto A ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1,
+                            stock: Math.floor(Math.random() * 50) + 1
                         }),
-                        new Products({
+                        new Product({
                             id: i + 300,
                             name: `List Producto B ${i}`,
                             description: `List Descripción del producto B ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1,
+                            stock: Math.floor(Math.random() * 50) + 1
                         }),
-                        new Products({
+                        new Product({
                             id: i + 400,
                             name: `List Producto C ${i}`,
                             description: `List Descripción del producto C ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1,
+                            stock: Math.floor(Math.random() * 50) + 1
                         }),
-                        new Products({
+                        new Product({
                             id: i + 500,
                             name: `List Producto D ${i}`,
                             description: `List Descripción del producto D ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1,
+                            stock: Math.floor(Math.random() * 50) + 1
                         }),
-                        new Products({
+                        new Product({
                             id: i + 600,
                             name: `List Producto E ${i}`,
                             description: `List Descripción del producto E ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1,
+                            stock: Math.floor(Math.random() * 50) + 1
                         }),
-                        new Products({
+                        new Product({
                             id: i + 700,
                             name: `List Producto F ${i}`,
                             description: `List Descripción del producto F ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1,
-                        }),
+                            stock: Math.floor(Math.random() * 50) + 1
+                        })
                     ]
                 })
             );
         }
-        
+
         return {
             Application,
             BaseEntity,
-            data: data as any as Products[],
+            data: data as any as Product[],
             GGICONS,
             GGCLASS
-        }
-    },
-}
+        };
+    }
+};
 </script>
 
 <style scoped>

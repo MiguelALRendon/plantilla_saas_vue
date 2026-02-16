@@ -32,7 +32,7 @@ import {
     UNIQUE_KEY,
     VALIDATION_KEY,
     VIEW_GROUP_KEY,
-    VIEW_GROUP_ROW_KEY,
+    VIEW_GROUP_ROW_KEY
 } from '@/decorations';
 import { confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
@@ -48,13 +48,13 @@ import type {
     HttpMethod,
     ReadOnlyMetadata,
     RequiredMetadata,
-    ValidationMetadata,
+    ValidationMetadata
 } from '@/decorations';
 import type { ViewGroupRow } from '@/enums/view_group_row';
 
 /**
  * Abstract base class for all entities in the meta-programming framework
- * 
+ *
  * Provides decorator-based metadata extraction, automatic CRUD operations,
  * validation, persistence mapping, and lifecycle hooks. All entity classes
  * in the framework must extend this class to inherit framework capabilities.
@@ -68,19 +68,19 @@ export abstract class BaseEntity {
      * Used by UI components to show loading indicators
      */
     public _isLoading: boolean = false;
-    
+
     /**
      * Snapshot of the entity's persistent state at load time
      * Used for dirty state detection and change tracking
      */
     public _originalState?: Record<string, any>;
-    
+
     /**
      * Indicates whether the entity is currently being saved
      * Prevents concurrent save operations
      */
     public _isSaving?: boolean = false;
-    
+
     /**
      * Object identifier used for entity tracking
      * Optional unique identifier for runtime object management
@@ -148,11 +148,11 @@ export abstract class BaseEntity {
         const result: Record<string, any> = {};
         const allProperties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
         const propertyKeys = Object.keys(allProperties);
-        
+
         for (const key of propertyKeys) {
             result[key] = this[key];
         }
-        
+
         return result;
     }
 
@@ -165,7 +165,7 @@ export abstract class BaseEntity {
         const columns = (this.constructor as typeof BaseEntity).getProperties();
         const keys = Object.keys(columns);
         const propertyIndices = this.getPropertyIndices();
-        
+
         // Ordenar por PropertyIndex si existe, sino por orden de declaración
         return keys.sort((a, b) => {
             const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
@@ -182,13 +182,13 @@ export abstract class BaseEntity {
         const properties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
         const propertyTypes = (this.constructor as typeof BaseEntity).getPropertyTypes();
         const arrayKeys: string[] = [];
-        
+
         for (const key of Object.keys(properties)) {
             if (propertyTypes[key] === Array) {
                 arrayKeys.push(key);
             }
         }
-        
+
         return arrayKeys;
     }
 
@@ -293,11 +293,11 @@ export abstract class BaseEntity {
         const stringTypes = proto[STRING_TYPE_KEY] || {};
         const properties = (this.constructor as typeof BaseEntity).getProperties();
         const result: Record<string, StringType> = {};
-        
+
         for (const key of Object.keys(properties)) {
             result[key] = stringTypes[key] ?? StringType.TEXT;
         }
-        
+
         return result;
     }
 
@@ -331,17 +331,17 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         const requiredFields: Record<string, RequiredMetadata> = proto[REQUIRED_KEY] || {};
         const metadata = requiredFields[propertyKey];
-        
+
         if (!metadata) {
             return false;
         }
-        
+
         let value = metadata.validation !== undefined ? metadata.validation : metadata.condition;
-        
+
         if (value === undefined) {
             return false;
         }
-        
+
         return typeof value === 'function' ? value(this) : value;
     }
 
@@ -366,11 +366,11 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         const validationRules: Record<string, ValidationMetadata> = proto[VALIDATION_KEY] || {};
         const rule = validationRules[propertyKey];
-        
+
         if (!rule) {
             return true;
         }
-        
+
         return typeof rule.condition === 'function' ? rule.condition(this) : rule.condition;
     }
 
@@ -396,11 +396,11 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         const disabledFields: Record<string, DisabledMetadata> = proto[DISABLED_KEY] || {};
         const metadata = disabledFields[propertyKey];
-        
+
         if (!metadata) {
             return false;
         }
-        
+
         return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
     }
 
@@ -414,11 +414,11 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
         const rule = asyncValidationRules[propertyKey];
-        
+
         if (!rule) {
             return true;
         }
-        
+
         try {
             return await rule.condition(this);
         } catch (error) {
@@ -459,15 +459,15 @@ export abstract class BaseEntity {
     public getFormattedValue(propertyKey: string): string {
         const value = (this as any)[propertyKey];
         const format = this.getDisplayFormat(propertyKey);
-        
+
         if (!format) {
             return value?.toString() ?? '';
         }
-        
+
         if (typeof format === 'function') {
             return format(value);
         }
-        
+
         // Si es string, reemplazar {value} con el valor actual
         return format.replace('{value}', value?.toString() ?? '');
     }
@@ -501,7 +501,7 @@ export abstract class BaseEntity {
     public getArrayKeysOrdered(): string[] {
         const arrayKeys = this.getArrayKeys();
         const tabOrders = this.getTabOrders();
-        
+
         // Ordenar por TabOrder si existe, sino por orden de declaración
         return arrayKeys.sort((a, b) => {
             const orderA = tabOrders[a] ?? Number.MAX_SAFE_INTEGER;
@@ -529,11 +529,11 @@ export abstract class BaseEntity {
         const proto = (this.constructor as any).prototype;
         const readOnlyFields: Record<string, ReadOnlyMetadata> = proto[READONLY_KEY] || {};
         const metadata = readOnlyFields[propertyKey];
-        
+
         if (!metadata) {
             return false;
         }
-        
+
         return typeof metadata.condition === 'function' ? metadata.condition(this) : metadata.condition;
     }
 
@@ -632,23 +632,23 @@ export abstract class BaseEntity {
     public validateModuleConfiguration(): boolean {
         const errors: string[] = [];
         const entityClass = this.constructor as typeof BaseEntity;
-        
+
         if (!entityClass.getModuleName()) {
             errors.push('El módulo no tiene definido @ModuleName');
         }
-        
+
         if (!entityClass.getModuleIcon()) {
             errors.push('El módulo no tiene definido @ModuleIcon');
         }
-        
+
         if (!(this.constructor as any)[DEFAULT_PROPERTY_KEY]) {
             errors.push('El módulo no tiene definido @DefaultProperty');
         }
-        
+
         if (!this.getPrimaryPropertyKey()) {
             errors.push('El módulo no tiene definido @PrimaryProperty');
         }
-        
+
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
@@ -660,7 +660,7 @@ export abstract class BaseEntity {
             );
             return false;
         }
-        
+
         return true;
     }
 
@@ -672,24 +672,24 @@ export abstract class BaseEntity {
     public async validateInputs(): Promise<boolean> {
         Application.View.value.isValid = true;
         Application.ApplicationUIService.showLoadingMenu();
-        
+
         // Esperar un tick para que el loading se muestre
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
         // Emitir evento para que los inputs validen
         Application.eventBus.emit('validate-inputs');
-        
+
         // Esperar a que todas las validaciones asíncronas realmente terminen
         const keys = this.getKeys();
-        const asyncValidationPromises = keys.map(key => this.isAsyncValidation(key));
+        const asyncValidationPromises = keys.map((key) => this.isAsyncValidation(key));
         await Promise.all(asyncValidationPromises);
-        
+
         // Esperar un momento adicional para que los inputs procesen los resultados
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
         this.onValidated();
         Application.ApplicationUIService.hideLoadingMenu();
-        
+
         return Application.View.value.isValid;
     }
 
@@ -726,21 +726,21 @@ export abstract class BaseEntity {
         if (!this.validateModuleConfiguration()) {
             return false;
         }
-        
+
         const errors: string[] = [];
-        
+
         if (!this.getUniquePropertyKey()) {
             errors.push('La entidad no tiene definido @UniquePropertyKey');
         }
-        
+
         if (!this.getApiEndpoint()) {
             errors.push('La entidad no tiene definido @ApiEndpoint');
         }
-        
+
         if (!this.getApiMethods()) {
             errors.push('La entidad no tiene definido @ApiMethods');
         }
-        
+
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
@@ -752,7 +752,7 @@ export abstract class BaseEntity {
             );
             return false;
         }
-        
+
         return true;
     }
 
@@ -787,25 +787,25 @@ export abstract class BaseEntity {
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
-        
+
         if (!this.validateApiMethod(this.isNew() ? 'POST' : 'PUT')) {
             return this;
         }
 
-        if (!await this.validateInputs()) {
+        if (!(await this.validateInputs())) {
             return this;
         }
-        
+
         this._isSaving = true;
         this.beforeSave();
         Application.ApplicationUIService.showLoadingMenu();
-        await new Promise(resolve => setTimeout(resolve, 400));
-        
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
         try {
             this.onSaving();
             const endpoint = this.getApiEndpoint();
             const dataToSend = this.mapToPersistentKeys(this.toObject());
-            
+
             let response;
             if (this.isNew()) {
                 response = await Application.axiosInstance.post(endpoint!, dataToSend);
@@ -813,7 +813,7 @@ export abstract class BaseEntity {
                 const uniqueKey = this.getUniquePropertyValue();
                 response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
             }
-            
+
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
             this._originalState = structuredClone(this.toPersistentObject());
@@ -837,7 +837,7 @@ export abstract class BaseEntity {
             throw error;
         }
     }
- 
+
     /**
      * Updates an existing entity in the database via PUT request
      * Requires primary key to be present (not new entity)
@@ -849,11 +849,11 @@ export abstract class BaseEntity {
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
-        
+
         if (!this.validateApiMethod('PUT')) {
             return this;
         }
-        
+
         if (this.isNew()) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
@@ -865,16 +865,16 @@ export abstract class BaseEntity {
             );
             return this;
         }
-        
+
         this._isSaving = true;
         this.beforeUpdate();
-        
+
         try {
             this.onUpdating();
             const endpoint = this.getApiEndpoint();
             const uniqueKey = this.getUniquePropertyValue();
             const dataToSend = this.mapToPersistentKeys(this.toObject());
-            
+
             const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
@@ -908,11 +908,11 @@ export abstract class BaseEntity {
         if (!this.validatePersistenceConfiguration()) {
             return;
         }
-        
+
         if (!this.validateApiMethod('DELETE')) {
             return;
         }
-        
+
         if (this.isNew()) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
@@ -924,14 +924,14 @@ export abstract class BaseEntity {
             );
             return;
         }
-        
+
         this.beforeDelete();
-        
+
         try {
             this.onDeleting();
             const endpoint = this.getApiEndpoint();
             const uniqueKey = this.getUniquePropertyValue();
-            
+
             await Application.axiosInstance.delete(`${endpoint}/${uniqueKey}`);
             this.afterDelete();
         } catch (error: any) {
@@ -970,7 +970,7 @@ export abstract class BaseEntity {
      * Can be overridden to implement custom navigation guards
      * @returns True to allow navigation, false to prevent
      */
-    public onBeforeRouteLeave() : boolean {
+    public onBeforeRouteLeave(): boolean {
         return true;
     }
 
@@ -1002,153 +1002,115 @@ export abstract class BaseEntity {
      * Lifecycle hook called before save operation begins
      * Override to implement custom pre-save logic
      */
-    public beforeSave() : void {
+    public beforeSave(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called during save operation after validation
      * Override to implement custom save processing
      */
-    public onSaving() : void {
-        
-    }
-    
+    public onSaving(): void {}
+
     /**
      * Lifecycle hook called after save operation succeeds
      * Override to implement custom post-save logic
      */
-    public afterSave() : void {
-        
-    }
-    
+    public afterSave(): void {}
+
     /**
      * Lifecycle hook called when save operation fails
      * Override to implement custom error handling
      */
-    public saveFailed() : void {
-        
-    }
+    public saveFailed(): void {}
 
     /**
      * Lifecycle hook called before update operation begins
      * Override to implement custom pre-update logic
      */
-    public beforeUpdate() : void {
+    public beforeUpdate(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called during update operation
      * Override to implement custom update processing
      */
-    public onUpdating() : void {
-        
-    }
-    
+    public onUpdating(): void {}
+
     /**
      * Lifecycle hook called after update operation succeeds
      * Override to implement custom post-update logic
      */
-    public afterUpdate() : void {
-        
-    }
-    
+    public afterUpdate(): void {}
+
     /**
      * Lifecycle hook called when update operation fails
      * Override to implement custom error handling
      */
-    public updateFailed() : void {
-        
-    }
+    public updateFailed(): void {}
 
     /**
      * Lifecycle hook called before delete operation begins
      * Override to implement custom pre-delete logic
      */
-    public beforeDelete() : void {
+    public beforeDelete(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called during delete operation
      * Override to implement custom delete processing
      */
-    public onDeleting() : void {
+    public onDeleting(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called after delete operation succeeds
      * Override to implement custom post-delete logic
      */
-    public afterDelete() : void {
+    public afterDelete(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called when delete operation fails
      * Override to implement custom error handling
      */
-    public deleteFailed() : void {
-
-    }
+    public deleteFailed(): void {}
 
     /**
      * Lifecycle hook called after getElement operation succeeds
      * Override to implement custom post-load logic for single entity
      */
-    public afterGetElement() : void {
+    public afterGetElement(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called when getElement operation fails
      * Override to implement custom error handling
      */
-    public getElementFailed() : void {
-
-    }
+    public getElementFailed(): void {}
 
     /**
      * Lifecycle hook called after getElementList operation succeeds
      * Override to implement custom post-load logic for entity list
      */
-    public afterGetElementList() : void {
+    public afterGetElementList(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called when getElementList operation fails
      * Override to implement custom error handling
      */
-    public getElementListFailed() : void {
-
-    }
+    public getElementListFailed(): void {}
 
     /**
      * Lifecycle hook called after refresh operation succeeds
      * Override to implement custom post-refresh logic
      */
-    public afterRefresh() : void {
+    public afterRefresh(): void {}
 
-    }
-    
     /**
      * Lifecycle hook called when refresh operation fails
      * Override to implement custom error handling
      */
-    public refreshFailed() : void {
-        
-    }
+    public refreshFailed(): void {}
 
     /**
      * Lifecycle hook called after all validations complete
      * Override to implement custom post-validation logic
      */
-    public onValidated() : void {
-        
-    }
+    public onValidated(): void {}
     // #endregion
 
     // #region METHODS OVERRIDES
@@ -1178,13 +1140,13 @@ export abstract class BaseEntity {
         const properties = proto[PROPERTY_NAME_KEY] || {};
         const propertyTypes = this.getPropertyTypes();
         const filtered: Record<string, string> = {};
-        
+
         for (const key of Object.keys(properties)) {
             if (propertyTypes[key] !== Array) {
                 filtered[key] = properties[key];
             }
         }
-        
+
         return filtered;
     }
 
@@ -1214,19 +1176,19 @@ export abstract class BaseEntity {
      */
     public static getArrayPropertyType(propertyKey: string): typeof BaseEntity | undefined {
         const propertyType = this.getPropertyType(propertyKey);
-        
+
         if (propertyType !== Array) {
             return undefined;
         }
-        
+
         const proto = this.prototype as any;
         const arrayTypes = proto[ARRAY_ELEMENT_TYPE_KEY] || {};
         const entityType = arrayTypes[propertyKey];
-        
+
         if (entityType && entityType.prototype instanceof BaseEntity) {
             return entityType;
         }
-        
+
         return undefined;
     }
 
@@ -1238,11 +1200,14 @@ export abstract class BaseEntity {
      */
     public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
         const columns = this.getProperties();
-        const proxy = new Proxy({}, {
-            get(prop) {
-                return prop;
+        const proxy = new Proxy(
+            {},
+            {
+                get(prop) {
+                    return prop;
+                }
             }
-        });
+        );
         const propertyName = selector(proxy as T) as string;
         return columns[propertyName];
     }
@@ -1400,15 +1365,18 @@ export abstract class BaseEntity {
      * @param data Entity data with internal property keys
      * @returns Data object with persistent keys
      */
-    public static mapToPersistentKeys<T extends BaseEntity>(this: new (...args: any[]) => T, data: Record<string, any>): Record<string, any> {
+    public static mapToPersistentKeys<T extends BaseEntity>(
+        this: new (...args: any[]) => T,
+        data: Record<string, any>
+    ): Record<string, any> {
         const persistentKeys = (this as any).getPersistentKeys();
         const mapped: Record<string, any> = {};
-        
+
         for (const [propertyKey, value] of Object.entries(data)) {
             const persistentKey = persistentKeys[propertyKey];
             mapped[persistentKey || propertyKey] = value;
         }
-        
+
         return mapped;
     }
 
@@ -1418,14 +1386,17 @@ export abstract class BaseEntity {
      * @param data Data with persistent keys
      * @returns Data object with internal property keys
      */
-    public static mapFromPersistentKeys<T extends BaseEntity>(this: new (...args: any[]) => T, data: Record<string, any>): Record<string, any> {
+    public static mapFromPersistentKeys<T extends BaseEntity>(
+        this: new (...args: any[]) => T,
+        data: Record<string, any>
+    ): Record<string, any> {
         const mapped: Record<string, any> = {};
-        
+
         for (const [persistentKey, value] of Object.entries(data)) {
             const propertyKey = (this as any).getPropertyKeyByPersistentKey(persistentKey);
             mapped[propertyKey || persistentKey] = value;
         }
-        
+
         return mapped;
     }
 
@@ -1436,13 +1407,16 @@ export abstract class BaseEntity {
      * @returns Promise resolving to entity instance
      * @throws Error if ApiEndpoint not defined or API request fails
      */
-    public static async getElement<T extends BaseEntity>(this: new (data: Record<string, any>) => T, oid: string): Promise<T> {
+    public static async getElement<T extends BaseEntity>(
+        this: new (data: Record<string, any>) => T,
+        oid: string
+    ): Promise<T> {
         const endpoint = (this as any).getApiEndpoint();
-        
+
         if (!endpoint) {
             throw new Error('ApiEndpoint no definido');
         }
-        
+
         try {
             const response = await Application.axiosInstance.get(`${endpoint}/${oid}`);
             const mappedData = (this as any).mapFromPersistentKeys(response.data);
@@ -1471,13 +1445,16 @@ export abstract class BaseEntity {
      * @returns Promise resolving to array of entity instances
      * @throws Error if ApiEndpoint not defined or API request fails
      */
-    public static async getElementList<T extends BaseEntity>(this: new (data: Record<string, any>) => T, filter: string = ''): Promise<T[]> {
+    public static async getElementList<T extends BaseEntity>(
+        this: new (data: Record<string, any>) => T,
+        filter: string = ''
+    ): Promise<T[]> {
         const endpoint = (this as any).getApiEndpoint();
-        
+
         if (!endpoint) {
             throw new Error('ApiEndpoint no definido');
         }
-        
+
         try {
             const response = await Application.axiosInstance.get(endpoint, { params: { filter } });
             const instances = response.data.map((item: any) => {

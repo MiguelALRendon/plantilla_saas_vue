@@ -1,27 +1,26 @@
 <template>
-<div class="TextInput" :class="containerClasses">
-    <label 
-    :for="'id-' + metadata.propertyName" 
-    class="label-input">{{ metadata.propertyName }}</label>
+    <div class="TextInput" :class="containerClasses">
+        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
 
-    <input 
-    :id="'id-' + metadata.propertyName" 
-    :name="metadata.propertyName" 
-    type="text" 
-    class="main-input" 
-    placeholder=" "
-    :value="modelValue"
-    :disabled="metadata.disabled.value"
-    @input="handleInput" />
-    
-    <div class="help-text" v-if="metadata.helpText.value">
-        <span>{{ metadata.helpText.value }}</span>
+        <input
+            :id="'id-' + metadata.propertyName"
+            :name="metadata.propertyName"
+            type="text"
+            class="main-input"
+            placeholder=" "
+            :value="modelValue"
+            :disabled="metadata.disabled.value"
+            @input="handleInput"
+        />
+
+        <div class="help-text" v-if="metadata.helpText.value">
+            <span>{{ metadata.helpText.value }}</span>
+        </div>
+
+        <div class="validation-messages">
+            <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+        </div>
     </div>
-    
-    <div class="validation-messages">
-        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
-    </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -34,26 +33,26 @@ export default {
     props: {
         entityClass: {
             type: Function as unknown as () => typeof BaseEntity,
-            required: true,
+            required: true
         },
         entity: {
             type: Object as () => BaseEntity,
-            required: true,
+            required: true
         },
         propertyKey: {
             type: String,
-            required: true,
+            required: true
         },
         modelValue: {
             type: String,
             required: true,
-            default: '',
-        },
+            default: ''
+        }
     },
     setup(props) {
         const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
         return {
-            metadata,
+            metadata
         };
     },
     mounted() {
@@ -78,16 +77,20 @@ export default {
         async isValidated(): Promise<boolean> {
             let validated: boolean = true;
             this.validationMessages = [];
-            
+
             if (this.metadata.required.value && (!this.modelValue || this.modelValue.trim() === '')) {
                 validated = false;
-                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
+                this.validationMessages.push(
+                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
+                );
             }
             if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
+                this.validationMessages.push(
+                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
+                );
             }
-            
+
             // Validación asíncrona
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
@@ -97,7 +100,7 @@ export default {
                     this.validationMessages.push(asyncMessage);
                 }
             }
-            
+
             return validated;
         },
 
@@ -106,16 +109,16 @@ export default {
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
-        },
+        }
     },
     data() {
         return {
             textInputId: 'text-input-' + this.propertyKey,
             isInputValidated: true,
-            validationMessages: [] as string[],
-        }
-    },
-}
+            validationMessages: [] as string[]
+        };
+    }
+};
 </script>
 
 <style scoped>

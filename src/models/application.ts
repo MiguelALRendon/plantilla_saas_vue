@@ -10,10 +10,10 @@ import {
     SaveAndNewButtonComponent,
     SaveButtonComponent,
     SendToDeviceButtonComponent,
-    ValidateButtonComponent,
+    ValidateButtonComponent
 } from '@/components/Buttons';
 import { BaseEntity } from '@/entities/base_entity';
-import { Products } from '@/entities/products';
+import { Product } from '@/entities/product';
 import { confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 
@@ -163,15 +163,15 @@ class ApplicationClass implements ApplicationUIContext {
             confirmationAction: () => {}
         }) as Ref<confirmationMenu>;
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
-        this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;        
+        this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
             timeout: this.AppConfiguration.value.apiTimeout,
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             }
         });
-        
+
         this.axiosInstance.interceptors.request.use(
             (config) => {
                 const token = localStorage.getItem(this.AppConfiguration.value.authTokenKey);
@@ -184,7 +184,7 @@ class ApplicationClass implements ApplicationUIContext {
                 return Promise.reject(error);
             }
         );
-        
+
         this.axiosInstance.interceptors.response.use(
             (response) => response,
             (error) => {
@@ -207,9 +207,13 @@ class ApplicationClass implements ApplicationUIContext {
      * @param viewType The type of view (LISTVIEW, DETAILVIEW, DEFAULTVIEW)
      * @param entity Optional entity object to display in detail view
      */
-    changeView = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
-
-        if(this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
+    changeView = (
+        entityClass: typeof BaseEntity,
+        component: Component,
+        viewType: ViewTypes,
+        entity: BaseEntity | null = null
+    ) => {
+        if (this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
             this.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
                 'Salir sin guardar',
@@ -221,7 +225,7 @@ class ApplicationClass implements ApplicationUIContext {
             return;
         }
         this.setViewChanges(entityClass, component, viewType, entity);
-    }
+    };
 
     /**
      * Applies view changes by updating View state and router
@@ -231,12 +235,17 @@ class ApplicationClass implements ApplicationUIContext {
      * @param viewType The type of view to display
      * @param entity Optional entity object for detail view
      */
-    private setViewChanges = (entityClass: typeof BaseEntity, component: Component, viewType: ViewTypes, entity: BaseEntity | null = null) => {
+    private setViewChanges = (
+        entityClass: typeof BaseEntity,
+        component: Component,
+        viewType: ViewTypes,
+        entity: BaseEntity | null = null
+    ) => {
         this.View.value.entityClass = entityClass;
         this.View.value.entityObject = entity;
         this.View.value.component = component;
         this.View.value.viewType = viewType;
-        
+
         if (entity) {
             const uniqueValue = entity.getUniquePropertyValue();
             console.log('[Application] Unique value for entity:', uniqueValue);
@@ -248,10 +257,10 @@ class ApplicationClass implements ApplicationUIContext {
         } else {
             this.View.value.entityOid = '';
         }
-        
+
         this.updateRouterFromView(entityClass, entity);
-    }
-    
+    };
+
     /**
      * Synchronizes Vue Router with current view state
      * Navigates to appropriate route based on entity and view type
@@ -260,45 +269,49 @@ class ApplicationClass implements ApplicationUIContext {
      */
     private updateRouterFromView = (entityClass: typeof BaseEntity, entity: BaseEntity | null = null) => {
         if (!this.router) return;
-        
+
         const moduleName = entityClass.getModuleName() || entityClass.name;
         const moduleNameLower = moduleName.toLowerCase();
-        
+
         // Prevenir navegaciÃ³n si ya estamos en la ruta correcta
         const currentRoute = this.router.currentRoute.value;
-        
+
         if (entity) {
             // Navegar a detailview con OID o 'new'
             const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
             if (currentRoute.path !== targetPath) {
-                this.router.push({ 
-                    name: 'ModuleDetail', 
-                    params: { 
-                        module: moduleNameLower, 
-                        oid: this.View.value.entityOid 
-                    } 
-                }).catch((err: unknown): void => {
-                    // Ignorar errores de navegación duplicada
-                    if (err instanceof Error && err.name !== 'NavigationDuplicated') {
-                        console.error('[Application] Error al navegar:', err);
-                    }
-                });
+                this.router
+                    .push({
+                        name: 'ModuleDetail',
+                        params: {
+                            module: moduleNameLower,
+                            oid: this.View.value.entityOid
+                        }
+                    })
+                    .catch((err: unknown): void => {
+                        // Ignorar errores de navegación duplicada
+                        if (err instanceof Error && err.name !== 'NavigationDuplicated') {
+                            console.error('[Application] Error al navegar:', err);
+                        }
+                    });
             }
         } else {
             // Navegar a listview
             const targetPath = `/${moduleNameLower}`;
             if (currentRoute.path !== targetPath) {
-                this.router.push({ 
-                    name: 'ModuleList', 
-                    params: { module: moduleNameLower } 
-                }).catch((err: unknown): void => {
-                    if (err instanceof Error && err.name !== 'NavigationDuplicated') {
-                        console.error('[Application] Error al navegar:', err);
-                    }
-                });
+                this.router
+                    .push({
+                        name: 'ModuleList',
+                        params: { module: moduleNameLower }
+                    })
+                    .catch((err: unknown): void => {
+                        if (err instanceof Error && err.name !== 'NavigationDuplicated') {
+                            console.error('[Application] Error al navegar:', err);
+                        }
+                    });
             }
         }
-    }
+    };
 
     /**
      * Navigates to the default view for a given entity class
@@ -310,7 +323,7 @@ class ApplicationClass implements ApplicationUIContext {
         setTimeout(() => {
             this.setButtonList();
         }, 405);
-    }
+    };
 
     /**
      * Navigates to the list view for a given entity class
@@ -322,7 +335,7 @@ class ApplicationClass implements ApplicationUIContext {
         setTimeout(() => {
             this.setButtonList();
         }, 405);
-    }
+    };
 
     /**
      * Navigates to the detail view for a specific entity instance
@@ -335,7 +348,7 @@ class ApplicationClass implements ApplicationUIContext {
         setTimeout((): void => {
             this.setButtonList();
         }, 405);
-    }
+    };
 
     /**
      * Configures the button list based on current view type and entity state
@@ -344,13 +357,10 @@ class ApplicationClass implements ApplicationUIContext {
      */
     setButtonList() {
         const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
-        
+
         switch (this.View.value.viewType) {
             case ViewTypes.LISTVIEW:
-                this.ListButtons.value = [
-                    markRaw(NewButtonComponent),
-                    markRaw(RefreshButtonComponent)
-                ];
+                this.ListButtons.value = [markRaw(NewButtonComponent), markRaw(RefreshButtonComponent)];
                 break;
             case ViewTypes.DETAILVIEW:
                 if (isPersistentEntity) {
@@ -376,7 +386,7 @@ class ApplicationClass implements ApplicationUIContext {
                 break;
         }
     }
-    
+
     /**
      * Initializes the router instance for the application
      * Must be called during application bootstrap to enable routing functionality
@@ -399,12 +409,10 @@ class ApplicationClass implements ApplicationUIContext {
         if (!this.instance) this.instance = new ApplicationClass();
         return this.instance;
     }
-
-
 }
 
 const Application = ApplicationClass.getInstance();
 
-Application.ModuleList.value.push(Products);
+Application.ModuleList.value.push(Product);
 export default Application;
 export { Application };

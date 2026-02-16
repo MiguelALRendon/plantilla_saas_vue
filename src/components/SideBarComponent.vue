@@ -1,19 +1,12 @@
 <template>
     <div :class="['sidebar', { toggled }]">
-        <div class="header">
-            Header
-        </div>
+        <div class="header">Header</div>
 
         <div class="body">
-        <SideBarItemComponent 
-        v-for="module in Application.ModuleList.values()" 
-        :module="module"
-        />
+            <SideBarItemComponent v-for="module in Application.ModuleList.values()" :module="module" />
         </div>
 
-        <div class="footer">
-            footer
-        </div>
+        <div class="footer">footer</div>
     </div>
 </template>
 
@@ -29,8 +22,8 @@ export default {
     data() {
         return {
             Application,
-            toggled: true,
-        }
+            toggled: true
+        };
     },
     mounted() {
         Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
@@ -40,7 +33,7 @@ export default {
     beforeUnmount() {
         Application.eventBus.off('toggle-sidebar');
     }
-}
+};
 </script>
 
 <style>
@@ -57,7 +50,7 @@ export default {
     background-color: var(--white);
     overflow: hidden;
 }
-.sidebar span{
+.sidebar span {
     opacity: 0;
     font-weight: 500;
     transition: opacity var(--transition-normal) var(--timing-ease) 0.2s;
@@ -65,7 +58,7 @@ export default {
 .sidebar.toggled {
     max-width: var(--sidebar-width-expanded);
 }
-.sidebar.toggled span{
+.sidebar.toggled span {
     opacity: 1;
 }
 
@@ -82,7 +75,7 @@ export default {
     height: 100%;
     opacity: 1;
     padding: var(--spacing-lg);
-} 
+}
 
 .sidebar .body {
     flex-grow: 1;

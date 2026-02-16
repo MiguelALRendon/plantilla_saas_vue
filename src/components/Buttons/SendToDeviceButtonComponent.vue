@@ -10,14 +10,12 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 
 export default {
     name: 'NewButtonComponent',
-    methods: {
-
-    },
+    methods: {},
     data() {
         return {
             GGCLASS,
-            GGICONS,
+            GGICONS
         };
     }
-}
+};
 </script>

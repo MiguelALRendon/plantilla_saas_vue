@@ -32,6 +32,6 @@ export function useInputMetadata(
         validated,
         requiredMessage,
         validatedMessage,
-        helpText,
+        helpText
     };
 }

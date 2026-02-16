@@ -22,14 +22,14 @@ export default {
     data() {
         return {
             GGCLASS,
-            GGICONS,
+            GGICONS
         };
     }
-}
+};
 </script>
 
 <style scoped>
-.button.secondary span{
+.button.secondary span {
     font-size: 1.1rem;
     margin-right: 0.15rem;
 }

@@ -1,33 +1,33 @@
 <template>
-<div class="TextInput NumberInput" :class="containerClasses">
-    <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
-    <button class="left" @click="decrementValue" :disabled="metadata.disabled.value">
-    <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
-    </button>
+    <div class="TextInput NumberInput" :class="containerClasses">
+        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <button class="left" @click="decrementValue" :disabled="metadata.disabled.value">
+            <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
+        </button>
 
-    <input
-        type="text"
-        class="main-input"
-        :value="displayValue"
-        :disabled="metadata.disabled.value"
-        @keypress="handleKeyPress"
-        @input="handleInput"
-        @focus="handleFocus"
-        @blur="handleBlur"
-    />
+        <input
+            type="text"
+            class="main-input"
+            :value="displayValue"
+            :disabled="metadata.disabled.value"
+            @keypress="handleKeyPress"
+            @input="handleInput"
+            @focus="handleFocus"
+            @blur="handleBlur"
+        />
 
-    <button class="right" @click="incrementValue" :disabled="metadata.disabled.value">
-        <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-    </button>
-</div>
+        <button class="right" @click="incrementValue" :disabled="metadata.disabled.value">
+            <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+        </button>
+    </div>
 
-<div class="help-text" v-if="metadata.helpText.value">
-    <span>{{ metadata.helpText.value }}</span>
-</div>
+    <div class="help-text" v-if="metadata.helpText.value">
+        <span>{{ metadata.helpText.value }}</span>
+    </div>
 
-<div class="validation-messages">
-    <span v-for="message in validationMessages" :key="message">{{ message }}</span>
-</div>
+    <div class="validation-messages">
+        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+    </div>
 </template>
 
 <script lang="ts">
@@ -41,26 +41,26 @@ export default {
     props: {
         entityClass: {
             type: Function as unknown as () => typeof BaseEntity,
-            required: true,
+            required: true
         },
         entity: {
             type: Object as () => BaseEntity,
-            required: true,
+            required: true
         },
         propertyKey: {
             type: String,
-            required: true,
+            required: true
         },
         modelValue: {
             type: Number,
             required: true,
-            default: 0,
-        },
+            default: 0
+        }
     },
     setup(props) {
         const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
         return {
-            metadata,
+            metadata
         };
     },
     mounted() {
@@ -76,32 +76,32 @@ export default {
             textInputId: 'text-input-' + this.propertyKey,
             isInputValidated: true,
             validationMessages: [] as string[],
-            isFocused: false,
-        }
+            isFocused: false
+        };
     },
     methods: {
         handleKeyPress(event: KeyboardEvent) {
             const char = event.key;
             const currentValue = (event.target as HTMLInputElement).value;
-            
+
             // Permitir: números, punto decimal, signo menos al inicio
             const isNumber = /^\d$/.test(char);
             const isDot = char === '.' && !currentValue.includes('.');
             const isMinus = char === '-' && currentValue.length === 0;
-            
+
             if (!isNumber && !isDot && !isMinus) {
                 event.preventDefault();
             }
         },
         handleInput(event: Event) {
             const inputValue = (event.target as HTMLInputElement).value;
-            
+
             if (inputValue === '' || inputValue === '-') {
                 return;
             }
-            
+
             const numValue = parseFloat(inputValue);
-            
+
             if (!isNaN(numValue)) {
                 this.$emit('update:modelValue', numValue);
             }
@@ -126,16 +126,20 @@ export default {
         async isValidated(): Promise<boolean> {
             var validated = true;
             this.validationMessages = [];
-            
+
             if (this.metadata.required.value && (this.modelValue === null || this.modelValue === undefined)) {
                 validated = false;
-                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
+                this.validationMessages.push(
+                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
+                );
             }
             if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
+                this.validationMessages.push(
+                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
+                );
             }
-            
+
             // Validación asíncrona
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
@@ -145,7 +149,7 @@ export default {
                     this.validationMessages.push(asyncMessage);
                 }
             }
-            
+
             return validated;
         },
         async handleValidation() {
@@ -153,7 +157,7 @@ export default {
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
-        },
+        }
     },
     computed: {
         containerClasses(): Record<string, boolean> {
@@ -166,17 +170,17 @@ export default {
             if (this.isFocused) {
                 return this.modelValue?.toString() || '';
             }
-            
+
             const format = this.entity.getDisplayFormat(this.propertyKey);
-            
+
             if (format) {
                 return this.entity.getFormattedValue(this.propertyKey);
             }
-            
+
             return this.modelValue?.toString() || '0';
         }
     }
-}
+};
 </script>
 
 <style scoped>

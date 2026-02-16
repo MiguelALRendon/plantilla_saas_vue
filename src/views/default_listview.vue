@@ -1,5 +1,5 @@
 <template>
-<DetailViewTableComponent />
+    <DetailViewTableComponent />
 </template>
 
 <script lang="ts">
@@ -15,5 +15,5 @@ export default {
     mounted() {
         Application.View.value.viewType = ViewTypes.LISTVIEW;
     }
-}
+};
 </script>

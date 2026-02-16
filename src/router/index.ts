@@ -39,7 +39,6 @@ const router: Router = createRouter({
 
 // Guard de navegación para sincronizar con Application cuando la URL cambia directamente
 router.beforeEach((to, _from, next) => {
-
     const moduleName = to.params.module as string;
     const oid = to.params.oid as string;
 
@@ -53,15 +52,17 @@ router.beforeEach((to, _from, next) => {
         // Si la navegación viene de cambiar la URL directamente (no desde Application)
         // necesitamos actualizar Application
         const currentModule = Application.View.value.entityClass;
-        const currentModuleName = currentModule ? (currentModule.getModuleName() || currentModule.name).toLowerCase() : '';
+        const currentModuleName = currentModule
+            ? (currentModule.getModuleName() || currentModule.name).toLowerCase()
+            : '';
         const currentOid = Application.View.value.entityOid;
-        
+
         // Solo actualizar Application si la URL es diferente de lo que Application tiene
         if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
             if (oid && to.meta.viewType === 'detail') {
                 // Vista de detalle - setear entityOid
                 Application.View.value.entityOid = oid;
-                
+
                 // Si el OID es 'new', crear una nueva instancia
                 if (oid === 'new') {
                     // Usar Reflect.construct para instanciar la clase concreta
@@ -73,18 +74,17 @@ router.beforeEach((to, _from, next) => {
                     // (el componente puede manejar la carga)
                     console.log('[Router] Preparando detail view para OID:', oid);
                 }
-                
             } else {
                 // Vista de lista
                 Application.View.value.entityOid = '';
-                
+
                 // Cambiar a list view si no estamos ahí
                 if (Application.View.value.viewType !== ViewTypes.LISTVIEW) {
                     Application.changeViewToListView(moduleClass);
                 }
             }
         }
-        
+
         next();
     } else {
         // Módulo no encontrado

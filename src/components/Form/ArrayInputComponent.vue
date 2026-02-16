@@ -1,78 +1,75 @@
 <template>
-<div class="table-container" :class="[{disabled: disabled}, {nonvalidated: !isInputValidated}]">
-    <div class="table-header-row">
-        <div class="left-side-space">
-            <div class="icon"><img :src="typeValue?.getModuleIcon()" alt=""></div>
-            <span class="title">{{ typeValue?.getModuleName() }}</span>
-            <div class="advice" v-if="!isInputValidated">
-                <div class="alert-btn">!</div>
-                <div class="val-list">
-                    <span v-for="message in validationMessages">{{ message }}</span>
+    <div class="table-container" :class="[{ disabled: disabled }, { nonvalidated: !isInputValidated }]">
+        <div class="table-header-row">
+            <div class="left-side-space">
+                <div class="icon"><img :src="moduleIcon" alt="" /></div>
+                <span class="title">{{ moduleName }}</span>
+                <div class="advice" v-if="!isInputValidated">
+                    <div class="alert-btn">!</div>
+                    <div class="val-list">
+                        <span v-for="message in validationMessages">{{ message }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="right-side-space">
-            <div class="TextInput" style="width: 100%">
-                <label class="label-input">Buscar {{ typeValue?.getModuleName() }}</label>
-                <input 
-                    type="text" 
-                    class="main-input" 
-                    placeholder=" "
-                    v-model="search"
-                    :disabled="disabled"
-                />
+            <div class="right-side-space">
+                <div class="TextInput" style="width: 100%">
+                    <label class="label-input">Buscar {{ moduleName }}</label>
+                    <input type="text" class="main-input" placeholder=" " v-model="search" :disabled="disabled" />
+                </div>
+                <button
+                    class="button alert fill"
+                    :disabled="selectedItems.length == 0 || disabled"
+                    @click="showDeleteModal"
+                >
+                    <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
+                    Eliminar
+                </button>
+                <button
+                    class="button success fill"
+                    @click="toggleSelection"
+                    :disabled="modelValue.length == 0 || disabled"
+                >
+                    <span :class="GGCLASS">{{ selectionIcon }}</span>
+                    Seleccionar
+                </button>
+                <button class="button secondary fill" @click="openModal" :disabled="disabled">
+                    <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+                    Agregar
+                </button>
             </div>
-            <button class="button alert fill" 
-            :disabled="selectedItems.length == 0 || disabled"
-            @click="showDeleteModal"
-            >
-                <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
-                Eliminar
-            </button>
-            <button 
-            class="button success fill" 
-            @click="toggleSelection"
-            :disabled="modelValue.length == 0 || disabled"
-            >
-                <span :class="GGCLASS">{{ isSelection ?
-                    GGICONS.SELECT_CHECKBOX :
-                    GGICONS.SELECT_VOID
-                }}</span>
-                Seleccionar
-            </button>
-            <button class="button secondary fill" @click="openModal" :disabled="disabled">
-                <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-                Agregar
-            </button>
         </div>
-    </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th class="selection" :class="[{display: isSelection}]"></th>
-                <th v-for="header in typeValue?.getProperties()">{{ header }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="item in filteredData" :class="[{selected: selectedItems.includes(item)}]">
-                <td class="selection" :class="[{display: isSelection}]">
-                    <button class="select-btn" 
-                    :class="[{added: selectedItems.includes(item)}]"
-                    @click="selectedItems.includes(item) ? selectedItems.splice(selectedItems.indexOf(item), 1) : selectedItems.push(item)">
-                        <span :class="GGCLASS">{{ selectedItems.includes(item) ? GGICONS.REMOVE : GGICONS.ADD }}</span>
-                    </button>
-                </td>
-                <td v-for="property in item.getKeys()">
-                    {{ item[property] }}
-                </td>
-            </tr>
-        </tbody>
-        <tfoot>
-        </tfoot>
-    </table>
-</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="selection" :class="[{ display: isSelection }]"></th>
+                    <th v-for="header in typeValue?.getProperties()">{{ header }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in filteredData" :class="[{ selected: selectedItems.includes(item) }]">
+                    <td class="selection" :class="[{ display: isSelection }]">
+                        <button
+                            class="select-btn"
+                            :class="[{ added: selectedItems.includes(item) }]"
+                            @click="
+                                selectedItems.includes(item)
+                                    ? selectedItems.splice(selectedItems.indexOf(item), 1)
+                                    : selectedItems.push(item)
+                            "
+                        >
+                            <span :class="GGCLASS">{{ getItemIcon(item) }}</span>
+                        </button>
+                    </td>
+                    <td v-for="property in item.getKeys()">
+                        {{ item[property] }}
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot></tfoot>
+        </table>
+    </div>
 </template>
 <script lang="ts">
 import { BaseEntity } from '@/entities/base_entity';
@@ -83,51 +80,51 @@ import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { confMenuType } from '@/enums/conf_menu_type';
 
 export default {
-  name: 'ArrayInputComponent',
-  components: {},
-  props: {
+    name: 'ArrayInputComponent',
+    components: {},
+    props: {
         modelValue: {
             type: Array<BaseEntity>,
             required: true,
-            default: () => [],
+            default: () => []
         },
         typeValue: {
             type: Function as unknown as PropType<typeof BaseEntity | undefined>,
-            required: true,
+            required: true
         },
         entity: {
             type: Object as PropType<BaseEntity>,
-            required: false,
+            required: false
         },
         propertyKey: {
             type: String,
-            required: false,
+            required: false
         },
         required: {
             type: Boolean,
             required: false,
-            default: false,
+            default: false
         },
         requireddMessage: {
             type: String,
             required: false,
-            default: '',
+            default: ''
         },
         disabled: {
             type: Boolean,
             required: false,
-            default: false,
+            default: false
         },
         validated: {
             type: Boolean,
             required: false,
-            default: true,
+            default: true
         },
         validatedMessage: {
             type: String,
             required: false,
-            default: '',
-        },
+            default: ''
+        }
     },
     mounted() {
         Application.eventBus.on('validate-inputs', this.handleValidation);
@@ -136,14 +133,17 @@ export default {
         Application.eventBus.off('validate-inputs', this.handleValidation);
     },
     methods: {
+        getItemIcon(item: BaseEntity): string {
+            return this.selectedItems.includes(item) ? GGICONS.REMOVE : GGICONS.ADD;
+        },
         openModal(): void {
             Application.ApplicationUIService.showModalOnFunction(
-                this.typeValue!, 
+                this.typeValue!,
                 (param: unknown): void => {
                     if (param === undefined || param instanceof BaseEntity) {
                         this.addSelectedElement(param);
                     }
-                }, 
+                },
                 ViewTypes.LOOKUPVIEW
             );
         },
@@ -165,20 +165,22 @@ export default {
                 'Confirmar eliminación',
                 'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',
                 () => {
-                    const updatedArray = this.modelValue.filter(item => !this.selectedItems.includes(item));
+                    const updatedArray = this.modelValue.filter((item) => !this.selectedItems.includes(item));
                     this.$emit('update:modelValue', updatedArray);
                     this.selectedItems = [];
                     this.isSelection = false;
-                },
+                }
             );
         },
         async isValidated(): Promise<boolean> {
             this.validationMessages = [];
-            
+
             if (this.required && (!this.modelValue || this.modelValue.length === 0)) {
-                this.validationMessages.push(this.requireddMessage || `${this.typeValue?.getModuleName()} is required.`);
+                this.validationMessages.push(
+                    this.requireddMessage || `${this.typeValue?.getModuleName()} is required.`
+                );
             }
-            
+
             // Validación tradicional (síncrona) usando entity si está disponible
             if (this.entity && this.propertyKey) {
                 const isValid = this.entity.isValidation(this.propertyKey);
@@ -188,9 +190,11 @@ export default {
                 }
             } else if (!this.validated) {
                 // Fallback a la prop validated si no hay entity/propertyKey
-                this.validationMessages.push(this.validatedMessage || `${this.typeValue?.getModuleName()} is not valid.`);
+                this.validationMessages.push(
+                    this.validatedMessage || `${this.typeValue?.getModuleName()} is not valid.`
+                );
             }
-            
+
             return this.validationMessages.length === 0;
         },
         async handleValidation() {
@@ -198,34 +202,43 @@ export default {
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
-        },
+        }
     },
     computed: {
+        moduleIcon(): string | undefined {
+            return this.typeValue?.getModuleIcon();
+        },
+        moduleName(): string | undefined {
+            return this.typeValue?.getModuleName();
+        },
+        selectionIcon(): string {
+            return this.isSelection ? GGICONS.SELECT_CHECKBOX : GGICONS.SELECT_VOID;
+        },
         filteredData() {
             if (!this.search) {
                 return this.modelValue;
             }
-            return this.modelValue.filter(item => {
+            return this.modelValue.filter((item) => {
                 const defaultValue = item.getDefaultPropertyValue();
                 if (defaultValue && typeof defaultValue === 'string') {
                     return defaultValue.toLowerCase().includes(this.search.toLowerCase());
                 }
                 return false;
             });
-        },
+        }
     },
     data() {
-    return {
-        Application,
-        GGICONS,
-        GGCLASS,
-        search: '',
-        isSelection: false,
-        isInputValidated: true,
-        selectedItems: [] as BaseEntity[],
-        validationMessages: [] as string[],
-    };
-    },
+        return {
+            Application,
+            GGICONS,
+            GGCLASS,
+            search: '',
+            isSelection: false,
+            isInputValidated: true,
+            selectedItems: [] as BaseEntity[],
+            validationMessages: [] as string[]
+        };
+    }
 };
 </script>
 
@@ -236,19 +249,19 @@ export default {
     gap: 1rem;
     box-sizing: border-box;
     height: 100%;
-    padding-block: .5rem;
+    padding-block: 0.5rem;
 }
-.title{
+.title {
     font-size: 1.25rem;
     font-weight: 600;
 }
 .table-container {
-  height: 26rem;
-  overflow: hidden;
-  box-sizing: border-box;
+    height: 26rem;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-.table-container .table-header-row{
+.table-container .table-header-row {
     display: flex;
     align-items: center;
     height: 5rem;
@@ -273,7 +286,7 @@ export default {
     box-sizing: border-box;
 }
 
-.table{
+.table {
     box-sizing: border-box;
     width: 100%;
     height: 20rem;
@@ -311,7 +324,7 @@ export default {
     max-width: 30ch;
 }
 
-.table td{
+.table td {
     height: 4rem;
     border-bottom: 1px solid var(--gray-lighter);
 }
@@ -320,7 +333,7 @@ export default {
     cursor: pointer;
 }
 
-.table thead{
+.table thead {
     height: 2.5rem;
     border-bottom: 1px solid var(--gray-lighter);
     flex-shrink: 0;
@@ -332,7 +345,7 @@ export default {
     overflow-x: hidden;
 }
 
-.table tfoot{
+.table tfoot {
     height: 2.5rem;
     border-top: 1px solid var(--gray-lighter);
     flex-shrink: 0;
@@ -364,7 +377,6 @@ export default {
     flex-direction: row;
     gap: 0.5rem;
     align-items: center;
-
 }
 .alert-btn {
     background-color: var(--accent-red);
@@ -380,11 +392,11 @@ export default {
     justify-content: center;
     cursor: default;
 }
-.val-list{
+.val-list {
     display: flex;
     flex-direction: column;
 }
-.val-list span{
+.val-list span {
     font-size: 0.875rem;
     color: var(--accent-red);
     margin-bottom: 0.2rem;

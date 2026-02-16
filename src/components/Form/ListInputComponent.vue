@@ -1,34 +1,44 @@
 <template>
-<div class="ListInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
-    <button class="list-input-header" @click="openOptions" :id="'id-4-click-on' + metadata.propertyName" :disabled="metadata.disabled.value">
-        <div class="list-input-container">
-            <div class="label-and-value">
-                <label class="label" :class="[{active: actualOption != ''}]">{{ metadata.propertyName }}</label>
-                <label class="value" :class="[{active: actualOption != ''}]">{{ actualOption }}</label>
+    <div class="ListInput" :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]">
+        <button
+            class="list-input-header"
+            @click="openOptions"
+            :id="'id-4-click-on' + metadata.propertyName"
+            :disabled="metadata.disabled.value"
+        >
+            <div class="list-input-container">
+                <div class="label-and-value">
+                    <label class="label" :class="[{ active: actualOption != '' }]">{{ metadata.propertyName }}</label>
+                    <label class="value" :class="[{ active: actualOption != '' }]">{{ actualOption }}</label>
+                </div>
+                <span class="arrow" :class="[GGCLASS, { active: droped }]">{{ GGICONS.ARROW_UP }}</span>
             </div>
-            <span class="arrow" :class="[GGCLASS, {active: droped}]">{{ GGICONS.ARROW_UP }}</span>
-        </div>
-    </button>
-    <div class="list-input-body" :class="[{enabled: droped}, { 'from-bottom': fromBottom }]">
-        <div class="list-input-items-wrapper">
-            <div class="list-input-item" 
-            v-for="value in propertyEnumValues.getKeyValuePairs()" 
-            :class="[{selected: modelValue == value.value}]"
-            :key="value.key"
-            @click="$emit('update:modelValue', value.value); droped = false;">
-                <span>{{ parseValue(value.key) }}</span>
+        </button>
+        <div class="list-input-body" :class="[{ enabled: droped }, { 'from-bottom': fromBottom }]">
+            <div class="list-input-items-wrapper">
+                <div
+                    class="list-input-item"
+                    v-for="value in formattedEnumValues"
+                    :class="[{ selected: modelValue == value.value }]"
+                    :key="value.key"
+                    @click="
+                        $emit('update:modelValue', value.value);
+                        droped = false;
+                    "
+                >
+                    <span>{{ value.displayKey }}</span>
+                </div>
             </div>
         </div>
+
+        <div class="help-text" v-if="metadata.helpText.value">
+            <span>{{ metadata.helpText.value }}</span>
+        </div>
+
+        <div class="validation-messages">
+            <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+        </div>
     </div>
-    
-    <div class="help-text" v-if="metadata.helpText.value">
-        <span>{{ metadata.helpText.value }}</span>
-    </div>
-    
-    <div class="validation-messages">
-        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
-    </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -51,21 +61,21 @@ export default {
     methods: {
         parseValue(key: string): string {
             return key
-            .toLowerCase()
-            .split('_')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+                .toLowerCase()
+                .split('_')
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
         },
         openOptions() {
             const rect = document.getElementById('id-4-click-on' + this.metadata.propertyName)?.getBoundingClientRect();
             if (rect) {
-                this.fromBottom = (window.innerHeight - rect.bottom) < 300;
+                this.fromBottom = window.innerHeight - rect.bottom < 300;
             }
             this.droped = !this.droped;
         },
 
         handleClickOutside(event: MouseEvent) {
-            if(this.droped) {
+            if (this.droped) {
                 const dropdown = this.$el;
                 if (!dropdown) return;
 
@@ -77,16 +87,20 @@ export default {
         async isValidated(): Promise<boolean> {
             var validated = true;
             this.validationMessages = [];
-            
+
             if (this.metadata.required.value && this.modelValue === '') {
                 validated = false;
-                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
+                this.validationMessages.push(
+                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
+                );
             }
             if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
+                this.validationMessages.push(
+                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
+                );
             }
-            
+
             // Validación asíncrona
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
@@ -96,7 +110,7 @@ export default {
                     this.validationMessages.push(asyncMessage);
                 }
             }
-            
+
             return validated;
         },
         async handleValidation() {
@@ -104,42 +118,48 @@ export default {
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
-        },
+        }
     },
     props: {
         entityClass: {
             type: Function as unknown as () => typeof BaseEntity,
-            required: true,
+            required: true
         },
         entity: {
             type: Object as () => BaseEntity,
-            required: true,
+            required: true
         },
         propertyKey: {
             type: String,
-            required: true,
+            required: true
         },
         propertyEnumValues: {
             type: Object as () => EnumAdapter,
-            required: true,
+            required: true
         },
         modelValue: {
             type: [String, Number],
             required: true,
-            default: '',
-        },
+            default: ''
+        }
     },
     setup(props) {
         const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
         return {
-            metadata,
+            metadata
         };
     },
     computed: {
+        formattedEnumValues(): Array<{ key: string; value: string | number; displayKey: string }> {
+            return this.propertyEnumValues.getKeyValuePairs().map((pair) => ({
+                key: pair.key,
+                value: pair.value,
+                displayKey: this.parseValue(pair.key)
+            }));
+        },
         actualOption(): String | number {
-            var value = this.propertyEnumValues.getKeyValuePairs().find(
-                (pair) => pair.value === this.modelValue
-            )?.key || '';
+            var value =
+                this.propertyEnumValues.getKeyValuePairs().find((pair) => pair.value === this.modelValue)?.key || '';
             return this.parseValue(value);
         }
     },
@@ -150,8 +170,8 @@ export default {
             droped: false,
             fromBottom: false,
             isInputValidated: true,
-            validationMessages: [] as string[],
-        }
+            validationMessages: [] as string[]
+        };
     }
 };
 </script>
@@ -195,7 +215,7 @@ export default {
     position: relative;
 }
 
-.list-input-header label { 
+.list-input-header label {
     pointer-events: all;
     cursor: pointer;
     font-size: 1rem;
@@ -208,7 +228,7 @@ export default {
 .label-and-value .label {
     position: absolute;
     left: 0.75rem;
-    top: .9rem;
+    top: 0.9rem;
     color: var(--blue-1);
     font-size: 1rem;
     transition: 0.5s ease;
@@ -216,7 +236,7 @@ export default {
     overflow: visible;
     display: flex;
     flex-direction: row;
-    align-items: end;    
+    align-items: end;
 }
 
 .label-and-value .label.active {
@@ -270,7 +290,7 @@ export default {
 .list-input-item.selected {
     background-color: var(--sky);
 }
-.list-input-item.selected span{
+.list-input-item.selected span {
     color: var(--white) !important;
 }
 
@@ -278,7 +298,9 @@ button:focus .list-input-container {
     background-color: var(--white) !important;
     border: 2px solid var(--lavender) !important;
 }
-button:disabled { background-color: transparent !important; }
+button:disabled {
+    background-color: transparent !important;
+}
 
 .ListInput.disabled {
     pointer-events: none;

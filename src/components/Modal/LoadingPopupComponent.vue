@@ -1,11 +1,11 @@
 <template>
-<div class="loading-popup-component-container" :class="{ active: showing }">
-    <div class="loading-popup-component-card">
-        <div class="loading-popup-component-spinner">
-            <span :class="GGCLASS" class="spin-icon">{{ GGICONS.REFRESH }}</span>
+    <div class="loading-popup-component-container" :class="{ active: showing }">
+        <div class="loading-popup-component-card">
+            <div class="loading-popup-component-spinner">
+                <span :class="GGCLASS" class="spin-icon">{{ GGICONS.REFRESH }}</span>
+            </div>
         </div>
     </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -19,7 +19,7 @@ export default {
             GGCLASS,
             GGICONS,
             Application,
-            showing: false,
+            showing: false
         };
     },
     mounted() {
@@ -35,7 +35,7 @@ export default {
         Application.eventBus.off('show-loading-menu');
         Application.eventBus.off('hide-loading-menu');
     }
-}
+};
 </script>
 
 <style scoped>
@@ -85,7 +85,11 @@ export default {
 }
 
 @keyframes spin {
-    0% { transform: var(--transform-rotate-0); }
-    100% { transform: var(--transform-rotate-360); }
+    0% {
+        transform: var(--transform-rotate-0);
+    }
+    100% {
+        transform: var(--transform-rotate-360);
+    }
 }
 </style>

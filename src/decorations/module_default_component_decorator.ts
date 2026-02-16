@@ -8,18 +8,18 @@ export const MODULE_DEFAULT_COMPONENT_KEY = Symbol('module_default_component');
 
 /**
  * Decorator that specifies the default landing component for an entity module.
- * 
+ *
  * This decorator defines which Vue component to show when navigating to the entity's
  * base route. If not specified, the framework uses the default list view. Useful for
  * modules that need custom dashboards or alternative entry points.
- * 
+ *
  * @param {Component} component - The Vue Component to use as the module's default view
  * @returns {ClassDecorator} A class decorator function that attaches default component metadata
- * 
+ *
  * @example
  * ```typescript
  * import ProductoDashboard from './ProductoDashboard.vue';
- * 
+ *
  * @ApiEndpoint('/productos')
  * @ModuleName('Producto')
  * @ModuleDefaultComponent(ProductoDashboard)
@@ -27,7 +27,7 @@ export const MODULE_DEFAULT_COMPONENT_KEY = Symbol('module_default_component');
  *   // Shows ProductoDashboard.vue when navigating to /productos
  * }
  * ```
- * 
+ *
  * @see {@link advanced-module-example.md | Advanced Module Example §3}
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.3}
  */

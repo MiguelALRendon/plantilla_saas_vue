@@ -1,6 +1,6 @@
-import { BaseEntity } from "@/entities/base_entity";
-import { ViewTypes } from "@/enums/view_type";
-import { Component } from "vue";
+import { BaseEntity } from '@/entities/base_entity';
+import { ViewTypes } from '@/enums/view_type';
+import { Component } from 'vue';
 
 type EntityCtor = typeof BaseEntity;
 

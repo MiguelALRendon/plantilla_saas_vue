@@ -23,11 +23,11 @@ export default {
             Application
         };
     }
-}
+};
 </script>
 
 <style scoped>
-.button.info span{
+.button.info span {
     font-size: 1.1rem;
 }
 </style>

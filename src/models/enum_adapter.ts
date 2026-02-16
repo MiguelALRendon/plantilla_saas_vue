@@ -7,10 +7,10 @@ export class EnumAdapter {
 
     getKeyValuePairs(): { key: string; value: number }[] {
         return Object.keys(this.enumRef)
-            .filter(key => isNaN(Number(key)))
-            .map(key => ({
+            .filter((key) => isNaN(Number(key)))
+            .map((key) => ({
                 key: key,
-                value: this.enumRef[key] as number,
+                value: this.enumRef[key] as number
             }));
     }
 }

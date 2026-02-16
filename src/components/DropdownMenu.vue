@@ -22,7 +22,7 @@ export default {
     },
     methods: {
         handleClickOutside(event: MouseEvent) {
-            if(this.dropDownData.showing) {
+            if (this.dropDownData.showing) {
                 const dropdown = document.getElementById('dropdown-element-in-general');
                 if (!dropdown) return;
 
@@ -39,8 +39,8 @@ export default {
     },
     data() {
         return {
-            Application,
-        }
+            Application
+        };
     },
     computed: {
         dropDownData() {
@@ -48,39 +48,39 @@ export default {
         },
         dropdownStyle() {
             const data = this.dropDownData;
-            
+
             const posX = parseFloat(data.position_x);
             const posY = parseFloat(data.position_y);
             const dropdownWidth = parseFloat(data.width);
             const canvasWidth = parseFloat(data.canvasWidth);
             const canvasHeight = parseFloat(data.canvasHeight);
             const elementHeight = parseFloat(data.activeElementHeight);
-            
-            let leftPosition = posX - (dropdownWidth / 2);
-            
+
+            let leftPosition = posX - dropdownWidth / 2;
+
             if (leftPosition + dropdownWidth > canvasWidth) {
                 leftPosition = posX - dropdownWidth;
             }
-            
+
             if (leftPosition < 0) {
                 leftPosition = posX;
             }
-            
+
             let topPosition = posY;
-            const isInBottomHalf = posY > (canvasHeight / 2);
-            
+            const isInBottomHalf = posY > canvasHeight / 2;
+
             if (isInBottomHalf) {
                 topPosition = posY - elementHeight;
             }
-            
+
             return {
                 'max-width': data.width,
-                'left': `${leftPosition}px`,
-                'top': `${topPosition}px`
+                left: `${leftPosition}px`,
+                top: `${topPosition}px`
             };
         }
     }
-}
+};
 </script>
 
 <style scoped>

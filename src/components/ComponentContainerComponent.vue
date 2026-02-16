@@ -3,9 +3,7 @@
         <TopBarComponent />
         <div class="ComponentContainer">
             <ActionsComponent />
-            <component 
-            v-if="currentComponent" :is="currentComponent"
-             />
+            <component v-if="currentComponent" :is="currentComponent" />
         </div>
         <LoadingScreenComponent />
     </div>
@@ -22,13 +20,15 @@ import ActionsComponent from './ActionsComponent.vue';
 export default {
     name: 'ComponentContainerComponent',
     components: {
-        TopBarComponent, LoadingScreenComponent, ActionsComponent
+        TopBarComponent,
+        LoadingScreenComponent,
+        ActionsComponent
     },
     data() {
         return {
             GGICONS,
             GGCLASS,
-            currentComponent: null as any,
+            currentComponent: null as any
         };
     },
     created() {
@@ -37,16 +37,19 @@ export default {
             this.currentComponent = markRaw(init);
         }
 
-        watch(() => Application.View.value.component, async (newVal: Component | null) => {
-            if (newVal) {
-                Application.ApplicationUIService.showLoadingScreen();
-                await new Promise(resolve => setTimeout(resolve, 400));
-                this.currentComponent = markRaw(newVal);
-                Application.ApplicationUIService.hideLoadingScreen();
+        watch(
+            () => Application.View.value.component,
+            async (newVal: Component | null) => {
+                if (newVal) {
+                    Application.ApplicationUIService.showLoadingScreen();
+                    await new Promise((resolve) => setTimeout(resolve, 400));
+                    this.currentComponent = markRaw(newVal);
+                    Application.ApplicationUIService.hideLoadingScreen();
+                }
             }
-        });
+        );
     }
-}
+};
 </script>
 
 <style scoped>

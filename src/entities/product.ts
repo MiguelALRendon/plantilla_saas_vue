@@ -1,4 +1,4 @@
-import ICONS from '@/constants/icons.ts';
+import ICONS from '@/constants/icons';
 import {
     ApiEndpoint,
     ApiMethods,
@@ -24,9 +24,9 @@ import {
     Validation,
     ViewGroup
 } from '@/decorations';
-import { StringType } from '@/enums/string_type.ts';
+import { StringType } from '@/enums/string_type';
 
-import { BaseEntity } from './base_entity.ts';
+import { BaseEntity } from './base_entity';
 
 /**
  * Product entity class for managing product data in the system.

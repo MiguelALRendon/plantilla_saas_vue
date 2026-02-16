@@ -1,4 +1,4 @@
-import type { ViewGroupRow } from "@/enums/view_group_row";
+import type { ViewGroupRow } from '@/enums/view_group_row';
 
 export const VIEW_GROUP_ROW_KEY = Symbol('view_group_row');
 

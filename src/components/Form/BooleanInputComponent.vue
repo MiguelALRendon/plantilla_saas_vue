@@ -1,23 +1,26 @@
 <template>
-<div class="boolean-input-container" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
-    <button class="BooleanInput" @click="value = !value" :disabled="metadata.disabled.value">
-        <label 
-        :for="'id-' + metadata.propertyName" 
-        class="label-input-boolean">{{ metadata.propertyName }}: </label>
+    <div
+        class="boolean-input-container"
+        :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
+    >
+        <button class="BooleanInput" @click="value = !value" :disabled="metadata.disabled.value">
+            <label :for="'id-' + metadata.propertyName" class="label-input-boolean"
+                >{{ metadata.propertyName }}:
+            </label>
 
-        <div :class="['input-button', { true: modelValue }]">
-            <span :class="GGCLASS" class="icon">{{ modelValue ? GGICONS.CHECK : GGICONS.CANCEL }}</span>
+            <div :class="['input-button', { true: modelValue }]">
+                <span :class="GGCLASS" class="icon">{{ displayIcon }}</span>
+            </div>
+        </button>
+
+        <div class="help-text" v-if="metadata.helpText.value">
+            <span>{{ metadata.helpText.value }}</span>
         </div>
-    </button>
-    
-    <div class="help-text" v-if="metadata.helpText.value">
-        <span>{{ metadata.helpText.value }}</span>
+
+        <div class="validation-messages">
+            <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+        </div>
     </div>
-    
-    <div class="validation-messages">
-        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
-    </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -31,26 +34,26 @@ export default {
     props: {
         entityClass: {
             type: Function as unknown as () => typeof BaseEntity,
-            required: true,
+            required: true
         },
         entity: {
             type: Object as () => BaseEntity,
-            required: true,
+            required: true
         },
         propertyKey: {
             type: String,
-            required: true,
+            required: true
         },
         modelValue: {
             type: Boolean,
             required: true,
-            default: false,
-        },
+            default: false
+        }
     },
     setup(props) {
         const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
         return {
-            metadata,
+            metadata
         };
     },
     mounted() {
@@ -64,23 +67,27 @@ export default {
             GGICONS,
             GGCLASS,
             isInputValidated: true,
-            validationMessages: [] as string[],
-        }
+            validationMessages: [] as string[]
+        };
     },
     methods: {
         async isValidated(): Promise<boolean> {
             var validated = true;
             this.validationMessages = [];
-            
+
             if (this.metadata.required.value && !this.modelValue) {
                 validated = false;
-                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
+                this.validationMessages.push(
+                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
+                );
             }
             if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
+                this.validationMessages.push(
+                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
+                );
             }
-            
+
             // Validación asíncrona
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
@@ -90,7 +97,7 @@ export default {
                     this.validationMessages.push(asyncMessage);
                 }
             }
-            
+
             return validated;
         },
         async handleValidation() {
@@ -98,7 +105,7 @@ export default {
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
-        },
+        }
     },
     computed: {
         value: {
@@ -108,9 +115,12 @@ export default {
             set(val: boolean) {
                 this.$emit('update:modelValue', val);
             }
+        },
+        displayIcon(): string {
+            return this.modelValue ? GGICONS.CHECK : GGICONS.CANCEL;
         }
     }
-}
+};
 </script>
 
 <style scoped>
@@ -164,7 +174,9 @@ export default {
     color: var(--white);
 }
 
-.BooleanInput:focus{border: 2px solid var(--lavender);}
+.BooleanInput:focus {
+    border: 2px solid var(--lavender);
+}
 .BooleanInput:focus .label-input-boolean {
     color: var(--gray-medium);
 }
@@ -177,8 +189,8 @@ export default {
 .boolean-input-container.disabled .BooleanInput label {
     color: var(--gray-light) !important;
 }
-.boolean-input-container.disabled .BooleanInput span { 
-    background-color: var(--gray-light) !important; 
+.boolean-input-container.disabled .BooleanInput span {
+    background-color: var(--gray-light) !important;
     color: var(--gray-lighter) !important;
 }
 

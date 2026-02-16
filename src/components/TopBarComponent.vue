@@ -2,17 +2,21 @@
     <div class="topbar">
         <div class="top-left-side">
             <button @click="toggleSidebar" :class="'push-side-nav-button' + (!toggled_bar ? ' toggled' : '')">
-                <img :src="ICONS.MENU" alt="">
+                <img :src="ICONS.MENU" alt="" />
             </button>
             <div class="icon">
-                <img :src="icon" alt="">
+                <img :src="icon" alt="" />
             </div>
             <span class="topbar-title">{{ title }}</span>
         </div>
         <div class="top-right-side">
-            <button @click.stop="openDropdown" :class="'profile_button' + (toggled_profile ? ' toggled' : '')" id="dropdown-profile-button">
+            <button
+                @click.stop="openDropdown"
+                :class="'profile_button' + (toggled_profile ? ' toggled' : '')"
+                id="dropdown-profile-button"
+            >
                 <div class="icon">
-                    <img :src="ICONS.AVATAR" alt="">
+                    <img :src="ICONS.AVATAR" alt="" />
                 </div>
             </button>
             <span>Chango</span>
@@ -50,9 +54,9 @@ export default {
     data() {
         return {
             ICONS,
-            toggled_profile : false,
-            toggled_bar: true,
-        }
+            toggled_profile: false,
+            toggled_bar: true
+        };
     },
     mounted() {
         Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
@@ -62,7 +66,7 @@ export default {
     beforeUnmount() {
         Application.eventBus.off('toggle-sidebar');
     }
-}
+};
 </script>
 
 <style scoped>
@@ -114,11 +118,11 @@ export default {
     font-weight: bold;
 }
 
-.topbar .icon{
+.topbar .icon {
     height: 100%;
 }
 
-.topbar .icon img{
+.topbar .icon img {
     height: 100%;
 }
 

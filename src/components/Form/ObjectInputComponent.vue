@@ -1,26 +1,46 @@
 <template>
-<div class="TextInput ObjectInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
-    <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
-    <input 
-        :id="'id-' + metadata.propertyName" 
-        :name="metadata.propertyName" 
-        type="text" 
-        class="main-input" 
-        placeholder=" "
-        :value="modelValue?.getDefaultPropertyValue()"
-        :disabled="metadata.disabled.value"
-        readonly="true"
-        @input="$emit('update:modelValue', modelValue)" />
-    <button class="right" @click="Application.ApplicationUIService.showModalOnFunction(modelType, (param: unknown) => { if (param === undefined || param instanceof BaseEntity) { setNewValue(param); } }, ViewTypes.LOOKUPVIEW)" :disabled="metadata.disabled.value"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
-</div>
+    <div
+        class="TextInput ObjectInput"
+        :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
+    >
+        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <input
+            :id="'id-' + metadata.propertyName"
+            :name="metadata.propertyName"
+            type="text"
+            class="main-input"
+            placeholder=" "
+            :value="modelValue?.getDefaultPropertyValue()"
+            :disabled="metadata.disabled.value"
+            readonly="true"
+            @input="$emit('update:modelValue', modelValue)"
+        />
+        <button
+            class="right"
+            @click="
+                Application.ApplicationUIService.showModalOnFunction(
+                    modelType,
+                    (param: unknown) => {
+                        if (param === undefined || param instanceof BaseEntity) {
+                            setNewValue(param);
+                        }
+                    },
+                    ViewTypes.LOOKUPVIEW
+                )
+            "
+            :disabled="metadata.disabled.value"
+        >
+            <span :class="GGCLASS">{{ GGICONS.SEARCH }}</span>
+        </button>
+    </div>
 
-<div class="help-text" v-if="metadata.helpText.value">
-    <span>{{ metadata.helpText.value }}</span>
-</div>
+    <div class="help-text" v-if="metadata.helpText.value">
+        <span>{{ metadata.helpText.value }}</span>
+    </div>
 
-<div class="validation-messages">
-    <span v-for="message in validationMessages" :key="message">{{ message }}</span>
-</div>
+    <div class="validation-messages">
+        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+    </div>
 </template>
 
 <script lang="ts">
@@ -36,30 +56,30 @@ export default {
     props: {
         entityClass: {
             type: Function as unknown as () => typeof BaseEntity,
-            required: true,
+            required: true
         },
         entity: {
             type: Object as () => BaseEntity,
-            required: true,
+            required: true
         },
         propertyKey: {
             type: String,
-            required: true,
+            required: true
         },
         modelValue: {
             type: Object as PropType<BaseEntity>,
             required: false,
-            default: () => new EmptyEntity({}),
+            default: () => new EmptyEntity({})
         },
         modelType: {
             type: Function as unknown as PropType<typeof BaseEntity>,
-            required: true,
-        },
+            required: true
+        }
     },
     setup(props) {
         const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
         return {
-            metadata,
+            metadata
         };
     },
     mounted() {
@@ -75,16 +95,23 @@ export default {
         async isValidated(): Promise<boolean> {
             let validated: boolean = true;
             this.validationMessages = [];
-            
-            if (this.metadata.required.value && (this.modelValue === null || this.modelValue === undefined || this.modelValue instanceof EmptyEntity)) {
+
+            if (
+                this.metadata.required.value &&
+                (this.modelValue === null || this.modelValue === undefined || this.modelValue instanceof EmptyEntity)
+            ) {
                 validated = false;
-                this.validationMessages.push(this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`);
+                this.validationMessages.push(
+                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
+                );
             }
             if (!this.metadata.validated.value) {
                 validated = false;
-                this.validationMessages.push(this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`);
+                this.validationMessages.push(
+                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
+                );
             }
-            
+
             // Validación asíncrona
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
@@ -94,7 +121,7 @@ export default {
                     this.validationMessages.push(asyncMessage);
                 }
             }
-            
+
             return validated;
         },
         async handleValidation() {
@@ -102,7 +129,7 @@ export default {
             if (!this.isInputValidated) {
                 Application.View.value.isValid = false;
             }
-        },
+        }
     },
     data() {
         return {
@@ -112,8 +139,8 @@ export default {
             ViewTypes,
             BaseEntity,
             isInputValidated: true,
-            validationMessages: [] as string[],
-        }
+            validationMessages: [] as string[]
+        };
     }
-}
+};
 </script>

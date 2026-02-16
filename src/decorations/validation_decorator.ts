@@ -21,15 +21,15 @@ export interface ValidationMetadata {
 
 /**
  * Decorator that adds synchronous validation logic to an entity property.
- * 
+ *
  * This decorator enables custom validation rules beyond basic required checks.
  * The validation runs synchronously during entity save operations. For async validations
  * (e.g., checking uniqueness via API), use @AsyncValidation instead.
- * 
+ *
  * @param {ValidationCondition} condition - Boolean or function returning boolean; must evaluate to true for valid state
  * @param {string} message - Error message displayed when validation fails
  * @returns {PropertyDecorator} A property decorator function that attaches validation metadata
- * 
+ *
  * @example
  * ```typescript
  * export class Producto extends BaseEntity {
@@ -39,7 +39,7 @@ export interface ValidationMetadata {
  *     'El precio debe ser mayor a cero'
  *   )
  *   precio: number = 0;
- * 
+ *
  *   @PropertyName('Descuento', Number)
  *   @Validation(
  *     (p: Producto) => p.descuento >= 0 && p.descuento <= 100,
@@ -48,7 +48,7 @@ export interface ValidationMetadata {
  *   descuento: number = 0;
  * }
  * ```
- * 
+ *
  * @see {@link 02-VALIDATIONS.md | Validation Tutorial §2.2}
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1}
  */
@@ -58,7 +58,7 @@ export function Validation(condition: ValidationCondition, message: string): Pro
         if (!proto[VALIDATION_KEY]) {
             proto[VALIDATION_KEY] = {};
         }
-        
+
         proto[VALIDATION_KEY][propertyKey] = {
             condition: condition,
             message: message

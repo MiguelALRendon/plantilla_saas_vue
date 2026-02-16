@@ -1,17 +1,17 @@
 <template>
-<div class="form-group">
-    <div class="form-group-header">
-        <span>{{ title }}</span>
-    </div>
+    <div class="form-group">
+        <div class="form-group-header">
+            <span>{{ title }}</span>
+        </div>
 
-    <div class="form-group-body">
-        <div class="form-group-body-container">
-            <div class="form-group-body-content">
-                <slot></slot>
+        <div class="form-group-body">
+            <div class="form-group-body-container">
+                <div class="form-group-body-content">
+                    <slot></slot>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -24,17 +24,17 @@ export default {
         title: {
             type: String,
             required: true,
-            default: '',
-        },
+            default: ''
+        }
     },
     data() {
         return {
             ICONS,
             GGCLASS,
-            GGICONS,
-        }
+            GGICONS
+        };
     }
-}
+};
 </script>
 
 <style scoped>

@@ -23,14 +23,14 @@ export default {
     data() {
         return {
             GGCLASS,
-            GGICONS,
+            GGICONS
         };
     }
-}
+};
 </script>
 
 <style scoped>
-.button.accent span{
+.button.accent span {
     font-size: 1.1rem;
     margin-right: 0.15rem;
 }

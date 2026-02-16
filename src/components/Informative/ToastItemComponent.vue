@@ -1,12 +1,12 @@
 <template>
-<div class="toast-card" :class="[setToastClass(), { show: showToast }]">
-    <div class="toast" :class="setToastClass()" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
-        <span>{{ toast.message }}</span>
-        <button class="toast-close-button" @click="handleClose">
-            <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
-        </button>
+    <div class="toast-card" :class="[setToastClass(), { show: showToast }]">
+        <div class="toast" :class="setToastClass()" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
+            <span>{{ toast.message }}</span>
+            <button class="toast-close-button" @click="handleClose">
+                <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+            </button>
+        </div>
     </div>
-</div>
 </template>
 
 <script lang="ts">
@@ -16,89 +16,89 @@ import { ToastType } from '@/enums/ToastType';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 
 export default {
-  name: 'ToastItemComponent',
+    name: 'ToastItemComponent',
     emits: ['remove'],
-  props: {
-    toast: {
-      type: Object as PropType<Toast>,
-      required: true
-    }
-  },
-  methods: {
-    setToastClass() : string {
-        switch (this.toast.type) {
-            case ToastType.ERROR:
-                return 'toast-error';
-            case ToastType.SUCCESS:
-                return 'toast-success';
-            case ToastType.INFO:
-                return 'toast-info';
-            case ToastType.WARNING:
-                return 'toast-warning';
-            default:
-                return '';
+    props: {
+        toast: {
+            type: Object as PropType<Toast>,
+            required: true
         }
     },
-    startDismissTimer() {
-        this.clearDismissTimer();
-        this.dismissStartAt = Date.now();
-        this.dismissTimerId = window.setTimeout(() => {
+    methods: {
+        setToastClass(): string {
+            switch (this.toast.type) {
+                case ToastType.ERROR:
+                    return 'toast-error';
+                case ToastType.SUCCESS:
+                    return 'toast-success';
+                case ToastType.INFO:
+                    return 'toast-info';
+                case ToastType.WARNING:
+                    return 'toast-warning';
+                default:
+                    return '';
+            }
+        },
+        startDismissTimer() {
+            this.clearDismissTimer();
+            this.dismissStartAt = Date.now();
+            this.dismissTimerId = window.setTimeout(() => {
+                this.dismissToast();
+            }, this.remainingDismissMs);
+        },
+        clearDismissTimer() {
+            if (this.dismissTimerId !== null) {
+                clearTimeout(this.dismissTimerId);
+                this.dismissTimerId = null;
+            }
+        },
+        clearRemoveTimer() {
+            if (this.removeTimerId !== null) {
+                clearTimeout(this.removeTimerId);
+                this.removeTimerId = null;
+            }
+        },
+        pauseDismiss() {
+            if (this.isDismissing || this.dismissTimerId === null) {
+                return;
+            }
+            const elapsed = Date.now() - this.dismissStartAt;
+            this.remainingDismissMs = Math.max(this.remainingDismissMs - elapsed, 0);
+            this.clearDismissTimer();
+        },
+        resumeDismiss() {
+            if (this.isDismissing || this.remainingDismissMs <= 0) {
+                return;
+            }
+            this.startDismissTimer();
+        },
+        dismissToast() {
+            if (this.isDismissing) {
+                return;
+            }
+            this.isDismissing = true;
+            this.showToast = false;
+            this.clearDismissTimer();
+            this.clearRemoveTimer();
+            this.removeTimerId = window.setTimeout(() => {
+                this.$emit('remove', this.toast.id);
+            }, 300);
+        },
+        handleClose() {
             this.dismissToast();
-        }, this.remainingDismissMs);
-    },
-    clearDismissTimer() {
-        if (this.dismissTimerId !== null) {
-            clearTimeout(this.dismissTimerId);
-            this.dismissTimerId = null;
         }
     },
-    clearRemoveTimer() {
-        if (this.removeTimerId !== null) {
-            clearTimeout(this.removeTimerId);
-            this.removeTimerId = null;
-        }
-    },
-    pauseDismiss() {
-        if (this.isDismissing || this.dismissTimerId === null) {
-            return;
-        }
-        const elapsed = Date.now() - this.dismissStartAt;
-        this.remainingDismissMs = Math.max(this.remainingDismissMs - elapsed, 0);
-        this.clearDismissTimer();
-    },
-    resumeDismiss() {
-        if (this.isDismissing || this.remainingDismissMs <= 0) {
-            return;
-        }
-        this.startDismissTimer();
-    },
-    dismissToast() {
-        if (this.isDismissing) {
-            return;
-        }
-        this.isDismissing = true;
-        this.showToast = false;
-        this.clearDismissTimer();
-        this.clearRemoveTimer();
-        this.removeTimerId = window.setTimeout(() => {
-            this.$emit('remove', this.toast.id);
-        }, 300);
-    },
-    handleClose() {
-        this.dismissToast();
-    }
-  },
-  mounted() {
-    setTimeout(() => {
-        this.showToast = true;
-    }, 50);
+    mounted() {
+        setTimeout(() => {
+            this.showToast = true;
+        }, 50);
         this.startDismissTimer();
     },
     beforeUnmount() {
         this.clearDismissTimer();
         this.clearRemoveTimer();
-  },
-  data() {
+    },
+    data() {
         return {
             GGICONS,
             GGCLASS,
@@ -139,9 +139,9 @@ export default {
     border-radius: calc(var(--border-radius) / 1.5);
     display: flex;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.20);
+    background-color: rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
-    padding-inline: .25rem;
+    padding-inline: 0.25rem;
     display: flex;
     justify-content: space-between;
     pointer-events: all;

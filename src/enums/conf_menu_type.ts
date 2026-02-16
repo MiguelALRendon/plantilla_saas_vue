@@ -1,3 +1,6 @@
 export enum confMenuType {
-    INFO, SUCCESS, WARNING, ERROR
+    INFO,
+    SUCCESS,
+    WARNING,
+    ERROR
 }

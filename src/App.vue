@@ -1,13 +1,13 @@
 <template>
-  <div class="app-container" :class="Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : ''">
-    <SideBarComponent />
-    <ComponentContainerComponent />
-    <ToastContainerComponent />
-    <ModalComponent />
-    <DropdownMenu />
-    <ConfirmationDialogComponent />
-    <LoadingPopupComponent />
-  </div>
+    <div class="app-container" :class="Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : ''">
+        <SideBarComponent />
+        <ComponentContainerComponent />
+        <ToastContainerComponent />
+        <ModalComponent />
+        <DropdownMenu />
+        <ConfirmationDialogComponent />
+        <LoadingPopupComponent />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -22,10 +22,10 @@ import ToastContainerComponent from './components/Informative/ToastContainerComp
 </script>
 
 <style scoped>
-  .app-container {
+.app-container {
     display: flex;
     flex-direction: row;
     max-height: 100vh;
     height: 100vh;
-  }
+}
 </style>

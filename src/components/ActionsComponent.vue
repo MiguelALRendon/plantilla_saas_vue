@@ -13,7 +13,7 @@ export default {
         return {
             Application,
             isAtTop: true,
-            scrollContainer: null as HTMLElement | null,
+            scrollContainer: null as HTMLElement | null
         };
     },
     mounted() {
@@ -35,7 +35,7 @@ export default {
             }
         }
     }
-}
+};
 </script>
 
 <style scoped>
@@ -51,12 +51,14 @@ export default {
     gap: 1rem;
     align-items: center;
     background-color: var(--white);
-    padding: .75rem;
+    padding: 0.75rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
     margin-bottom: 1rem;
     overflow: hidden;
-    transition: max-width 0.5s ease, opacity 0.3s ease;
+    transition:
+        max-width 0.5s ease,
+        opacity 0.3s ease;
     white-space: nowrap;
     opacity: 0.3;
 }

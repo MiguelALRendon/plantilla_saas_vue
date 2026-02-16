@@ -6,14 +6,14 @@ export const DEFAULT_PROPERTY_KEY = Symbol('default_property');
 
 /**
  * Decorator that designates which property serves as the default display representation of an entity.
- * 
+ *
  * This decorator is critical for relational displays (dropdowns, selections) where the framework
  * needs to show a human-readable representation of an entity. If not specified, the framework
  * uses the primary property or falls back to the first available property.
- * 
+ *
  * @param {string} propertyName - The name of the property to use as default display (must match an existing property key)
  * @returns {ClassDecorator} A class decorator function that attaches default property metadata
- * 
+ *
  * @example
  * ```typescript
  * @ApiEndpoint('/usuarios')
@@ -23,12 +23,12 @@ export const DEFAULT_PROPERTY_KEY = Symbol('default_property');
  *   @PropertyName('Usuario')
  *   @PrimaryProperty()
  *   username: string = '';
- * 
+ *
  *   @PropertyName('Nombre Completo')
  *   nombreCompleto: string = '';
  * }
  * ```
- * 
+ *
  * @see {@link 03-RELATIONS.md | Relations Tutorial §2.3}
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1}
  */

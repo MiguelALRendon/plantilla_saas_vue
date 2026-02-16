@@ -1,3 +1,4 @@
 export enum DetailTypes {
-    NEW, EDIT
+    NEW,
+    EDIT
 }

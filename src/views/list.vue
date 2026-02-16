@@ -10,10 +10,10 @@ export default {
     name: 'ListView',
     data() {
         return {
-            Application,
-        }
-    },
-}
+            Application
+        };
+    }
+};
 </script>
 
 <style scoped>
@@ -22,7 +22,7 @@ export default {
     padding: var(--spacing-lg);
     box-sizing: border-box;
 }
-.button{
+.button {
     width: 100%;
 }
 </style>
