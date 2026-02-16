@@ -19,7 +19,7 @@ export default {
 <style scoped>
 .container {
     width: 100%;
-    padding: 1rem;
+    padding: var(--spacing-lg);
     box-sizing: border-box;
 }
 .button{

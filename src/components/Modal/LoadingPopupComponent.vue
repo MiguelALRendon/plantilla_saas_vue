@@ -52,7 +52,7 @@ export default {
     z-index: 1100;
     pointer-events: none;
     opacity: 0;
-    transition: 0.3s ease;
+    transition: var(--transition-normal) var(--timing-ease);
 }
 
 .loading-popup-component-container.active {
@@ -62,7 +62,7 @@ export default {
 
 .loading-popup-component-card {
     background-color: var(--white);
-    padding: 2rem;
+    padding: var(--spacing-2xl);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
     display: flex;
@@ -70,22 +70,22 @@ export default {
     align-items: center;
     width: 400px;
     height: 150px;
-    transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    transform: scale(0.01);
+    transition: var(--transition-normal) var(--timing-bounce);
+    transform: var(--transform-scale-min);
 }
 .loading-popup-component-container.active .loading-popup-component-card {
-    transform: scale(1);
+    transform: var(--transform-scale-full);
 }
 
 .spin-icon {
     font-size: 120px;
     font-weight: bold;
     color: var(--green-soft);
-    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    animation: spin var(--animation-spin-duration) var(--timing-bounce) infinite;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% { transform: var(--transform-rotate-0); }
+    100% { transform: var(--transform-rotate-360); }
 }
 </style>

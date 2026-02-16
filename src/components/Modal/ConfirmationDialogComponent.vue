@@ -87,7 +87,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--transition-normal) var(--timing-ease);
 }
 
 .confirmation-dialog-container.closed {
@@ -102,33 +102,33 @@ export default {
   max-width: 400px;
   max-height: 300px;
   background-color: var(--white);
-  border-radius: 1rem;
+  border-radius: var(--border-radius);
   box-shadow: var(--shadow-dark);
   overflow: hidden;
-  transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  transition: var(--transition-normal) var(--timing-bounce);
 }
 
 .confirmation-dialog-container.closed .confirmation-dialog-card {
-  transform: scale(0.01);
+  transform: var(--transform-scale-min);
 }
 
 .confirmation-dialog-header {
-  padding-bottom: .5rem;
-  padding-top: 1rem;
+  padding-bottom: var(--spacing-sm);
+  padding-top: var(--spacing-lg);
   text-align: center;
   flex-shrink: 0;
 }
 
 .confirmation-dialog-body {
-  padding: .5rem;
+  padding: var(--spacing-sm);
   flex: 1;
   overflow-y: auto;
 }
 .confirmation-dialog-center {
   text-align: center;
   background-color: var(--bg-gray);
-  padding: 1rem;
-  border-radius: 1rem;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
 }
 
 .confirmation-dialog-footer {
@@ -136,10 +136,10 @@ export default {
   flex-direction: row;
   justify-content: end;
   align-items: center;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  padding-top: 0.5rem;
-  padding-inline: 1rem;
+  gap: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+  padding-top: var(--spacing-sm);
+  padding-inline: var(--spacing-lg);
   flex-shrink: 0;
 }
 

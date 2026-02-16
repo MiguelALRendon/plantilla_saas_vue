@@ -122,19 +122,19 @@ export default {
 .validation-messages {
     color: var(--red);
     font-size: 0.875rem;
-    margin-top: 0.25rem;
-    padding-left: 0.75rem;
+    margin-top: var(--spacing-xs);
+    padding-left: var(--spacing-md);
 }
 
 .BooleanInput {
     display: flex;
     flex-direction: row;
-    margin-block: .5rem;
-    padding: 0.5rem .25rem;
+    margin-block: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-xs);
     cursor: pointer;
     align-items: center;
-    border-radius: 1rem;
-    transition: 0.5s ease;
+    border-radius: var(--border-radius);
+    transition: var(--transition-slow) var(--timing-ease);
     border: 0px solid transparent;
 }
 .BooleanInput:hover {

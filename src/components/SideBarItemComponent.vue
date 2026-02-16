@@ -38,7 +38,7 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
-    transition: 0.4s ease;
+    transition: var(--transition-normal) var(--timing-ease);
 }
 .side-bar-item:hover {
     background-color: var(--gray-lightest);
@@ -67,6 +67,6 @@ export default {
 .active .module-title {
     font-weight: 600;
     color: var(--white);
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
 }
 </style>

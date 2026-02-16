@@ -67,7 +67,7 @@ export default {
 
 <style scoped>
 .topbar {
-    height: 50px;
+    height: var(--topbar-height);
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -81,7 +81,7 @@ export default {
     height: 100%;
     border: none;
     border-radius: var(--border-radius-circle);
-    padding: 0 !important;
+    padding: 0;
 }
 .topbar .push-side-nav-button:hover,
 .topbar .profile_button:hover {
@@ -90,7 +90,7 @@ export default {
 .topbar .push-side-nav-button img,
 .topbar .profile_button img {
     height: 100%;
-    transition: 0.5s ease;
+    transition: var(--transition-slow) var(--timing-ease);
 }
 
 .topbar .push-side-nav-button.toggled img,
@@ -102,7 +102,7 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-gap);
     font-weight: bold;
 }
 
@@ -110,7 +110,7 @@ export default {
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-gap);
     font-weight: bold;
 }
 
@@ -123,7 +123,7 @@ export default {
 }
 
 .topbar .topbar-title {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     color: var(--gray-medium);
 }
 </style>

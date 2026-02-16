@@ -1,7 +1,11 @@
 :root {
     --button-color: #a0a0a0;
 
+    /* Dimensiones de componentes estructurales */
     --sidebar-min-width: 60px;
+    --sidebar-width-collapsed: 68px;
+    --sidebar-width-expanded: 250px;
+    --topbar-height: 50px;
 
     /* Colores base */
     --white: #ffffff;
@@ -63,10 +67,20 @@
     
     /* Transiciones y duraciones */
     --transition-fast: 0.15s;
+    --transition-quick: 0.25s;
     --transition-normal: 0.3s;
     --transition-slow: 0.5s;
     --timing-ease: ease;
     --timing-ease-in-out: ease-in-out;
+    --timing-bounce: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    --animation-spin-duration: 1.5s;
+    
+    /* Transforms estándar */
+    --transform-scale-min: scale(0.01);
+    --transform-scale-full: scale(1);
+    --transform-translateX-hide: translateX(105%);
+    --transform-rotate-0: rotate(0deg);
+    --transform-rotate-360: rotate(360deg);
     
     /* Espaciados y dimensiones */
     --padding-small: 0.5rem;
@@ -78,14 +92,24 @@
     --spacing-xxs: 0.15rem;
     --spacing-xs: 0.25rem;
     --spacing-small: 0.5rem;
+    --spacing-sm: 0.5rem;
+    --spacing-gap: 0.625rem;
     --spacing-helper: 0.7rem;
+    --spacing-md: 0.75rem;
     --spacing-medium: 1rem;
+    --spacing-lg: 1rem;
     --spacing-large: 1.5rem;
+    --spacing-xl: 1.5rem;
+    --spacing-2xl: 2rem;
     
     /* Tipografía */
+    --font-size-xs: 0.75rem;
     --font-size-small: 0.75rem;
+    --font-size-sm: 0.875rem;
     --font-size-base: 1rem;
+    --font-size-lg: 1.1rem;
     --font-size-medium: 1.25rem;
+    --font-size-xl: 1.25rem;
     --font-size-large: 1.5rem;
     --font-size-h1: 2rem;
     --font-size-h2: 1.75rem;

@@ -14,8 +14,8 @@ export default {
     .tab-component{
         width: 100%;
         height: 100%;
-        padding: .5rem;
-        border-radius: 0 0 1rem 1rem;
+        padding: var(--spacing-sm);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
         border: 2px solid var(--sky);
         border-top: none;
         box-sizing: border-box;

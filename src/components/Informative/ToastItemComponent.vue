@@ -119,11 +119,11 @@ export default {
     width: 100%;
     height: 3rem;
     border-radius: var(--border-radius);
-    padding: 0.25rem;
+    padding: var(--spacing-xs);
     box-sizing: border-box;
     background-color: var(--white);
-    transform: translateX(105%);
-    transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transform: var(--transform-translateX-hide);
+    transition: var(--transition-normal) var(--timing-bounce);
     opacity: 0.75;
 }
 .toast-card.show {

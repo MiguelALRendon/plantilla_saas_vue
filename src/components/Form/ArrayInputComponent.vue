@@ -300,7 +300,7 @@ export default {
 .table th,
 .table td {
     flex: 1;
-    padding: 0.5rem;
+    padding: var(--spacing-sm);
     text-align: left;
     box-sizing: border-box;
     display: flex;

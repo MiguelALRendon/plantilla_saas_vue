@@ -110,7 +110,7 @@ export default {
     align-items: center;
     z-index: 1000;
     opacity: 1;
-    transition: 0.25s ease;
+    transition: var(--transition-quick) var(--timing-ease);
 }
 .modal-background.closed {
     opacity: 0;
@@ -126,7 +126,7 @@ export default {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transition: var(--transition-normal) var(--timing-bounce);
 }
 .modal-structure.closed {
     max-width: 0px;
@@ -135,8 +135,8 @@ export default {
 
 .modal-head {
     height: 55px;
-    padding-block: .25rem;
-    padding-inline: 1rem;
+    padding-block: var(--spacing-xs);
+    padding-inline: var(--spacing-lg);
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -150,7 +150,7 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-lg);
 }
 
 .modal-body{
@@ -158,8 +158,8 @@ export default {
     max-height: calc(60vh - 55px);
     height: 100%;
     overflow-y: auto;
-    padding: 1rem;
-    margin-inline: 0.5rem;
+    padding: var(--spacing-lg);
+    margin-inline: var(--spacing-sm);
     box-sizing: border-box;
     background-color: var(--bg-gray);
     border-radius: var(--border-radius);
@@ -172,7 +172,7 @@ export default {
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
-    padding-inline: 1rem;
-    gap: 0.75rem;
+    padding-inline: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 </style>

@@ -66,17 +66,17 @@ export default {
   .tab-container-row{
     display: flex;
     flex-direction: row;
-    gap: .5rem;
+    gap: var(--spacing-sm);
     border-bottom: 2px solid var(--sky);
   }
 
   .tab-container-row .tab{
-    padding: 0.5rem 1.5rem;
+    padding: var(--spacing-sm) var(--spacing-xl);
     cursor: pointer;
-    border-radius: 1rem 1rem 0 0;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
     border: 1px solid var(--border-gray);
     border-bottom: none;
-    transition: 0.5s ease;
+    transition: var(--transition-slow) var(--timing-ease);
   }
 
   .tab-container-row .tab.active{

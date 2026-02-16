@@ -47,11 +47,11 @@ export default {
 .sidebar {
     display: flex;
     flex-direction: column;
-    max-width: 68px;
+    max-width: var(--sidebar-width-collapsed);
     width: 100%;
     height: 100%;
     max-height: 100vh;
-    transition: 0.5s ease;
+    transition: var(--transition-slow) var(--timing-ease);
     position: relative;
     z-index: 100;
     background-color: var(--white);
@@ -60,28 +60,28 @@ export default {
 .sidebar span{
     opacity: 0;
     font-weight: 500;
-    transition: opacity 0.3s ease 0.2s;
+    transition: opacity var(--transition-normal) var(--timing-ease) 0.2s;
 }
 .sidebar.toggled {
-    max-width: 250px;
+    max-width: var(--sidebar-width-expanded);
 }
 .sidebar.toggled span{
     opacity: 1;
 }
 
 .sidebar .header {
-    height: 50px;
+    height: var(--topbar-height);
     opacity: 0;
     max-height: 90px;
     padding: 0;
     overflow: hidden;
     border-bottom: 1px solid var(--border-gray);
-    transition: 0.5s ease;
+    transition: var(--transition-slow) var(--timing-ease);
 }
 .sidebar.toggled .header {
     height: 100%;
     opacity: 1;
-    padding: 1rem;
+    padding: var(--spacing-lg);
 } 
 
 .sidebar .body {
@@ -95,9 +95,9 @@ export default {
     height: 0%;
     opacity: 0;
     max-height: 70px;
-    padding: 1rem;
+    padding: var(--spacing-lg);
     overflow: hidden;
-    transition: 0.5s ease;
+    transition: var(--transition-slow) var(--timing-ease);
     border-top: 1px solid var(--border-gray);
 }
 .sidebar.toggled .footer {
