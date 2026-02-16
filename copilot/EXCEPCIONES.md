@@ -99,11 +99,82 @@ _No existen excepciones activas en este momento._
 ```
 
 ### Fecha de Revisión Futura
-[Fecha recomendada para revisar si excepción sigue siendo necesaria]
+**Próxima Revisión:** 15 de Febrero, 2027  
+**Condición:** Evaluar si TypeScript 5.x+ permite tipado seguro de símbolos en prototypes.
 
 ### Decisión del Arquitecto
 **Decisión:** APROBADA  
-**Comentarios:** [Comentarios adicionales del arquitecto]
+**Comentarios:** Limitación técnica de TypeScript. Excepciónjustificada por MI LÓGICA A4.
+
+---
+
+### [EXC-002] - Uso de Tipo `any` en Valores de Retorno de APIs de Metadatos Públicas
+
+**Fecha de Autorización:** 15 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+#### Cláusula Afectada
+**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
+**Sección:** § 6.4.1 - Prohibición Absoluta de Tipo `any`  
+**Cláusula:** "El uso de tipo `any` está PROHIBIDO ABSOLUTAMENTE"
+
+#### Descripción de la Excepción
+
+Los métodos públicos de BaseEntity que devuelven metadatos de tipos de propiedades necesitan devolver `any` en lugar de `unknown` para permitir su uso directo en componentes Vue sin type guards explícitos.
+
+**Métodos afectados:**
+- `getPropertyType(propertyKey: string): any`
+- `static getPropertyType(propertyKey: string): any`
+- `getPropertyTypes(): Record<string, any>`
+- `static getPropertyTypes(): Record<string, any>`
+- `getDefaultPropertyValues(): Record<string, any>`
+- `static getDefaultPropertyValues(): Record<string, any>`
+
+#### Justificación Técnica
+
+Los componentes Vue necesitan usar directamente los tipos devueltos (String, Number, Boolean, typeof BaseEntity, Array, Date) para binding en v-model, verificaciones instanceof y paso de props. Con `unknown`, se generan 16+ errores de tipado en componentes.
+
+**Error típico con `unknown`:**
+```typescript
+:modelType="entityClass.getPropertyType(prop)" // ❌ Type 'unknown' not assignable to 'typeof BaseEntity'
+```
+
+Los valores reales son siempre tipos concretos (constructors), por lo que el riesgo runtime es mínimo.
+
+#### Alternativas Evaluadas
+
+1. **Tipo union específico:** TypeScript no infiere correctamente en compilación, requiere type guards igual.
+2. **Type assertions en componentes:** Requiere modificar 50+ componentes, verboso y error-prone.
+3. **Helper functions:** Similar, no escala.
+4. **Narrowing automático:** TypeScript no lo hace con `unknown` sin guards explícitos.
+
+#### Alcance de la Excepción
+
+**Archivos:** `/src/entities/base_entity.ts`
+
+**Patrón Autorizado:**
+```typescript
+// EXC-002: Public metadata API - 'any' for Vue usability
+public getPropertyType(propertyKey: string): any {
+    return (this.constructor as any).getPropertyType(propertyKey);
+}
+```
+
+**NO Autorizado:** `any` en parámetros, variables locales, catch blocks, métodos internos.
+
+#### Impacto Arquitectónico
+
+**Impacto:** BAJO - Solo 6 métodos públicos. Valores siempre son constructors válidos.  
+**Beneficio:** Componentes Vue usan API limpiamente sin type guards.
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 15 de Febrero, 2027  
+**Condición:** Evaluar si TypeScript 5.x+ permite typed metadata APIs compatibles con Vue.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Compromiso pragmático entre type safety y usabilidad de API pública.
 
 ---
 

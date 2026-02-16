@@ -166,7 +166,7 @@ export abstract class BaseEntity {
         const keys = Object.keys(columns);
         const propertyIndices = this.getPropertyIndices();
 
-        // Ordenar por PropertyIndex si existe, sino por orden de declaración
+        // Sort by PropertyIndex if exists, otherwise by declaration order
         return keys.sort((a, b) => {
             const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
             const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
@@ -216,7 +216,7 @@ export abstract class BaseEntity {
      * @param propertyKey The property key to query
      * @returns The property type (String, Number, Boolean, Array, etc.) or undefined
      */
-    public getPropertyType(propertyKey: string): any | undefined {
+    public getPropertyType(propertyKey: string): any | undefined { // EXC-002: Public metadata API
         return (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
     }
 
@@ -233,8 +233,8 @@ export abstract class BaseEntity {
      * Retrieves the value of the property marked with DefaultProperty decorator
      * @returns The default display value for this entity
      */
-    public getDefaultPropertyValue(): any {
-        const propertyName = (this.constructor as any)[DEFAULT_PROPERTY_KEY];
+    public getDefaultPropertyValue(): any { // EXC-002: Public metadata API
+        const propertyName = (this.constructor as any)[DEFAULT_PROPERTY_KEY]; // EXC-001: Symbol index access
         if (!propertyName) {
             return undefined;
         }
@@ -468,7 +468,7 @@ export abstract class BaseEntity {
             return format(value);
         }
 
-        // Si es string, reemplazar {value} con el valor actual
+        // If format is string, replace {value} with current value
         return format.replace('{value}', value?.toString() ?? '');
     }
 
@@ -1154,8 +1154,8 @@ export abstract class BaseEntity {
      * Retrieves the type mapping for all properties
      * @returns Map of property keys to their TypeScript type constructors
      */
-    public static getPropertyTypes(): Record<string, any> {
-        const proto = this.prototype as any;
+    public static getPropertyTypes(): Record<string, any> { // EXC-002: Public metadata API
+        const proto = this.prototype as any; // EXC-001: Symbol index access
         return proto[PROPERTY_TYPE_KEY] || {};
     }
 
@@ -1164,7 +1164,7 @@ export abstract class BaseEntity {
      * @param propertyKey The property key to query
      * @returns The property type constructor or undefined
      */
-    public static getPropertyType(propertyKey: string): any | undefined {
+    public static getPropertyType(propertyKey: string): any | undefined { // EXC-002: Public metadata API
         const types = this.getPropertyTypes();
         return types[propertyKey];
     }
@@ -1320,7 +1320,7 @@ export abstract class BaseEntity {
     public static isApiMethodAllowed(method: HttpMethod): boolean {
         const allowedMethods = this.getApiMethods();
         if (!allowedMethods) {
-            return true; // Si no se especifica, se permiten todos
+            return true; // If not specified, all methods are allowed
         }
         return allowedMethods.includes(method);
     }

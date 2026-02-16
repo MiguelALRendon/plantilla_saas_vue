@@ -7,7 +7,7 @@ import Application from '@/models/application';
 import router, { initializeRouterWithApplication } from '@/router';
 import { BaseEntity } from '@/entities/base_entity';
 
-// Inicializar el router con Application
+// Initialize router with Application
 initializeRouterWithApplication();
 Application.initializeRouter(router);
 
@@ -18,10 +18,10 @@ app.mount('#app');
 // Set document title from AppConfiguration
 document.title = Application.AppConfiguration.value.appName;
 
-// La navegación inicial ahora la maneja el router
+// Initial navigation is now handled by the router
 if (Application.ModuleList && Application.ModuleList.value && Application.ModuleList.value.length > 0) {
     try {
-        // El router redirigirá automáticamente a la ruta del primer módulo
+        // Router will automatically redirect to first module route
         const firstModule: typeof BaseEntity = Application.ModuleList.value[0];
         Application.changeViewToDefaultView(firstModule);
     } catch (e: unknown) {

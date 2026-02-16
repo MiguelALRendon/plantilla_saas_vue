@@ -273,11 +273,11 @@ class ApplicationClass implements ApplicationUIContext {
         const moduleName = entityClass.getModuleName() || entityClass.name;
         const moduleNameLower = moduleName.toLowerCase();
 
-        // Prevenir navegaciÃ³n si ya estamos en la ruta correcta
+        // Prevent navigation if we're already at the correct route
         const currentRoute = this.router.currentRoute.value;
 
         if (entity) {
-            // Navegar a detailview con OID o 'new'
+            // Navigate to detailview with OID or 'new'
             const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
             if (currentRoute.path !== targetPath) {
                 this.router

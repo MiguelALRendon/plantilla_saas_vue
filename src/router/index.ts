@@ -9,7 +9,7 @@ const routes: Array<RouteRecordRaw> = [
         path: '/',
         name: 'Home',
         redirect: () => {
-            // Redirigir al primer módulo si existe
+            // Redirect to first module if it exists
             if (Application && Application.ModuleList.value.length > 0) {
                 const firstModule = Application.ModuleList.value[0];
                 const moduleName = firstModule.getModuleName() || firstModule.name;
@@ -37,33 +37,33 @@ const router: Router = createRouter({
     routes
 });
 
-// Guard de navegación para sincronizar con Application cuando la URL cambia directamente
+// Navigation guard to synchronize with Application when URL changes directly
 router.beforeEach((to, _from, next) => {
     const moduleName = to.params.module as string;
     const oid = to.params.oid as string;
 
-    // Buscar el módulo correspondiente
+    // Find the corresponding module
     const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
         const modName = mod.getModuleName() || mod.name;
         return modName.toLowerCase() === moduleName?.toLowerCase();
     });
 
     if (moduleClass) {
-        // Si la navegación viene de cambiar la URL directamente (no desde Application)
-        // necesitamos actualizar Application
+        // If navigation comes from direct URL change (not from Application)
+        // we need to update Application
         const currentModule = Application.View.value.entityClass;
         const currentModuleName = currentModule
             ? (currentModule.getModuleName() || currentModule.name).toLowerCase()
             : '';
         const currentOid = Application.View.value.entityOid;
 
-        // Solo actualizar Application si la URL es diferente de lo que Application tiene
+        // Only update Application if URL is different from what Application has
         if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
             if (oid && to.meta.viewType === 'detail') {
-                // Vista de detalle - setear entityOid
+                // Detail view - set entityOid
                 Application.View.value.entityOid = oid;
 
-                // Si el OID es 'new', crear una nueva instancia
+                // If OID is 'new', create a new instance
                 if (oid === 'new') {
                     // Usar Reflect.construct para instanciar la clase concreta
                     const newEntity: BaseEntity = Reflect.construct(moduleClass, [{}]);
@@ -75,10 +75,10 @@ router.beforeEach((to, _from, next) => {
                     console.log('[Router] Preparando detail view para OID:', oid);
                 }
             } else {
-                // Vista de lista
+                // List view
                 Application.View.value.entityOid = '';
 
-                // Cambiar a list view si no estamos ahí
+                // Change to list view if not there already
                 if (Application.View.value.viewType !== ViewTypes.LISTVIEW) {
                     Application.changeViewToListView(moduleClass);
                 }
@@ -87,15 +87,15 @@ router.beforeEach((to, _from, next) => {
 
         next();
     } else {
-        // Módulo no encontrado
-        console.warn('[Router] Módulo no encontrado:', moduleName);
+        // Module not found
+        console.warn('[Router] Module not found:', moduleName);
         next();
     }
 });
 
-// Guard después de la navegación para logging
+// Guard after navigation for logging
 router.afterEach((to) => {
-    console.log('[Router] Navegado a:', to.path, '| entityOid:', Application.View.value.entityOid);
+    console.log('[Router] Navigated to:', to.path, '| entityOid:', Application.View.value.entityOid);
 });
 
 export default router;
