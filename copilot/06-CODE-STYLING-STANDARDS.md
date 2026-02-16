@@ -1,6 +1,6 @@
 # CONTRATO DE ESTÁNDARES DE CODE STYLING - Framework SaaS Vue
 
-**Versión:** 1.1.0  
+**Versión:** 1.2.0  
 **Fecha de Creación:** 15 de Febrero, 2026  
 **Última Actualización:** 15 de Febrero, 2026  
 **Estado:** ACTIVO Y VINCULANTE
@@ -986,7 +986,297 @@ public override onSaving(): void { }
 // #endregion
 ```
 
-### 6.3 Reglas de Estructura Vue Composition API
+### 6.3 Reglas de Estructura de Componentes Vue
+
+Esta sección establece reglas obligatorias para todos los aspectos de componentes Vue: estructura del bloque `<template>`, organización del bloque `<script>`, y formateo del bloque `<style>`.
+
+#### 6.3.1 Estructura y Formateo del Bloque `<template>` en Componentes Vue
+
+El bloque `<template>` en componentes Vue constituye la capa de presentación y DEBE seguir reglas estrictas de formateo y organización para garantizar legibilidad, mantenibilidad y prevención de código implícito no controlado.
+
+##### 6.3.1.1 Expansión Obligatoria de Etiquetas HTML
+
+**REGLA OBLIGATORIA:**
+
+Todo HTML en bloques `<template>` de componentes Vue DEBE estar completamente expandido (desplegado).
+
+**PROHIBICIÓN ABSOLUTA:** No puede haber más de **dos etiquetas** en la misma línea.
+
+**Justificación:**
+
+Esta regla garantiza:
+- Legibilidad máxima del código de template
+- Facilidad de debugging y localización de elementos
+- Diffs de Git claros y precisos
+- Prevención de líneas excesivamente largas
+- Estructura visual jerárquica evidente
+
+**Aplicación:**
+
+```vue
+<!-- CORRECTO - Etiquetas expandidas, máximo dos por línea -->
+<template>
+    <div class="product-card">
+        <div class="product-header">
+            <h2 class="product-title">{{ productName }}</h2>
+            <span class="product-price">{{ formattedPrice }}</span>
+        </div>
+        <div class="product-body">
+            <p class="product-description">
+                {{ productDescription }}
+            </p>
+            <ul class="product-features">
+                <li v-for="feature in features" :key="feature.id">
+                    {{ feature.name }}
+                </li>
+            </ul>
+        </div>
+        <div class="product-actions">
+            <button 
+                :class="['btn', 'btn--primary', { 'btn--disabled': !isAvailable }]"
+                :disabled="!isAvailable"
+                @click="handleAddToCart"
+            >
+                Add to Cart
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- INCORRECTO - Múltiples etiquetas en una línea -->
+<template>
+    <div class="product-card"><div class="product-header"><h2>{{ productName }}</h2></div></div>
+</template>
+
+<!-- INCORRECTO - Más de dos etiquetas por línea -->
+<template>
+    <div class="product-card"><div class="product-header"><h2 class="title">{{ productName }}</h2></div></div>
+</template>
+
+<!-- INCORRECTO - Etiquetas de cierre en línea con contenido complejo -->
+<template>
+    <div class="container"><span>{{ value }}</span><button @click="handler">Click</button></div>
+</template>
+```
+
+**Casos Permitidos (máximo dos etiquetas por línea):**
+
+```vue
+<!-- CORRECTO - Etiqueta de apertura y cierre de contenedor simple en una línea -->
+<template>
+    <div class="container">
+        <span>{{ simpleValue }}</span>
+        <p>{{ simpleText }}</p>
+    </div>
+</template>
+
+<!-- CORRECTO - Etiqueta auto-cerrada simple -->
+<template>
+    <div>
+        <input type="text" />
+        <br />
+    </div>
+</template>
+
+<!-- CORRECTO - Dos etiquetas simples que forman unidad semántica -->
+<template>
+    <div>
+        <label>Name:</label> <span>{{ name }}</span>
+    </div>
+</template>
+```
+
+**Excepciones NO permitidas:**
+
+No existen excepciones. Incluso componentes simples DEBEN expandirse completamente.
+
+##### 6.3.1.2 Prohibición de Código Implícito en Etiquetas
+
+**REGLA OBLIGATORIA:**
+
+En archivos Vue, **ninguna etiqueta puede contener código implícito**.
+
+Todo código que deba ejecutarse (expresiones, operaciones, llamadas a métodos, operadores ternarios, lógica condicional) DEBE extraerse a una **variable computada** o **función** en el bloque `<script>`.
+
+**PROHIBICIÓN ABSOLUTA:** Lógica de negocio, operaciones aritméticas, operadores ternarios, llamadas a métodos con argumentos complejos, o cualquier expresión que no sea una simple referencia a variable dentro de atributos o contenido de etiquetas.
+
+**Justificación:**
+
+Esta regla garantiza:
+- Separación estricta entre presentación y lógica
+- Testabilidad de código de negocio (las computeds y funciones son unit-testables)
+- Legibilidad del template (el template debe ser declarativo, no imperativo)
+- Reutilización de lógica
+- Prevención de templates complejos e ilegibles
+- Type safety completo en el script, no en el template
+
+**Aplicación:**
+
+```vue
+<!-- INCORRECTO - Código implícito en template -->
+<template>
+    <div>
+        <!-- PROHIBIDO - Operador ternario -->
+        <span>{{ isActive ? 'Active' : 'Inactive' }}</span>
+        
+        <!-- PROHIBIDO - Operación aritmética -->
+        <p>Total: ${{ price * quantity }}</p>
+        
+        <!-- PROHIBIDO - Llamada a método con expresión -->
+        <button @click="saveProduct(product.id, isNew ? 'create' : 'update')">
+            Save
+        </button>
+        
+        <!-- PROHIBIDO - Lógica condicional compleja -->
+        <div v-if="user && user.role === 'admin' && !user.isBlocked">
+            Admin Panel
+        </div>
+        
+        <!-- PROHIBIDO - Operaciones de string -->
+        <h1>{{ 'Product: ' + product.name + ' (' + product.id + ')' }}</h1>
+        
+        <!-- PROHIBIDO - Acceso a propiedades anidadas con lógica -->
+        <span>{{ product.category ? product.category.name : 'Uncategorized' }}</span>
+    </div>
+</template>
+
+<!-- CORRECTO - Todo el código extraído a computeds y funciones -->
+<template>
+    <div>
+        <!-- Variables computadas simples -->
+        <span>{{ statusLabel }}</span>
+        <p>{{ totalPrice }}</p>
+        
+        <!-- Funciones con parámetros simples -->
+        <button @click="handleSaveProduct">
+            Save
+        </button>
+        
+        <!-- Computed para condición -->
+        <div v-if="isAdminPanelVisible">
+            Admin Panel
+        </div>
+        
+        <!-- Computed para string formateado -->
+        <h1>{{ productTitle }}</h1>
+        
+        <!-- Computed para lógica condicional -->
+        <span>{{ categoryName }}</span>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, Ref, ComputedRef } from 'vue';
+
+// Props
+interface Props {
+    product: Product;
+    isNew: boolean;
+}
+
+const props = defineProps<Props>();
+
+// Refs
+const isActive: Ref<boolean> = ref(true);
+const price: Ref<number> = ref(0);
+const quantity: Ref<number> = ref(1);
+
+// Computeds - Toda la lógica extraída aquí
+const statusLabel: ComputedRef<string> = computed(() => {
+    return isActive.value ? 'Active' : 'Inactive';
+});
+
+const totalPrice: ComputedRef<string> = computed(() => {
+    return `Total: $${price.value * quantity.value}`;
+});
+
+const isAdminPanelVisible: ComputedRef<boolean> = computed(() => {
+    return user.value !== null && 
+           user.value.role === 'admin' && 
+           !user.value.isBlocked;
+});
+
+const productTitle: ComputedRef<string> = computed(() => {
+    return `Product: ${props.product.name} (${props.product.id})`;
+});
+
+const categoryName: ComputedRef<string> = computed(() => {
+    return props.product.category ? props.product.category.name : 'Uncategorized';
+});
+
+// Funciones - Handlers extraídos
+function handleSaveProduct(): void {
+    const mode: string = props.isNew ? 'create' : 'update';
+    saveProduct(props.product.id, mode);
+}
+
+function saveProduct(id: number, mode: string): void {
+    // Lógica de guardado
+}
+</script>
+```
+
+**Excepciones Permitidas (únicamente):**
+
+```vue
+<!-- PERMITIDO - Referencias simples a variables -->
+<template>
+    <div>
+        <span>{{ productName }}</span>
+        <p>{{ price }}</p>
+        <button :disabled="isLoading">Save</button>
+    </div>
+</template>
+
+<!-- PERMITIDO - v-for y v-if con variables simples -->
+<template>
+    <ul>
+        <li v-for="item in items" :key="item.id">
+            {{ item.name }}
+        </li>
+    </ul>
+    <div v-if="isVisible">
+        Content
+    </div>
+</template>
+
+<!-- PERMITIDO - Binding directo de props/variables -->
+<template>
+    <TextInputComponent 
+        :value="productName"
+        :label="labelText"
+        :disabled="isReadonly"
+        @input="handleInput"
+    />
+</template>
+```
+
+**Casos Límite:**
+
+```vue
+<!-- INCORRECTO - Incluso operaciones "simples" deben extraerse -->
+<template>
+    <!-- NO permitido -->
+    <span>{{ count + 1 }}</span>
+    <p>{{ price.toFixed(2) }}</p>
+    <div>{{ items.length }}</div>
+</template>
+
+<!-- CORRECTO - Extraer a computeds -->
+<template>
+    <span>{{ nextCount }}</span>
+    <p>{{ formattedPrice }}</p>
+    <div>{{ itemCount }}</div>
+</template>
+
+<script setup lang="ts">
+const nextCount: ComputedRef<number> = computed(() => count.value + 1);
+const formattedPrice: ComputedRef<string> = computed(() => price.value.toFixed(2));
+const itemCount: ComputedRef<number> = computed(() => items.value.length);
+</script>
+```
+
+#### 6.3.2 Estructura del Bloque `<script>` en Componentes Vue (Composition API)
 
 **REGLA OBLIGATORIA:**
 
@@ -1089,11 +1379,11 @@ async function loadEntity(entityClass: typeof BaseEntity): Promise<void> {
 </script>
 ```
 
-### 6.3.4 Estructura del Bloque `<style>` en Componentes Vue
+#### 6.3.3 Estructura del Bloque `<style>` en Componentes Vue
 
 **REGLA OBLIGATORIA:**
 
-Todo componente Vue DEBE colocar el bloque `<style scoped>` al **final del archivo**, después de `<template>` y `<script>`.
+Todo componente Vue DEBE colocar el bloque `<style scoped>` al **final del archivo**, después de `<template>` y `<script>` incluso si los estilos individuales del componente no son requeridos.
 
 Orden obligatorio de secciones:
 
@@ -1246,7 +1536,7 @@ const errorMessage: ComputedRef<string> = computed(() => props.error);
 </style>
 ```
 
-#### 6.3.4.1 Prohibición Absoluta de Variables CSS Locales
+##### 6.3.3.1 Prohibición Absoluta de Variables CSS Locales
 
 **REGLA FUNDAMENTAL:**
 
@@ -1310,7 +1600,7 @@ Desarrollador necesita valor CSS
 NUNCA definir variable local en componente
 ```
 
-#### 6.3.4.2 Convención de Nombres de Clases
+##### 6.3.3.2 Convención de Nombres de Clases
 
 **REGLA OBLIGATORIA:**
 
@@ -1352,7 +1642,7 @@ Usar convención BEM simplificada o clases semánticas:
 - Selectores por ID: `#elementId` (no reutilizables)
 - Selectores de tipo sin clase: `div`, `span`, `button` (demasiado genéricos)
 
-#### 6.3.4.3 Limitación de Anidación
+##### 6.3.3.3 Limitación de Anidación
 
 **REGLA OBLIGATORIA:**
 

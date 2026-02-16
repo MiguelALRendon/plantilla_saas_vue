@@ -35,7 +35,7 @@ QS: 03-QUICK-START.md (Guía)
 | QS | 03-QUICK-START.md | Guía Práctica | Tutorial inicio rápido | 564 | v1.0.0 | ACTIVO |
 | UI | 04-UI-DESIGN-SYSTEM-CONTRACT.md | Contrato Subordinado | Sistema UI/CSS | 1100+ | v2.0.0 | ACTIVO |
 | ENF | 05-ENFORCEMENT-TECHNICAL-CONTRACT.md | Contrato Subordinado | Enforcement técnico | 2280+ | v1.4.0 | ACTIVO |
-| CST | 06-CODE-STYLING-STANDARDS.md | Contrato Subordinado | Estándares de code styling | 2450+ | v1.1.0 | ACTIVO |
+| CST | 06-CODE-STYLING-STANDARDS.md | Contrato Subordinado | Estándares de code styling | 2850+ | v1.2.0 | ACTIVO |
 
 ### Documentación de Capas (Layer 1-6)
 
