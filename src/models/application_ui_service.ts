@@ -37,7 +37,7 @@ export class ApplicationUIService {
         this.app.eventBus.emit('show-modal');
     }
 
-    showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param: any) => void, viewType: ViewTypes, customViewId?: string) => {
+    showModalOnFunction = (entity: typeof BaseEntity, onCloseFunction: (param: unknown) => void, viewType: ViewTypes, customViewId?: string): void => {
         this.app.modal.value.modalView = entity;
         this.app.modal.value.modalOnCloseFunction = onCloseFunction;
         this.app.modal.value.viewType = viewType;
@@ -52,12 +52,12 @@ export class ApplicationUIService {
         }, 150);
     }
 
-    closeModalOnFunction = (param: any) => {
+    closeModalOnFunction = (param: unknown): void => {
         if (this.app.modal.value.modalOnCloseFunction) {
             this.app.modal.value.modalOnCloseFunction(param);
         }
         this.app.eventBus.emit('hide-modal');
-        setTimeout(() => {
+        setTimeout((): void => {
             this.app.modal.value.modalView = null;
             this.app.modal.value.modalOnCloseFunction = null;
         }, 150);

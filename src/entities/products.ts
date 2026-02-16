@@ -11,6 +11,7 @@ import {
     HelpText,
     HideInDetailView,
     HideInListView,
+    ModuleIcon,
     ModuleName,
     Persistent,
     PrimaryProperty,

@@ -1,7 +1,7 @@
 export class EnumAdapter {
-    private enumRef: any;
+    private enumRef: Record<string, string | number>;
 
-    constructor(enumRef: any) {
+    constructor(enumRef: Record<string, string | number>) {
         this.enumRef = enumRef;
     }
 
@@ -10,7 +10,7 @@ export class EnumAdapter {
             .filter(key => isNaN(Number(key)))
             .map(key => ({
                 key: key,
-                value: this.enumRef[key]
+                value: this.enumRef[key] as number,
             }));
     }
 }

@@ -136,10 +136,18 @@ export default {
         Application.eventBus.off('validate-inputs', this.handleValidation);
     },
     methods: {
-        openModal() {
-            Application.ApplicationUIService.showModalOnFunction(this.typeValue!, this.addSelectedElement, ViewTypes.LOOKUPVIEW);
+        openModal(): void {
+            Application.ApplicationUIService.showModalOnFunction(
+                this.typeValue!, 
+                (param: unknown): void => {
+                    if (param === undefined || param instanceof BaseEntity) {
+                        this.addSelectedElement(param);
+                    }
+                }, 
+                ViewTypes.LOOKUPVIEW
+            );
         },
-        addSelectedElement(newElement: BaseEntity | undefined) {
+        addSelectedElement(newElement: BaseEntity | undefined): void {
             if (newElement) {
                 const updatedArray = [...this.modelValue, newElement];
                 this.$emit('update:modelValue', updatedArray);

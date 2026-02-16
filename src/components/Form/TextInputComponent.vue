@@ -64,7 +64,7 @@ export default {
     },
     methods: {
         async isValidated(): Promise<boolean> {
-            var validated = true;
+            let validated: boolean = true;
             this.validationMessages = [];
             
             if (this.metadata.required.value && (!this.modelValue || this.modelValue.trim() === '')) {

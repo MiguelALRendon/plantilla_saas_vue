@@ -277,9 +277,9 @@ class ApplicationClass implements ApplicationUIContext {
                         module: moduleNameLower, 
                         oid: this.View.value.entityOid 
                     } 
-                }).catch((err: any) => {
-                    // Ignorar errores de navegaciÃ³n duplicada
-                    if (err.name !== 'NavigationDuplicated') {
+                }).catch((err: unknown): void => {
+                    // Ignorar errores de navegación duplicada
+                    if (err instanceof Error && err.name !== 'NavigationDuplicated') {
                         console.error('[Application] Error al navegar:', err);
                     }
                 });
@@ -291,8 +291,8 @@ class ApplicationClass implements ApplicationUIContext {
                 this.router.push({ 
                     name: 'ModuleList', 
                     params: { module: moduleNameLower } 
-                }).catch((err: any) => {
-                    if (err.name !== 'NavigationDuplicated') {
+                }).catch((err: unknown): void => {
+                    if (err instanceof Error && err.name !== 'NavigationDuplicated') {
                         console.error('[Application] Error al navegar:', err);
                     }
                 });
@@ -329,10 +329,10 @@ class ApplicationClass implements ApplicationUIContext {
      * Updates button list after view transition
      * @param entity The entity instance to display in detail view
      */
-    changeViewToDetailView = <T extends BaseEntity>(entity: T) => {
-        var entityClass = entity.constructor as typeof BaseEntity;
+    changeViewToDetailView = <T extends BaseEntity>(entity: T): void => {
+        const entityClass: typeof BaseEntity = entity.constructor as typeof BaseEntity;
         this.changeView(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
-        setTimeout(() => {
+        setTimeout((): void => {
             this.setButtonList();
         }, 405);
     }

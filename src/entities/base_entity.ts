@@ -980,8 +980,8 @@ export abstract class BaseEntity {
      * @returns True if entity has been modified since load
      */
     public getDirtyState(): boolean {
-        var snapshotJson = JSON.stringify(this._originalState);
-        var actualJson = JSON.stringify(this.toPersistentObject());
+        const snapshotJson: string = JSON.stringify(this._originalState);
+        const actualJson: string = JSON.stringify(this.toPersistentObject());
         console.log('Snapshot:', snapshotJson);
         console.log('Actual:', actualJson);
         console.log('Dirty State:', snapshotJson !== actualJson);

@@ -1,9 +1,8 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import type { Router } from 'vue-router';
 import { BaseEntity } from '@/entities/base_entity';
-
-// Se importará dinámicamente desde Application
-let Application: any = null;
+import Application from '@/models/application';
+import { ViewTypes } from '@/enums/view_type';
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -38,17 +37,8 @@ const router: Router = createRouter({
     routes
 });
 
-// Función para inicializar Application después de crear el router
-export function initializeRouterWithApplication(app: any) {
-    Application = app;
-}
-
 // Guard de navegación para sincronizar con Application cuando la URL cambia directamente
 router.beforeEach((to, _from, next) => {
-    if (!Application) {
-        next();
-        return;
-    }
 
     const moduleName = to.params.module as string;
     const oid = to.params.oid as string;
@@ -74,7 +64,8 @@ router.beforeEach((to, _from, next) => {
                 
                 // Si el OID es 'new', crear una nueva instancia
                 if (oid === 'new') {
-                    const newEntity = moduleClass.createNewInstance();
+                    // Usar Reflect.construct para instanciar la clase concreta
+                    const newEntity: BaseEntity = Reflect.construct(moduleClass, [{}]);
                     Application.changeViewToDetailView(newEntity);
                 } else {
                     // En el futuro aquí se llamará a la API para cargar la entidad
@@ -88,7 +79,7 @@ router.beforeEach((to, _from, next) => {
                 Application.View.value.entityOid = '';
                 
                 // Cambiar a list view si no estamos ahí
-                if (Application.View.value.viewType !== 'LISTVIEW') {
+                if (Application.View.value.viewType !== ViewTypes.LISTVIEW) {
                     Application.changeViewToListView(moduleClass);
                 }
             }
@@ -104,9 +95,11 @@ router.beforeEach((to, _from, next) => {
 
 // Guard después de la navegación para logging
 router.afterEach((to) => {
-    if (Application) {
-        console.log('[Router] Navegado a:', to.path, '| entityOid:', Application.View.value.entityOid);
-    }
+    console.log('[Router] Navegado a:', to.path, '| entityOid:', Application.View.value.entityOid);
 });
 
 export default router;
+export function initializeRouterWithApplication(): void {
+    // Function kept for backwards compatibility but no longer needed
+    // Application is now imported directly
+}

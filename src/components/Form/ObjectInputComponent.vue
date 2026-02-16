@@ -11,7 +11,7 @@
         :disabled="metadata.disabled.value"
         readonly="true"
         @input="$emit('update:modelValue', modelValue)" />
-    <button class="right" @click="Application.ApplicationUIService.showModalOnFunction(modelType, setNewValue, ViewTypes.LOOKUPVIEW)" :disabled="metadata.disabled.value"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
+    <button class="right" @click="Application.ApplicationUIService.showModalOnFunction(modelType, (param: unknown) => { if (param === undefined || param instanceof BaseEntity) { setNewValue(param); } }, ViewTypes.LOOKUPVIEW)" :disabled="metadata.disabled.value"><span :class="GGCLASS">{{ GGICONS.SEARCH }}</span></button>
 </div>
 
 <div class="help-text" v-if="metadata.helpText.value">
@@ -69,11 +69,11 @@ export default {
         Application.eventBus.off('validate-inputs', this.handleValidation);
     },
     methods: {
-        setNewValue(newValue: BaseEntity | undefined) {
+        setNewValue(newValue: BaseEntity | undefined): void {
             this.$emit('update:modelValue', newValue);
         },
         async isValidated(): Promise<boolean> {
-            var validated = true;
+            let validated: boolean = true;
             this.validationMessages = [];
             
             if (this.metadata.required.value && (this.modelValue === null || this.modelValue === undefined || this.modelValue instanceof EmptyEntity)) {
