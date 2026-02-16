@@ -23,6 +23,13 @@ BaseEntity es la clase abstracta base del sistema, definida como el único punto
 - No define estructura de propiedades (responsabilidad de subclases)
 - No maneja enrutamiento (usa Application como interfaz)
 
+## Contrato de Tipado Estricto (2026-02-16)
+
+- `src/entities/base_entity.ts` no debe usar `any` en firmas, casts ni `catch`.
+- El tipado dinámico del sistema de metadatos debe usar `unknown` + `Record<PropertyKey, unknown>`.
+- El acceso a propiedades dinámicas de instancia debe tiparse con `Record<string, unknown>`.
+- El manejo de errores en CRUD debe usar `unknown` y normalización de mensaje segura.
+
 ## 3. Definiciones Clave
 
 **BaseEntity:** Clase abstracta que sirve como superclase única para todas las entidades del sistema. Declarada en `src/entities/base_entity.ts` (líneas 1-962).

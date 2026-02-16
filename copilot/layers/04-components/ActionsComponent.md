@@ -514,13 +514,13 @@ ActionsComponent DEBE usar `position: sticky` con `top: 0` para comportamiento f
 }
 ```
 
-### Regla 5: Z-Index Apropiado
-Z-index DEBE ser valor medio (10) para estar encima de contenido pero debajo de overlays.
+### Regla 5: Z-Index con Token
+Z-index DEBE declararse con token del sistema (`var(--z-base)`) para mantener consistencia de capas.
 
 ```css
 /* ✅ CORRECTO */
 .floating-actions {
-    z-index: 10;
+    z-index: var(--z-base);
 }
 
 /* ❌ INCORRECTO - Cubriría overlays críticos */
@@ -530,7 +530,7 @@ Z-index DEBE ser valor medio (10) para estar encima de contenido pero debajo de 
 
 /* ❌ INCORRECTO - Contenido podría cubrir botones */
 .floating-actions {
-    z-index: 1;
+    z-index: var(--z-toast);
 }
 ```
 

@@ -36,7 +36,7 @@ export const PROPERTY_INDEX_KEY = Symbol('property_index');
  * @see {@link 01-BASIC-CRUD.md | CRUD Tutorial §2.6}
  */
 export function PropertyIndex(index: number): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[PROPERTY_INDEX_KEY]) {
             proto[PROPERTY_INDEX_KEY] = {};

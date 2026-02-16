@@ -3,7 +3,7 @@
         <button
             class="list-input-header"
             @click="openOptions"
-            :id="'id-4-click-on' + metadata.propertyName"
+            :id="`id-4-click-on${metadata.propertyName}`"
             :disabled="metadata.disabled.value"
         >
             <div class="list-input-container">
@@ -63,11 +63,11 @@ export default {
             return key
                 .toLowerCase()
                 .split('_')
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
                 .join(' ');
         },
         openOptions() {
-            const rect = document.getElementById('id-4-click-on' + this.metadata.propertyName)?.getBoundingClientRect();
+            const rect = document.getElementById(`id-4-click-on${this.metadata.propertyName}`)?.getBoundingClientRect();
             if (rect) {
                 this.fromBottom = window.innerHeight - rect.bottom < 300;
             }
@@ -264,7 +264,7 @@ export default {
     overflow-y: auto;
     position: absolute;
     background-color: var(--white);
-    z-index: 1000;
+    z-index: var(--z-modal);
     transition: grid-template-rows 0.3s ease;
 }
 .list-input-body.from-bottom {

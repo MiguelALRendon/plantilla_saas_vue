@@ -1,9 +1,9 @@
 <template>
     <div class="TextInput" :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]">
-        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
 
         <textarea
-            :id="'id-' + metadata.propertyName"
+            :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             class="main-input"
             placeholder=" "
@@ -83,7 +83,7 @@ export default {
     },
     data() {
         return {
-            textInputId: 'text-area-' + this.propertyKey,
+            textInputId: `text-area-${this.propertyKey}`,
             isInputValidated: true,
             validationMessages: [] as string[]
         };

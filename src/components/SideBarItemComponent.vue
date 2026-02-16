@@ -1,5 +1,5 @@
 <template>
-    <div :class="'side-bar-item ' + (isActive ? ' active' : '')" @click="setNewView">
+    <div :class="['side-bar-item', { active: isActive }]" @click="setNewView">
         <div class="icon">
             <img :src="moduleIcon" alt="" />
         </div>

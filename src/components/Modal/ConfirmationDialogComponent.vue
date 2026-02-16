@@ -100,7 +100,7 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1500;
+    z-index: var(--z-toast);
     background-color: var(--overlay-dark);
     display: flex;
     justify-content: center;

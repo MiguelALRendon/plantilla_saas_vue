@@ -29,7 +29,7 @@
 
                         <span
                             v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean"
-                            :class="GGCLASS + ' ' + (item.toObject()[column] ? 'row-check' : 'row-cancel')"
+                            :class="[GGCLASS, item.toObject()[column] ? 'row-check' : 'row-cancel']"
                             class="boolean-row"
                         >
                             {{ getBooleanIcon(item, column) }}
@@ -48,15 +48,32 @@
 <script lang="ts">
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
-import { Product } from '@/entities/product';
 import Application from '@/models/application';
 export default {
     name: 'DetailViewTableComponent',
     methods: {
+        async loadData(): Promise<void> {
+            const entityClass = Application.View.value.entityClass as
+                | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
+                | null;
+
+            if (!entityClass) {
+                this.data = [];
+                return;
+            }
+
+            try {
+                const entities = await entityClass.getElementList('');
+                this.data = entities;
+            } catch (error: unknown) {
+                console.error('[DetailViewTableComponent] Failed to load entity list', error);
+                this.data = [];
+            }
+        },
         getBooleanIcon(item: BaseEntity, column: string): string {
             return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
         },
-        openDetailView(entity: any) {
+        openDetailView(entity: BaseEntity) {
             // Setear entityOid antes de cambiar la vista
             const uniqueValue = entity.getUniquePropertyValue();
             if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
@@ -67,68 +84,14 @@ export default {
             Application.changeViewToDetailView(entity as BaseEntity);
         }
     },
+    mounted() {
+        this.loadData();
+    },
     data() {
-        const data: Product[] = [];
-        for (let i = 1; i <= 50; i++) {
-            data.push(
-                new Product({
-                    id: i,
-                    name: `Producto ${i}`,
-                    description: `Descripción del producto asdf fasdfasdfasdf ta sdf sd fasdf   asdfasdfasdf asdfasfafsdf ${i}`,
-                    stock: Math.floor(Math.random() * 50) + 1,
-                    Catedral: new Product({
-                        id: i + 100,
-                        name: `Inner Producto ${i}`,
-                        description: `Inner Descripción del producto ${i}`,
-                        stock: Math.floor(Math.random() * 50) + 1
-                    }),
-                    bolian: i % 2 === 0,
-                    listaProductos: [
-                        new Product({
-                            id: i + 200,
-                            name: `List Producto A ${i}`,
-                            description: `List Descripción del producto A ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1
-                        }),
-                        new Product({
-                            id: i + 300,
-                            name: `List Producto B ${i}`,
-                            description: `List Descripción del producto B ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1
-                        }),
-                        new Product({
-                            id: i + 400,
-                            name: `List Producto C ${i}`,
-                            description: `List Descripción del producto C ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1
-                        }),
-                        new Product({
-                            id: i + 500,
-                            name: `List Producto D ${i}`,
-                            description: `List Descripción del producto D ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1
-                        }),
-                        new Product({
-                            id: i + 600,
-                            name: `List Producto E ${i}`,
-                            description: `List Descripción del producto E ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1
-                        }),
-                        new Product({
-                            id: i + 700,
-                            name: `List Producto F ${i}`,
-                            description: `List Descripción del producto F ${i}`,
-                            stock: Math.floor(Math.random() * 50) + 1
-                        })
-                    ]
-                })
-            );
-        }
-
         return {
             Application,
             BaseEntity,
-            data: data as any as Product[],
+            data: [] as BaseEntity[],
             GGICONS,
             GGCLASS
         };
@@ -141,7 +104,7 @@ export default {
 
 table {
     width: 100%;
-    height: calc(100vh - 50px - 2rem - 2rem - 4.3rem);
+    height: calc(100vh - var(--topbar-height) - (var(--spacing-2xl) * 2) - var(--detail-table-footer-offset));
     background-color: var(--white);
     border-radius: var(--border-radius);
     display: flex;
@@ -155,7 +118,7 @@ thead {
     width: 100%;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: var(--z-base);
 }
 
 thead tr {
@@ -192,15 +155,15 @@ tfoot tr {
 }
 
 td {
-    padding-inline: 1rem;
-    padding-block: 0.5rem;
+    padding-inline: var(--spacing-medium);
+    padding-block: var(--spacing-small);
     border-bottom: 1px solid var(--gray-lighter);
     user-select: none;
     width: 100%;
 }
 
 tr {
-    min-height: 3rem;
+    min-height: var(--table-row-min-height);
 }
 tbody tr {
     cursor: pointer;
@@ -215,8 +178,8 @@ tbody tr:hover {
 }
 
 .boolean-row {
-    font-size: 1.75rem;
-    margin-left: 2rem;
+    font-size: var(--font-size-h2);
+    margin-left: var(--spacing-2xl);
     border-radius: 100%;
 }
 

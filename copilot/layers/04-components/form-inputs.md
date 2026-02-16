@@ -20,6 +20,8 @@ Este documento describe:
 
 El sistema opera exclusivamente en el contexto de formularios de detalle CRUD. Los inputs se renderizan dinámicamente dentro de DefaultDetailView o vistas personalizadas que manejan instancias de BaseEntity.
 
+**Responsividad contractual:** los estilos de inputs deben incluir reglas `@media` para garantizar legibilidad y operabilidad en viewport móvil, manteniendo estados visuales por clases y sin estilos inline.
+
 ## 3. Definiciones Clave
 
 **Input Component**: Componente Vue que renderiza un control de formulario HTML específico (input, select, textarea) con lógica de validación y metadatos integrados.
@@ -447,6 +449,8 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 
 7. **Todos los inputs DEBEN renderizar validation-messages cuando isInputValidated = false**: El template DEBE incluir div validation-messages que itera validationMessages array. Los mensajes DEBEN ser visibles cuando isInputValidated = false. Los mensajes DEBEN ocultarse cuando isInputValidated = true para evitar clutter.
 
+8. **Todos los inputs DEBEN evitar concatenación con `+` para strings dinámicos**: IDs, clases y textos derivados de metadatos DEBEN construirse con template literals o computed properties, nunca con concatenación de strings.
+
 ## 7. Prohibiciones
 
 1. **NUNCA modificar entity directamente en métodos del input**: Los inputs solo DEBEN leer de entity para metadatos. La única escritura permitida es vía v-model automático. No ejecutar entity[propertyKey] = value manualmente dentro del input. No invocar entity.save() ni entity.delete() desde inputs.
@@ -462,6 +466,8 @@ Activado cuando isInputValidated = false después de ejecutar handleValidation()
 6. **NUNCA registrar múltiples listeners del mismo evento**: Un input DEBE registrar exactamente UN listener validate-inputs en mounted(). No registrar listeners duplicados en otros lifecycle hooks. No registrar listeners condicionales que puedan quedar sin limpiar.
 
 7. **NUNCA asumir que modelValue tiene valor**: El modelValue puede ser undefined, null, o empty string inicialmente. El input DEBE manejar casos donde modelValue es falsy. La validación Required DEBE ejecutarse incluso si modelValue está vacío. No crashear con TypeError al acceder propiedades de modelValue null.
+
+8. **NUNCA construir IDs/clases con concatenación `+` en template/script**: patrones como `'id-' + metadata.propertyName` están prohibidos por contrato de estilo.
 
 ## 8. Dependencias
 

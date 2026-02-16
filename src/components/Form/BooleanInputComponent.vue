@@ -4,7 +4,7 @@
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
         <button class="BooleanInput" @click="value = !value" :disabled="metadata.disabled.value">
-            <label :for="'id-' + metadata.propertyName" class="label-input-boolean"
+            <label :for="`id-${metadata.propertyName}`" class="label-input-boolean"
                 >{{ metadata.propertyName }}:
             </label>
 

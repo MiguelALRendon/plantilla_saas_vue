@@ -7,7 +7,7 @@ export const READONLY_KEY = Symbol('readonly');
 /**
  * Type definition for readonly conditions: static boolean or dynamic function.
  */
-export type ReadOnlyCondition = boolean | ((instance: any) => boolean);
+export type ReadOnlyCondition<T = unknown> = boolean | ((instance: T) => boolean);
 
 /**
  * Metadata structure for readonly property state.
@@ -43,8 +43,8 @@ export interface ReadOnlyMetadata {
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1}
  * @see {@link 02-FLOW-ARCHITECTURE.md | Architecture Flow §4.3}
  */
-export function ReadOnly(condition: ReadOnlyCondition = true): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+export function ReadOnly<T = unknown>(condition: ReadOnlyCondition<T> = true): PropertyDecorator {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[READONLY_KEY]) {
             proto[READONLY_KEY] = {};

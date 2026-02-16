@@ -193,16 +193,25 @@ closeDropdownMenu() {
 
 ### 6.6 Z-Index Hierarchy
 
-Container DEBE usar z-index: 888, menu z-index: 889:
+Container DEBE usar token de z-index contractual:
 
 ```css
 .dropdown-menu-container {
-    z-index: 888;
-}
-.dropdown-menu {
-    z-index: 889;
+    z-index: var(--z-overlay);
 }
 ```
+
+### 6.7 Posicionamiento sin :style en template
+
+El componente DEBE evitar `:style` inline en el template. El posicionamiento dinámico se realiza actualizando variables CSS (`--dropdown-left`, `--dropdown-top`, `--dropdown-max-width`) desde método del componente.
+
+### 6.8 Tokenización obligatoria de estilos visuales
+
+Todas las propiedades visuales del dropdown (`transition`, `padding`, `font-size`, `margin`, `max-width fallback`) DEBEN usar tokens de `constants.css`. No se permiten valores literales repetibles.
+
+### 6.9 Fallbacks CSS con tokens
+
+Los fallbacks de variables CSS para width/posición DEBEN ser tokenizados o neutros (`0`) y no valores literales como `250px`.
 
 ## 7. Prohibiciones
 
@@ -216,6 +225,7 @@ Container DEBE usar z-index: 888, menu z-index: 889:
 8. NO usar transiciones CSS en left/top - Solo opacity para performance
 9. NO almacenar estado en data del componente - Application.dropdownMenu.value es fuente única
 10. NO validar contenido del componente hijo - Es responsabilidad del componente hijo
+11. NO usar `:style="..."` en template del dropdown - usar variables CSS actualizadas desde script
 
 ## 8. Dependencias
 
@@ -229,7 +239,7 @@ Container DEBE usar z-index: 888, menu z-index: 889:
 **Vue Core:**
 - markRaw() - Prevenir proxy reactivo en componentes dinámicos
 - Composition API: computed, mounted, beforeUnmount, data
-- Directivas: :is, :class, :style, v-if
+- Directivas: :is, :class, v-if
 
 **DOM APIs:**
 - document.addEventListener('click') - Detectar click outside
@@ -244,7 +254,7 @@ Container DEBE usar z-index: 888, menu z-index: 889:
 - Variables: --white, --border-radius, --shadow-dark, --gray-dark, --gray-lighter
 - Transiciones: opacity 0.5s ease
 - Positioning: absolute, fixed
-- Z-index: 888-889
+- Z-index: token contractual (`var(--z-overlay)`)
 
 ### Dependencias Implícitas
 
@@ -347,8 +357,8 @@ El trigger debe usar stopPropagation() para evitar que primer click cierre dropd
 
 ```
 Contenido normal: z-index < 888
-DropdownMenu container: 888
-DropdownMenu card: 889
+DropdownMenu container: var(--z-overlay)
+DropdownMenu card: hereda stacking context del container
 Modal overlay: 1000
 Modal content: 1001
 LoadingScreen: 1100

@@ -7,6 +7,7 @@
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
 
 export default {
@@ -16,7 +17,13 @@ export default {
             const entity = Application.View.value.entityObject;
             if (entity && entity.isPersistent()) {
                 await entity.save();
-                Application.changeViewToDetailView((Application.View.value.entityClass! as any).createNewInstance());
+                const entityClass = Application.View.value.entityClass as
+                    | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
+                    | null;
+
+                if (!entityClass) return;
+
+                Application.changeViewToDetailView(entityClass.createNewInstance());
             }
         }
     },

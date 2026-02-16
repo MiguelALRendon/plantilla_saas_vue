@@ -1,8 +1,32 @@
 # Layer 4: Vue Components - Índice General
 
+## Proposito
+
+Proporcionar un índice completo y estructura organizativa de toda la documentación de componentes Vue del framework.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 ## 1. Propósito
 
 Proporcionar un índice completo y estructura organizativa de toda la documentación de componentes Vue que conforman el sistema de interfaz de usuario del Framework SaaS. Este documento actúa como punto de entrada central para localizar documentación específica de cualquier componente, entender la arquitectura de capas de UI, y comprender cómo los componentes se relacionan con decoradores, entidades y Application singleton.
+
+## Elementos
+
+- [core-components.md](core-components.md)
+- [form-inputs.md](form-inputs.md)
+- [views-overview.md](views-overview.md)
+
+## Enlaces Estructurados
+
+- [Índice de Capas](../README.md)
+- [Decoradores](../01-decorators/README.md)
+- [Application](../03-application/README.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ## 2. Alcance
 

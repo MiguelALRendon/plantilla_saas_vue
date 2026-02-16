@@ -78,7 +78,7 @@ Método que recibe entity del click de fila, obtiene uniqueValue con getUniquePr
 
 **METODO openDetailView:**
 ```typescript
-openDetailView(entity: any) {
+openDetailView(entity: BaseEntity) {
     const uniqueValue = entity.getUniquePropertyValue();
     if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
         Application.View.value.entityOid = 'new';
@@ -92,29 +92,19 @@ openDetailView(entity: any) {
 **DATA:**
 ```typescript
 data() {
-    const data: Products[] = [];
-    
-    for (let i = 1; i <= 50; i++) {
-        data.push(
-            new Products({
-                id: i,
-                name: `Producto ${i}`,
-                description: `Descripción del producto ${i}`,
-                stock: Math.floor(Math.random() * 50) + 1,
-                Catedral: new Products({...}),
-                bolian: i % 2 === 0,
-                listaProductos: [...]
-            })
-        );
-    }
-    
     return {
         Application,
         BaseEntity,
-        data: data as any as Products[],
+        data: [] as BaseEntity[],
         GGICONS,
         GGCLASS
     }
+}
+
+async mounted() {
+    const entityClass = Application.View.value.entityClass;
+    if (!entityClass) return;
+    this.data = await entityClass.getElementList('');
 }
 ```
 
@@ -216,6 +206,12 @@ Usuario hace scroll vertical en tbody, header thead permanece sticky visible con
 **REGLA 6:** SIEMPRE aplicar formateo con getFormattedValue respetando @DisplayFormat decorator.
 
 **REGLA 7:** SIEMPRE hacer rows clickeable con @click navegando a DetailView con openDetailView method.
+
+**REGLA 8:** SIEMPRE declarar `z-index` del header sticky con token (`var(--z-base)`), no con números literales.
+
+**REGLA 9:** SIEMPRE construir clases dinámicas con arrays/objetos de Vue en `:class`; NUNCA usar concatenación con `+`.
+
+**REGLA 10:** SIEMPRE tokenizar medidas visuales repetibles de tabla (`height`, `padding`, `min-height`, `font-size`, `margins`) usando `constants.css`; solo se permiten literales si son excepciones únicas documentadas.
 
 ## 7. Prohibiciones
 
@@ -325,17 +321,19 @@ Boolean: Renderiza icon check verde si true, cancel rojo si false con GGICONS
 DisplayFormat: Aplica formato custom como price $99.99 o stock 50 units
 
 **LIMITACIONES ACTUALES:**
-1. Datos simulados: Usa 50 productos hardcoded en data(), producción debe llamar Product.getElementList()
-2. Sin paginación: Muestra todos registros sin límite, problemas performance > 100 items
-3. Sin filtrado: NO hay input búsqueda ni filtros por columna
-4. Sin ordenamiento: Click header NO ordena columnas ascendente/descendente
-5. Arrays ocultos: Properties Array invisible por diseño para uso solo DetailView
+1. Sin paginación: Muestra todos registros sin límite, problemas performance > 100 items
+2. Sin filtrado: NO hay input búsqueda ni filtros por columna
+3. Sin ordenamiento: Click header NO ordena columnas ascendente/descendente
+4. Arrays ocultos: Properties Array invisible por diseño para uso solo DetailView
+
+**REGLA OPERATIVA:**
+La fuente de datos de tabla DEBE provenir de `entityClass.getElementList('')` (flujo CRUD real), no de arrays mock locales.
 
 **ESTRUCTURA FLEX:**
 Table usa flex column para header sticky y body scrollable independiente, thead display block sticky top 0, tbody display block overflow-y auto flex 1, adaptable viewport height con calc formula.
 
 **FLUJO COMPLETO:**
-Usuario /products → ListView → DetailViewTableComponent monta → data genera 50 products → header desde getProperties → rows desde data iteration → usuario click row 2 → openDetailView(product2) → entityOid = "2" → changeViewToDetailView → router /products/2 → DetailView renderiza.
+Usuario /products → ListView → DetailViewTableComponent monta → loadData() ejecuta getElementList('') → header desde getProperties → rows desde data iteration → usuario click row 2 → openDetailView(product2) → entityOid = "2" → changeViewToDetailView → router /products/2 → DetailView renderiza.
 
 ## 11. Referencias Cruzadas
 

@@ -46,7 +46,7 @@ El flujo operacional comienza cuando Application.changeView() o Application.chan
 1. Usuario hace click en botón New con icono ADD
 2. Método openNewDetailView() se ejecuta
 3. Obtiene Application.View.value.entityClass (ej: Products)
-4. Invoca (entityClass as any).createNewInstance() que retorna nueva instancia con propiedades inicializadas según @DefaultProperty decorators
+4. Invoca entityClass tipada y luego createNewInstance() que retorna nueva instancia con propiedades inicializadas según @DefaultProperty decorators
 5. Invoca Application.changeViewToDetailView(newEntity)
 6. Application actualiza View.value.entityObject = newEntity, View.value.viewType = DETAILVIEW
 7. Router actualiza URL a /:module/new
@@ -67,7 +67,7 @@ El flujo operacional comienza cuando Application.changeView() o Application.chan
 **Fase de Interacción Usuario con SaveAndNewButtonComponent**:
 1-7. Pasos idénticos a SaveButtonComponent hasta finalización de entity.save()
 8. Método continúa ejecutando: obtiene entityClass desde Application.View.value.entityClass
-9. Invoca (entityClass as any).createNewInstance() generando nueva instancia vacía
+9. Invoca entityClass tipada y luego createNewInstance() generando nueva instancia vacía
 10. Invoca Application.changeViewToDetailView(newEntity)
 11. DetailView re-renderiza con formulario vacío
 12. Usuario puede inmediatamente comenzar ingreso de siguiente entidad sin clicks adicionales
@@ -223,7 +223,7 @@ Consideraciones importantes para implementación y mantenimiento:
 
 **Patrón de Verificación isPersistent()**: Todos los botones de persistencia (Save, SaveAndNew, Refresh) verifican entity.isPersistent() antes de invocar operaciones. Esta verificación es pattern crítico porque entidades sin @Persistent decorator tienen endpoint === '' causando errores 404 al intentar peticiones HTTP. En lugar de prevenir montaje de botones (filtrado en setButtonList()), verificación en runtime permite mayor flexibilidad si se agregan decoradores dinámicamente en futuro.
 
-**Casting as any en createNewInstance()**: NewButtonComponent y SaveAndNewButtonComponent usan (entityClass as any).createNewInstance() porque TypeScript no infiere correctamente que todas las clases que extienden BaseEntity tienen este método estático. Alternativa: definir interface TypedBaseEntity con método estático, pero aumenta complejidad. Casting actual es pragmático y type-safe en runtime.
+**Tipado explícito de entityClass para createNewInstance()**: NewButtonComponent y SaveAndNewButtonComponent DEBEN usar una variable tipada (constructor de BaseEntity) antes de invocar createNewInstance(), evitando `as any`.
 
 **Razón de markRaw() en setButtonList()**: Vue 3 por defecto convierte todo en reactive proxies. Definiciones de componentes no necesitan ser reactivas (solo sus instancias). markRaw() previene que Vue envuelva definiciones de componente en Proxy, reduciendo overhead. Sin markRaw(), console muestra warnings sobre non-extensible objects. Performance gain es marginal pero buena práctica.
 

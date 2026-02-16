@@ -37,7 +37,7 @@ export default {
     position: fixed;
     top: 0;
     right: 0;
-    z-index: 9999;
+    z-index: var(--z-toast);
     width: 400px;
     height: 100%;
     padding-top: calc(50px + 0.5rem);

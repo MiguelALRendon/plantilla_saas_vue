@@ -1,9 +1,9 @@
 <template>
     <div class="TextInput" :class="containerClasses">
-        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
 
         <input
-            :id="'id-' + metadata.propertyName"
+            :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             type="text"
             class="main-input"
@@ -113,7 +113,7 @@ export default {
     },
     data() {
         return {
-            textInputId: 'text-input-' + this.propertyKey,
+            textInputId: `text-input-${this.propertyKey}`,
             isInputValidated: true,
             validationMessages: [] as string[]
         };

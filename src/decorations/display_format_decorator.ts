@@ -7,7 +7,7 @@ export const DISPLAY_FORMAT_KEY = Symbol('display_format');
 /**
  * Type definition for display format functions that transform raw values to display strings.
  */
-export type DisplayFormatFunction = (value: any) => string;
+export type DisplayFormatFunction = (value: unknown) => string;
 
 /**
  * Type definition for display format values: static template string or dynamic function.
@@ -17,7 +17,7 @@ export type DisplayFormatValue = string | DisplayFormatFunction;
 /**
  * Decorator that defines how a property value should be formatted for display in UI views.
  *
- * This decorator enables custom formatting for dates, numbers, currencies, or any value
+ * This decorator enables custom formatting for dates, numbers, currencies, or arbitrary values
  * that requires transformation for presentation. Supports both template strings and
  * custom formatter functions.
  *
@@ -41,7 +41,7 @@ export type DisplayFormatValue = string | DisplayFormatFunction;
  * @see {@link 01-BASIC-CRUD.md | CRUD Tutorial §2.4}
  */
 export function DisplayFormat(format: DisplayFormatValue): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[DISPLAY_FORMAT_KEY]) {
             proto[DISPLAY_FORMAT_KEY] = {};

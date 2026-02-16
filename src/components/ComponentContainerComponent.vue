@@ -28,7 +28,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            currentComponent: null as any
+            currentComponent: null as Component | null
         };
     },
     created() {
@@ -60,7 +60,7 @@ export default {
     height: 100%;
     max-height: 100vh;
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
     padding-bottom: 0.5rem;
     padding-right: 0.5rem;
     box-sizing: border-box;

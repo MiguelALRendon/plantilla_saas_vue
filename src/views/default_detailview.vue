@@ -14,7 +14,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getNumberModel(prop)"
+                            @update:model-value="setNumberModel(prop, $event)"
                         />
 
                         <ObjectInputComponent
@@ -22,8 +23,9 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            :modelType="entityClass.getPropertyType(prop)"
-                            v-model="entity[prop]"
+                            :modelType="getObjectModelType(prop)"
+                            :model-value="getObjectModel(prop)"
+                            @update:model-value="setObjectModel(prop, $event)"
                         />
 
                         <DateInputComponent
@@ -31,7 +33,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
                         />
 
                         <BooleanInputComponent
@@ -39,7 +42,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getBooleanModel(prop)"
+                            @update:model-value="setBooleanModel(prop, $event)"
                         />
 
                         <ListInputComponent
@@ -47,8 +51,9 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            :property-enum-values="entityClass.getPropertyType(prop)"
-                            v-model="entity[prop]"
+                            :property-enum-values="getEnumAdapter(prop)"
+                            :model-value="getListModel(prop)"
+                            @update:model-value="setListModel(prop, $event)"
                         />
 
                         <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
@@ -57,7 +62,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
                         />
 
                         <TextAreaComponent
@@ -65,7 +71,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
                         />
 
                         <EmailInputComponent
@@ -73,7 +80,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
                         />
 
                         <PasswordInputComponent
@@ -81,7 +89,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            v-model="entity[prop]"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
                         />
                         <!---------------------------------------------->
                     </div>
@@ -101,7 +110,8 @@
                     :validated="entity.isValidation(tab)"
                     :requiredd-message="entity.requiredMessage(tab)"
                     :validated-message="entity.validationMessage(tab)"
-                    v-model="entity[tab]"
+                    :model-value="getArrayModel(tab)"
+                    @update:model-value="setArrayModel(tab, $event)"
                     :type-value="entityClass.getArrayPropertyType(tab)"
                 />
             </TabComponent>
@@ -114,7 +124,7 @@ import * as FormComponents from '@/components/Form';
 import TabControllerComponent from '@/components/TabControllerComponent.vue';
 import TabComponent from '@/components/TabComponent.vue';
 import Application from '@/models/application';
-import { BaseEntity } from '@/entities/base_entity';
+import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import { EnumAdapter } from '@/models/enum_adapter';
@@ -145,7 +155,7 @@ export default {
     },
     computed: {
         defaultPropertyValue(): string {
-            return this.entity.getDefaultPropertyValue();
+            return String(this.entity.getDefaultPropertyValue() ?? '');
         },
         propertyMetadata(): Record<
             string,
@@ -161,7 +171,20 @@ export default {
                 showPasswordInput: boolean;
             }
         > {
-            const metadata: Record<string, any> = {};
+            const metadata: Record<
+                string,
+                {
+                    showNumberInput: boolean;
+                    showObjectInput: boolean;
+                    showDateInput: boolean;
+                    showBooleanInput: boolean;
+                    showListInput: boolean;
+                    showTextInput: boolean;
+                    showTextAreaInput: boolean;
+                    showEmailInput: boolean;
+                    showPasswordInput: boolean;
+                }
+            > = {};
             const keys = this.entity.getKeys();
 
             for (const prop of keys) {
@@ -170,7 +193,7 @@ export default {
 
                 metadata[prop] = {
                     showNumberInput: propType === Number,
-                    showObjectInput: propType && propType.prototype instanceof BaseEntity,
+                    showObjectInput: !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity,
                     showDateInput: propType === Date,
                     showBooleanInput: propType === Boolean,
                     showListInput: propType instanceof EnumAdapter,
@@ -249,7 +272,52 @@ export default {
         },
         isBaseEntityType(prop: string): boolean {
             const propType = this.entityClass.getPropertyType(prop);
-            return propType && propType.prototype instanceof BaseEntity;
+            return !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity;
+        },
+        getObjectModelType(prop: string): typeof BaseEntity {
+            return this.entityClass.getPropertyType(prop) as typeof BaseEntity;
+        },
+        getEnumAdapter(prop: string): EnumAdapter {
+            return this.entityClass.getPropertyType(prop) as EnumAdapter;
+        },
+        getNumberModel(prop: string): number {
+            return Number(this.entity[prop] ?? 0);
+        },
+        setNumberModel(prop: string, value: number): void {
+            this.entity[prop] = value;
+        },
+        getStringModel(prop: string): string {
+            return String(this.entity[prop] ?? '');
+        },
+        setStringModel(prop: string, value: string): void {
+            this.entity[prop] = value;
+        },
+        getBooleanModel(prop: string): boolean {
+            return Boolean(this.entity[prop]);
+        },
+        setBooleanModel(prop: string, value: boolean): void {
+            this.entity[prop] = value;
+        },
+        getListModel(prop: string): string | number {
+            const currentValue = this.entity[prop];
+            return typeof currentValue === 'number' ? currentValue : String(currentValue ?? '');
+        },
+        setListModel(prop: string, value: string | number): void {
+            this.entity[prop] = value;
+        },
+        getObjectModel(prop: string): BaseEntity {
+            const value = this.entity[prop];
+            return value instanceof BaseEntity ? value : new EmptyEntity({});
+        },
+        setObjectModel(prop: string, value: BaseEntity): void {
+            this.entity[prop] = value;
+        },
+        getArrayModel(prop: string): BaseEntity[] {
+            const value = this.entity[prop];
+            return Array.isArray(value) ? (value as BaseEntity[]) : [];
+        },
+        setArrayModel(prop: string, value: BaseEntity[]): void {
+            this.entity[prop] = value;
         },
         getArrayListsTabs(): Array<string> {
             var returnList: Array<string> = [];

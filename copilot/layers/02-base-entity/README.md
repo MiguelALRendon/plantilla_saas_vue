@@ -1,8 +1,38 @@
 # BaseEntity - Índice Semántico
 
+## Proposito
+
+Indexar la documentación funcional y técnica de BaseEntity como motor core del framework.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 **Propósito:** Índice completo de especificaciones de BaseEntity  
 **Última Actualización:** 13 de Febrero, 2026  
 **ID Base:** BE
+
+---
+
+## Propósito
+
+Indexar la documentación funcional y técnica de BaseEntity como motor core del framework.
+
+## Elementos
+
+- [base-entity-core.md](base-entity-core.md)
+- [crud-operations.md](crud-operations.md)
+- [metadata-access.md](metadata-access.md)
+
+## Enlaces Estructurados
+
+- [Índice de Capas](../README.md)
+- [Decoradores](../01-decorators/README.md)
+- [Application](../03-application/README.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ---
 

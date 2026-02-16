@@ -584,23 +584,23 @@ Application.View.value.entityClass.getModuleName()
 ```
 
 ### Regla 7: Clase CSS Toggled Condicional
-La clase `.toggled` DEBE aplicarse cuando `toggled_bar` es `false` (sidebar cerrado), no cuando es `true`, para reflejar correctamente el estado.
+La clase `.toggled` DEBE aplicarse cuando `toggled_bar` es `false` (sidebar cerrado), no cuando es `true`, para reflejar correctamente el estado. Además, no se debe usar concatenación con `+` para construir clases.
 
 ```vue
 <!-- ✅ CORRECTO - toggled cuando sidebar cerrado -->
-:class="'push-side-nav-button' + (!toggled_bar ? ' toggled' : '')"
+:class="['push-side-nav-button', { toggled: !toggled_bar }]"
 
 <!-- ❌ INCORRECTO - toggled cuando sidebar abierto -->
-:class="'push-side-nav-button' + (toggled_bar ? ' toggled' : '')"
+:class="['push-side-nav-button', { toggled: toggled_bar }]"
 ```
 
-### Regla 8: Z-Index Relativo
-TopBar DEBE mantener z-index bajo (1) para estar debajo de modales y dropdowns (z-index ~1000), pero encima de contenido regular (z-index 0 o sin especificar).
+### Regla 8: Z-Index Relativo Tokenizado
+TopBar DEBE mantener capa baja con token (`var(--z-base)`) para estar debajo de modales y dropdowns, pero encima de contenido sin capa.
 
 ```css
 /* ✅ CORRECTO */
 .topbar {
-    z-index: 1;  /* Debajo de modales, encima de contenido */
+    z-index: var(--z-base);
 }
 
 /* ❌ INCORRECTO */

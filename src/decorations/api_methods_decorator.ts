@@ -33,6 +33,6 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
  */
 export function ApiMethods(methods: HttpMethod[]): ClassDecorator {
     return function (target: Function) {
-        (target as any)[API_METHODS_KEY] = methods;
+        (target as unknown as Record<PropertyKey, unknown>)[API_METHODS_KEY] = methods;
     };
 }

@@ -39,7 +39,7 @@ export const STRING_TYPE_KEY = Symbol('string_type');
  * @see {@link 01-BASIC-CRUD.md | CRUD Tutorial §2.4}
  */
 export function StringTypeDef(stringType: StringType): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[STRING_TYPE_KEY]) {
             proto[STRING_TYPE_KEY] = {};

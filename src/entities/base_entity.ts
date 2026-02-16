@@ -52,6 +52,37 @@ import type {
 } from '@/decorations';
 import type { ViewGroupRow } from '@/enums/view_group_row';
 
+type EntityData = Record<string, unknown>;
+type MetadataRecord = Record<PropertyKey, unknown>;
+type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: EntityData) => T;
+type ConcreteEntityClass<T extends BaseEntity = BaseEntity> = EntityConstructor<T> & {
+    getApiEndpoint(): string | undefined;
+    mapFromPersistentKeys(data: EntityData): EntityData;
+    getPersistentKeys(): Record<string, string>;
+    getPropertyKeyByPersistentKey(persistentKey: string): string | undefined;
+    getElementList(filter?: string): Promise<T[]>;
+};
+
+function getErrorMessage(error: unknown): string {
+    if (error && typeof error === 'object') {
+        const errorRecord = error as Record<string, unknown>;
+        const response = errorRecord.response as Record<string, unknown> | undefined;
+        const responseData = response?.data as Record<string, unknown> | undefined;
+        const responseMessage = responseData?.message;
+
+        if (typeof responseMessage === 'string' && responseMessage.length > 0) {
+            return responseMessage;
+        }
+
+        const message = errorRecord.message;
+        if (typeof message === 'string' && message.length > 0) {
+            return message;
+        }
+    }
+
+    return 'Error desconocido';
+}
+
 /**
  * Abstract base class for all entities in the meta-programming framework
  *
@@ -60,7 +91,7 @@ import type { ViewGroupRow } from '@/enums/view_group_row';
  * in the framework must extend this class to inherit framework capabilities.
  */
 export abstract class BaseEntity {
-    [key: string]: any;
+    [key: string]: unknown;
 
     // #region PROPERTIES
     /**
@@ -73,7 +104,7 @@ export abstract class BaseEntity {
      * Snapshot of the entity's persistent state at load time
      * Used for dirty state detection and change tracking
      */
-    public _originalState?: Record<string, any>;
+    public _originalState?: EntityData;
 
     /**
      * Indicates whether the entity is currently being saved
@@ -93,7 +124,7 @@ export abstract class BaseEntity {
      * Initializes the entity with provided data and captures the original state
      * @param data Initial data to populate the entity properties
      */
-    constructor(data: Record<string, any>) {
+    constructor(data: EntityData) {
         Object.assign(this, data);
         this._originalState = structuredClone(this.toPersistentObject());
     }
@@ -135,8 +166,8 @@ export abstract class BaseEntity {
      * Converts the entity to a plain JavaScript object
      * @returns Object representation including all properties
      */
-    public toObject(): Record<string, any> {
-        return this as Record<string, any>;
+    public toObject(): EntityData {
+        return this as EntityData;
     }
 
     /**
@@ -144,8 +175,8 @@ export abstract class BaseEntity {
      * Only includes properties defined with decorators, excludes internal state
      * @returns Object containing only persistable properties
      */
-    public toPersistentObject(): Record<string, any> {
-        const result: Record<string, any> = {};
+    public toPersistentObject(): EntityData {
+        const result: EntityData = {};
         const allProperties = (this.constructor as typeof BaseEntity).getAllPropertiesNonFilter();
         const propertyKeys = Object.keys(allProperties);
 
@@ -198,8 +229,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their display order indices
      */
     public getPropertyIndices(): Record<string, number> {
-        const proto = (this.constructor as any).prototype;
-        return proto[PROPERTY_INDEX_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        return (proto[PROPERTY_INDEX_KEY] as Record<string, number>) || {};
     }
 
     /**
@@ -207,8 +238,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their CSS class names
      */
     public getCSSClasses(): Record<string, string> {
-        const proto = (this.constructor as any).prototype;
-        return proto[CSS_COLUMN_CLASS_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        return (proto[CSS_COLUMN_CLASS_KEY] as Record<string, string>) || {};
     }
 
     /**
@@ -216,7 +247,7 @@ export abstract class BaseEntity {
      * @param propertyKey The property key to query
      * @returns The property type (String, Number, Boolean, Array, etc.) or undefined
      */
-    public getPropertyType(propertyKey: string): any | undefined { // EXC-002: Public metadata API
+    public getPropertyType(propertyKey: string): unknown | undefined { // EXC-002: Public metadata API
         return (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
     }
 
@@ -233,12 +264,13 @@ export abstract class BaseEntity {
      * Retrieves the value of the property marked with DefaultProperty decorator
      * @returns The default display value for this entity
      */
-    public getDefaultPropertyValue(): any { // EXC-002: Public metadata API
-        const propertyName = (this.constructor as any)[DEFAULT_PROPERTY_KEY]; // EXC-001: Symbol index access
+    public getDefaultPropertyValue(): unknown { // EXC-002: Public metadata API
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const propertyName = constructorMetadata[DEFAULT_PROPERTY_KEY] as string | undefined; // EXC-001: Symbol index access
         if (!propertyName) {
             return undefined;
         }
-        return (this as any)[propertyName];
+        return (this as EntityData)[propertyName];
     }
 
     /**
@@ -246,12 +278,13 @@ export abstract class BaseEntity {
      * Typically the database primary key
      * @returns The primary key value
      */
-    public getPrimaryPropertyValue(): any {
-        const propertyName = (this.constructor as any)[PRIMARY_PROPERTY_KEY];
+    public getPrimaryPropertyValue(): unknown {
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const propertyName = constructorMetadata[PRIMARY_PROPERTY_KEY] as string | undefined;
         if (!propertyName) {
             return undefined;
         }
-        return (this as any)[propertyName];
+        return (this as EntityData)[propertyName];
     }
 
     /**
@@ -259,7 +292,8 @@ export abstract class BaseEntity {
      * @returns The property key name or undefined if not defined
      */
     public getPrimaryPropertyKey(): string | undefined {
-        return (this.constructor as any)[PRIMARY_PROPERTY_KEY];
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        return constructorMetadata[PRIMARY_PROPERTY_KEY] as string | undefined;
     }
 
     /**
@@ -267,12 +301,13 @@ export abstract class BaseEntity {
      * Used for API endpoints and entity identification
      * @returns The unique identifier value
      */
-    public getUniquePropertyValue(): any {
-        const propertyName = (this.constructor as any)[UNIQUE_KEY];
+    public getUniquePropertyValue(): unknown {
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const propertyName = constructorMetadata[UNIQUE_KEY] as string | undefined;
         if (!propertyName) {
             return undefined;
         }
-        return (this as any)[propertyName];
+        return (this as EntityData)[propertyName];
     }
 
     /**
@@ -280,7 +315,8 @@ export abstract class BaseEntity {
      * @returns The unique property key name or undefined if not defined
      */
     public getUniquePropertyKey(): string | undefined {
-        return (this.constructor as any)[UNIQUE_KEY];
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        return constructorMetadata[UNIQUE_KEY] as string | undefined;
     }
 
     /**
@@ -289,8 +325,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their string type definitions
      */
     public getStringType(): Record<string, StringType> {
-        const proto = (this.constructor as any).prototype;
-        const stringTypes = proto[STRING_TYPE_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const stringTypes = (proto[STRING_TYPE_KEY] as Record<string, StringType>) || {};
         const properties = (this.constructor as typeof BaseEntity).getProperties();
         const result: Record<string, StringType> = {};
 
@@ -307,8 +343,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their view group names
      */
     public getViewGroups(): Record<string, string> {
-        const proto = (this.constructor as any).prototype;
-        return proto[VIEW_GROUP_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        return (proto[VIEW_GROUP_KEY] as Record<string, string>) || {};
     }
 
     /**
@@ -317,8 +353,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their ViewGroupRow configurations
      */
     public getViewGroupRows(): Record<string, ViewGroupRow> {
-        const proto = (this.constructor as any).prototype;
-        return proto[VIEW_GROUP_ROW_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        return (proto[VIEW_GROUP_ROW_KEY] as Record<string, ViewGroupRow>) || {};
     }
 
     /**
@@ -328,8 +364,8 @@ export abstract class BaseEntity {
      * @returns True if property is required, false otherwise
      */
     public isRequired(propertyKey: string): boolean {
-        const proto = (this.constructor as any).prototype;
-        const requiredFields: Record<string, RequiredMetadata> = proto[REQUIRED_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
         const metadata = requiredFields[propertyKey];
 
         if (!metadata) {
@@ -351,8 +387,8 @@ export abstract class BaseEntity {
      * @returns Custom validation message or undefined
      */
     public requiredMessage(propertyKey: string): string | undefined {
-        const proto = (this.constructor as any).prototype;
-        const requiredFields: Record<string, RequiredMetadata> = proto[REQUIRED_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
         const metadata = requiredFields[propertyKey];
         return metadata?.message;
     }
@@ -363,8 +399,8 @@ export abstract class BaseEntity {
      * @returns True if validation passes, false otherwise
      */
     public isValidation(propertyKey: string): boolean {
-        const proto = (this.constructor as any).prototype;
-        const validationRules: Record<string, ValidationMetadata> = proto[VALIDATION_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
         const rule = validationRules[propertyKey];
 
         if (!rule) {
@@ -380,8 +416,8 @@ export abstract class BaseEntity {
      * @returns Validation error message or undefined
      */
     public validationMessage(propertyKey: string): string | undefined {
-        const proto = (this.constructor as any).prototype;
-        const validationRules: Record<string, ValidationMetadata> = proto[VALIDATION_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
         const rule = validationRules[propertyKey];
         return rule?.message;
     }
@@ -393,8 +429,8 @@ export abstract class BaseEntity {
      * @returns True if property should be disabled, false otherwise
      */
     public isDisabled(propertyKey: string): boolean {
-        const proto = (this.constructor as any).prototype;
-        const disabledFields: Record<string, DisabledMetadata> = proto[DISABLED_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const disabledFields = (proto[DISABLED_KEY] as Record<string, DisabledMetadata>) ?? {};
         const metadata = disabledFields[propertyKey];
 
         if (!metadata) {
@@ -411,8 +447,8 @@ export abstract class BaseEntity {
      * @returns Promise resolving to true if valid, false if invalid
      */
     public async isAsyncValidation(propertyKey: string): Promise<boolean> {
-        const proto = (this.constructor as any).prototype;
-        const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
         const rule = asyncValidationRules[propertyKey];
 
         if (!rule) {
@@ -433,8 +469,8 @@ export abstract class BaseEntity {
      * @returns Async validation error message or undefined
      */
     public asyncValidationMessage(propertyKey: string): string | undefined {
-        const proto = (this.constructor as any).prototype;
-        const asyncValidationRules: Record<string, AsyncValidationMetadata> = proto[ASYNC_VALIDATION_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
         const rule = asyncValidationRules[propertyKey];
         return rule?.message;
     }
@@ -445,8 +481,8 @@ export abstract class BaseEntity {
      * @returns Display format function or template string, or undefined
      */
     public getDisplayFormat(propertyKey: string): DisplayFormatValue | undefined {
-        const proto = (this.constructor as any).prototype;
-        const displayFormats: Record<string, DisplayFormatValue> = proto[DISPLAY_FORMAT_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const displayFormats = (proto[DISPLAY_FORMAT_KEY] as Record<string, DisplayFormatValue>) ?? {};
         return displayFormats[propertyKey];
     }
 
@@ -457,7 +493,7 @@ export abstract class BaseEntity {
      * @returns Formatted string representation of the property value
      */
     public getFormattedValue(propertyKey: string): string {
-        const value = (this as any)[propertyKey];
+        const value = (this as EntityData)[propertyKey];
         const format = this.getDisplayFormat(propertyKey);
 
         if (!format) {
@@ -479,8 +515,8 @@ export abstract class BaseEntity {
      * @returns Help text string or undefined
      */
     public getHelpText(propertyKey: string): string | undefined {
-        const proto = (this.constructor as any).prototype;
-        const helpTexts: Record<string, string> = proto[HELP_TEXT_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const helpTexts = (proto[HELP_TEXT_KEY] as Record<string, string>) ?? {};
         return helpTexts[propertyKey];
     }
 
@@ -490,8 +526,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their tab order indices
      */
     public getTabOrders(): Record<string, number> {
-        const proto = (this.constructor as any).prototype;
-        return proto[TAB_ORDER_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        return (proto[TAB_ORDER_KEY] as Record<string, number>) || {};
     }
 
     /**
@@ -526,8 +562,8 @@ export abstract class BaseEntity {
      * @returns True if property is read-only, false otherwise
      */
     public isReadOnly(propertyKey: string): boolean {
-        const proto = (this.constructor as any).prototype;
-        const readOnlyFields: Record<string, ReadOnlyMetadata> = proto[READONLY_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const readOnlyFields = (proto[READONLY_KEY] as Record<string, ReadOnlyMetadata>) ?? {};
         const metadata = readOnlyFields[propertyKey];
 
         if (!metadata) {
@@ -561,8 +597,8 @@ export abstract class BaseEntity {
      * @returns True if property should be hidden in detail view
      */
     public isHideInDetailView(propertyKey: string): boolean {
-        const proto = (this.constructor as any).prototype;
-        const hideFields: Record<string, boolean> = proto[HIDE_IN_DETAIL_VIEW_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const hideFields = (proto[HIDE_IN_DETAIL_VIEW_KEY] as Record<string, boolean>) ?? {};
         return hideFields[propertyKey] === true;
     }
 
@@ -572,8 +608,8 @@ export abstract class BaseEntity {
      * @returns True if property should be hidden in list view
      */
     public isHideInListView(propertyKey: string): boolean {
-        const proto = (this.constructor as any).prototype;
-        const hideFields: Record<string, boolean> = proto[HIDE_IN_LIST_VIEW_KEY] || {};
+        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const hideFields = (proto[HIDE_IN_LIST_VIEW_KEY] as Record<string, boolean>) ?? {};
         return hideFields[propertyKey] === true;
     }
 
@@ -610,8 +646,8 @@ export abstract class BaseEntity {
      * @param data Entity data with internal property keys
      * @returns Data object with persistent keys
      */
-    public mapToPersistentKeys(data: Record<string, any>): Record<string, any> {
-        return (this.constructor as any).mapToPersistentKeys(data);
+    public mapToPersistentKeys(data: EntityData): EntityData {
+        return (this.constructor as typeof BaseEntity).mapToPersistentKeys(data);
     }
 
     /**
@@ -620,8 +656,8 @@ export abstract class BaseEntity {
      * @param data Data with persistent keys
      * @returns Data object with internal property keys
      */
-    public mapFromPersistentKeys(data: Record<string, any>): Record<string, any> {
-        return (this.constructor as any).mapFromPersistentKeys(data);
+    public mapFromPersistentKeys(data: EntityData): EntityData {
+        return (this.constructor as typeof BaseEntity).mapFromPersistentKeys(data);
     }
 
     /**
@@ -641,7 +677,9 @@ export abstract class BaseEntity {
             errors.push('El módulo no tiene definido @ModuleIcon');
         }
 
-        if (!(this.constructor as any)[DEFAULT_PROPERTY_KEY]) {
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+
+        if (!constructorMetadata[DEFAULT_PROPERTY_KEY]) {
             errors.push('El módulo no tiene definido @DefaultProperty');
         }
 
@@ -698,7 +736,8 @@ export abstract class BaseEntity {
      * @returns True if entity has Persistent decorator
      */
     public isPersistent(): boolean {
-        return !!(this.constructor as any)[PERSISTENT_KEY];
+        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        return !!constructorMetadata[PERSISTENT_KEY];
     }
 
     /**
@@ -822,14 +861,14 @@ export abstract class BaseEntity {
             Application.ApplicationUIService.hideLoadingMenu();
             Application.ApplicationUIService.showToast('Guardado con éxito.', ToastType.SUCCESS);
             return this;
-        } catch (error: any) {
+        } catch (error: unknown) {
             this._isSaving = false;
             Application.ApplicationUIService.hideLoadingMenu();
             this.saveFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al guardar',
-                error.response?.data?.message || error.message || 'Error desconocido',
+                getErrorMessage(error),
                 undefined,
                 'Aceptar',
                 'Cerrar'
@@ -882,13 +921,13 @@ export abstract class BaseEntity {
             this._isSaving = false;
             this.afterUpdate();
             return this;
-        } catch (error: any) {
+        } catch (error: unknown) {
             this._isSaving = false;
             this.updateFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al actualizar',
-                error.response?.data?.message || error.message || 'Error desconocido',
+                getErrorMessage(error),
                 undefined,
                 'Aceptar',
                 'Cerrar'
@@ -934,12 +973,12 @@ export abstract class BaseEntity {
 
             await Application.axiosInstance.delete(`${endpoint}/${uniqueKey}`);
             this.afterDelete();
-        } catch (error: any) {
+        } catch (error: unknown) {
             this.deleteFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al eliminar',
-                error.response?.data?.message || error.message || 'Error desconocido',
+                getErrorMessage(error),
                 undefined,
                 'Aceptar',
                 'Cerrar'
@@ -956,7 +995,8 @@ export abstract class BaseEntity {
      */
     public async refresh(filter: string = ''): Promise<this[]> {
         try {
-            const instances = await (this.constructor as any).getElementList(filter);
+            const entityClass = this.constructor as unknown as ConcreteEntityClass<this>;
+            const instances = await entityClass.getElementList(filter);
             this.afterRefresh();
             return instances;
         } catch (error) {
@@ -990,7 +1030,7 @@ export abstract class BaseEntity {
 
     /**
      * Resets all entity properties to their original state
-     * Reverts any unsaved changes made since entity was loaded
+    * Reverts all unsaved changes made since entity was loaded
      */
     public resetChanges(): void {
         if (this._originalState) {
@@ -1126,8 +1166,8 @@ export abstract class BaseEntity {
      * @returns Map of all property keys to their display names
      */
     public static getAllPropertiesNonFilter(): Record<string, string> {
-        const proto = this.prototype as any;
-        return proto[PROPERTY_NAME_KEY] || {};
+        const proto = this.prototype as unknown as MetadataRecord;
+        return (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
     }
 
     /**
@@ -1136,8 +1176,8 @@ export abstract class BaseEntity {
      * @returns Map of scalar property keys to their display names
      */
     public static getProperties(): Record<string, string> {
-        const proto = this.prototype as any;
-        const properties = proto[PROPERTY_NAME_KEY] || {};
+        const proto = this.prototype as unknown as MetadataRecord;
+        const properties = (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
         const propertyTypes = this.getPropertyTypes();
         const filtered: Record<string, string> = {};
 
@@ -1154,9 +1194,9 @@ export abstract class BaseEntity {
      * Retrieves the type mapping for all properties
      * @returns Map of property keys to their TypeScript type constructors
      */
-    public static getPropertyTypes(): Record<string, any> { // EXC-002: Public metadata API
-        const proto = this.prototype as any; // EXC-001: Symbol index access
-        return proto[PROPERTY_TYPE_KEY] || {};
+    public static getPropertyTypes(): Record<string, unknown> { // EXC-002: Public metadata API
+        const proto = this.prototype as unknown as MetadataRecord; // EXC-001: Symbol index access
+        return (proto[PROPERTY_TYPE_KEY] as Record<string, unknown>) || {};
     }
 
     /**
@@ -1164,7 +1204,7 @@ export abstract class BaseEntity {
      * @param propertyKey The property key to query
      * @returns The property type constructor or undefined
      */
-    public static getPropertyType(propertyKey: string): any | undefined { // EXC-002: Public metadata API
+    public static getPropertyType(propertyKey: string): unknown | undefined { // EXC-002: Public metadata API
         const types = this.getPropertyTypes();
         return types[propertyKey];
     }
@@ -1181,9 +1221,9 @@ export abstract class BaseEntity {
             return undefined;
         }
 
-        const proto = this.prototype as any;
-        const arrayTypes = proto[ARRAY_ELEMENT_TYPE_KEY] || {};
-        const entityType = arrayTypes[propertyKey];
+        const proto = this.prototype as unknown as MetadataRecord;
+        const arrayTypes = (proto[ARRAY_ELEMENT_TYPE_KEY] as Record<string, unknown>) || {};
+        const entityType = arrayTypes[propertyKey] as typeof BaseEntity | undefined;
 
         if (entityType && entityType.prototype instanceof BaseEntity) {
             return entityType;
@@ -1198,7 +1238,7 @@ export abstract class BaseEntity {
      * @param selector Function that selects the property from entity instance
      * @returns The display name of the property or undefined
      */
-    public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => any): string | undefined {
+    public static getPropertyName<T extends BaseEntity>(selector: (entity: T) => unknown): string | undefined {
         const columns = this.getProperties();
         const proxy = new Proxy(
             {},
@@ -1227,8 +1267,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their CSS class names
      */
     public static getCSSClasses(): Record<string, string> {
-        const proto = this.prototype as any;
-        return proto[CSS_COLUMN_CLASS_KEY] || {};
+        const proto = this.prototype as unknown as MetadataRecord;
+        return (proto[CSS_COLUMN_CLASS_KEY] as Record<string, string>) || {};
     }
 
     /**
@@ -1236,7 +1276,8 @@ export abstract class BaseEntity {
      * @returns The module name or undefined
      */
     public static getModuleName(): string | undefined {
-        return (this as any)[MODULE_NAME_KEY];
+        const metadata = this as unknown as MetadataRecord;
+        return metadata[MODULE_NAME_KEY] as string | undefined;
     }
 
     /**
@@ -1244,7 +1285,8 @@ export abstract class BaseEntity {
      * @returns The permission identifier or undefined
      */
     public static getModulePermission(): string | undefined {
-        return (this as any)[MODULE_PERMISSION_KEY];
+        const metadata = this as unknown as MetadataRecord;
+        return metadata[MODULE_PERMISSION_KEY] as string | undefined;
     }
 
     /**
@@ -1252,7 +1294,8 @@ export abstract class BaseEntity {
      * @returns The icon identifier or undefined
      */
     public static getModuleIcon(): string | undefined {
-        return (this as any)[MODULE_ICON_KEY];
+        const metadata = this as unknown as MetadataRecord;
+        return metadata[MODULE_ICON_KEY] as string | undefined;
     }
 
     /**
@@ -1260,7 +1303,8 @@ export abstract class BaseEntity {
      * @returns Vue component for list view, defaults to DefaultListview
      */
     public static getModuleListComponent(): Component {
-        return (this as any)[MODULE_LIST_COMPONENT_KEY] || DefaultListview;
+        const metadata = this as unknown as MetadataRecord;
+        return (metadata[MODULE_LIST_COMPONENT_KEY] as Component) || DefaultListview;
     }
 
     /**
@@ -1268,7 +1312,8 @@ export abstract class BaseEntity {
      * @returns Vue component for detail view, defaults to DefaultDetailView
      */
     public static getModuleDetailComponent(): Component {
-        return (this as any)[MODULE_DETAIL_COMPONENT_KEY] || DefaultDetailView;
+        const metadata = this as unknown as MetadataRecord;
+        return (metadata[MODULE_DETAIL_COMPONENT_KEY] as Component) || DefaultDetailView;
     }
 
     /**
@@ -1277,7 +1322,8 @@ export abstract class BaseEntity {
      * @returns Vue component for default view, defaults to DefaultListview
      */
     public static getModuleDefaultComponent(): Component {
-        return (this as any)[MODULE_DEFAULT_COMPONENT_KEY] || DefaultListview;
+        const metadata = this as unknown as MetadataRecord;
+        return (metadata[MODULE_DEFAULT_COMPONENT_KEY] as Component) || DefaultListview;
     }
 
     /**
@@ -1285,14 +1331,15 @@ export abstract class BaseEntity {
      * @returns Map of component names to Vue components, or null if none defined
      */
     public static getModuleCustomComponents(): Map<string, Component> | null {
-        return (this as any)[MODULE_CUSTOM_COMPONENTS_KEY] || null;
+        const metadata = this as unknown as MetadataRecord;
+        return (metadata[MODULE_CUSTOM_COMPONENTS_KEY] as Map<string, Component>) || null;
     }
 
     /**
      * Creates a new instance of this entity with empty data
      * @returns New entity instance
      */
-    public static createNewInstance<T extends BaseEntity>(this: new (data: Record<string, any>) => T): T {
+    public static createNewInstance<T extends BaseEntity>(this: new (data: EntityData) => T): T {
         return new this({});
     }
 
@@ -1301,7 +1348,8 @@ export abstract class BaseEntity {
      * @returns API endpoint URL or undefined
      */
     public static getApiEndpoint(): string | undefined {
-        return (this as any)[API_ENDPOINT_KEY];
+        const metadata = this as unknown as MetadataRecord;
+        return metadata[API_ENDPOINT_KEY] as string | undefined;
     }
 
     /**
@@ -1309,7 +1357,8 @@ export abstract class BaseEntity {
      * @returns Array of allowed HTTP methods or undefined if all allowed
      */
     public static getApiMethods(): HttpMethod[] | undefined {
-        return (this as any)[API_METHODS_KEY];
+        const metadata = this as unknown as MetadataRecord;
+        return metadata[API_METHODS_KEY] as HttpMethod[] | undefined;
     }
 
     /**
@@ -1330,8 +1379,8 @@ export abstract class BaseEntity {
      * @returns Map of property keys to persistent key names
      */
     public static getPersistentKeys(): Record<string, string> {
-        const proto = this.prototype as any;
-        return proto[PERSISTENT_KEY_KEY] || {};
+        const proto = this.prototype as unknown as MetadataRecord;
+        return (proto[PERSISTENT_KEY_KEY] as Record<string, string>) || {};
     }
 
     /**
@@ -1365,12 +1414,12 @@ export abstract class BaseEntity {
      * @param data Entity data with internal property keys
      * @returns Data object with persistent keys
      */
-    public static mapToPersistentKeys<T extends BaseEntity>(
-        this: new (...args: any[]) => T,
-        data: Record<string, any>
-    ): Record<string, any> {
-        const persistentKeys = (this as any).getPersistentKeys();
-        const mapped: Record<string, any> = {};
+    public static mapToPersistentKeys(
+        this: typeof BaseEntity,
+        data: EntityData
+    ): EntityData {
+        const persistentKeys = this.getPersistentKeys();
+        const mapped: EntityData = {};
 
         for (const [propertyKey, value] of Object.entries(data)) {
             const persistentKey = persistentKeys[propertyKey];
@@ -1386,14 +1435,14 @@ export abstract class BaseEntity {
      * @param data Data with persistent keys
      * @returns Data object with internal property keys
      */
-    public static mapFromPersistentKeys<T extends BaseEntity>(
-        this: new (...args: any[]) => T,
-        data: Record<string, any>
-    ): Record<string, any> {
-        const mapped: Record<string, any> = {};
+    public static mapFromPersistentKeys(
+        this: typeof BaseEntity,
+        data: EntityData
+    ): EntityData {
+        const mapped: EntityData = {};
 
         for (const [persistentKey, value] of Object.entries(data)) {
-            const propertyKey = (this as any).getPropertyKeyByPersistentKey(persistentKey);
+            const propertyKey = this.getPropertyKeyByPersistentKey(persistentKey);
             mapped[propertyKey || persistentKey] = value;
         }
 
@@ -1408,10 +1457,10 @@ export abstract class BaseEntity {
      * @throws Error if ApiEndpoint not defined or API request fails
      */
     public static async getElement<T extends BaseEntity>(
-        this: new (data: Record<string, any>) => T,
+        this: ConcreteEntityClass<T>,
         oid: string
     ): Promise<T> {
-        const endpoint = (this as any).getApiEndpoint();
+        const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
             throw new Error('ApiEndpoint no definido');
@@ -1419,17 +1468,17 @@ export abstract class BaseEntity {
 
         try {
             const response = await Application.axiosInstance.get(`${endpoint}/${oid}`);
-            const mappedData = (this as any).mapFromPersistentKeys(response.data);
+            const mappedData = this.mapFromPersistentKeys(response.data as EntityData);
             const instance = new this(mappedData);
-            (instance as any).afterGetElement();
+            instance.afterGetElement();
             return instance;
-        } catch (error: any) {
+        } catch (error: unknown) {
             const tempInstance = new this({});
-            (tempInstance as any).getElementFailed();
+            tempInstance.getElementFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al obtener elemento',
-                error.response?.data?.message || error.message || 'Error desconocido',
+                getErrorMessage(error),
                 undefined,
                 'Aceptar',
                 'Cerrar'
@@ -1446,10 +1495,10 @@ export abstract class BaseEntity {
      * @throws Error if ApiEndpoint not defined or API request fails
      */
     public static async getElementList<T extends BaseEntity>(
-        this: new (data: Record<string, any>) => T,
+        this: ConcreteEntityClass<T>,
         filter: string = ''
     ): Promise<T[]> {
-        const endpoint = (this as any).getApiEndpoint();
+        const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
             throw new Error('ApiEndpoint no definido');
@@ -1457,21 +1506,21 @@ export abstract class BaseEntity {
 
         try {
             const response = await Application.axiosInstance.get(endpoint, { params: { filter } });
-            const instances = response.data.map((item: any) => {
-                const mappedData = (this as any).mapFromPersistentKeys(item);
+            const instances = (response.data as unknown[]).map((item: unknown) => {
+                const mappedData = this.mapFromPersistentKeys(item as EntityData);
                 return new this(mappedData);
             });
             if (instances.length > 0) {
-                (instances[0] as any).afterGetElementList();
+                instances[0].afterGetElementList();
             }
             return instances;
-        } catch (error: any) {
+        } catch (error: unknown) {
             const tempInstance = new this({});
-            (tempInstance as any).getElementListFailed();
+            tempInstance.getElementListFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
                 'Error al obtener lista',
-                error.response?.data?.message || error.message || 'Error desconocido',
+                getErrorMessage(error),
                 undefined,
                 'Aceptar',
                 'Cerrar'

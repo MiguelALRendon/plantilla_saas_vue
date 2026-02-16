@@ -45,7 +45,7 @@ export default {
     right: 0;
     width: auto;
     margin-left: auto;
-    z-index: 10;
+    z-index: var(--z-base);
     display: flex;
     flex-direction: row;
     gap: 1rem;

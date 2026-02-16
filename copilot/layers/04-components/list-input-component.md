@@ -223,6 +223,8 @@ Usuario intenta guardar, BaseEntity.validateInputs() emite evento validate-input
 
 ** REGLA 7:** SIEMPRE validar que valor seleccionado existe en enum con Object.values.includes.
 
+**REGLA 8:** SIEMPRE usar tokens CSS para `z-index` del panel desplegable (`var(--z-modal)` o token contractual equivalente), NUNCA valores numéricos literales.
+
 ## 7. Prohibiciones
 
 **PROHIBIDO:** Usar listas hardcodeadas sin EnumAdapter perdiendo type safety.

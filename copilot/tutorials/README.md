@@ -1,8 +1,38 @@
 # Tutoriales - Índice Semántico
 
+## Proposito
+
+Organizar la ruta de aprendizaje práctica del framework mediante tutoriales progresivos.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 **Propósito:** Índice de tutoriales prácticos paso a paso  
 **Última Actualización:** 13 de Febrero, 2026  
 **ID Base:** TUT
+
+---
+
+## Propósito
+
+Organizar la ruta de aprendizaje práctica del framework mediante tutoriales progresivos.
+
+## Elementos
+
+- [01-basic-crud.md](01-basic-crud.md)
+- [02-validations.md](02-validations.md)
+- [03-relations.md](03-relations.md)
+
+## Enlaces Estructurados
+
+- [Spec Kit](../README.md)
+- [Framework Overview](../01-FRAMEWORK-OVERVIEW.md)
+- [Flow Architecture](../02-FLOW-ARCHITECTURE.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ---
 

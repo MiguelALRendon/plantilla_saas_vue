@@ -3,9 +3,9 @@
         class="TextInput ObjectInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
-        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
         <input
-            :id="'id-' + metadata.propertyName"
+            :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             type="text"
             class="main-input"

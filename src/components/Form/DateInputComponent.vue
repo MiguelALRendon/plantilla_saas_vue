@@ -3,9 +3,9 @@
         class="TextInput DateInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
-        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
         <input
-            :id="'id-' + metadata.propertyName"
+            :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             type="text"
             class="main-input"
@@ -16,7 +16,7 @@
         />
         <input
             ref="dateInput"
-            :id="'date-id-' + metadata.propertyName"
+            :id="`date-id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             type="date"
             class="date-input"
@@ -81,7 +81,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            textInputId: 'text-input-' + this.propertyKey,
+            textInputId: `text-input-${this.propertyKey}`,
             isInputValidated: true,
             validationMessages: [] as string[]
         };
@@ -90,7 +90,7 @@ export default {
         formattedDate(): string {
             if (!this.modelValue) return '';
 
-            const date = new Date(this.modelValue + 'T00:00:00');
+            const date = new Date(`${this.modelValue}T00:00:00`);
 
             if (isNaN(date.getTime())) return '';
 

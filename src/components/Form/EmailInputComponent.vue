@@ -1,10 +1,10 @@
 <template>
     <div class="TextInput" :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]">
-        <label :for="'id-' + metadata.propertyName" class="label-input"
+        <label :for="`id-${metadata.propertyName}`" class="label-input"
             >{{ metadata.propertyName }} <span :class="GGCLASS" class="icon">{{ GGICONS.MAIL }}</span></label
         >
         <input
-            :id="'id-' + metadata.propertyName"
+            :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             type="email"
             class="main-input"
@@ -105,7 +105,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            textInputId: 'text-input-' + this.propertyKey,
+            textInputId: `text-input-${this.propertyKey}`,
             isInputValidated: true,
             validationMessages: [] as string[]
         };

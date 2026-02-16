@@ -3,9 +3,9 @@
         class="TextInput PasswordInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
-        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
         <input
-            :id="'id-' + metadata.propertyName"
+            :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
             :type="showPassword ? 'text' : 'password'"
             class="main-input"
@@ -71,7 +71,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            textInputId: 'text-input-' + this.propertyKey,
+            textInputId: `text-input-${this.propertyKey}`,
             showPassword: false,
             isInputValidated: true,
             validationMessages: [] as string[]

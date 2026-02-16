@@ -126,7 +126,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            currentComponent: null as any,
+                        currentComponent: null as Component | null,
         };
     },
     created() {
@@ -506,6 +506,9 @@ max-height: calc(100vh - 50px);
 max-height: 90vh;
 max-height: 900px;
 ```
+
+### Regla 9: Z-Index Tokenizado
+El contenedor raíz DEBE usar token de capa para `z-index` (`var(--z-base)`) y NO valores numéricos literales.
 
 ## 7. Prohibiciones
 

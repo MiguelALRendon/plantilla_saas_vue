@@ -49,7 +49,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1100;
+    z-index: var(--z-toast);
     pointer-events: none;
     opacity: 0;
     transition: var(--transition-normal) var(--timing-ease);

@@ -19,6 +19,9 @@ export const PROPERTY_TYPE_KEY = Symbol('property_type');
  */
 export const ARRAY_ELEMENT_TYPE_KEY = Symbol('array_element_type');
 
+export type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: Record<string, unknown>) => T;
+export type EnumLike = Record<string, string | number>;
+
 /**
  * Type definition for property types supported by the framework.
  */
@@ -27,14 +30,15 @@ export type PropertyType =
     | typeof Number
     | typeof Date
     | typeof Boolean
-    | (new (...args: any[]) => BaseEntity)
-    | any;
+    | EntityConstructor
+    | EnumLike
+    | ArrayTypeWrapper;
 
 /**
  * Internal wrapper class for array type definitions.
  */
 class ArrayTypeWrapper {
-    constructor(public elementType: new (...args: any[]) => BaseEntity) {}
+    constructor(public elementType: EntityConstructor) {}
 }
 
 /**
@@ -43,7 +47,7 @@ class ArrayTypeWrapper {
  * This function wraps an entity constructor to indicate that the property is an array
  * of that entity type. Used for one-to-many relationships.
  *
- * @param {new (...args: any[]) => T} elementType - The constructor of the entity type contained in the array
+ * @param {new (data: Record<string, unknown>) => T} elementType - The constructor of the entity type contained in the array
  * @returns {ArrayTypeWrapper} A wrapper object indicating array type with element metadata
  *
  * @example
@@ -56,7 +60,7 @@ class ArrayTypeWrapper {
  *
  * @see {@link 03-RELATIONS.md | Relations Tutorial §2.4}
  */
-export function ArrayOf<T extends BaseEntity>(elementType: new (...args: any[]) => T): ArrayTypeWrapper {
+export function ArrayOf<T extends BaseEntity>(elementType: new (data: Record<string, unknown>) => T): ArrayTypeWrapper {
     return new ArrayTypeWrapper(elementType);
 }
 
@@ -106,7 +110,7 @@ export function ArrayOf<T extends BaseEntity>(elementType: new (...args: any[]) 
  * @see {@link 03-RELATIONS.md | Relations Tutorial}
  */
 export function PropertyName(name: string, type: PropertyType): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[PROPERTY_NAME_KEY]) {
             proto[PROPERTY_NAME_KEY] = {};
@@ -126,7 +130,7 @@ export function PropertyName(name: string, type: PropertyType): PropertyDecorato
             }
             proto[ARRAY_ELEMENT_TYPE_KEY][propertyKey] = type.elementType;
         } else {
-            const isEnum = typeof type === 'object' && !type.prototype;
+            const isEnum = typeof type === 'object';
             proto[PROPERTY_TYPE_KEY][propertyKey] = isEnum ? new EnumAdapter(type) : type;
         }
     };

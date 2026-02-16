@@ -304,6 +304,12 @@ Mapea ToastType a clase CSS correspondiente para coloring diferenciado.
 
 **OBLIGATORIO 6.9:** Pause/resume logic DEBE calcular elapsed time correctamente. NO reiniciar timer con duration original ignorando tiempo transcurrido.
 
+**OBLIGATORIO 6.10:** El contenedor toast DEBE usar token de capa (`var(--z-toast)`) para `z-index`; quedan prohibidos valores numéricos literales.
+
+**OBLIGATORIO 6.11:** Los estilos de ToastItem (`opacity`, `background-color`, `padding`, `height`, `transform`) DEBEN consumir tokens de `constants.css`; quedan prohibidos valores literales `rgba(...)`, `rem` o porcentajes repetibles.
+
+**OBLIGATORIO 6.12:** El estado visual de entrada/salida DEBE usar transformaciones tokenizadas (`--transform-*`) y transiciones tokenizadas (`--transition-*`, `--timing-*`).
+
 ---
 
 ## 7. Prohibiciones

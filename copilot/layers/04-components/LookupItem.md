@@ -219,6 +219,8 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 
 6. **Estilos CSS NO DEBEN modificarse inline**: Los estilos CSS de LookupItem están diseñados para cohesión visual con framework. No aplicar :style="{ ... }" modificando padding, margin, o transition inline. Si necesitas estilos diferentes, crear componente lookup personalizado extendiendo LookupItem.
 
+7. **Tipado estricto en computed**: `defaultPropertyValue` DEBE usar tipo explícito no-`any` (por ejemplo `unknown` o uniones concretas), conforme al contrato de estilo.
+
 7. **getDefaultPropertyValue() DEBE retornar valor displayable**: La propiedad marcada con @DefaultProperty DEBE ser String, Number, o tipo convertible a string legible. No marcar propiedades Object, Array, o BaseEntity como DefaultProperty. El valor se renderiza directamente como texto sin transformación.
 
 ## 7. Prohibiciones

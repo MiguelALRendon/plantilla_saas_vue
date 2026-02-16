@@ -251,7 +251,7 @@ Validaciones implementadas en Supplier:
 
 ### Entidad 3: Product
 
-Archivo: src/entities/product.ts
+Archivo: src/entities/products.ts
 
 ```typescript
 import { BaseEntity } from './base_entity';

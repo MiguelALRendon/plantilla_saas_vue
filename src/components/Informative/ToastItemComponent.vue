@@ -117,17 +117,17 @@ export default {
 .toast-card {
     position: relative;
     width: 100%;
-    height: 3rem;
+    height: var(--toast-height);
     border-radius: var(--border-radius);
     padding: var(--spacing-xs);
     box-sizing: border-box;
     background-color: var(--white);
     transform: var(--transform-translateX-hide);
     transition: var(--transition-normal) var(--timing-bounce);
-    opacity: 0.75;
+    opacity: var(--opacity-toast-rest);
 }
 .toast-card.show {
-    transform: translateX(0%);
+    transform: var(--transform-translateX-show);
 }
 .toast-card:hover {
     opacity: 1;
@@ -139,10 +139,9 @@ export default {
     border-radius: calc(var(--border-radius) / 1.5);
     display: flex;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--overlay-medium);
     box-sizing: border-box;
-    padding-inline: 0.25rem;
-    display: flex;
+    padding-inline: var(--spacing-xs);
     justify-content: space-between;
     pointer-events: all;
 }

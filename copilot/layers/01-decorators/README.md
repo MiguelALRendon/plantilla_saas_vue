@@ -1,8 +1,45 @@
 # Sistema de Decoradores - Índice Semántico
 
+## Proposito
+
+Centralizar navegación y referencia semántica de los decoradores del framework.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 **Propósito:** Índice completo de los 31 decoradores del framework  
 **Última Actualización:** 13 de Febrero,  2026  
 **ID Base:** DEC
+
+---
+
+## Propósito
+
+Centralizar navegación y referencia semántica de los decoradores del framework.
+
+## Contrato de Tipado Estricto
+
+- Las implementaciones de decoradores en `src/decorations/**/*.ts` no deben usar `any`.
+- Para metadatos dinámicos usar `unknown` o `Record<PropertyKey, unknown>`.
+- Las firmas de `PropertyDecorator` deben tipar `target` como `object`.
+- Constructores genéricos deben tiparse con `unknown[]` en lugar de `any[]`.
+
+## Elementos
+
+- [property-name-decorator.md](property-name-decorator.md)
+- [required-decorator.md](required-decorator.md)
+- [module-name-decorator.md](module-name-decorator.md)
+
+## Enlaces Estructurados
+
+- [Índice de Capas](../README.md)
+- [BaseEntity](../02-base-entity/README.md)
+- [Application](../03-application/README.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ---
 

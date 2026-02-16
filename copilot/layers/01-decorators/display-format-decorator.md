@@ -1303,7 +1303,7 @@ export const Formatters = {
     boolean: (value: boolean) => value ? '✅ Yes' : '❌ No'
 };
 
-// entities/product.ts
+// entities/products.ts
 import { Formatters } from '@/utils/formatters';
 
 export class Product extends BaseEntity {

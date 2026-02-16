@@ -544,7 +544,11 @@ hideLoadingMenu() {
 
 6. **ConfirmationDialog botón Aceptar DEBE renderizarse condicionalmente**: v-if="dialogInfo.confirmationAction" en botón Aceptar es obligatorio. Para diálogos INFO sin acción, botón no debe aparecer. Solo mostrar Aceptar si hay callback definido ejecutable.
 
-7. **Z-index hierarchy DEBE respetarse**: ConfirmationDialog (1500) > LoadingPopup (1100) > ModalComponent (1000). Confirmation debe estar sobre todo. Modificar z-index rompe jerarquía causando overlaps incorrectos. Z-index son valores establecidos framework-wide.
+7. **Z-index hierarchy DEBE respetarse**: ConfirmationDialog (`var(--z-toast)`) >= LoadingPopup (`var(--z-toast)` o token overlay alto) > ModalComponent (`var(--z-modal)`). Modificar z-index rompe jerarquía causando overlaps incorrectos.
+
+8. **ModalComponent DEBE usar `<style scoped>`**: Los estilos del modal base no deben filtrarse globalmente a otros wrappers/layouts. Cualquier excepción de scope requiere justificación contractual y registro de excepción.
+
+9. **Bindings dinámicos de clase DEBEN evitar concatenación `+`**: en templates de modales, usar arrays/objetos en `:class` en lugar de construir strings concatenadas.
 
 ## 7. Prohibiciones
 
@@ -556,7 +560,7 @@ hideLoadingMenu() {
 
 4. **NUNCA usar v-if para ocultar modales, usar clases CSS**: Los modales usan opacity transitions y pointer-events none, no v-if toggling. v-if desmonta/remonta component quebrando animaciones y event listeners. Usar isShowing boolean con clase closed aplicando opacity 0.
 
-5. **NUNCA modificar z-index de modales inline**: No aplicar :style="{ zIndex: newValue }" a modales. Z-index son constantes framework (1000, 1100, 1500). Modificar causa overlaps impredecibles. Si necesitas modal sobre confirmación, revisar diseño workflow.
+5. **NUNCA modificar z-index de modales inline**: No aplicar :style="{ zIndex: newValue }" a modales. Z-index debe declararse con tokens (`var(--z-modal)`, `var(--z-toast)`, etc.), nunca con números literales.
 
 6. **NUNCA ejecutar código síncrono pesado en confirmationAction**: El callback confirmationAction ejecuta en main thread bloqueante. No ejecutar loops largos, operaciones síncronas pesadas. Para operaciones asíncronas, usar async/await con showLoadingMenu() dentro callback.
 

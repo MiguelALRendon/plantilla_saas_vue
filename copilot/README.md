@@ -6,6 +6,12 @@
 **Total Documentos:** 50+ archivos  
 **ID Base:** DOC
 
+### DECLARACIÓN DE CUMPLIMIENTO CONTRACTUAL
+
+Se declara que toda normalización técnica en este repositorio debe ejecutarse bajo principio SPEC FIRST, manteniendo sincronización bidireccional entre documentación y código conforme a contratos 00-06.
+
+Fecha de declaración operativa: 16 de Febrero, 2026.
+
 ---
 
 ## Navegación Principal

@@ -73,7 +73,7 @@ export class Product extends BaseEntity {
      */
     @PropertyIndex(3)
     @PropertyName('Stringi', StringType)
-    @Disabled((entity) => entity.id == 3)
+    @Disabled((entity: Product) => entity.id == 3)
     @Required(true)
     grupo!: StringType;
 
@@ -137,7 +137,7 @@ export class Product extends BaseEntity {
     @StringTypeDef(StringType.EMAIL)
     @Required(true)
     @HelpText('Email de contacto del proveedor')
-    @AsyncValidation(async (entity) => {
+    @AsyncValidation(async (entity: Product) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return !entity.email?.endsWith('@test.com');
     }, 'El email no puede terminar en @test.com')
@@ -159,7 +159,7 @@ export class Product extends BaseEntity {
      */
     @TabOrder(1)
     @Required(true)
-    @Validation((entity) => entity.listaProductos?.length > 3, 'La cantidad minima tiene que ser mayor a 3')
+    @Validation((entity: Product) => entity.listaProductos?.length > 3, 'La cantidad minima tiene que ser mayor a 3')
     @PropertyName('List', ArrayOf(Product))
     listaProductos!: Array<Product>;
     // #endregion

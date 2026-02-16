@@ -383,7 +383,7 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 
 5. **Botones dialog DEBEN invocar ApplicationUIService methods directamente**: @click="Application.ApplicationUIService.acceptConfigurationMenu()" patrón obligatorio. No crear métodos locales intermedios wrapping service calls. Directness simplifica debugging y garantiza service logic centralizado ejecuta.
 
-6. **Z-index hierarchy DEBE respetarse inmutable**: ConfirmationDialog (1500) > LoadingPopup (1100). No modificar z-index inline via :style. Valores son constantes framework-wide. Modificar rompe jerarquía causando overlaps incorrectos dialog bajo loading.
+6. **Z-index hierarchy DEBE respetarse inmutable**: ConfirmationDialog (`var(--z-toast)`) >= LoadingPopup (`var(--z-toast)` o token de overlay alto). No modificar z-index inline via :style ni usar valores numéricos literales.
 
 7. **confMenuType DEBE usarse para todos dialogs confirmación**: No crear custom dialog types omitiendo enum. Usar INFO, SUCCESS, WARNING, ERROR únicamente. Consistency visual UX framework-wide requiere adherencia strict 4 tipos definidos.
 

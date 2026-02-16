@@ -16,7 +16,7 @@ export default {
         }
     },
     computed: {
-        defaultPropertyValue(): any {
+        defaultPropertyValue(): unknown {
             return (this.itemFromList as BaseEntity).getDefaultPropertyValue();
         }
     }

@@ -1,6 +1,6 @@
 <template>
-    <div :class="'modal-background ' + (isShowing ? '' : 'closed')">
-        <div :class="'modal-structure ' + (isShowing ? '' : 'closed')">
+    <div :class="['modal-background', { closed: !isShowing }]">
+        <div :class="['modal-structure', { closed: !isShowing }]">
             <div class="modal-head">
                 <div class="left-side">
                     <div class="icon">
@@ -105,7 +105,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .modal-background {
     position: fixed;
     top: 0;
@@ -116,7 +116,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
     opacity: 1;
     transition: var(--transition-quick) var(--timing-ease);
 }

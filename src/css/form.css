@@ -190,3 +190,46 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput:has(.main-input:focus).nonvalidated .label-input span {
     color: var(--white) !important;
 }
+
+@media (max-width: 768px) {
+    .TextInput.NumberInput,
+    .TextInput.PasswordInput,
+    .TextInput.DateInput,
+    .TextInput.ObjectInput {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .TextInput.NumberInput button,
+    .TextInput.PasswordInput button,
+    .TextInput.DateInput button,
+    .TextInput.ObjectInput button {
+        width: 100%;
+        min-height: var(--button-height);
+        border-radius: var(--border-radius);
+        border: var(--border-width-thin) solid var(--sky);
+    }
+
+    .TextInput.NumberInput button.left,
+    .TextInput.NumberInput button.right,
+    .TextInput.PasswordInput button.right,
+    .TextInput.DateInput button.right,
+    .TextInput.ObjectInput button.right {
+        border-radius: var(--border-radius);
+        border-left: var(--border-width-thin) solid var(--sky);
+        border-right: var(--border-width-thin) solid var(--sky);
+    }
+
+    .TextInput.PasswordInput input[type="text"],
+    .TextInput.DateInput input[type="text"],
+    .TextInput.ObjectInput input[type="text"],
+    input[type="number"],
+    input[type="password"] {
+        border-radius: var(--border-radius);
+        text-align: left;
+    }
+
+    .TextInput.NumberInput .label-input {
+        left: var(--input-padding);
+    }
+}

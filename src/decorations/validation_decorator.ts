@@ -7,7 +7,7 @@ export const VALIDATION_KEY = Symbol('validation');
 /**
  * Type definition for validation conditions: static boolean or dynamic function.
  */
-export type ValidationCondition = boolean | ((instance: any) => boolean);
+export type ValidationCondition<T = unknown> = boolean | ((instance: T) => boolean);
 
 /**
  * Metadata structure for synchronous property validation.
@@ -52,8 +52,8 @@ export interface ValidationMetadata {
  * @see {@link 02-VALIDATIONS.md | Validation Tutorial §2.2}
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1}
  */
-export function Validation(condition: ValidationCondition, message: string): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+export function Validation<T = unknown>(condition: ValidationCondition<T>, message: string): PropertyDecorator {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[VALIDATION_KEY]) {
             proto[VALIDATION_KEY] = {};

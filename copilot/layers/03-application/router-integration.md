@@ -12,7 +12,7 @@ Sincronizar estado de navegación entre Vue Router y Application singleton media
 - Sincronizar router.currentRoute con Application.View state
 - Ejecutar beforeEach guard para resolver módulo desde params.module
 - Redirigir ruta raíz (/) al primer módulo en ModuleList
-- Integrar con Application mediante initializeRouterWithApplication()
+- Integrar con Application importado directamente en el módulo router
 - Actualizar Application.View cuando URL cambia directamente (navegación browser)
 - Renderizar ComponentContainerComponent para todas las rutas de módulos
 
@@ -25,6 +25,12 @@ Sincronizar estado de navegación entre Vue Router y Application singleton media
 - No controla history back/forward (Vue Router nativo)
 - No persiste estado de navegación (session storage)
 
+### 2.3 Contrato de Tipado Estricto (2026-02-16)
+
+- `src/router/index.ts` no debe usar `any` en casts de clases de módulo.
+- Las clases concretas para navegación deben tiparse con `Record<string, unknown>`.
+- Las definiciones globales de Vue en `src/env.d.ts` deben evitar `any` y usar `unknown`.
+
 ## 3. Definiciones Clave
 
 **Rutas Genéricas**: Rutas con parámetros dinámicos (/:module, /:module/:oid) que funcionan para todas las entidades, eliminando necesidad de rutas por módulo.
@@ -33,7 +39,7 @@ Sincronizar estado de navegación entre Vue Router y Application singleton media
 
 **/:module/:oid Route**: Ruta DetailView genérica (e.g., /products/42, /customers/new) donde :oid es identificador único o 'new'.
 
-**initializeRouterWithApplication()**: Función que recibe Application singleton y configura guards de navegación, necesaria para sincronización.
+**initializeRouterWithApplication()**: Función legacy sin efectos mantenida por compatibilidad retroactiva.
 
 **beforeEach Guard**: Navigation guard ejecutado antes de cada navegación, resuelve moduleClass desde params.module y actualiza Application.View.
 
@@ -96,18 +102,18 @@ const router: Router = createRouter({
 
 createWebHistory para URLs limpias sin #hash. BASE_URL desde import.meta.env para subdirectory deployment.
 
-### 4.3 initializeRouterWithApplication
+### 4.3 Integración con Application
 
 ```typescript
-// src/router/index.ts (línea 42-44)
-let Application: any = null;
+// src/router/index.ts
+import Application from '@/models/application';
 
-export function initializeRouterWithApplication(app: any) {
-    Application = app;
+export function initializeRouterWithApplication(): void {
+    // Legacy no-op: Application se importa directamente
 }
 ```
 
-Guarda referencia a Application singleton para uso en guards y redirects. Llamada en main.js después de crear router.
+Application se usa por import directo en guards y redirects. `initializeRouterWithApplication()` permanece únicamente para evitar rupturas en imports antiguos.
 
 ### 4.4 beforeEach Navigation Guard
 
@@ -174,7 +180,7 @@ router.beforeEach((to, _from, next) => {
 
 **Sync Check**: Solo actualiza Application si URL difiere de Application.View state (evita loops).
 
-**DetailView Handling**: Si oid === 'new', crea instancia con createNewInstance() y llama changeViewToDetailView(). Si oid numérico, componente carga datos.
+**DetailView Handling**: Si oid === 'new', crea instancia con createNewInstance() y sincroniza View. Si oid existente, ejecuta `moduleClass.getElement(oid)` y sincroniza View con la entidad cargada.
 
 **ListView Handling**: Limpia entityOid y llama changeViewToListView() si viewType no es LISTVIEW.
 
@@ -188,7 +194,7 @@ export default router;
 export { initializeRouterWithApplication };
 ```
 
-Export default de router para app.use(router) en main.js. Named export de initializeRouterWithApplication para setup.
+Export default de router para app.use(router) en main.js. Named export de initializeRouterWithApplication se mantiene como legacy no-op.
 
 ## 5. Flujo de Funcionamiento
 
@@ -201,13 +207,7 @@ import router from '@/router'
     ↓
 import Application from '@/models/application'
     ↓
-import { initializeRouterWithApplication } from '@/router'
-    ↓
 Application.ModuleList.value.push(Products, Orders, Customers)
-    ↓
-initializeRouterWithApplication(Application)
-    → Guarda referencia Application en router module
-    → beforeEach guard ahora puede acceder Application
     ↓
 const app = createApp(App)
     ↓
@@ -366,9 +366,9 @@ Opcional: Mostrar toast "Módulo no encontrado"
 
 ### 6.1 Inicialización del Router
 
-1. Llamar initializeRouterWithApplication(Application) ANTES de app.use(router)
-2. Llamar Application.initializeRouter(router) DESPUÉS de app.use(router)
-3. Registrar módulos en ModuleList ANTES de initializeRouterWithApplication()
+1. Llamar Application.initializeRouter(router) durante bootstrap ANTES de cualquier changeView()
+2. Registrar módulos en ModuleList antes de depender de redirect inicial '/'
+3. `initializeRouterWithApplication()` es opcional (legacy no-op)
 4. No crear router instances múltiples (singleton)
 5. Usar createWebHistory para URLs limpias (no createWebHashHistory excepto legacy)
 
@@ -386,7 +386,7 @@ Opcional: Mostrar toast "Módulo no encontrado"
 12. moduleClass resolution OBLIGATORIA con .find() en ModuleList
 13. Si moduleClass no encontrado, ejecutar next(false) para cancelar navegación
 14. Solo actualizar Application.View si URL difiere de state actual (evitar loops)
-15. Para oid === 'new', crear instancia con moduleClass.createNewInstance()
+15. Para oid === 'new', crear instancia con moduleClass.createNewInstance(); para oid existente, cargar con moduleClass.getElement(oid)
 
 ### 6.4 Navegación Programática
 

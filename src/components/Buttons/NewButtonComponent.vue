@@ -7,13 +7,20 @@
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
 
 export default {
     name: 'NewButtonComponent',
     methods: {
         openNewDetailView() {
-            Application.changeViewToDetailView((Application.View.value.entityClass! as any).createNewInstance());
+            const entityClass = Application.View.value.entityClass as
+                | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
+                | null;
+
+            if (!entityClass) return;
+
+            Application.changeViewToDetailView(entityClass.createNewInstance());
         }
     },
     data() {

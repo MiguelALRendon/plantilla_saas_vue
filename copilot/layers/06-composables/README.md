@@ -1,5 +1,13 @@
 # Composables del Framework
 
+## Proposito
+
+Documentar composables de Vue 3 utilizados para encapsular lógica reactiva compartida.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 ## Propósito
 Esta carpeta contiene documentación sobre composables de Vue 3 Composition API utilizados en el Framework SaaS Vue. Los composables son funciones reutilizables que encapsulan lógica reactiva y permiten compartir funcionalidad entre componentes.
 
@@ -8,6 +16,16 @@ Esta carpeta contiene documentación sobre composables de Vue 3 Composition API 
 ### Composables Disponibles
 
 - **[useInputMetadata.md](./useInputMetadata.md)** - Composable para acceder y gestionar metadatos de propiedades de entidades en componentes de formulario, proporcionando acceso reactivo a validaciones, requerimientos y configuración de UI.
+
+## Enlaces Estructurados
+
+- [Índice de Capas](../README.md)
+- [Componentes](../04-components/README.md)
+- [Framework Overview](../../01-FRAMEWORK-OVERVIEW.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ## Arquitectura de Composables
 
@@ -47,4 +65,4 @@ const {
 - [Components Documentation](../04-components/README.md)
 
 ## Última Actualización
-15 de Febrero, 2026
+16 de Febrero, 2026

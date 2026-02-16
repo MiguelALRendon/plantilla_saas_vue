@@ -32,7 +32,7 @@ export const PERSISTENT_KEY_KEY = Symbol('persistent_key');
  * @see {@link 02-FLOW-ARCHITECTURE.md | Architecture Flow §4.2}
  */
 export function PersistentKey(persistentKey: string): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[PERSISTENT_KEY_KEY]) {
             proto[PERSISTENT_KEY_KEY] = {};

@@ -7,7 +7,7 @@ export const DISABLED_KEY = Symbol('disabled');
 /**
  * Type definition for disabled conditions: static boolean or dynamic function.
  */
-export type DisabledCondition = boolean | ((instance: any) => boolean);
+export type DisabledCondition<T = unknown> = boolean | ((instance: T) => boolean);
 
 /**
  * Metadata structure for disabled property state.
@@ -43,8 +43,8 @@ export interface DisabledMetadata {
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1}
  * @see {@link 02-FLOW-ARCHITECTURE.md | Architecture Flow §4.3}
  */
-export function Disabled(condition: DisabledCondition): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+export function Disabled<T = unknown>(condition: DisabledCondition<T>): PropertyDecorator {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[DISABLED_KEY]) {
             proto[DISABLED_KEY] = {};

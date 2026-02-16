@@ -176,10 +176,18 @@ Header, body, footer DEBEN mantenerse en orden y estructura:
 ```vue
 <div :class="['sidebar', { toggled }]">
     <div class="header">...</div>
+
+### 6.7 Scope de Estilos
+
+El componente DEBE declarar bloque `<style scoped>` para evitar fuga de estilos globales sobre otros componentes del layout.
     <div class="body">...</div>
     <div class="footer">...</div>
 </div>
 ```
+
+### 6.8 Z-Index con Tokens
+
+El sidebar DEBE usar `z-index` mediante tokens CSS (`var(--z-dropdown)` o equivalente contractual) y NO valores numéricos directos.
 
 ## 7. Prohibiciones
 

@@ -39,7 +39,7 @@ export default {
     width: 100%;
     font-size: 1.5rem;
     top: var(--topbar-height);
-    z-index: 99999;
+    z-index: var(--z-overlay);
     background-color: var(--white);
     color: var(--gray);
     opacity: 0;

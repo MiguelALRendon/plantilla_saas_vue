@@ -98,6 +98,7 @@ Patrón Singleton con constructor privado, getInstance() retorna única instanci
 - Propósito: Registro de módulos disponibles para navegación
 - Modificación: `Application.ModuleList.value.push(Products)` en src/models/application.ts línea 278
 - Consumido por: SideBarComponent para generar menú, Router para validación
+- Convención de entidad ejemplo: usar la clase `Product` exportada desde `src/entities/products.ts` como fuente única.
 - Ubicación: Línea 67
 
 **modal: Ref\<Modal\>**
@@ -239,6 +240,9 @@ app.mount('#app');
 ```
 
 Orden crítico: initializeRouter() antes de cualquier changeView().
+
+La navegación inicial de módulo debe resolverse por el redirect del router (`/` → `/:module`).
+No se debe forzar `Application.changeViewToDefaultView()` desde bootstrap en `main.ts`.
 
 ## 5. Flujo de Funcionamiento
 

@@ -36,7 +36,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -46,7 +46,7 @@ export default {
     max-height: 100vh;
     transition: var(--transition-slow) var(--timing-ease);
     position: relative;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     background-color: var(--white);
     overflow: hidden;
 }

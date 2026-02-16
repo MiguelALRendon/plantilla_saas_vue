@@ -7,18 +7,18 @@ export const REQUIRED_KEY = Symbol('required');
 /**
  * Type definition for required conditions: static boolean or dynamic function.
  */
-export type RequiredCondition = boolean | ((instance: any) => boolean);
+export type RequiredCondition<T = unknown> = boolean | ((instance: T) => boolean);
 
 /**
  * Metadata structure for required property validation.
  */
-export interface RequiredMetadata {
+export interface RequiredMetadata<T = unknown> {
     /** The condition determining whether the property is required */
-    condition?: RequiredCondition;
+    condition?: RequiredCondition<T>;
     /** Optional custom error message for validation failures */
     message?: string;
     /** Alternative validation function for complex requirements */
-    validation?: RequiredCondition;
+    validation?: RequiredCondition<T>;
 }
 
 /**
@@ -52,14 +52,14 @@ export interface RequiredMetadata {
  * @see {@link 02-VALIDATIONS.md | Validation Tutorial §2}
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1}
  */
-export function Required(conditionOrValidation: RequiredCondition, message?: string): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+export function Required<T = unknown>(conditionOrValidation: RequiredCondition<T>, message?: string): PropertyDecorator {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[REQUIRED_KEY]) {
             proto[REQUIRED_KEY] = {};
         }
 
-        const metadata: RequiredMetadata =
+        const metadata: RequiredMetadata<T> =
             message !== undefined
                 ? { condition: conditionOrValidation, message: message }
                 : { validation: conditionOrValidation };

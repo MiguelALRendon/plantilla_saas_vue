@@ -1,8 +1,37 @@
 # Ejemplos - Índice Semántico
 
+## Proposito
+
+Concentrar ejemplos integrales de implementación de módulos para referencia de adopción.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 **Propósito:** Índice de ejemplos completos de módulos  
 **Última Actualización:** 13 de Febrero, 2026  
 **ID Base:** EX
+
+---
+
+## Propósito
+
+Concentrar ejemplos integrales de implementación de módulos para referencia y aceleración de adopción.
+
+## Elementos
+
+- [classic-module-example.md](classic-module-example.md)
+- [advanced-module-example.md](advanced-module-example.md)
+
+## Enlaces Estructurados
+
+- [Spec Kit](../README.md)
+- [Quick Start](../03-QUICK-START.md)
+- [Tutorials](../tutorials/README.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ---
 
@@ -405,7 +434,7 @@ Ir a: [advanced-module-example.md](advanced-module-example.md) → `EX::advanced
 
 ### Classic Module
 
-**Ubicación:** `/src/entities/Product.ts`
+**Ubicación:** `/src/entities/products.ts`
 
 **Dependencias:**
 - BaseEntity

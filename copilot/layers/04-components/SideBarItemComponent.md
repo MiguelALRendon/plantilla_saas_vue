@@ -82,6 +82,8 @@ Las reglas obligatorias para el uso correcto de SideBarItemComponent son:
 
 **Regla de Evento Click**: No debe agregarse lógica adicional al evento @click. Toda lógica de navegación debe delegarse a Application.changeViewToDefaultView. Agregar lógica personalizada puede causar desincronización entre URL, estado de Application y estado visual del sidebar.
 
+**Regla de Binding de Clases**: El binding de `:class` DEBE usar sintaxis de arrays/objetos de Vue; está prohibida la concatenación con `+` para construir clases dinámicas.
+
 ## 7. Prohibiciones
 
 Las siguientes prácticas están estrictamente prohibidas:

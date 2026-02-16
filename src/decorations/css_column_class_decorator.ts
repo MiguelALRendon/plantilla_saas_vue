@@ -31,7 +31,7 @@ export const CSS_COLUMN_CLASS_KEY = Symbol('css_column_class');
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.4}
  */
 export function CSSColumnClass(cssClass: string): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[CSS_COLUMN_CLASS_KEY]) {
             proto[CSS_COLUMN_CLASS_KEY] = {};

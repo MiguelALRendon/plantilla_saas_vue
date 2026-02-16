@@ -10,7 +10,7 @@ export const MODULE_LIST_COMPONENT_KEY = Symbol('module_list_component');
  * Decorator that specifies a custom Vue component for the entity's list/table view.
  *
  * This decorator replaces the default auto-generated data table with a custom Vue component.
- * Use this when you need custom list layouts, card views, kanban boards, or any specialized
+ * Use this when you need custom list layouts, card views, kanban boards, or other specialized
  * presentation beyond the standard table format.
  *
  * @param {Component} component - The Vue Component to use for the list view
@@ -33,6 +33,6 @@ export const MODULE_LIST_COMPONENT_KEY = Symbol('module_list_component');
  */
 export function ModuleListComponent(component: Component): ClassDecorator {
     return function (target: Function) {
-        (target as any)[MODULE_LIST_COMPONENT_KEY] = component;
+        (target as unknown as Record<PropertyKey, unknown>)[MODULE_LIST_COMPONENT_KEY] = component;
     };
 }

@@ -30,7 +30,7 @@ export const HIDE_IN_DETAIL_VIEW_KEY = Symbol('hide_in_detail_view');
  * @see {@link 01-BASIC-CRUD.md | CRUD Tutorial §2.5}
  */
 export function HideInDetailView(): PropertyDecorator {
-    return function (target: any, propertyKey: string | symbol) {
+    return function (target: object, propertyKey: string | symbol) {
         const proto = target.constructor.prototype;
         if (!proto[HIDE_IN_DETAIL_VIEW_KEY]) {
             proto[HIDE_IN_DETAIL_VIEW_KEY] = {};

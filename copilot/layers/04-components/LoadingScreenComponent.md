@@ -476,13 +476,13 @@ El overlay DEBE posicionarse con `top: 50px` para renderizar debajo del TopBar s
 }
 ```
 
-### Regla 4: Z-Index Muy Alto pero Debajo de Modales
-Z-index DEBE ser muy alto (99999) para estar encima de contenido, pero típicamente debajo de modales full-screen (100000+).
+### Regla 4: Z-Index con Token de Overlay
+Z-index DEBE usar token de overlay (`var(--z-overlay)`) para mantener consistencia con la jerarquía de capas del sistema.
 
 ```css
 /* ✅ CORRECTO */
 .loading-screen {
-    z-index: 99999;  /* Alto pero debajo de modales */
+    z-index: var(--z-overlay);
 }
 
 /* ❌ INCORRECTO - Podría cubrir modales */

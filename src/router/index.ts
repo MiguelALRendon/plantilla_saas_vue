@@ -38,7 +38,7 @@ const router: Router = createRouter({
 });
 
 // Navigation guard to synchronize with Application when URL changes directly
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
     const moduleName = to.params.module as string;
     const oid = to.params.oid as string;
 
@@ -49,6 +49,8 @@ router.beforeEach((to, _from, next) => {
     });
 
     if (moduleClass) {
+        const concreteModuleClass = moduleClass as typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity);
+
         // If navigation comes from direct URL change (not from Application)
         // we need to update Application
         const currentModule = Application.View.value.entityClass;
@@ -60,28 +62,38 @@ router.beforeEach((to, _from, next) => {
         // Only update Application if URL is different from what Application has
         if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
             if (oid && to.meta.viewType === 'detail') {
-                // Detail view - set entityOid
-                Application.View.value.entityOid = oid;
-
-                // If OID is 'new', create a new instance
+                // Detail view
                 if (oid === 'new') {
-                    // Usar Reflect.construct para instanciar la clase concreta
-                    const newEntity: BaseEntity = Reflect.construct(moduleClass, [{}]);
-                    Application.changeViewToDetailView(newEntity);
+                    const newEntity: BaseEntity = concreteModuleClass.createNewInstance();
+                    Application.View.value.entityClass = moduleClass;
+                    Application.View.value.entityObject = newEntity;
+                    Application.View.value.component = moduleClass.getModuleDetailComponent();
+                    Application.View.value.viewType = ViewTypes.DETAILVIEW;
+                    Application.View.value.entityOid = oid;
+                    Application.setButtonList();
                 } else {
-                    // En el futuro aquí se llamará a la API para cargar la entidad
-                    // Por ahora, si no hay entityObject o no coincide, mostrar vista sin datos
-                    // (el componente puede manejar la carga)
-                    console.log('[Router] Preparando detail view para OID:', oid);
+                    try {
+                        const loadedEntity: BaseEntity = await concreteModuleClass.getElement(oid);
+                        Application.View.value.entityClass = moduleClass;
+                        Application.View.value.entityObject = loadedEntity;
+                        Application.View.value.component = moduleClass.getModuleDetailComponent();
+                        Application.View.value.viewType = ViewTypes.DETAILVIEW;
+                        Application.View.value.entityOid = oid;
+                        Application.setButtonList();
+                    } catch (error: unknown) {
+                        console.error('[Router] Failed to load entity for OID:', oid, error);
+                        next(false);
+                        return;
+                    }
                 }
             } else {
                 // List view
+                Application.View.value.entityClass = moduleClass;
+                Application.View.value.entityObject = null;
+                Application.View.value.component = moduleClass.getModuleListComponent();
+                Application.View.value.viewType = ViewTypes.LISTVIEW;
                 Application.View.value.entityOid = '';
-
-                // Change to list view if not there already
-                if (Application.View.value.viewType !== ViewTypes.LISTVIEW) {
-                    Application.changeViewToListView(moduleClass);
-                }
+                Application.setButtonList();
             }
         }
 
@@ -89,7 +101,7 @@ router.beforeEach((to, _from, next) => {
     } else {
         // Module not found
         console.warn('[Router] Module not found:', moduleName);
-        next();
+        next(false);
     }
 });
 
@@ -100,6 +112,5 @@ router.afterEach((to) => {
 
 export default router;
 export function initializeRouterWithApplication(): void {
-    // Function kept for backwards compatibility but no longer needed
-    // Application is now imported directly
+    // Legacy no-op kept for backwards compatibility
 }

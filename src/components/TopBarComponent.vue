@@ -1,7 +1,7 @@
 <template>
     <div class="topbar">
         <div class="top-left-side">
-            <button @click="toggleSidebar" :class="'push-side-nav-button' + (!toggled_bar ? ' toggled' : '')">
+            <button @click="toggleSidebar" :class="['push-side-nav-button', { toggled: !toggled_bar }]">
                 <img :src="ICONS.MENU" alt="" />
             </button>
             <div class="icon">
@@ -12,7 +12,7 @@
         <div class="top-right-side">
             <button
                 @click.stop="openDropdown"
-                :class="'profile_button' + (toggled_profile ? ' toggled' : '')"
+                :class="['profile_button', { toggled: toggled_profile }]"
                 id="dropdown-profile-button"
             >
                 <div class="icon">
@@ -77,7 +77,7 @@ export default {
     flex-direction: row;
     justify-content: space-between;
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
 }
 .topbar .push-side-nav-button,
 .topbar .profile_button {

@@ -1,6 +1,6 @@
 <template>
     <div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]">
-        <div class="dropdown-menu" id="dropdown-element-in-general" :style="dropdownStyle">
+        <div class="dropdown-menu" id="dropdown-element-in-general">
             <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
             <component v-if="dropDownData.component" :is="dropDownData.component"></component>
         </div>
@@ -21,32 +21,10 @@ export default {
         window.removeEventListener('keydown', this.handleKeydown);
     },
     methods: {
-        handleClickOutside(event: MouseEvent) {
-            if (this.dropDownData.showing) {
-                const dropdown = document.getElementById('dropdown-element-in-general');
-                if (!dropdown) return;
+        updateDropdownPosition(): void {
+            const dropdown = document.getElementById('dropdown-element-in-general');
+            if (!dropdown) return;
 
-                if (!dropdown.contains(event.target as Node)) {
-                    Application.ApplicationUIService.closeDropdownMenu();
-                }
-            }
-        },
-        handleKeydown(e: KeyboardEvent) {
-            if (e.key === 'Escape' && this.dropDownData.showing) {
-                Application.ApplicationUIService.closeDropdownMenu();
-            }
-        }
-    },
-    data() {
-        return {
-            Application
-        };
-    },
-    computed: {
-        dropDownData() {
-            return Application.dropdownMenu.value;
-        },
-        dropdownStyle() {
             const data = this.dropDownData;
 
             const posX = parseFloat(data.position_x);
@@ -73,11 +51,45 @@ export default {
                 topPosition = posY - elementHeight;
             }
 
-            return {
-                'max-width': data.width,
-                left: `${leftPosition}px`,
-                top: `${topPosition}px`
-            };
+            dropdown.style.setProperty('--dropdown-max-width', data.width);
+            dropdown.style.setProperty('--dropdown-left', `${leftPosition}px`);
+            dropdown.style.setProperty('--dropdown-top', `${topPosition}px`);
+        },
+        handleClickOutside(event: MouseEvent) {
+            if (this.dropDownData.showing) {
+                const dropdown = document.getElementById('dropdown-element-in-general');
+                if (!dropdown) return;
+
+                if (!dropdown.contains(event.target as Node)) {
+                    Application.ApplicationUIService.closeDropdownMenu();
+                }
+            }
+        },
+        handleKeydown(e: KeyboardEvent) {
+            if (e.key === 'Escape' && this.dropDownData.showing) {
+                Application.ApplicationUIService.closeDropdownMenu();
+            }
+        }
+    },
+    data() {
+        return {
+            Application
+        };
+    },
+    computed: {
+        dropDownData() {
+            return Application.dropdownMenu.value;
+        }
+    },
+    watch: {
+        dropDownData: {
+            handler() {
+                this.$nextTick(() => {
+                    this.updateDropdownPosition();
+                });
+            },
+            deep: true,
+            immediate: true
         }
     }
 };
@@ -90,9 +102,9 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 888;
+    z-index: var(--z-overlay);
     display: flex;
-    transition: opacity 0.5s ease;
+    transition: opacity var(--transition-slow) var(--timing-ease);
     display: flex;
     pointer-events: none;
 }
@@ -102,11 +114,14 @@ export default {
 .dropdown-menu-container .dropdown-menu {
     background-color: var(--white);
     border-radius: var(--border-radius);
-    padding-block-end: 1rem;
+    padding-block-end: var(--spacing-medium);
     width: 100%;
+    max-width: var(--dropdown-max-width, var(--dropdown-default-width));
     height: fit-content;
     pointer-events: all;
     position: absolute;
+    left: var(--dropdown-left, 0);
+    top: var(--dropdown-top, 0);
     box-shadow: var(--shadow-dark);
 }
 .dropdown-menu-container.hidden .dropdown-menu {
@@ -115,10 +130,10 @@ export default {
 
 .dropdown-menu-container .dropdown-menu .dropdown-menu-title {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-small);
     text-align: center;
-    margin-top: 0.5rem;
+    margin-top: var(--spacing-small);
 }
 </style>

@@ -1,8 +1,38 @@
 # Application - Índice Semántico
 
+## Proposito
+
+Proveer índice de navegación para documentación del singleton Application y su integración con router/UI.
+
+## Ultima Actualizacion
+
+16 de Febrero, 2026
+
 **Propósito:** Índice completo del singleton Application  
 **Última Actualización:** 13 de Febrero, 2026  
 **ID Base:** APP
+
+---
+
+## Propósito
+
+Proveer índice de navegación para documentación del singleton Application y su integración con router/UI.
+
+## Elementos
+
+- [application-singleton.md](application-singleton.md)
+- [router-integration.md](router-integration.md)
+- [ui-services.md](ui-services.md)
+
+## Enlaces Estructurados
+
+- [Índice de Capas](../README.md)
+- [BaseEntity](../02-base-entity/README.md)
+- [Componentes](../04-components/README.md)
+
+## Última Actualización
+
+16 de Febrero, 2026
 
 ---
 

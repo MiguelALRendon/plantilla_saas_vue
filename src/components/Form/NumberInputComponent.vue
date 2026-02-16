@@ -1,6 +1,6 @@
 <template>
     <div class="TextInput NumberInput" :class="containerClasses">
-        <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
         <button class="left" @click="decrementValue" :disabled="metadata.disabled.value">
             <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
         </button>
@@ -73,7 +73,7 @@ export default {
         return {
             GGICONS,
             GGCLASS,
-            textInputId: 'text-input-' + this.propertyKey,
+            textInputId: `text-input-${this.propertyKey}`,
             isInputValidated: true,
             validationMessages: [] as string[],
             isFocused: false
