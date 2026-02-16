@@ -23,12 +23,29 @@
     --bg-gray: #f5f5f5;
     --border-gray: lightgray;
     
+    /* Grises extendidos para documentación */
+    --gray-100: #f9fafb;
+    --gray-200: #f3f4f6;
+    --gray-300: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --gray-border: #ddd;
+    --gray-border-light: #d1d5db;
+    --gray-text: #666;
+    --gray-text-alt: #999;
+    --gray-icon: #6c757d;
+    
     /* Colores de acento */
     --accent-red: #db3955;
     --accent-pink: #f33f8a;
     --accent-rose: #b86094;
     --purple-1: #8660b3;
     --purple-2: #9b6585;
+    --purple-custom: #9333ea;
     --lavender: #a796be;
     --sky: #96cff5;
     --blue-1: #98b1e4;
@@ -39,6 +56,44 @@
     --green-main: #4fa3a5;
     --green-soft: #6fbfa3;
     --green-deep: #3f8f7d;
+    
+    /* Paleta extendida de estados y feedback */
+    --error-primary: #ef4444;
+    --error-secondary: #dc3545;
+    --error-tertiary: #e74c3c;
+    --error-alt: #f44336;
+    --error-light: #f87171;
+    --error-lighter: #E57373;
+    --error-lightest: #EF5350;
+    --error-bg: #fff5f5;
+    --error-bg-alt: #fee;
+    
+    --success-primary: #10b981;
+    --success-secondary: #52b5bc;
+    --success-light: #34d399;
+    --success-lighter: #81C784;
+    --success-lightest: #66BB6A;
+    --success-green: #4CAF50;
+    
+    --info-primary: #3b82f6;
+    --info-secondary: #2563eb;
+    --info-light: #64B5F6;
+    --info-lighter: #42A5F5;
+    --info-lightest: #dbeafe;
+    --info-dark: #1e40af;
+    --info-darker: #1d4ed8;
+    
+    --warning-primary: #f59e0b;
+    --warning-secondary: #f5a623;
+    --warning-light: #FFB74D;
+    --warning-lighter: #FFA726;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
+    
+    /* Colores de fondo especiales */
+    --bg-dark: #1a1a1a;
+    --bg-very-light: #f9fafb;
+    --bg-skeleton: #f0f0f0;
 
     /* Colores de botones */
     --btn-primary: #2563eb;
@@ -53,6 +108,17 @@
     --grad-rose-sky: linear-gradient(135deg, var(--accent-rose) 0%, var(--sky) 100%);
     --grad-red-warm: linear-gradient(135deg, var(--accent-red) 0%, var(--warm-1) 100%);
     --grad-lavender-blue: linear-gradient(135deg, var(--lavender) 0%, var(--sky) 100%);
+    
+    /* Gradientes para Toast Components */
+    --grad-toast-success: linear-gradient(135deg, var(--success-light) 0%, var(--success-primary) 100%);
+    --grad-toast-success-alt: linear-gradient(135deg, var(--success-lighter) 0%, var(--success-lightest) 100%);
+    --grad-toast-error: linear-gradient(135deg, var(--error-light) 0%, var(--error-primary) 100%);
+    --grad-toast-error-alt: linear-gradient(135deg, var(--error-lighter) 0%, var(--error-lightest) 100%);
+    --grad-toast-info: linear-gradient(135deg, var(--info-light) 0%, var(--info-lighter) 100%);
+    --grad-toast-warning: linear-gradient(135deg, var(--warning-light) 0%, var(--warning-lighter) 100%);
+    
+    /* Gradientes para Skeleton Loading */
+    --grad-skeleton: linear-gradient(90deg, var(--bg-skeleton) 25%, var(--gray-lighter) 50%, var(--bg-skeleton) 75%);
     
     /* Sombras y overlays */
     --shadow-light: 0 2px 2px rgba(0, 0, 0, 0.05);

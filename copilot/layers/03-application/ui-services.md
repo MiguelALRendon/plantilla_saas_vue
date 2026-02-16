@@ -520,8 +520,8 @@ HTML actualizado:
     ↓
 CSS reacciona:
 :root[data-theme="dark"] {
-    --background-color: #1a1a1a;
-    --text-color: #ffffff;
+    --background-color: var(--bg-dark);
+    --text-color: var(--white);
     ...
 }
     ↓
@@ -962,13 +962,13 @@ const theme = computed(() =>
 
 <style>
 :root {
-    --background-color: #ffffff;
-    --text-color: #000000;
+    --background-color: var(--white);
+    --text-color: var(--black);
 }
 
 [data-theme="dark"] {
-    --background-color: #1a1a1a;
-    --text-color: #ffffff;
+    --background-color: var(--bg-dark);
+    --text-color: var(--white);
 }
 
 body {

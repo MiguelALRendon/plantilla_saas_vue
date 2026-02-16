@@ -759,14 +759,7 @@ background-color: var(--white);  /* Color de fondo del overlay */
 color: var(--gray);              /* Color del texto "Loading..." */
 ```
 
-Estas variables deben definirse en `src/css/constants.css` o archivo de variables globales:
-
-```css
-:root {
-    --white: #ffffff;
-    --gray: #6c757d;
-}
-```
+Estas variables ya están definidas en `src/css/constants.css` como parte del design system tokenizado del framework. Usar directamente sin redefinición local.
 
 ### Dependencias Implícitas
 

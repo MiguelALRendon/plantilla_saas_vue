@@ -79,10 +79,10 @@ export enum ViewGroupRow {
 **TOASTTYPE ENUM:**
 ```typescript
 export enum ToastType {
-    SUCCESS,  // 0 - Verde #10b981
-    ERROR,    // 1 - Rojo #ef4444
-    INFO,     // 2 - Azul #3b82f6
-    WARNING   // 3 - Amarillo #f59e0b
+    SUCCESS,  // 0 - Verde var(--success-primary)
+    ERROR,    // 1 - Rojo var(--error-primary)
+    INFO,     // 2 - Azul var(--info-primary)
+    WARNING   // 3 - Amarillo var(--warning-primary)
 }
 ```
 **USO:** ApplicationUIService.pushToast recibe objeto con type property ToastType, ToastItemComponent mapea type a backgroundColor con computed property getBackgroundColor.
@@ -128,7 +128,7 @@ DefaultDetailView itera properties de entity, obtiene stringType con entity.getS
 DefaultDetailView.groupedProperties itera properties obteniendo viewGroupRow desde entity.getViewGroupRows(), agrupa properties consecutivas con mismo rowType value, crea chunks con rowType SINGLE/PAIR/TRIPLE y array de properties, renderiza FormRowTwoItemsComponent para PAIR con 2 fields o FormRowThreeItemsComponent para TRIPLE con 3 fields.
 
 **PASO 4 - Mostrar Toast Notification:**
-Usuario ejecuta acción como save, código llama ApplicationUIService.pushToast pasando objeto con type ToastType.SUCCESS y message, ToastItemComponent se renderiza con backgroundColor verde #10b981 desde computed getBackgroundColor, toast se auto-elimina después de duration milisegundos default 3000.
+Usuario ejecuta acción como save, código llama ApplicationUIService.pushToast pasando objeto con type ToastType.SUCCESS y message, ToastItemComponent se renderiza con backgroundColor verde var(--success-primary) desde computed getBackgroundColor, toast se auto-elimina después de duration milisegundos default 3000.
 
 **PASO 5 - Abrir Confirmation Dialog:**
 Usuario intenta acción destructiva como delete, código llama ApplicationUIService.openConfirmationMenu pasando objeto con type confMenuType.WARNING y callbacks onConfirm/onCancel, ConfirmationDialogComponent se renderiza con header amarillo, usuario hace clic Confirm ejecutando callback o Cancel cerrando modal.

@@ -235,7 +235,7 @@ const isRequired = computed(() => {
     margin-bottom: 0;
     font-size: 0.875rem;       /* 14px */
     line-height: 1.25rem;
-    color: #6b7280;            /* Gray-500 */
+    color: var(--gray-text);            /* Gray-500 */
     font-style: italic;
 }
 
@@ -243,7 +243,7 @@ const isRequired = computed(() => {
     margin-top: 4px;
     margin-bottom: 0;
     font-size: 0.875rem;
-    color: #ef4444;            /* Red-500 */
+    color: var(--error-primary);            /* Red-500 */
     font-weight: 500;
 }
 
@@ -793,7 +793,7 @@ description!: string;
     margin-bottom: 0;
     font-size: 0.875rem;       /* 14px */
     line-height: 1.25rem;
-    color: #6b7280;            /* Gray-500 */
+    color: var(--gray-text);            /* Gray-500 */
     font-style: italic;
 }
 
@@ -801,7 +801,7 @@ description!: string;
     margin-top: 4px;
     margin-bottom: 0;
     font-size: 0.875rem;
-    color: #ef4444;            /* Red-500 */
+    color: var(--error-primary);            /* Red-500 */
     font-weight: 500;
 }
 
@@ -813,7 +813,7 @@ description!: string;
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
     .help-text {
-        color: #9ca3af;        /* Gray-400 */
+        color: var(--gray-lighter);        /* Gray-400 */
     }
 }
 ```
@@ -1061,14 +1061,14 @@ const isRequired = computed(() => {
 .help-text {
     margin-top: 4px;
     font-size: 0.875rem;
-    color: #6b7280;  /* Gray */
+    color: var(--gray-text);  /* Gray */
     font-style: italic;
 }
 
 .error-text {
     margin-top: 4px;
     font-size: 0.875rem;
-    color: #ef4444;  /* Red */
+    color: var(--error-primary);  /* Red */
     font-weight: 500;
 }
 </style>
@@ -1374,22 +1374,22 @@ export class Product extends BaseEntity {
     margin-bottom: 0;
     font-size: 0.875rem;       /* 14px */
     line-height: 1.25rem;      /* 20px */
-    color: #6b7280;            /* Gray-500 */
+    color: var(--gray-text);            /* Gray-500 */
     font-style: italic;
 }
 
 .help-text a {
-    color: #2563eb;            /* Blue-600 */
+    color: var(--info-primary);            /* Blue-600 */
     text-decoration: underline;
 }
 
 .help-text a:hover {
-    color: #1d4ed8;            /* Blue-700 */
+    color: var(--info-darker);            /* Blue-700 */
 }
 
 /* Dark mode */
 .dark .help-text {
-    color: #9ca3af;            /* Gray-400 */
+    color: var(--gray-lighter);            /* Gray-400 */
 }
 
 /* Help text con icono */
@@ -1404,7 +1404,7 @@ export class Product extends BaseEntity {
     margin-bottom: 0;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    color: #ef4444;            /* Red-500 */
+    color: var(--error-primary);            /* Red-500 */
     font-weight: 500;
 }
 

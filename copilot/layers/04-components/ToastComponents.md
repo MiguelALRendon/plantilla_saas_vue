@@ -451,11 +451,11 @@ Cada ToastType tiene gradiente específico definido en CSS. Para customizar colo
 
 ```css
 .toast-success {
-    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    background: var(--grad-toast-success);
 }
 
 .toast-error {
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    background: var(--grad-toast-error);
 }
 ```
 
@@ -629,22 +629,22 @@ methods: {
 
 ```css
 .toast-success {
-    background: linear-gradient(135deg, #81C784, #66BB6A);
+    background: var(--grad-toast-success-alt);
     color: white;
 }
 
 .toast-error {
-    background: linear-gradient(135deg, #E57373, #EF5350);
+    background: var(--grad-toast-error-alt);
     color: white;
 }
 
 .toast-info {
-    background: linear-gradient(135deg, #64B5F6, #42A5F5);
+    background: var(--grad-toast-info);
     color: white;
 }
 
 .toast-warning {
-    background: linear-gradient(135deg, #FFB74D, #FFA726);
+    background: var(--grad-toast-warning);
     color: white;
 }
 ```

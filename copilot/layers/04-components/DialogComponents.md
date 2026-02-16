@@ -540,7 +540,7 @@ computed: {
 </script>
 
 <style scoped>
-.txt-custom-purple { color: #9333ea; }
+.txt-custom-purple { color: var(--purple-1); }
 </style>
 ```
 

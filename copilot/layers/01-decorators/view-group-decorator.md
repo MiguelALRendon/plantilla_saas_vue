@@ -557,7 +557,7 @@ export default {
 
 <style>
 fieldset {
-    border: 1px solid #ddd;
+    border: 1px solid var(--gray-border);
     border-radius: 4px;
     padding: 16px;
     margin-bottom: 16px;
@@ -663,7 +663,7 @@ export default {
 <style>
 .tabs {
     display: flex;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid var(--gray-border);
 }
 
 .tabs button {
@@ -674,7 +674,7 @@ export default {
 }
 
 .tabs button.active {
-    border-bottom: 3px solid #4CAF50;
+    border-bottom: 3px solid var(--success-primary);
     font-weight: bold;
 }
 </style>

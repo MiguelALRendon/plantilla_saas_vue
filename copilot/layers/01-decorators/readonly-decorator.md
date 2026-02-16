@@ -600,10 +600,10 @@ export default {
 **Estilos CSS Recomendados**
 ```css
 .readonly-field {
-    background-color: #f5f5f5;
+    background-color: var(--gray-bg);
     cursor: not-allowed;
-    border: 1px solid #ddd;
-    color: #666;
+    border: 1px solid var(--gray-border);
+    color: var(--gray-text);
 }
 
 input[readonly], input:disabled {

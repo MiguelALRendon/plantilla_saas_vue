@@ -8,7 +8,7 @@ El decorator Disabled marca propiedad como deshabilitada en interfaz de usuario,
 
 **Responsabilidades cubiertas:**
 - Marcar propiedad como disabled en UI (input disabled attribute = true)
-- Aplicar estilos visuales de disabled (grayed out, opacity 0.6, cursor not-allowed, background-color #f5f5f5)
+- Aplicar estilos visuales de disabled (grayed out, opacity 0.6, cursor not-allowed, background-color var(--gray-bg))
 - Excluir propiedad de toDictionary() output usado en POST/PUT requests al backend
 - Prevenir edición de campo en forms independientemente de user input attempts
 - Soportar disabling estático (boolean true) y dinámico (function que retorna boolean evaluado en runtime)
@@ -216,8 +216,8 @@ const isDisabled = computed(() => {
 
 <style scoped>
 .disabled {
-    background-color: #f5f5f5;
-    color: #999;
+    background-color: var(--gray-bg);
+    color: var(--gray-icon);
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -1243,8 +1243,8 @@ const isDisabled = computed(() => {
 
 <style scoped>
 .disabled {
-    background-color: #f5f5f5;
-    color: #999;
+    background-color: var(--gray-bg);
+    color: var(--gray-icon);
     cursor: not-allowed;
     opacity: 0.6;
 }

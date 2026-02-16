@@ -840,17 +840,17 @@ private validateComplexRule(): boolean {
 
 ```css
 .TextInput {
-    border: 1px solid #ccc;
+    border: 1px solid var(--gray-border);
     transition: border-color 0.3s ease;
 }
 
 .TextInput.nonvalidated {
-    border-color: #dc3545;
-    background-color: #fff5f5;
+    border-color: var(--error-primary);
+    background-color: var(--error-bg);
 }
 
 .validation-messages {
-    color: #dc3545;
+    color: var(--error-primary);
     font-size: 0.875rem;
     margin-top: 0.25rem;
     min-height: 1.2rem; /* Evita saltos de layout */

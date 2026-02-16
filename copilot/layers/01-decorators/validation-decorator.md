@@ -636,11 +636,11 @@ export default {
 
 <style>
 .form-field input.error {
-    border-color: #f44336;
+    border-color: var(--error-primary);
 }
 
 .error-message {
-    color: #f44336;
+    color: var(--error-primary);
     font-size: 0.875rem;
     margin-top: 4px;
 }

@@ -323,18 +323,18 @@ onMounted(() => {
 
 .card-price {
     font-size: 20px;
-    color: #2563eb;
+    color: var(--info-primary);
     font-weight: 700;
 }
 
 .card-stock {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--gray-text);
 }
 
 .card-actions {
     padding: 12px 16px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--gray-border);
     display: flex;
     gap: 8px;
 }
@@ -460,7 +460,7 @@ onMounted(() => {
 .kanban-column {
     flex: 1;
     min-width: 300px;
-    background: #f3f4f6;
+    background: var(--gray-bg);
     border-radius: 8px;
     padding: 16px;
 }
@@ -491,7 +491,7 @@ onMounted(() => {
 
 .order-total {
     font-size: 20px;
-    color: #2563eb;
+    color: var(--info-primary);
     font-weight: 700;
     margin: 8px 0;
 }

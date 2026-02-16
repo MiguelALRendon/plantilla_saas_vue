@@ -550,8 +550,8 @@ async function validate() {
 
 <style scoped>
 .has-error .input-error {
-    border-color: #e74c3c;
-    background-color: #fee;
+    border-color: var(--error-primary);
+    background-color: var(--error-bg);
 }
 
 .error-messages {
@@ -560,7 +560,7 @@ async function validate() {
 
 .error-message {
     display: block;
-    color: #e74c3c;
+    color: var(--error-primary);
     font-size: 12px;
     margin-top: 2px;
 }
