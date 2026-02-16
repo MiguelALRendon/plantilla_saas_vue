@@ -1,5 +1,5 @@
 <template>
-<h2 class="title">{{ entity.getDefaultPropertyValue() }}</h2>
+<h2 class="title">{{ defaultPropertyValue }}</h2>
 
 <div v-for="(group, groupName) in groupedProperties" :key="groupName">
     <FormGroupComponent :title="groupName">
@@ -9,14 +9,14 @@
                 :class="chunk.rowType === 'single' ? 'form-row-single' : ''">
                 <div v-for="prop in chunk.properties" :key="prop">
                     <NumberInputComponent 
-                    v-if="entityClass.getPropertyType(prop) === Number"
+                    v-if="propertyMetadata[prop].showNumberInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
                     v-model="entity[prop]" />
 
                     <ObjectInputComponent 
-                    v-if="isBaseEntityType(prop)"
+                    v-if="propertyMetadata[prop].showObjectInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
@@ -24,21 +24,21 @@
                     v-model="entity[prop]" />
 
                     <DateInputComponent
-                    v-if="entityClass.getPropertyType(prop) === Date"
+                    v-if="propertyMetadata[prop].showDateInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
                     v-model="entity[prop]" />
 
                     <BooleanInputComponent
-                    v-if="entityClass.getPropertyType(prop) === Boolean"
+                    v-if="propertyMetadata[prop].showBooleanInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
                     v-model="entity[prop]" />
 
                     <ListInputComponent
-                    v-if="entityClass.getPropertyType(prop) instanceof EnumAdapter"
+                    v-if="propertyMetadata[prop].showListInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
@@ -47,28 +47,28 @@
 
                     <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
                     <TextInputComponent 
-                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXT"
+                    v-if="propertyMetadata[prop].showTextInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
                     v-model="entity[prop]" />
 
                     <TextAreaComponent 
-                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.TEXTAREA"
+                    v-if="propertyMetadata[prop].showTextAreaInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
                     v-model="entity[prop]" />
 
                     <EmailInputComponent
-                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.EMAIL"
+                    v-if="propertyMetadata[prop].showEmailInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
                     v-model="entity[prop]" />
 
                     <PasswordInputComponent
-                    v-if="entityClass.getPropertyType(prop) === String && entity.getStringType()[prop] == StringType.PASSWORD"
+                    v-if="propertyMetadata[prop].showPasswordInput"
                     :entity-class="entityClass"
                     :entity="entity"
                     :property-key="prop"
@@ -134,6 +134,41 @@ export default {
         // }
     },
     computed: {
+        defaultPropertyValue(): string {
+            return this.entity.getDefaultPropertyValue();
+        },
+        propertyMetadata(): Record<string, {
+            showNumberInput: boolean;
+            showObjectInput: boolean;
+            showDateInput: boolean;
+            showBooleanInput: boolean;
+            showListInput: boolean;
+            showTextInput: boolean;
+            showTextAreaInput: boolean;
+            showEmailInput: boolean;
+            showPasswordInput: boolean;
+        }> {
+            const metadata: Record<string, any> = {};
+            const keys = this.entity.getKeys();
+            
+            for (const prop of keys) {
+                const propType = this.entityClass.getPropertyType(prop);
+                const stringType = this.entity.getStringType()[prop];
+                
+                metadata[prop] = {
+                    showNumberInput: propType === Number,
+                    showObjectInput: propType && propType.prototype instanceof BaseEntity,
+                    showDateInput: propType === Date,
+                    showBooleanInput: propType === Boolean,
+                    showListInput: propType instanceof EnumAdapter,
+                    showTextInput: propType === String && stringType == StringType.TEXT,
+                    showTextAreaInput: propType === String && stringType == StringType.TEXTAREA,
+                    showEmailInput: propType === String && stringType == StringType.EMAIL,
+                    showPasswordInput: propType === String && stringType == StringType.PASSWORD
+                };
+            }
+            return metadata;
+        },
         groupedProperties() {
             const viewGroups = this.entity.getViewGroups();
             const viewGroupRows = this.entity.getViewGroupRows();

@@ -26,7 +26,7 @@ input[type="number"] {
 
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea {
     outline: none;
-    border: 1px solid var(--sky) ;
+    border: var(--border-width-thin) solid var(--sky);
     padding: var(--input-padding);
     border-radius: var(--border-radius);
     font-family: 'Inter', sans-serif;
@@ -51,7 +51,7 @@ input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.
     border-bottom-left-radius: var(--border-radius);
 }
 input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus {
-    border: 2px solid var(--lavender);
+    border: var(--border-width-medium) solid var(--lavender);
 }
 
 .label-input {
@@ -123,19 +123,19 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     background-color: var(--lavender);
     color: var(--white) !important;
     border: none !important;
-    border: 2px solid var(--lavender);
+    border: var(--border-width-medium) solid var(--lavender);
 }
 .TextInput:has(.main-input:focus) button span, .TextInput:has(button:focus) button span {
     color: var(--white) !important;
 }
 .TextInput:has(button:focus) .main-input {
-    border: 2px solid var(--lavender);
+    border: var(--border-width-medium) solid var(--lavender);
 }
 
 .TextInput.NumberInput button, .TextInput.PasswordInput button, .TextInput.DateInput button, .TextInput.ObjectInput button {
     width: var(--icon-button-width);
-    border-top: 1px solid var(--sky);
-    border-bottom: 1px solid var(--sky);
+    border-top: var(--border-width-thin) solid var(--sky);
+    border-bottom: var(--border-width-thin) solid var(--sky);
     font-size: var(--font-size-large);
     display: flex;
     align-items: center;
@@ -146,10 +146,10 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput button span {
     color: var(--sky) !important;
 }
-.TextInput.NumberInput button.left { border-radius: var(--border-radius) 0 0 var(--border-radius); border-left: 1px solid var(--sky); }
+.TextInput.NumberInput button.left { border-radius: var(--border-radius) 0 0 var(--border-radius); border-left: var(--border-width-thin) solid var(--sky); }
 .TextInput.NumberInput button.right, 
 .TextInput.PasswordInput button.right, .TextInput.DateInput button.right, .TextInput.ObjectInput button.right
-{ border-radius: 0 var(--border-radius) var(--border-radius) 0; border-right: 1px solid var(--sky); }
+{ border-radius: 0 var(--border-radius) var(--border-radius) 0; border-right: var(--border-width-thin) solid var(--sky); }
 
 .TextInput.DateInput .date-input {
     position: absolute;

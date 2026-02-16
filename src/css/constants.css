@@ -82,6 +82,11 @@
     --transform-rotate-0: rotate(0deg);
     --transform-rotate-360: rotate(360deg);
     
+    /* Border widths */
+    --border-width-thin: 1px;
+    --border-width-medium: 2px;
+    --border-width-thick: 3px;
+    
     /* Espaciados y dimensiones */
     --padding-small: 0.5rem;
     --padding-medium: 0.75rem;

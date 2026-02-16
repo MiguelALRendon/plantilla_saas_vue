@@ -1,5 +1,5 @@
 <template>
-<div class="TextInput NumberInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
+<div class="TextInput NumberInput" :class="containerClasses">
     <label :for="'id-' + metadata.propertyName" class="label-input">{{ metadata.propertyName }}</label>
     <button class="left" @click="decrementValue" :disabled="metadata.disabled.value">
     <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
@@ -156,6 +156,12 @@ export default {
         },
     },
     computed: {
+        containerClasses(): Record<string, boolean> {
+            return {
+                disabled: this.metadata.disabled.value,
+                nonvalidated: !this.isInputValidated
+            };
+        },
         displayValue(): string {
             if (this.isFocused) {
                 return this.modelValue?.toString() || '';
@@ -172,3 +178,8 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+/* Component-specific styles inherit from global form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>

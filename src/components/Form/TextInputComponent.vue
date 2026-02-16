@@ -1,5 +1,5 @@
 <template>
-<div class="TextInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
+<div class="TextInput" :class="containerClasses">
     <label 
     :for="'id-' + metadata.propertyName" 
     class="label-input">{{ metadata.propertyName }}</label>
@@ -12,7 +12,7 @@
     placeholder=" "
     :value="modelValue"
     :disabled="metadata.disabled.value"
-    @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+    @input="handleInput" />
     
     <div class="help-text" v-if="metadata.helpText.value">
         <span>{{ metadata.helpText.value }}</span>
@@ -62,7 +62,19 @@ export default {
     beforeUnmount() {
         Application.eventBus.off('validate-inputs', this.handleValidation);
     },
+    computed: {
+        containerClasses(): Record<string, boolean> {
+            return {
+                disabled: this.metadata.disabled.value,
+                nonvalidated: !this.isInputValidated
+            };
+        }
+    },
     methods: {
+        handleInput(event: Event): void {
+            const target = event.target as HTMLInputElement;
+            this.$emit('update:modelValue', target.value);
+        },
         async isValidated(): Promise<boolean> {
             let validated: boolean = true;
             this.validationMessages = [];
@@ -105,3 +117,8 @@ export default {
     },
 }
 </script>
+
+<style scoped>
+/* Component-specific styles inherit from global form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>
