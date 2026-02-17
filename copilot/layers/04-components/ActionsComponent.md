@@ -239,17 +239,17 @@ Actualiza estado `isAtTop` basado en posición de scroll:
     z-index: 10;
     display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: var(--spacing-medium);
     align-items: center;
     background-color: var(--white);
-    padding: .75rem;
+    padding: var(--padding-medium);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
-    margin-bottom: 1rem;
+    margin-bottom: var(--margin-medium);
     overflow: hidden;
-    transition: max-width 0.5s ease, opacity 0.3s ease;
+    transition: max-width var(--transition-slow) var(--timing-ease), opacity var(--transition-normal) var(--timing-ease);
     white-space: nowrap;
-    opacity: 0.3;
+    opacity: var(--opacity-disabled);
 }
 
 .floating-actions.at-top {
@@ -267,16 +267,16 @@ Actualiza estado `isAtTop` basado en posición de scroll:
 - **right: 0 + margin-left: auto:** Alineación a la derecha del contenedor
 - **z-index: 10:** Por encima de contenido (z-index 0) pero debajo de overlays (99999+)
 - **display: flex + flex-direction: row:** Botones dispuestos horizontalmente en fila
-- **gap: 1rem:** Separación de 16px entre botones
+- **gap: var(--spacing-medium):** Separación entre botones definida por token
 - **align-items: center:** Alineación vertical centrada de botones
 - **background-color: var(--white):** Fondo blanco sólido para contraste con contenido
-- **padding: .75rem:** Padding interno de 12px
+- **padding: var(--padding-medium):** Padding interno tokenizado
 - **border-radius + box-shadow:** Apariencia de tarjeta elevada
-- **margin-bottom: 1rem:** Separación de 16px del contenido debajo
+- **margin-bottom: var(--margin-medium):** Separación inferior tokenizada
 - **overflow: hidden:** Previene que contenido exceda bordes con border-radius
-- **transition:** Transiciones suaves en max-width (0.5s) y opacity (0.3s)
+- **transition:** Transiciones suaves en max-width y opacity usando tokens de duración y timing
 - **white-space: nowrap:** Previene wrap de contenido de botones
-- **opacity: 0.3:** Estado semi-transparente por defecto cuando scrolled
+- **opacity: var(--opacity-disabled):** Estado semi-transparente por defecto cuando scrolled
 
 **Clase .at-top:**
 - **opacity: 1:** Estado completamente opaco cuando scroll está en top
@@ -570,13 +570,13 @@ El `v-for` DEBE aplicarse directamente a `<component>`, no a un wrapper div para
 </div>
 ```
 
-### Regla 8: Transición Solo en opacity
+### Regla 8: Transición Solo en opacity y valores tokenizados
 La transición de opacity DEBE aplicarse para cambios suaves, NO aplicar transiciones a todas las propiedades.
 
 ```css
 /* ✅ CORRECTO */
 .floating-actions {
-    transition: max-width 0.5s ease, opacity 0.3s ease;
+    transition: max-width var(--transition-slow) var(--timing-ease), opacity var(--transition-normal) var(--timing-ease);
 }
 
 /* ❌ INCORRECTO - Transiciona propiedades no cambiantes */

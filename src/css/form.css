@@ -191,7 +191,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--white) !important;
 }
 
-@media (max-width: 768px) {
+@media (max-width: var(--breakpoint-mobile)) {
     .TextInput.NumberInput,
     .TextInput.PasswordInput,
     .TextInput.DateInput,

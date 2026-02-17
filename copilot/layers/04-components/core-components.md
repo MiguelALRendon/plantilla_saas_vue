@@ -14,7 +14,7 @@ Los componentes core forman estructura principal aplicación proporcionando layo
 - TabControllerComponent.vue: Controlador pestañas headers clickeables setActiveTab index management slot validation
 - TabComponent.vue: Contenedor contenido tab individual display none active class CSS
 - LoadingScreenComponent.vue: Pantalla carga fullscreen opacity transition show-loading hide-loading events
-- DropdownMenu.vue: Menú contextual dropdown posicionamiento inteligente smart position click outside ESC key
+- DropdownMenuComponent.vue: Menú contextual dropdown posicionamiento inteligente smart position click outside ESC key
 
 **RENDERIZADO DINAMICO:**
 ComponentContainerComponent usa component :is="currentComponent" renderizando DefaultListView DefaultDetailView custom views según Application.View.value.component reactive property.
@@ -37,7 +37,7 @@ Props tabs array strings nombres pestañas renderizados v-for div.tab headers cl
 Position absolute top 50px below TopBar height 100% width 100% z-index 99999 highest priority covering all content, opacity 0 pointer-events none hidden default, class active CSS opacity 1 pointer-events all visible blocking interaction, transition opacity 0.3s ease-in-out smooth fade animation. EventBus listeners show-loading hide-loading events emitted ApplicationUIService showLoadingScreen() hideLoadingScreen() methods controlling visibility state.
 
 **DropdownMenu smart positioning:**
-Computed dropdownStyle calcula position left top evitando viewport overflow, centrar horizontalmente leftPosition = posX - (dropdownWidth / 2), ajustar derecha if leftPosition + dropdownWidth mayor canvasWidth, ajustar izquierda if leftPosition menor 0, determinar mitad pantalla isInBottomHalf = posY mayor canvasHeight / 2, mostrar arriba elemento if isInBottomHalf topPosition -= elementHeight, return style object max-width left top CSS inline properties. HandleClickOutside listener closes dropdown click fuera element, handleKeydown listener closes Escape key pressed.
+Computed properties calculan clases de posición (`dropdown-pos-left|center|right`, `dropdown-pos-top|bottom`) y ancho (`dropdown-width-sm|md|lg|xl`) evitando estilos inline. La selección considera límites del viewport y ubicación del trigger. HandleClickOutside listener closes dropdown click fuera element, handleKeydown listener closes Escape key pressed.
 
 ## 4. Descripción Técnica
 

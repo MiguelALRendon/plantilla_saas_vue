@@ -338,7 +338,7 @@ Cadena if/else-if verificando:
 </template>
 
 <script>
-import LookupItem from '@/components/LookupItem.vue';
+import LookupItem from '@/components/Informative/LookupItemComponent.vue';
 import { BaseEntity } from '@/entities/base_entity';
 
 export default {
@@ -451,7 +451,7 @@ export default {
 import { Application } from '@/libs/application/application';
 import { BaseEntity } from '@/entities/base_entity';
 import { GGICONS } from '@/constants/ggicons';
-import { Product } from '@/entities/products';
+import { Product } from '@/entities/product';
 
 export default {
     data() {
@@ -649,6 +649,7 @@ export default {
 18. NO modificar Application.View.value fuera de métodos Application
 19. NO duplicar lógica de renderizado entre vistas (usar components)
 20. NO omitir key único en v-for loops (usar getUniquePropertyValue)
+21. NO usar expresiones condicionales complejas (ternarios encadenados) en template; moverlas a computed/methods
 
 ## 8. Dependencias
 

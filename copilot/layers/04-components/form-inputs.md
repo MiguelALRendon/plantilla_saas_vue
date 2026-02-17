@@ -20,7 +20,7 @@ Este documento describe:
 
 El sistema opera exclusivamente en el contexto de formularios de detalle CRUD. Los inputs se renderizan dinámicamente dentro de DefaultDetailView o vistas personalizadas que manejan instancias de BaseEntity.
 
-**Responsividad contractual:** los estilos de inputs deben incluir reglas `@media` para garantizar legibilidad y operabilidad en viewport móvil, manteniendo estados visuales por clases y sin estilos inline.
+**Responsividad contractual:** los estilos de inputs deben incluir reglas `@media (max-width: var(--breakpoint-mobile))` para garantizar legibilidad y operabilidad en viewport móvil, manteniendo estados visuales por clases y sin estilos inline.
 
 ## 3. Definiciones Clave
 
@@ -183,12 +183,12 @@ La validación es progresiva: Required se verifica primero (presencia de valor),
     disabled: metadata.disabled.value, 
     nonvalidated: !isInputValidated
 }">
-    <label :for="'id-' + metadata.propertyName" class="label-input">
+    <label :for="`id-${metadata.propertyName}`" class="label-input">
         {{ metadata.propertyName }}
     </label>
 
     <input 
-        :id="'id-' + metadata.propertyName" 
+        :id="`id-${metadata.propertyName}`" 
         :value="modelValue"
         :disabled="metadata.disabled.value"
         @input="$emit('update:modelValue', $event.target.value)" 

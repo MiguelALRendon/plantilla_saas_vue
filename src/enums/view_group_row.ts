@@ -1,5 +1,5 @@
 export enum ViewGroupRow {
-    SINGLE = 'single',
-    PAIR = 'pair',
-    TRIPLE = 'triple'
+    SINGLE,
+    PAIR,
+    TRIPLE
 }

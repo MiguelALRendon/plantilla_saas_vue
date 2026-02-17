@@ -8,29 +8,29 @@
 import { BaseEntity } from '@/entities/base_entity';
 
 export default {
-    name: 'DefaultLookupListView',
+    name: 'LookupItemComponent',
     props: {
         itemFromList: {
             type: Object as () => BaseEntity,
-            required: true
-        }
+            required: true,
+        },
     },
     computed: {
         defaultPropertyValue(): unknown {
             return (this.itemFromList as BaseEntity).getDefaultPropertyValue();
-        }
-    }
+        },
+    },
 };
 </script>
 
 <style scoped>
 .lookup-item-card {
     border-radius: var(--border-radius);
-    padding: 1rem;
+    padding: var(--spacing-medium);
     cursor: pointer;
     background-color: var(--white);
-    margin-bottom: 0.75rem;
-    transition: 0.5s ease;
+    margin-bottom: var(--spacing-md);
+    transition: var(--transition-slow) var(--timing-ease);
     box-shadow: var(--shadow-light);
 }
 .lookup-item-card:hover {

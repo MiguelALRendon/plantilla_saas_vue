@@ -9,7 +9,7 @@ Organizar la ruta de aprendizaje práctica del framework mediante tutoriales pro
 16 de Febrero, 2026
 
 **Propósito:** Índice de tutoriales prácticos paso a paso  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 17 de Febrero, 2026  
 **ID Base:** TUT
 
 ---
@@ -348,6 +348,6 @@ Ir a: [../examples/](../examples/)
 
 ---
 
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 17 de Febrero, 2026  
 **Total Tutoriales:** 3  
 **Mantenimiento:** Actualizar al agregar/modificar tutoriales

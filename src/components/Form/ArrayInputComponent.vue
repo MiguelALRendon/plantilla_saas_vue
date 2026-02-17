@@ -77,7 +77,7 @@ import { PropType } from 'vue';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
-import { confMenuType } from '@/enums/conf_menu_type';
+import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 
 export default {
     name: 'ArrayInputComponent',

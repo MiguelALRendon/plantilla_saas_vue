@@ -118,14 +118,14 @@ export interface DropdownMenu {
     canvasHeight: string;      // "1080px" viewport height
 }
 ```
-**POSICIONAMIENTO INTELIGENTE:** DropdownMenu.vue calcula position_x position_y automáticamente obteniendo triggerElement.getBoundingClientRect(), intenta abrir hacia abajo-derecha default, si se sale viewport derecha abre hacia izquierda x = triggerRect.right - menuWidth, si se sale viewport abajo abre hacia arriba y = triggerRect.top - menuHeight, garantiza dropdown siempre visible dentro viewport.
+**POSICIONAMIENTO INTELIGENTE:** DropdownMenuComponent.vue calcula clases de posición y ancho automáticamente a partir de triggerElement y viewport, garantizando visibilidad dentro de pantalla.
 
 **CONFIRMATIONMENU INTERFACE:**
 ```typescript
-import { confMenuType } from "@/enums/conf_menu_type";
+import { ConfMenuType } from "@/enums/conf_menu_type";
 
 export interface confirmationMenu {
-    type: confMenuType;                  // WARNING ERROR INFO SUCCESS
+    type: ConfMenuType;                  // WARNING ERROR INFO SUCCESS
     title: string;                       // "Eliminar producto?"
     message: string;                     // "Esta acción no se puede deshacer"
     confirmationAction?: () => void;     // () => entity.delete() callback
@@ -133,7 +133,7 @@ export interface confirmationMenu {
     cancelButtonText?: string;           // "Cancelar" custom default "Cancelar"
 }
 ```
-**USO:** ApplicationUIService.openConfirmationMenu recibe objeto confirmationMenu estableciendo confirmationMenu.value emitiendo show-confirmation evento, ConfirmationDialogComponent renderiza modal con header color según type mapping confMenuType a backgroundColor, usuario hace clic Aceptar ejecutando confirmationAction callback o Cancelar solo cerrando, closeConfirmationMenu emite hide-confirmation resetea confirmationMenu.value.
+**USO:** ApplicationUIService.openConfirmationMenu recibe objeto confirmationMenu estableciendo confirmationMenu.value emitiendo show-confirmation evento, ConfirmationDialogComponent renderiza modal con header color según type mapping ConfMenuType a backgroundColor, usuario hace clic Aceptar ejecutando confirmationAction callback o Cancelar solo cerrando, closeConfirmationMenu emite hide-confirmation resetea confirmationMenu.value.
 
 **TOAST CLASS:**
 ```typescript
@@ -217,10 +217,10 @@ Usuario hace clic fila customer tabla lookup, LookupItem ejecuta clickedItem(cus
 Usuario hace clic SaveButton iniciando save operation, código ejecuta ApplicationUIService.pushToast({type: ToastType.SUCCESS, title: "Éxito", message: "Guardado", duration: 3000}), service crea newToast = new Toast(message, type) generando ID automático, pushea newToast a ToastList.value array, ToastContainerComponent v-for reactivo renderiza ToastItemComponent con :key="toast.id", ToastItemComponent mounted setTimeout 3000ms llamando removeToast(), timeout completa splice toast desde ToastList array desapareciendo UI con transition.
 
 **PASO 7 - Abrir Confirmation Dialog:**
-Usuario hace clic DeleteButton acción destructiva, código llama ApplicationUIService.openConfirmationMenu({type: confMenuType.WARNING, title: "Eliminar?", message: "No se puede deshacer", confirmationAction: () => entity.delete()}), service establece confirmationMenu.value con datos callback, emite show-confirmation evento, ConfirmationDialogComponent listener establece isVisible true renderizando modal header amarillo WARNING, usuario hace clic Aceptar ejecutando handleConfirm llamando confirmationAction() con entity.delete(), service emite hide-confirmation cierra modal.
+Usuario hace clic DeleteButton acción destructiva, código llama ApplicationUIService.openConfirmationMenu({type: ConfMenuType.WARNING, title: "Eliminar?", message: "No se puede deshacer", confirmationAction: () => entity.delete()}), service establece confirmationMenu.value con datos callback, emite show-confirmation evento, ConfirmationDialogComponent listener establece isVisible true renderizando modal header amarillo WARNING, usuario hace clic Aceptar ejecutando handleConfirm llamando confirmationAction() con entity.delete(), service emite hide-confirmation cierra modal.
 
 **PASO 8 - Posicionar Dropdown Menu:**
-Usuario hace clic botón opciones trigger dropdown, código llama ApplicationUIService.openDropdownMenu recibiendo triggerElement event.target, service calcula const triggerRect = triggerElement.getBoundingClientRect() obteniendo x y width height, calcula posición inicial x = triggerRect.left y = triggerRect.bottom intentando abrir abajo-derecha, verifica if (x + menuWidth > window.innerWidth) ajustando x = triggerRect.right - menuWidth abriendo izquierda, verifica if (y + menuHeight > window.innerHeight) ajustando y = triggerRect.top - menuHeight abriendo arriba, establece dropdownMenu.value con position_x position_y calculadas showing true, DropdownMenu.vue renderiza posición absolute correcta visible dentro viewport.
+Usuario hace clic botón opciones trigger dropdown, código llama ApplicationUIService.openDropdownMenu recibiendo triggerElement event.target, service calcula triggerRect y dimensiones de canvas, establece dropdownMenu.value con datos de posición y tamaño, y DropdownMenuComponent.vue deriva clases horizontales/verticales/anchura para renderizado consistente sin estilos inline.
 
 **PASO 9 - Validar Vista Actual:**
 Usuario hace clic ValidateButton iniciando validation, ejecuta Application.eventBus.emit('validate-inputs') notificando todos input components, cada input ejecuta validateInput() actualizando hasError ref según metadata validations, ValidateButton espera nextTick() permitiendo DOM update, emite validate-entity evento para cross-field validations custom, obtiene entity = Application.View.value.entityObject llamando await entity.validate() ejecutando getPropertyValidations(), actualiza Application.View.value.isValid = result true o false, SaveButton reacciona computed isDisabled habilitando/deshabilitando según isValid state.
@@ -268,7 +268,7 @@ Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, D
 
 **ENUMS:**
 - ViewTypes: LISTVIEW DETAILVIEW LOOKUPVIEW para View.viewType
-- confMenuType: INFO SUCCESS WARNING ERROR para confirmationMenu.type
+- ConfMenuType: INFO SUCCESS WARNING ERROR para confirmationMenu.type
 - ToastType: SUCCESS ERROR INFO WARNING para Toast.type
 
 **ENTITIES:**
@@ -281,7 +281,7 @@ Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, D
 - ActionsComponent: Lee View.viewType decidiendo botones
 - ConfirmationDialogComponent: Lee confirmationMenu.value renderizando modal
 - ToastContainerComponent: Lee ToastList.value array v-for rendering
-- DropdownMenu.vue: Lee dropdownMenu.value posicionando menú
+- DropdownMenuComponent.vue: Lee dropdownMenu.value posicionando menú
 - ListInputComponent: Recibe EnumAdapter.getKeyValuePairs() dropdown options
 
 ## 9. Relaciones
@@ -293,7 +293,7 @@ Application.View.value conecta router con UI, router params module oid establece
 ObjectInputComponent openLookup establece modal.value.modalOnCloseFunction callback, Usuario selección ejecuta closeModalOnFunction pasando selected entity, callback actualiza ObjectInputComponent modelValue, separación estado modal evento show-modal permite modal wrapper renderizar component correcto props apropiadas.
 
 **CONFIRMATIONMENU Y ACCIONES DESTRUCTIVAS:**
-Botones destructivos Delete Discard llaman openConfirmationMenu pasando confirmationAction callback, type confMenuType.WARNING renderiza header amarillo alert visual, usuario Aceptar ejecuta callback acción destructiva, Cancelar solo cierra sin ejecutar, pattern garantiza confirmación explícita usuario acciones irreversibles.
+Botones destructivos Delete Discard llaman openConfirmationMenu pasando confirmationAction callback, type ConfMenuType.WARNING renderiza header amarillo alert visual, usuario Aceptar ejecuta callback acción destructiva, Cancelar solo cierra sin ejecutar, pattern garantiza confirmación explícita usuario acciones irreversibles.
 
 **TOAST Y OPERACIONES ASYNC:**
 SaveButton fetch API muestra loading emite show-loading, success pushToast tipo SUCCESS message positivo, error pushToast tipo ERROR message descriptivo, finally emite hide-loading, ToastItemComponent auto-dismiss 3000ms splice desde ToastList, múltiples toasts simultáneos apilados verticalmente cada ID único :key.
@@ -429,7 +429,7 @@ closeModalOnFunction(param: any) {
 ```typescript
 // Confirmar eliminación
 Application.ApplicationUIService.openConfirmationMenu({
-    type: confMenuType.WARNING,
+    type: ConfMenuType.WARNING,
     title: 'Eliminar producto?',
     message: 'Esta acción no se puede deshacer',
     acceptButtonText: 'Sí, eliminar',
@@ -660,7 +660,7 @@ EnumAdapter usa any type perdiendo type safety porque debe aceptar cualquier enu
 - ToastComponents.md: ToastContainerComponent y ToastItemComponent renderizando Toast instances
 - DropdownMenu.md: Componente lee dropdownMenu.value posicionando menú
 - ListInputComponent.md: Componente usa EnumAdapter.getKeyValuePairs() dropdown options
-- Enums.md: ViewTypes confMenuType ToastType usados en models
+- Enums.md: ViewTypes ConfMenuType ToastType usados en models
 - router.md: Vue Router integración con View.entityOid params navegación
 
 **UBICACION:** copilot/layers/05-advanced/Models.md

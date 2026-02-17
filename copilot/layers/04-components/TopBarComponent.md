@@ -1258,7 +1258,7 @@ SVG icons ofrecen mejor escalabilidad y control de estilo.
 
 - **`src/components/SideBarComponent.vue`:** Componente de sidebar que escucha mismo evento `toggle-sidebar`.
 
-- **`src/components/DropdownMenu.vue`:** Componente de dropdown renderizado cuando TopBar ejecuta `openDropdownMenu()`.
+- **`src/components/DropdownMenuComponent.vue`:** Componente de dropdown renderizado cuando TopBar ejecuta `openDropdownMenu()`.
 
 - **`src/views/list.vue`:** Componente listView pasado como contenido del dropdown de perfil.
 

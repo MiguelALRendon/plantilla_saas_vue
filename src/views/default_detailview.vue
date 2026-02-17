@@ -6,7 +6,7 @@
             <template v-for="(chunk, index) in group" :key="index">
                 <component
                     :is="getRowComponent(chunk.rowType)"
-                    :class="chunk.rowType === 'single' ? 'form-row-single' : ''"
+                    :class="getChunkClass(chunk.rowType)"
                 >
                     <div v-for="prop in chunk.properties" :key="prop">
                         <NumberInputComponent
@@ -210,7 +210,7 @@ export default {
             const viewGroupRows = this.entity.getViewGroupRows();
             const keys = this.entity.getKeys();
 
-            const groups: Record<string, Array<{ rowType: string; properties: string[] }>> = {};
+            const groups: Record<string, Array<{ rowType: ViewGroupRow; properties: string[] }>> = {};
             let currentGroup = 'default';
 
             for (const prop of keys) {
@@ -258,7 +258,7 @@ export default {
         //         console.error('Error loading entity:', error);
         //     }
         // },
-        getRowComponent(rowType: string) {
+        getRowComponent(rowType: ViewGroupRow) {
             switch (rowType) {
                 case ViewGroupRow.SINGLE:
                     return 'div';
@@ -269,6 +269,9 @@ export default {
                 default:
                     return FormComponents.FormRowTwoItemsComponent;
             }
+        },
+        getChunkClass(rowType: ViewGroupRow): string {
+            return rowType === ViewGroupRow.SINGLE ? 'form-row-single' : '';
         },
         isBaseEntityType(prop: string): boolean {
             const propType = this.entityClass.getPropertyType(prop);

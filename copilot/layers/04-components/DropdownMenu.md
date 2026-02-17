@@ -4,7 +4,7 @@
 
 DropdownMenu es un menú desplegable posicionable dinámicamente que aparece como overlay en respuesta a clicks en elementos de UI, renderizando componentes Vue arbitrarios como contenido contextual. El componente implementa posicionamiento inteligente que calcula automáticamente la mejor ubicación para evitar salirse de pantalla, ajustando posición horizontal y vertical según dimensiones de ventana y elemento trigger. Proporciona cierre mediante tecla ESC o click fuera del menú, gestionando listeners globales para detección de eventos. Se integra con Application.dropdownMenu.value como fuente reactiva de estado y utiliza ApplicationUIService para control centralizado de apertura/cierre.
 
-**Ubicación del código fuente:** src/components/DropdownMenu.vue
+**Ubicación del código fuente:** src/components/DropdownMenuComponent.vue
 
 **Patrón de diseño:** Dynamic Component Renderer + Smart Positioning + Global Event Handling
 
@@ -201,9 +201,9 @@ Container DEBE usar token de z-index contractual:
 }
 ```
 
-### 6.7 Posicionamiento sin :style en template
+### 6.7 Posicionamiento por clases
 
-El componente DEBE evitar `:style` inline en el template. El posicionamiento dinámico se realiza actualizando variables CSS (`--dropdown-left`, `--dropdown-top`, `--dropdown-max-width`) desde método del componente.
+El componente DEBE evitar `:style` inline en template y script. El posicionamiento dinámico se resuelve mediante clases semánticas (`dropdown-pos-left|center|right`, `dropdown-pos-top|bottom`) y clases de ancho (`dropdown-width-sm|md|lg|xl`) calculadas en computed properties.
 
 ### 6.8 Tokenización obligatoria de estilos visuales
 
@@ -211,7 +211,7 @@ Todas las propiedades visuales del dropdown (`transition`, `padding`, `font-size
 
 ### 6.9 Fallbacks CSS con tokens
 
-Los fallbacks de variables CSS para width/posición DEBEN ser tokenizados o neutros (`0`) y no valores literales como `250px`.
+Los anchos y offsets por clase DEBEN usar tokens de `constants.css` (por ejemplo `--dropdown-default-width`, `--spacing-*`) y no valores literales hardcodeados.
 
 ## 7. Prohibiciones
 
@@ -225,7 +225,7 @@ Los fallbacks de variables CSS para width/posición DEBEN ser tokenizados o neut
 8. NO usar transiciones CSS en left/top - Solo opacity para performance
 9. NO almacenar estado en data del componente - Application.dropdownMenu.value es fuente única
 10. NO validar contenido del componente hijo - Es responsabilidad del componente hijo
-11. NO usar `:style="..."` en template del dropdown - usar variables CSS actualizadas desde script
+11. NO usar `:style="..."` ni `element.style.setProperty(...)` para posicionamiento del dropdown
 
 ## 8. Dependencias
 
@@ -390,10 +390,31 @@ Confirmation: 1500
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
     padding: 1rem;
-    min-width: 150px;
-    max-width: 400px;
+    min-width: var(--table-width-medium);
+    max-width: var(--table-width-extra-large);
     z-index: 889;
     pointer-events: all;
+}
+
+.dropdown-menu.dropdown-pos-left {
+    left: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-pos-center {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.dropdown-menu.dropdown-pos-right {
+    right: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-pos-top {
+    top: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-pos-bottom {
+    bottom: var(--spacing-small);
 }
 
 .dropdown-menu-title {
@@ -481,4 +502,4 @@ Application.ApplicationUIService.openDropdownMenu(
 - markRaw() API para prevenir reactive proxy
 - Event handling: addEventListener y removeEventListener
 
-**Ubicación del código fuente:** src/components/DropdownMenu.vue
+**Ubicación del código fuente:** src/components/DropdownMenuComponent.vue

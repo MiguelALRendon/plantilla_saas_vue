@@ -48,19 +48,19 @@ export default {
     z-index: var(--z-base);
     display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: var(--spacing-medium);
     align-items: center;
     background-color: var(--white);
-    padding: 0.75rem;
+    padding: var(--padding-medium);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
-    margin-bottom: 1rem;
+    margin-bottom: var(--margin-medium);
     overflow: hidden;
     transition:
-        max-width 0.5s ease,
-        opacity 0.3s ease;
+        max-width var(--transition-slow) var(--timing-ease),
+        opacity var(--transition-normal) var(--timing-ease);
     white-space: nowrap;
-    opacity: 0.3;
+    opacity: var(--opacity-disabled);
 }
 .floating-actions.at-top {
     opacity: 1;

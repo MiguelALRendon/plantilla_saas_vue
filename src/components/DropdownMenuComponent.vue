@@ -1,6 +1,9 @@
 <template>
     <div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]">
-        <div class="dropdown-menu" id="dropdown-element-in-general">
+        <div
+            id="dropdown-element-in-general"
+            :class="['dropdown-menu', dropdownHorizontalClass, dropdownVerticalClass, dropdownWidthClass]"
+        >
             <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
             <component v-if="dropDownData.component" :is="dropDownData.component"></component>
         </div>
@@ -11,7 +14,7 @@
 import Application from '@/models/application';
 
 export default {
-    name: 'DropdownMenu',
+    name: 'DropdownMenuComponent',
     mounted() {
         document.addEventListener('click', this.handleClickOutside);
         window.addEventListener('keydown', this.handleKeydown);
@@ -21,40 +24,6 @@ export default {
         window.removeEventListener('keydown', this.handleKeydown);
     },
     methods: {
-        updateDropdownPosition(): void {
-            const dropdown = document.getElementById('dropdown-element-in-general');
-            if (!dropdown) return;
-
-            const data = this.dropDownData;
-
-            const posX = parseFloat(data.position_x);
-            const posY = parseFloat(data.position_y);
-            const dropdownWidth = parseFloat(data.width);
-            const canvasWidth = parseFloat(data.canvasWidth);
-            const canvasHeight = parseFloat(data.canvasHeight);
-            const elementHeight = parseFloat(data.activeElementHeight);
-
-            let leftPosition = posX - dropdownWidth / 2;
-
-            if (leftPosition + dropdownWidth > canvasWidth) {
-                leftPosition = posX - dropdownWidth;
-            }
-
-            if (leftPosition < 0) {
-                leftPosition = posX;
-            }
-
-            let topPosition = posY;
-            const isInBottomHalf = posY > canvasHeight / 2;
-
-            if (isInBottomHalf) {
-                topPosition = posY - elementHeight;
-            }
-
-            dropdown.style.setProperty('--dropdown-max-width', data.width);
-            dropdown.style.setProperty('--dropdown-left', `${leftPosition}px`);
-            dropdown.style.setProperty('--dropdown-top', `${topPosition}px`);
-        },
         handleClickOutside(event: MouseEvent) {
             if (this.dropDownData.showing) {
                 const dropdown = document.getElementById('dropdown-element-in-general');
@@ -69,29 +38,60 @@ export default {
             if (e.key === 'Escape' && this.dropDownData.showing) {
                 Application.ApplicationUIService.closeDropdownMenu();
             }
-        }
+        },
     },
     data() {
         return {
-            Application
+            Application,
         };
     },
     computed: {
         dropDownData() {
             return Application.dropdownMenu.value;
-        }
+        },
+        dropdownHorizontalClass(): string {
+            const data = this.dropDownData;
+            const posX = parseFloat(data.position_x);
+            const dropdownWidth = parseFloat(data.width);
+            const canvasWidth = parseFloat(data.canvasWidth);
+
+            const centeredLeft = posX - dropdownWidth / 2;
+
+            if (centeredLeft + dropdownWidth > canvasWidth) {
+                return 'dropdown-pos-right';
+            }
+
+            if (centeredLeft < 0) {
+                return 'dropdown-pos-left';
+            }
+
+            return 'dropdown-pos-center';
+        },
+        dropdownVerticalClass(): string {
+            const data = this.dropDownData;
+            const posY = parseFloat(data.position_y);
+            const canvasHeight = parseFloat(data.canvasHeight);
+
+            return posY > canvasHeight / 2 ? 'dropdown-pos-top' : 'dropdown-pos-bottom';
+        },
+        dropdownWidthClass(): string {
+            const width = parseFloat(this.dropDownData.width);
+
+            if (width <= 200) {
+                return 'dropdown-width-sm';
+            }
+
+            if (width <= 280) {
+                return 'dropdown-width-md';
+            }
+
+            if (width <= 360) {
+                return 'dropdown-width-lg';
+            }
+
+            return 'dropdown-width-xl';
+        },
     },
-    watch: {
-        dropDownData: {
-            handler() {
-                this.$nextTick(() => {
-                    this.updateDropdownPosition();
-                });
-            },
-            deep: true,
-            immediate: true
-        }
-    }
 };
 </script>
 
@@ -105,7 +105,6 @@ export default {
     z-index: var(--z-overlay);
     display: flex;
     transition: opacity var(--transition-slow) var(--timing-ease);
-    display: flex;
     pointer-events: none;
 }
 .dropdown-menu-container.hidden {
@@ -116,14 +115,50 @@ export default {
     border-radius: var(--border-radius);
     padding-block-end: var(--spacing-medium);
     width: 100%;
-    max-width: var(--dropdown-max-width, var(--dropdown-default-width));
+    max-width: var(--dropdown-default-width);
     height: fit-content;
     pointer-events: all;
     position: absolute;
-    left: var(--dropdown-left, 0);
-    top: var(--dropdown-top, 0);
     box-shadow: var(--shadow-dark);
 }
+
+.dropdown-menu.dropdown-pos-left {
+    left: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-pos-center {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.dropdown-menu.dropdown-pos-right {
+    right: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-pos-top {
+    top: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-pos-bottom {
+    bottom: var(--spacing-small);
+}
+
+.dropdown-menu.dropdown-width-sm {
+    max-width: var(--table-width-medium);
+}
+
+.dropdown-menu.dropdown-width-md {
+    max-width: var(--dropdown-default-width);
+}
+
+.dropdown-menu.dropdown-width-lg {
+    max-width: var(--table-width-large);
+}
+
+.dropdown-menu.dropdown-width-xl {
+    max-width: var(--table-width-extra-large);
+}
+
 .dropdown-menu-container.hidden .dropdown-menu {
     pointer-events: none;
 }

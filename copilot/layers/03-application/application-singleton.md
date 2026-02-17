@@ -98,7 +98,7 @@ Patrón Singleton con constructor privado, getInstance() retorna única instanci
 - Propósito: Registro de módulos disponibles para navegación
 - Modificación: `Application.ModuleList.value.push(Products)` en src/models/application.ts línea 278
 - Consumido por: SideBarComponent para generar menú, Router para validación
-- Convención de entidad ejemplo: usar la clase `Product` exportada desde `src/entities/products.ts` como fuente única.
+- Convención de entidad ejemplo: usar la clase `Product` exportada desde `src/entities/product.ts` como fuente única.
 - Ubicación: Línea 67
 
 **modal: Ref\<Modal\>**

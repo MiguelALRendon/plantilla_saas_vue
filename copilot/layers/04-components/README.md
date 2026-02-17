@@ -14,12 +14,12 @@ Proporcionar un índice completo y estructura organizativa de toda la documentac
 
 ## Elementos
 
-- [core-components.md](core-components.md)
-- [form-inputs.md](form-inputs.md)
-- [views-overview.md](views-overview.md)
+ - [ActionsComponent.md](ActionsComponent.md)
+ - [DropdownMenu.md](DropdownMenu.md)
+ - [LookupItem.md](LookupItem.md)
 
 ## Enlaces Estructurados
-
+ 17 de Febrero, 2026
 - [Índice de Capas](../README.md)
 - [Decoradores](../01-decorators/README.md)
 - [Application](../03-application/README.md)

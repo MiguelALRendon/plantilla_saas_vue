@@ -2,7 +2,7 @@
 
 **Propósito:** Punto de entrada central a la documentación contractual y técnica del framework  
 **Versión:** 1.0.0  
-**Última Actualización:** 15 de Febrero, 2026  
+**Última Actualización:** 17 de Febrero, 2026  
 **Total Documentos:** 50+ archivos  
 **ID Base:** DOC
 
@@ -59,7 +59,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 1. Contrato de Desarrollo (00-CONTRACT.md)
 
 **ID:** CORE  
-**Líneas:** 866  
+**Líneas:** 902  
 **Estado:** ACTIVO - Obligatorio  
 **Versión:** 2.0.0
 
@@ -86,7 +86,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 2. Framework Overview (01-FRAMEWORK-OVERVIEW.md)
 
 **ID:** FWK  
-**Líneas:** 792  
+**Líneas:** 791  
 **Estado:** ACTIVO  
 **Versión:** 1.0.0
 
@@ -104,7 +104,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 3. Flow Architecture (02-FLOW-ARCHITECTURE.md)
 
 **ID:** FLOW  
-**Líneas:** 921  
+**Líneas:** 920  
 **Estado:** ACTIVO  
 **Versión:** 1.0.0
 
@@ -122,7 +122,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 4. Quick Start (03-QUICK-START.md)
 
 **ID:** QS  
-**Líneas:** 564  
+**Líneas:** 563  
 **Estado:** ACTIVO  
 **Versión:** 1.0.0
 
@@ -140,7 +140,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 5. UI/Design System Contract (04-UI-DESIGN-SYSTEM-CONTRACT.md)
 
 **ID:** UI  
-**Líneas:** 894  
+**Líneas:** 1221  
 **Estado:** ACTIVO - Obligatorio para desarrollo UI  
 **Versión:** 2.0.0
 
@@ -171,7 +171,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 6. Enforcement Technical Contract (05-ENFORCEMENT-TECHNICAL-CONTRACT.md)
 
 **ID:** ENF  
-**Líneas:** 1678  
+**Líneas:** 2267  
 **Estado:** ACTIVO - Obligatorio para desarrollo con IA  
 **Versión:** 2.0.0
 
@@ -190,7 +190,7 @@ MI LÓGICA (4 Axiomas: A1-A4)
 ### 7. Code Styling Standards Contract (06-CODE-STYLING-STANDARDS.md)
 
 **ID:** CST  
-**Líneas:** 1850+  
+**Líneas:** 2864  
 **Estado:** ACTIVO - Obligatorio para todo código  
 **Versión:** 1.0.0
 

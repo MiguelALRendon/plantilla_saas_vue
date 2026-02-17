@@ -59,7 +59,7 @@
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import { confMenuType } from '@/enums/conf_menu_type';
+import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import Application from '@/models/application';
 
 export default {

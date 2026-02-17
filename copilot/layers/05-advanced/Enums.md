@@ -13,7 +13,7 @@ Los enums del framework definen conjuntos cerrados de valores que se usan para t
 - StringType: src/enums/string_type.ts - Define tipo de input HTML para strings
 - ViewGroupRow: src/enums/view_group_row.ts - Controla diseño de filas en formularios
 - ToastType: src/enums/ToastType.ts - Tipos visuales de notificaciones toast
-- confMenuType: src/enums/conf_menu_type.ts - Tipos visuales de diálogos confirmación
+- ConfMenuType: src/enums/conf_menu_type.ts - Tipos visuales de diálogos confirmación
 
 **ENUMS RESERVADOS NO IMPLEMENTADOS:**
 - DetailTypes: src/enums/detail_type.ts - Modo NEW vs EDIT no usado actualmente
@@ -36,7 +36,7 @@ Define 3 disposiciones de campos por fila: SINGLE un campo ocupa 100% ancho, PAI
 **ToastType enum:**
 Define 4 tipos notificaciones temporales: SUCCESS verde con check para operaciones exitosas, ERROR rojo con X para fallos, INFO azul con i para información general, WARNING amarillo con advertencia para avisos.
 
-**confMenuType enum:**
+**ConfMenuType enum:**
 Define 4 tipos diálogos modales: INFO azul para confirmaciones generales, SUCCESS verde para operaciones exitosas, WARNING amarillo para acciones destructivas, ERROR rojo para errores graves.
 
 ## 4. Descripción Técnica
@@ -69,9 +69,9 @@ export enum StringType {
 **VIEWGROUPROW ENUM:**
 ```typescript
 export enum ViewGroupRow {
-    SINGLE = 'single',  // 100% width
-    PAIR = 'pair',      // 50% + 50% width
-    TRIPLE = 'triple'   // 33% + 33% + 33% width
+    SINGLE,  // 0 => 100% width
+    PAIR,    // 1 => 50% + 50% width
+    TRIPLE   // 2 => 33% + 33% + 33% width
 }
 ```
 **USO:** DefaultDetailView.groupedProperties agrupa properties consecutivas con mismo viewGroupRow value en misma fila. SINGLE renderiza div normal, PAIR renderiza FormRowTwoItemsComponent, TRIPLE renderiza FormRowThreeItemsComponent.
@@ -89,14 +89,14 @@ export enum ToastType {
 
 **CONFMENUTYPE ENUM:**
 ```typescript
-export enum confMenuType {
+export enum ConfMenuType {
     INFO,     // 0 - Azul header
     SUCCESS,  // 1 - Verde header
     WARNING,  // 2 - Amarillo header
     ERROR     // 3 - Rojo header
 }
 ```
-**USO:** ApplicationUIService.openConfirmationMenu recibe objeto con type property confMenuType, ConfirmationDialogComponent mapea type a getHeaderColor computed.
+**USO:** ApplicationUIService.openConfirmationMenu recibe objeto con type property ConfMenuType, ConfirmationDialogComponent mapea type a getHeaderColor computed.
 
 **DETAILTYPES ENUM NO USADO:**
 ```typescript
@@ -149,7 +149,7 @@ Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obt
 
 **REGLA 4:** SIEMPRE usar ToastType.SUCCESS para operaciones exitosas, ToastType.ERROR para fallos, mantener semántica consistente.
 
-**REGLA 5:** SIEMPRE usar confMenuType.WARNING para acciones destructivas requiriendo confirmación explícita usuario.
+**REGLA 5:** SIEMPRE usar ConfMenuType.WARNING para acciones destructivas requiriendo confirmación explícita usuario.
 
 **REGLA 6:** SIEMPRE usar decorador @StringTypeDef con StringType enum, NUNCA hardcodear strings "email" "password".
 
@@ -165,7 +165,7 @@ Desarrollador ejecuta console.log ViewTypes[Application.View.value.viewType] obt
 
 **PROHIBIDO:** Usar ToastType.SUCCESS para mostrar errores confundiendo semántica visual verde/rojo.
 
-**PROHIBIDO:** Usar confMenuType.INFO para acciones destructivas que requieren advertencia WARNING clara.
+**PROHIBIDO:** Usar ConfMenuType.INFO para acciones destructivas que requieren advertencia WARNING clara.
 
 **PROHIBIDO:** Usar DetailTypes o MaskSides enums que no están implementados actualmente.
 
@@ -205,7 +205,7 @@ DefaultDetailView selección de componente: StringType.EMAIL → EmailInputCompo
 DefaultDetailView.groupedProperties itera properties consecutivas con mismo viewGroupRow creando chunks, cada chunk renderiza FormRowTwoItemsComponent si PAIR o FormRowThreeItemsComponent si TRIPLE o div simple si SINGLE.
 
 **TOASTTYPE Y CONFMENUTYPE SIMILAR:**
-Ambos definen tipos SUCCESS/ERROR/INFO/WARNING pero para contextos diferentes: ToastType para notificaciones temporales auto-dismiss, confMenuType para modales requiriendo acción usuario explícita Confirm/Cancel.
+Ambos definen tipos SUCCESS/ERROR/INFO/WARNING pero para contextos diferentes: ToastType para notificaciones temporales auto-dismiss, ConfMenuType para modales requiriendo acción usuario explícita Confirm/Cancel.
 
 ## 10. Notas de Implementación
 
@@ -291,12 +291,12 @@ Application.ApplicationUIService.pushToast({
 
 **EJEMPLO CONFMENUTYPE USAGE:**
 ```typescript
-import { confMenuType } from '@/enums/conf_menu_type';
+import { ConfMenuType } from '@/enums/conf_menu_type';
 
 Application.ApplicationUIService.openConfirmationMenu({
     title: 'Eliminar producto?',
     message: 'Esta acción no se puede deshacer',
-    type: confMenuType.WARNING,
+    type: ConfMenuType.WARNING,
     confirmText: 'Eliminar',
     cancelText: 'Cancelar',
     onConfirm: () => {

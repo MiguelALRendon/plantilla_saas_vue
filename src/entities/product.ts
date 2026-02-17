@@ -22,7 +22,7 @@ import {
     TabOrder,
     UniquePropertyKey,
     Validation,
-    ViewGroup
+    ViewGroup,
 } from '@/decorations';
 import { StringType } from '@/enums/string_type.ts';
 

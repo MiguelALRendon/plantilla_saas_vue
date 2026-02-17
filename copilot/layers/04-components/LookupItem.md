@@ -42,7 +42,7 @@ El componente opera exclusivamente en contexto de modales lookup disparados por 
 
 ### Estructura del Componente
 
-**Archivo:** src/components/Informative/LookupItem.vue
+**Archivo:** src/components/Informative/LookupItemComponent.vue
 
 **Props:**
 ```typescript
@@ -54,7 +54,10 @@ El componente opera exclusivamente en contexto de modales lookup disparados por 
 La prop itemFromList recibe instancia completa de BaseEntity (Customer, Product, etc.) que se renderiza como item seleccionable. El componente no recibe metadata adicional, todo se extrae de la entidad misma.
 
 **Template:**
-```vue
+**Archivo:** src/components/Informative/LookupItemComponent.vue
+
+**Ubicación del código fuente:** src/components/Informative/LookupItemComponent.vue
+
 <template>
 <div class="lookup-item-card">
     <span>{{ (itemFromList as BaseEntity).getDefaultPropertyValue() }}</span>
@@ -150,7 +153,7 @@ El @DefaultProperty('name') marca name como propiedad display. LookupItem muestr
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import LookupItem from '@/components/Informative/LookupItem.vue';
+import LookupItem from '@/components/Informative/LookupItemComponent.vue';
 import { Application } from '@/constants/application';
 import type { BaseEntity } from '@/entities/base_entity';
 
@@ -225,7 +228,7 @@ El @click se registra en componente padre (default_lookup_listview), no en Looku
 
 ## 7. Prohibiciones
 
-1. **NUNCA implementar lógica click dentro de LookupItem**: No añadir métodos methods: { handleClick() { ... } } dentro de LookupItem.vue. No emitir custom event @click desde LookupItem. El componente DEBE ser presentacional puro. Toda lógica de selección DEBE residir en vista lookup padre.
+1. **NUNCA implementar lógica click dentro de LookupItem**: No añadir métodos methods: { handleClick() { ... } } dentro de LookupItemComponent.vue. No emitir custom event @click desde LookupItem. El componente DEBE ser presentacional puro. Toda lógica de selección DEBE residir en vista lookup padre.
 
 2. **NUNCA usar LookupItem sin @DefaultProperty en entidad**: No usar LookupItem para renderizar entidades sin @DefaultProperty decorator. El componente fallaría sin feedback útil. Si entidad no puede tener DefaultProperty, crear componente lookup personalizado con lógica display diferente.
 
@@ -410,7 +413,7 @@ Para añadir search box filtrando LookupItems:
 
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue';
-import LookupItem from '@/components/Informative/LookupItem.vue';
+import LookupItem from '@/components/Informative/LookupItemComponent.vue';
 import { Application } from '@/constants/application';
 
 export default defineComponent({
@@ -592,7 +595,7 @@ Pruebas unitarias para LookupItem:
 
 ```typescript
 import { mount } from '@vue/test-utils';
-import LookupItem from '@/components/Informative/LookupItem.vue';
+import LookupItem from '@/components/Informative/LookupItemComponent.vue';
 import { Customer } from '@/entities/customer';
 
 describe('LookupItem', () => {

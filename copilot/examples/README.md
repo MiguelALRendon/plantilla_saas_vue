@@ -9,7 +9,7 @@ Concentrar ejemplos integrales de implementación de módulos para referencia de
 16 de Febrero, 2026
 
 **Propósito:** Índice de ejemplos completos de módulos  
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 17 de Febrero, 2026  
 **ID Base:** EX
 
 ---
@@ -434,7 +434,7 @@ Ir a: [advanced-module-example.md](advanced-module-example.md) → `EX::advanced
 
 ### Classic Module
 
-**Ubicación:** `/src/entities/products.ts`
+**Ubicación:** `/src/entities/product.ts`
 
 **Dependencias:**
 - BaseEntity
@@ -466,6 +466,6 @@ Ir a: [advanced-module-example.md](advanced-module-example.md) → `EX::advanced
 
 ---
 
-**Última Actualización:** 13 de Febrero, 2026  
+**Última Actualización:** 17 de Febrero, 2026  
 **Total Ejemplos:** 2  
 **Mantenimiento:** Actualizar al agregar/modificar ejemplos

@@ -1,4 +1,4 @@
-export enum confMenuType {
+export enum ConfMenuType {
     INFO,
     SUCCESS,
     WARNING,

@@ -1,17 +1,22 @@
 <template>
-    <LookupItem v-for="(item, index) in data" :key="index" :itemFromList="item" @click="clickedItrem(item)" />
+    <LookupItemComponent
+        v-for="(item, index) in data"
+        :key="index"
+        :itemFromList="item"
+        @click="clickedItrem(item)"
+    />
 </template>
 
 <script lang="ts">
 import { BaseEntity } from '@/entities/base_entity';
-import { Product } from '@/entities/products';
-import LookupItem from '@/components/Informative/LookupItem.vue';
+import { Product } from '@/entities/product';
+import LookupItemComponent from '@/components/Informative/LookupItemComponent.vue';
 import Application from '@/models/application';
 
 export default {
     name: 'DefaultLookupListView',
     components: {
-        LookupItem
+        LookupItemComponent
     },
     methods: {
         clickedItrem(item: BaseEntity) {

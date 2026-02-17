@@ -34,7 +34,7 @@ import {
     VIEW_GROUP_KEY,
     VIEW_GROUP_ROW_KEY
 } from '@/decorations';
-import { confMenuType } from '@/enums/conf_menu_type';
+import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
 import { ToastType } from '@/enums/ToastType';
 import Application from '@/models/application';
