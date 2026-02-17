@@ -122,14 +122,14 @@ handleValidation() {
     const metadata = this.metadata;
     const entity = this.entity;
     
-    // Nivel 1: Required con trim
+    /** Nivel 1: Required con trim */
     if (metadata.required && !this.value?.trim()) {
         this.isValid = false;
         this.validationMessages.push(metadata.requiredMessage || 'This field is required');
         return;
     }
     
-    // Nivel 2: Validación síncrona regex
+    /** Nivel 2: Validación síncrona regex */
     if (metadata.validation) {
         const isValid = metadata.validation(entity);
         if (!isValid) {
@@ -139,7 +139,7 @@ handleValidation() {
         }
     }
     
-    // Nivel 3: Validación asíncrona API
+    /** Nivel 3: Validación asíncrona API */
     if (metadata.asyncValidation) {
         await metadata.asyncValidation(entity);
     }

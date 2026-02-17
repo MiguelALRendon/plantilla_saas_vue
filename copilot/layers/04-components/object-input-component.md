@@ -119,7 +119,7 @@ async isValidated(): Promise<boolean> {
     var validated = true;
     this.validationMessages = [];
     
-    // Nivel 1: Required con verificación EmptyEntity
+    /** Nivel 1: Required con verificación EmptyEntity */
     if (this.metadata.required.value && 
         (this.modelValue === null || 
          this.modelValue === undefined || 
@@ -131,7 +131,7 @@ async isValidated(): Promise<boolean> {
         );
     }
     
-    // Nivel 2: Validación síncrona
+    /** Nivel 2: Validación síncrona */
     if (!this.metadata.validated.value) {
         validated = false;
         this.validationMessages.push(
@@ -140,7 +140,7 @@ async isValidated(): Promise<boolean> {
         );
     }
     
-    // Nivel 3: Validación asíncrona
+    /** Nivel 3: Validación asíncrona */
     const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
     if (!isAsyncValid) {
         validated = false;

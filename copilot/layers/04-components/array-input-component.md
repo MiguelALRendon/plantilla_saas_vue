@@ -868,7 +868,7 @@ showDeleteModal() {
         'Confirmar eliminación',
         'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',
         () => {
-            // Callback de confirmación
+            /** Callback de confirmación */
             const updatedArray = this.modelValue.filter(
                 item => !this.selectedItems.includes(item)
             );

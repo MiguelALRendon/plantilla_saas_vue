@@ -42,7 +42,10 @@ import { BaseEntity } from './base_entity.ts';
 @ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])
 @Persistent()
 export class Product extends BaseEntity {
-    // #region PROPERTIES
+    /**
+     * @region PROPERTIES
+     * Product properties with validation and display metadata
+     */
     /**
      * Unique identifier for the product in the database.
      * Required field, hidden in detail view.
@@ -162,11 +165,23 @@ export class Product extends BaseEntity {
     @Validation((entity: Product) => entity.listaProductos?.length > 3, 'La cantidad minima tiene que ser mayor a 3')
     @PropertyName('List', ArrayOf(Product))
     listaProductos!: Array<Product>;
-    // #endregion
+    /**
+     * @endregion
+     */
 
-    // #region METHODS
-    // #endregion
+    /**
+     * @region METHODS
+     * Custom business logic methods for Product entity
+     */
+    /**
+     * @endregion
+     */
 
-    // #region METHODS OVERRIDES
-    // #endregion
+    /**
+     * @region METHODS OVERRIDES
+     * Overridden BaseEntity methods for Product-specific behavior
+     */
+    /**
+     * @endregion
+     */
 }

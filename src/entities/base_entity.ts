@@ -93,7 +93,10 @@ function getErrorMessage(error: unknown): string {
 export abstract class BaseEntity {
     [key: string]: unknown;
 
-    // #region PROPERTIES
+    /**
+     * @region PROPERTIES
+     * Instance properties for entity state management
+     */
     /**
      * Indicates whether the entity is currently in a loading state
      * Used by UI components to show loading indicators
@@ -117,7 +120,9 @@ export abstract class BaseEntity {
      * Optional unique identifier for runtime object management
      */
     public oid?: string;
-    // #endregion
+    /**
+     * @endregion
+     */
 
     /**
      * Creates a new BaseEntity instance
@@ -129,7 +134,10 @@ export abstract class BaseEntity {
         this._originalState = structuredClone(this.toPersistentObject());
     }
 
-    // #region METHODS
+    /**
+     * @region METHODS
+     * Instance methods for entity operations and metadata access
+     */
     /**
      * Sets the entity to loading state
      * Used to indicate async operations in progress
@@ -197,7 +205,7 @@ export abstract class BaseEntity {
         const keys = Object.keys(columns);
         const propertyIndices = this.getPropertyIndices();
 
-        // Sort by PropertyIndex if exists, otherwise by declaration order
+        /** Sort by PropertyIndex if exists, otherwise by declaration order */
         return keys.sort((a, b) => {
             const indexA = propertyIndices[a] ?? Number.MAX_SAFE_INTEGER;
             const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
@@ -504,7 +512,7 @@ export abstract class BaseEntity {
             return format(value);
         }
 
-        // If format is string, replace {value} with current value
+        /** If format is string, replace {value} with current value */
         return format.replace('{value}', value?.toString() ?? '');
     }
 
@@ -538,7 +546,7 @@ export abstract class BaseEntity {
         const arrayKeys = this.getArrayKeys();
         const tabOrders = this.getTabOrders();
 
-        // Ordenar por TabOrder si existe, sino por orden de declaración
+        /** Ordenar por TabOrder si existe, sino por orden de declaración */
         return arrayKeys.sort((a, b) => {
             const orderA = tabOrders[a] ?? Number.MAX_SAFE_INTEGER;
             const orderB = tabOrders[b] ?? Number.MAX_SAFE_INTEGER;
@@ -711,18 +719,18 @@ export abstract class BaseEntity {
         Application.View.value.isValid = true;
         Application.ApplicationUIService.showLoadingMenu();
 
-        // Esperar un tick para que el loading se muestre
+        /** Esperar un tick para que el loading se muestre */
         await new Promise((resolve) => setTimeout(resolve, 50));
 
-        // Emitir evento para que los inputs validen
+        /** Emitir evento para que los inputs validen */
         Application.eventBus.emit('validate-inputs');
 
-        // Esperar a que todas las validaciones asíncronas realmente terminen
+        /** Esperar a que todas las validaciones asíncronas realmente terminen */
         const keys = this.getKeys();
         const asyncValidationPromises = keys.map((key) => this.isAsyncValidation(key));
         await Promise.all(asyncValidationPromises);
 
-        // Esperar un momento adicional para que los inputs procesen los resultados
+        /** Esperar un momento adicional para que los inputs procesen los resultados */
         await new Promise((resolve) => setTimeout(resolve, 50));
 
         this.onValidated();
@@ -1154,12 +1162,8 @@ export abstract class BaseEntity {
     // #endregion
 
     // #region METHODS OVERRIDES
-    // No override methods in BaseEntity
+    /** No override methods in BaseEntity */
     // #endregion
-
-    // ====================
-    // STATIC METHODS
-    // ====================
 
     /**
      * Retrieves all properties without filtering out array types

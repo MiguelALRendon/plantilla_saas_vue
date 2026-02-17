@@ -62,20 +62,20 @@ props: {
 
 ```vue
 <template>
-<div class="TextInput" :class="[{disabled: metadata.disabled.value}, {nonvalidated: !isInputValidated}]">
+<div class="TextInput" :class="containerClasses">
     <label 
-    :for="'id-' + metadata.propertyName" 
+    :for="`id-${metadata.propertyName}`" 
     class="label-input">{{ metadata.propertyName }}</label>
 
     <input 
-    :id="'id-' + metadata.propertyName" 
+    :id="`id-${metadata.propertyName}`" 
     :name="metadata.propertyName" 
     type="text" 
     class="main-input" 
     placeholder=" "
     :value="modelValue"
     :disabled="metadata.disabled.value"
-    @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" />
+    @input="handleInput" />
     
     <div class="help-text" v-if="metadata.helpText.value">
         <span>{{ metadata.helpText.value }}</span>
@@ -88,7 +88,7 @@ props: {
 </template>
 ```
 
-Elemento raíz div.TextInput con clases condicionales disabled y nonvalidated. Label con for vinculado a id del input. Input type="text" con value vinculado a modelValue prop, @input emite update:modelValue con ($event.target as HTMLInputElement).value. Div help-text renderizado condicionalmente si metadata.helpText.value existe. Div validation-messages itera sobre validationMessages array mostrando cada mensaje de error.
+Elemento raíz div.TextInput usa computed property containerClasses para clases condicionales. Label usa template literal :for="\`id-${metadata.propertyName}\`" siguiendo § 06-CODE-STYLING-STANDARDS 6.2 (template literals obligatorios). Input type="text" con :id también usando template literal, value vinculado a modelValue prop, @input ejecuta método handleInput. Div help-text renderizado condicionalmente si metadata.helpText.value existe. Div validation-messages itera sobre validationMessages array mostrando cada mensaje de error.
 
 ### Setup con Composition API
 
@@ -108,14 +108,14 @@ Ejecuta useInputMetadata composable pasando entityClass, entity y propertyKey. R
 ```typescript
 data() {
     return {
-        textInputId: 'text-input-' + this.propertyKey,
+        textInputId: `text-input-${this.propertyKey}`,
         isInputValidated: true,
         validationMessages: [] as string[],
     }
 }
 ```
 
-textInputId: String generado concatenando text-input con propertyKey. isInputValidated: Boolean iniciando en true, cambia a false si validación falla. validationMessages: Array vacío de strings que almacena mensajes de error.
+textInputId: String generado usando template literal concatenando 'text-input-' con propertyKey siguiendo § 06-CODE-STYLING-STANDARDS 6.2. isInputValidated: Boolean iniciando en true, cambia a false si validación falla. validationMessages: Array vacío de strings que almacena mensajes de error.
 
 ### Lifecycle Hooks
 
@@ -174,6 +174,34 @@ async handleValidation() {
 
 Ejecuta isValidated y asigna resultado a isInputValidated. Si isInputValidated es false, actualiza Application.View.value.isValid a false para bloquear guardado global.
 
+### Computed Property containerClasses
+
+```typescript
+computed: {
+    containerClasses(): Record<string, boolean> {
+        return {
+            disabled: this.metadata.disabled.value,
+            nonvalidated: !this.isInputValidated
+        };
+    }
+}
+```
+
+Retorna objeto con clases CSS condicionales. Clase disabled aplicada cuando metadata.disabled.value es true. Clase nonvalidated aplicada cuando isInputValidated es false. Reemplaza sintaxis array literal inline en :class del template siguiendo § 06-CODE-STYLING-STANDARDS 6.13.3 (prohibido código implícito en templates).
+
+### Método handleInput
+
+```typescript
+methods: {
+    handleInput(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        this.$emit('update:modelValue', target.value);
+    }
+}
+```
+
+Maneja evento @input del elemento input HTML. Extrae event.target y lo castea a HTMLInputElement con tipado TypeScript estricto. Emite evento update:modelValue con target.value para v-model binding. Método explícito reemplaza inline $emit en template siguiendo § 06-CODE-STYLING-STANDARDS 6.13.3.
+
 ### Estados CSS
 
 Clase disabled: Aplicada cuando metadata.disabled.value es true. Clase nonvalidated: Aplicada cuando isInputValidated es false después de ejecutar validaciones.
@@ -201,15 +229,17 @@ Clase disabled: Aplicada cuando metadata.disabled.value es true. Clase nonvalida
 ```
 1. Usuario escribe en input HTML
         ↓
-2. Evento @input dispara
+2. Evento @input dispara handleInput(event)
         ↓
-3. $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+3. handleInput extrae value de (event.target as HTMLInputElement)
         ↓
-4. v-model actualiza entity[propertyKey] en componente padre
+4. $emit('update:modelValue', target.value) desde método
         ↓
-5. Vue reactivity propaga cambio
+5. v-model actualiza entity[propertyKey] en componente padre
         ↓
-6. entity.getDirtyState() detecta cambio (originalState !== estado actual)
+6. Vue reactivity propaga cambio
+        ↓
+7. entity.getDirtyState() detecta cambio (originalState !== estado actual)
 ```
 
 ### Flujo de Validación Global
@@ -274,11 +304,11 @@ Validaciones se ejecutan siempre en orden: Required → Sync → Async. Si algun
 
 ## 6. Reglas Obligatorias
 
-Props entityClass, entity, propertyKey y modelValue son OBLIGATORIOS, componente no funciona sin ellos. modelValue DEBE ser String, otros tipos causan error de tipo TypeScript. propertyKey DEBE corresponder a propiedad existente en entity con decorador @PropertyName, caso contrario useInputMetadata no retorna metadatos. @input DEBE emitir update:modelValue con valor string para v-model binding funcione correctamente. mounted DEBE registrar eventBus listener validate-inputs para validación global funcione. beforeUnmount DEBE remover eventBus listener para prevenir memory leaks y errores de componente desmontado. isValidated DEBE ejecutar los tres niveles de validación en orden Required, Sync, Async sin saltos. handleValidation DEBE actualizar Application.View.value.isValid a false si validación falla para bloquear save global. trim DEBE usarse en validación required para rechazar strings con solo espacios. validationMessages DEBE limpiarse al inicio de isValidated para no acumular mensajes de validaciones anteriores.
+Props entityClass, entity, propertyKey y modelValue son OBLIGATORIOS, componente no funciona sin ellos. modelValue DEBE ser String, otros tipos causan error de tipo TypeScript. propertyKey DEBE corresponder a propiedad existente en entity con decorador @PropertyName, caso contrario useInputMetadata no retorna metadatos. handleInput DEBE emitir update:modelValue con valor string para v-model binding funcione correctamente. mounted DEBE registrar eventBus listener validate-inputs para validación global funcione. beforeUnmount DEBE remover eventBus listener para prevenir memory leaks y errores de componente desmontado. isValidated DEBE ejecutar los tres niveles de validación en orden Required, Sync, Async sin saltos. handleValidation DEBE actualizar Application.View.value.isValid a false si validación falla para bloquear save global. trim DEBE usarse en validación required para rechazar strings con solo espacios. validationMessages DEBE limpiarse al inicio de isValidated para no acumular mensajes de validaciones anteriores. containerClasses computed property DEBE retornar objeto con disabled y nonvalidated para clases CSS condicionales.
 
 ## 7. Prohibiciones
 
-NO usar este componente para propiedades con @StringTypeDef, usar componente especializado correspondiente (EmailInputComponent para EMAIL, PasswordInputComponent para PASSWORD, TextAreaComponent para TEXTAREA). NO modificar metadata retornado por useInputMetadata, es read-only reactive ref. NO ejecutar $emit('update:modelValue') sin pasar valor string válido, causa error de tipo. NO registrar múltiples listeners validate-inputs, causa validaciones duplicadas. NO olvidar remover listener en beforeUnmount, causa memory leaks. NO asignar directamente isInputValidated sin ejecutar isValidated, rompe sincronía con estado real de validación. NO ejecutar validación síncrona después de asíncrona, orden estricto Required → Sync → Async. NO usar trim en tipos no-string, solo aplicar en validación required de strings. NO modificar Application.View.value.isValid directamente desde otros métodos que no sean handleValidation. NO agregar lógica de negocio en este componente, validaciones complejas van en decoradores de entidad.
+NO usar este componente para propiedades con @StringTypeDef, usar componente especializado correspondiente (EmailInputComponent para EMAIL, PasswordInputComponent para PASSWORD, TextAreaComponent para TEXTAREA). NO modificar metadata retornado por useInputMetadata, es read-only reactive ref. NO ejecutar $emit('update:modelValue') desde template directo, usar método handleInput. NO registrar múltiples listeners validate-inputs, causa validaciones duplicadas. NO olvidar remover listener en beforeUnmount, causa memory leaks. NO asignar directamente isInputValidated sin ejecutar isValidated, rompe sincronía con estado real de validación. NO ejecutar validación síncrona después de asíncrona, orden estricto Required → Sync → Async. NO usar trim en tipos no-string, solo aplicar en validación required de strings. NO modificar Application.View.value.isValid directamente desde otros métodos que no sean handleValidation. NO agregar lógica de negocio en este componente, validaciones complejas van en decoradores de entidad. NO usar array literal con objetos condicionales en :class, usar computed property containerClasses.
 
 ## 8. Dependencias
 

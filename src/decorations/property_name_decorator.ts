@@ -121,7 +121,7 @@ export function PropertyName(name: string, type: PropertyType): PropertyDecorato
             proto[PROPERTY_TYPE_KEY] = {};
         }
 
-        // Detect if it's an ArrayTypeWrapper
+        /** Detect if it's an ArrayTypeWrapper */
         if (type instanceof ArrayTypeWrapper) {
             proto[PROPERTY_TYPE_KEY][propertyKey] = Array;
 

@@ -216,6 +216,8 @@ Entity class usa @ModuleName("productos") decorator customizando URL, changeView
 
 **REGLA 7:** SIEMPRE usar createWebHistory() HTML5 mode, NUNCA createWebHashHistory() generando URLs con hash # ugly non-SEO.
 
+**REGLA 8:** SIEMPRE documentar bloques de lógica compleja usando JSDoc `/** ... */` siguiendo § 06-CODE-STYLING-STANDARDS 6.6. PROHIBIDO comentarios de una línea `//` excepto en contextos JSDoc internos. Guardrails beforeEach afterEach deben documentarse con JSDoc block explicando propósito y comportamiento.
+
 ## 7. Prohibiciones
 
 **PROHIBIDO:** Llamar router.push() directamente sin actualizar Application.View.value antes causando desync UI state URL.

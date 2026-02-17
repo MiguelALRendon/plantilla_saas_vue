@@ -112,7 +112,7 @@ export default {
                 );
             }
 
-            // Validación asíncrona
+            /** Validación asíncrona */
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
                 validated = false;

@@ -9,7 +9,7 @@ const routes: Array<RouteRecordRaw> = [
         path: '/',
         name: 'Home',
         redirect: () => {
-            // Redirect to first module if it exists
+            /** Redirect to first module if it exists */
             if (Application && Application.ModuleList.value.length > 0) {
                 const firstModule = Application.ModuleList.value[0];
                 const moduleName = firstModule.getModuleName() || firstModule.name;
@@ -37,12 +37,16 @@ const router: Router = createRouter({
     routes
 });
 
-// Navigation guard to synchronize with Application when URL changes directly
+/**
+ * Navigation guard to synchronize Application state with URL changes
+ * Executes before each route navigation to update Application.View based on URL parameters
+ * Prevents infinite loops by comparing current state before updating
+ */
 router.beforeEach(async (to, _from, next) => {
     const moduleName = to.params.module as string;
     const oid = to.params.oid as string;
 
-    // Find the corresponding module
+    /** Find the corresponding module class from ModuleList by name matching */
     const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
         const modName = mod.getModuleName() || mod.name;
         return modName.toLowerCase() === moduleName?.toLowerCase();
@@ -51,18 +55,20 @@ router.beforeEach(async (to, _from, next) => {
     if (moduleClass) {
         const concreteModuleClass = moduleClass as typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity);
 
-        // If navigation comes from direct URL change (not from Application)
-        // we need to update Application
+        /**
+         * Detect if navigation comes from direct URL change (not from Application)
+         * Compare current Application state with URL params to determine if update needed
+         */
         const currentModule = Application.View.value.entityClass;
         const currentModuleName = currentModule
             ? (currentModule.getModuleName() || currentModule.name).toLowerCase()
             : '';
         const currentOid = Application.View.value.entityOid;
 
-        // Only update Application if URL is different from what Application has
+        /** Only update Application if URL is different from current state to prevent loops */
         if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
             if (oid && to.meta.viewType === 'detail') {
-                // Detail view
+                /** Detail view - Handle entity creation or editing */
                 if (oid === 'new') {
                     const newEntity: BaseEntity = concreteModuleClass.createNewInstance();
                     Application.View.value.entityClass = moduleClass;
@@ -87,7 +93,7 @@ router.beforeEach(async (to, _from, next) => {
                     }
                 }
             } else {
-                // List view
+                /** List view - Display table of entities */
                 Application.View.value.entityClass = moduleClass;
                 Application.View.value.entityObject = null;
                 Application.View.value.component = moduleClass.getModuleListComponent();
@@ -99,18 +105,26 @@ router.beforeEach(async (to, _from, next) => {
 
         next();
     } else {
-        // Module not found
+        /** Module not found - Log warning and prevent navigation */
         console.warn('[Router] Module not found:', moduleName);
         next(false);
     }
 });
 
-// Guard after navigation for logging
+/**
+ * After-navigation guard for logging successful navigations
+ * Logs path and entityOid for debugging synchronization
+ */
 router.afterEach((to) => {
     console.log('[Router] Navigated to:', to.path, '| entityOid:', Application.View.value.entityOid);
 });
 
 export default router;
+
+/**
+ * Legacy function kept for backwards compatibility
+ * No longer performs any initialization as Application is imported directly
+ */
 export function initializeRouterWithApplication(): void {
-    // Legacy no-op kept for backwards compatibility
+    /** No-op - Application imported directly at module level */
 }

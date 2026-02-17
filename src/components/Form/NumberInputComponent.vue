@@ -84,7 +84,7 @@ export default {
             const char = event.key;
             const currentValue = (event.target as HTMLInputElement).value;
 
-            // Permitir: números, punto decimal, signo menos al inicio
+            /** Permitir: números, punto decimal, signo menos al inicio */
             const isNumber = /^\d$/.test(char);
             const isDot = char === '.' && !currentValue.includes('.');
             const isMinus = char === '-' && currentValue.length === 0;
@@ -140,7 +140,7 @@ export default {
                 );
             }
 
-            // Validación asíncrona
+            /** Validación asíncrona */
             const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
             if (!isAsyncValid) {
                 validated = false;

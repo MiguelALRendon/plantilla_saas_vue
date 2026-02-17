@@ -12,5 +12,5 @@ const app: VueApp = createApp(App);
 app.use(router);
 app.mount('#app');
 
-// Set document title from AppConfiguration
+/** Set document title from AppConfiguration */
 document.title = Application.AppConfiguration.value.appName;

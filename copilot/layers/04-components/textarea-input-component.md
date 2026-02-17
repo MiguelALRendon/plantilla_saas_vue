@@ -116,7 +116,7 @@ isValidated(): boolean {
     var validated = true;
     this.validationMessages = [];
     
-    // Nivel 1: Required con trim
+    /** Nivel 1: Required con trim */
     if (this.metadata.required.value && 
         (!this.modelValue || this.modelValue.trim() === '')) {
         validated = false;
@@ -126,7 +126,7 @@ isValidated(): boolean {
         );
     }
     
-    // Nivel 2: Validación síncrona
+    /** Nivel 2: Validación síncrona */
     if (!this.metadata.validated.value) {
         validated = false;
         this.validationMessages.push(

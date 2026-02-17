@@ -149,20 +149,20 @@ handleKeyPress(event) {
     const currentValue = event.target.value;
     const cursorPosition = event.target.selectionStart;
     
-    // Permitir teclas de navegación y edición
+    /** Permitir teclas de navegación y edición */
     const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
     if (allowedKeys.includes(key)) return;
     
-    // Permitir dígitos
+    /** Permitir dígitos */
     if (/^\d$/.test(key)) return;
     
-    // Permitir punto decimal único
+    /** Permitir punto decimal único */
     if (key === '.' && !currentValue.includes('.')) return;
     
-    // Permitir signo menos solo al inicio
+    /** Permitir signo menos solo al inicio */
     if (key === '-' && cursorPosition === 0 && !currentValue.includes('-')) return;
     
-    // Bloquear cualquier otra tecla
+    /** Bloquear cualquier otra tecla */
     event.preventDefault();
 }
 ```
@@ -196,7 +196,7 @@ decrementValue() {
 handleBlur() {
     this.focusState = false;
     
-    // Si valor está vacío, asignar 0
+    /** Si valor está vacío, asignar 0 */
     if (this.value === '' || this.value === null || this.value === undefined) {
         this.value = 0;
     }

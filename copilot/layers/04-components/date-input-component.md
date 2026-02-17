@@ -680,13 +680,13 @@ computed: {
     formattedDate(): string {
         if (!this.modelValue) return '';
         
-        // Crear fecha desde string YYYY-MM-DD
+        /** Crear fecha desde string YYYY-MM-DD */
         const date = new Date(this.modelValue + 'T00:00:00');
         
-        // Validar fecha
+        /** Validar fecha */
         if (isNaN(date.getTime())) return '';
         
-        // Formatear a DD/MM/YYYY
+        /** Formatear a DD/MM/YYYY */
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();

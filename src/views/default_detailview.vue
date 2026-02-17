@@ -146,12 +146,14 @@ export default {
         };
     },
     mounted() {
-        // FUTURE: Aquí se implementará la lógica para cargar la entidad desde la API
-        // usando Application.View.value.entityOid cuando entityObject sea null
-        // Ejemplo:
-        // if (!this.entity && Application.View.value.entityOid) {
-        //     this.loadEntityFromAPI(Application.View.value.entityOid);
-        // }
+        /**
+         * FUTURE: Aquí se implementará la lógica para cargar la entidad desde la API
+         * usando Application.View.value.entityOid cuando entityObject sea null
+         * Ejemplo:
+         * if (!this.entity && Application.View.value.entityOid) {
+         *     this.loadEntityFromAPI(Application.View.value.entityOid);
+         * }
+         */
     },
     computed: {
         defaultPropertyValue(): string {
@@ -214,7 +216,7 @@ export default {
             let currentGroup = 'default';
 
             for (const prop of keys) {
-                // Filtrar propiedades ocultas
+                /** Filtrar propiedades ocultas */
                 if (this.entity.isHideInDetailView(prop)) {
                     continue;
                 }
@@ -246,18 +248,20 @@ export default {
         }
     },
     methods: {
-        // FUTURE: Método para cargar entidad desde API
-        // async loadEntityFromAPI(oid: string) {
-        //     try {
-        //         const response = await Application.axiosInstance.get(
-        //             `${this.entityClass.getApiEndpoint()}/${oid}`
-        //         );
-        //         this.entity = new this.entityClass(response.data);
-        //         Application.View.value.entityObject = this.entity;
-        //     } catch (error) {
-        //         console.error('Error loading entity:', error);
-        //     }
-        // },
+        /**
+         * FUTURE: Método para cargar entidad desde API
+         * async loadEntityFromAPI(oid: string) {
+         *     try {
+         *         const response = await Application.axiosInstance.get(
+         *             `${this.entityClass.getApiEndpoint()}/${oid}`
+         *         );
+         *         this.entity = new this.entityClass(response.data);
+         *         Application.View.value.entityObject = this.entity;
+         *     } catch (error) {
+         *         console.error('Error loading entity:', error);
+         *     }
+         * }
+         */
         getRowComponent(rowType: ViewGroupRow) {
             switch (rowType) {
                 case ViewGroupRow.SINGLE:

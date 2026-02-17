@@ -651,7 +651,7 @@ async isValidated(): Promise<boolean> {
     var validated = true;
     this.validationMessages = [];
     
-    // Required: debe ser true
+    /** Required: debe ser true */
     if (this.metadata.required.value && !this.modelValue) {
         validated = false;
         this.validationMessages.push(
@@ -660,7 +660,7 @@ async isValidated(): Promise<boolean> {
         );
     }
     
-    // Sync validation
+    /** Sync validation */
     if (!this.metadata.validated.value) {
         validated = false;
         this.validationMessages.push(
@@ -669,7 +669,7 @@ async isValidated(): Promise<boolean> {
         );
     }
     
-    // Async validation
+    /** Async validation */
     const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
     if (!isAsyncValid) {
         validated = false;

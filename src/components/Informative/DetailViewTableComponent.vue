@@ -74,7 +74,7 @@ export default {
             return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
         },
         openDetailView(entity: BaseEntity) {
-            // Setear entityOid antes de cambiar la vista
+            /** Setear entityOid antes de cambiar la vista */
             const uniqueValue = entity.getUniquePropertyValue();
             if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
                 Application.View.value.entityOid = 'new';

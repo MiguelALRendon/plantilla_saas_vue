@@ -505,6 +505,14 @@ Si success:
 34. No crear event bus custom, usar Application.eventBus compartido
 35. Events tipados en @/types/events.ts
 
+### 6.8 Documentación y JSDoc
+
+36. SIEMPRE documentar propiedades públicas con JSDoc multi-línea `/** ... */`
+37. PROHIBIDO usar comentarios de una línea `//` excepto dentro de JSDoc
+38. Regiones `#region` deben documentarse con JSDoc siguiendo § 06-CODE-STYLING-STANDARDS 6.6
+39. Métodos públicos deben tener JSDoc con @param, @returns, @throws
+40. Referencias a contratos o excepciones deben documentarse inline con `/** § 06-... */` o `/** EXC-XXX ... */`
+
 ## 7. Prohibiciones
 
 ### 7.1 Prohibiciones de Instanciación

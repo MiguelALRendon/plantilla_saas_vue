@@ -181,7 +181,7 @@ export default {
                 );
             }
 
-            // Validación tradicional (síncrona) usando entity si está disponible
+            /** Validación tradicional (síncrona) usando entity si está disponible */
             if (this.entity && this.propertyKey) {
                 const isValid = this.entity.isValidation(this.propertyKey);
                 if (!isValid) {
@@ -189,7 +189,7 @@ export default {
                     this.validationMessages.push(validationMsg || `${this.typeValue?.getModuleName()} is not valid.`);
                 }
             } else if (!this.validated) {
-                // Fallback a la prop validated si no hay entity/propertyKey
+                /** Fallback a la prop validated si no hay entity/propertyKey */
                 this.validationMessages.push(
                     this.validatedMessage || `${this.typeValue?.getModuleName()} is not valid.`
                 );

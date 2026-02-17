@@ -38,7 +38,10 @@ import type { Toast } from './Toast';
 class ApplicationClass implements ApplicationUIContext {
     private static instance: ApplicationClass | null = null;
 
-    // #region PROPERTIES
+    /**
+     * @region PROPERTIES
+     * Reactive and non-reactive properties of the Application singleton
+     */
     /**
      * Application configuration object containing environment variables and settings
      * Type: Ref<AppConfiguration>
@@ -111,7 +114,9 @@ class ApplicationClass implements ApplicationUIContext {
      * Initialized by initializeRouter() and used to synchronize view changes with URL routes
      */
     router: Router | null = null;
-    // #endregion
+    /**
+     * @endregion
+     */
 
     private constructor() {
         this.AppConfiguration = ref<AppConfiguration>({
@@ -198,7 +203,10 @@ class ApplicationClass implements ApplicationUIContext {
         this.ApplicationUIService = new ApplicationUIService(this);
     }
 
-    // #region METHODS
+    /**
+     * @region METHODS
+     * Public and private methods for managing application state and navigation
+     */
     /**
      * Changes the current application view to display a different entity and component
      * Checks for unsaved changes and prompts user confirmation if necessary
@@ -273,11 +281,11 @@ class ApplicationClass implements ApplicationUIContext {
         const moduleName = entityClass.getModuleName() || entityClass.name;
         const moduleNameLower = moduleName.toLowerCase();
 
-        // Prevent navigation if we're already at the correct route
+        /** Prevent navigation if we're already at the correct route */
         const currentRoute = this.router.currentRoute.value;
 
         if (entity) {
-            // Navigate to detailview with OID or 'new'
+            /** Navigate to detailview with OID or 'new' */
             const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
             if (currentRoute.path !== targetPath) {
                 this.router
@@ -289,14 +297,14 @@ class ApplicationClass implements ApplicationUIContext {
                         }
                     })
                     .catch((err: unknown): void => {
-                        // Ignorar errores de navegación duplicada
+                        /** Ignore duplicated navigation errors */
                         if (err instanceof Error && err.name !== 'NavigationDuplicated') {
                             console.error('[Application] Error al navegar:', err);
                         }
                     });
             }
         } else {
-            // Navegar a listview
+            /** Navigate to listview */
             const targetPath = `/${moduleNameLower}`;
             if (currentRoute.path !== targetPath) {
                 this.router
@@ -395,10 +403,17 @@ class ApplicationClass implements ApplicationUIContext {
     initializeRouter(router: Router) {
         this.router = router;
     }
-    // #endregion
+    /**
+     * @endregion
+     */
 
-    // #region METHODS OVERRIDES
-    // #endregion
+    /**
+     * @region METHODS OVERRIDES
+     * Reserved for method overrides if ApplicationClass is extended (currently unused)
+     */
+    /**
+     * @endregion
+     */
 
     /**
      * Returns the singleton instance of ApplicationClass

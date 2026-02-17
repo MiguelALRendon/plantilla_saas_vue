@@ -272,14 +272,16 @@ export default {
         };
     },
     mounted() {
-        // FUTURE: Implementar carga de entidad desde API
-        // if (!this.entity && this.entityOid) {
-        //     const endpoint = this.entityClass.getApiEndpoint();
-        //     axios.get(`${endpoint}/${this.entityOid}`)
-        //         .then(response => {
-        //             this.entity = new this.entityClass(response.data);
-        //         });
-        // }
+        /**
+         * FUTURE: Implementar carga de entidad desde API
+         * if (!this.entity && this.entityOid) {
+         *     const endpoint = this.entityClass.getApiEndpoint();
+         *     axios.get(`${endpoint}/${this.entityOid}`)
+         *         .then(response => {
+         *             this.entity = new this.entityClass(response.data);
+         *         });
+         * }
+         */
     },
 };
 </script>
@@ -894,6 +896,10 @@ describe('default_detailview', () => {
 ### FUTURE: Cargar Entidad desde API en DetailView
 
 ```javascript
+/**
+ * FUTURE: Load entity from API when entityOid is present but entityObject is null
+ * @description When navigating to detail view via route params, this would load the entity data
+ */
 async mounted() {
     const entityOid = this.$route.params.oid;
     if (!this.entity && entityOid) {
