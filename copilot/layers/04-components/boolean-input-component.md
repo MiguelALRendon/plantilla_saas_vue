@@ -875,8 +875,8 @@ Los iconos se pueden cambiar modificando:
 
 - **Overview:** `form-inputs.md`
 - **Composable:** `useInputMetadata-composable.md`
-- **Required Decorator:** `../../01-decorators/required-decorator.md`
-- **Disabled Decorator:** `../../01-decorators/disabled-decorator.md`
+- **Required Decorator:** `../01-decorators/required-decorator.md`
+- **Disabled Decorator:** `../01-decorators/disabled-decorator.md`
 - **Icons:** `src/constants/ggicons.ts`
 
 ---

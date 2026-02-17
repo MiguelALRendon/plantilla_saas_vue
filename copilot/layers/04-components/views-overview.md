@@ -968,14 +968,14 @@ export default {
 - [FormLayoutComponents.md](FormLayoutComponents.md) - FormGroup y FormRow components
 - [LookupItem.md](LookupItem.md) - Item seleccionable lookup
 - [TabComponent.md](TabComponent.md) - Sistema tabs
-- [../../02-base-entity/metadata-access.md](../../02-base-entity/metadata-access.md) - Métodos metadata BaseEntity
-- [../../02-base-entity/view-groups.md](../../02-base-entity/view-groups.md) - Sistema ViewGroup y ViewGroupRow
-- [../../03-application/view-management.md](../../03-application/view-management.md) - Gestión vistas Application
-- [../../03-application/navigation.md](../../03-application/navigation.md) - changeViewToListView y changeViewToDetailView
-- [../../01-decorators/view-group-decorator.md](../../01-decorators/view-group-decorator.md) - @ViewGroup
-- [../../01-decorators/view-group-row-decorator.md](../../01-decorators/view-group-row-decorator.md) - @ViewGroupRow
-- [../../01-decorators/hide-in-list-view-decorator.md](../../01-decorators/hide-in-list-view-decorator.md) - @HideInListView
-- [../../01-decorators/hide-in-detail-view-decorator.md](../../01-decorators/hide-in-detail-view-decorator.md) - @HideInDetailView
+- [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md) - Métodos metadata BaseEntity
+- [../02-base-entity/base-entity-core.md](../02-base-entity/base-entity-core.md) - Sistema ViewGroup y ViewGroupRow
+- [../03-application/application-singleton.md](../03-application/application-singleton.md) - Gestión vistas Application
+- [../03-application/router-integration.md](../03-application/router-integration.md) - changeViewToListView y changeViewToDetailView
+- [../01-decorators/view-group-decorator.md](../01-decorators/view-group-decorator.md) - @ViewGroup
+- [../01-decorators/view-group-row-decorator.md](../01-decorators/view-group-row-decorator.md) - @ViewGroupRow
+- [../01-decorators/hide-in-list-view-decorator.md](../01-decorators/hide-in-list-view-decorator.md) - @HideInListView
+- [../01-decorators/hide-in-detail-view-decorator.md](../01-decorators/hide-in-detail-view-decorator.md) - @HideInDetailView
 
 ### Código Fuente
 - src/views/default_listview.vue

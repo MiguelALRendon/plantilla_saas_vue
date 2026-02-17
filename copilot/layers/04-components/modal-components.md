@@ -772,13 +772,11 @@ describe('ModalComponent', () => {
 **Documentos Relacionados:**
 - [DialogComponents.md](DialogComponents.md): Documentación detallada ConfirmationDialog y LoadingPopup components
 - [core-components.md](core-components.md): Componentes core framework incluyendo estructura general
-- ../../03-application/ui-services.md: ApplicationUIService methods completos (showModal, closeModal, openConfirmationMenu, etc.)
-- ../../03-application/event-bus.md: Event Bus architecture y eventos disponibles framework
-- ../../03-application/application-state.md: Application.modal.value y Application.confirmationMenu.value state structures
-- ../../05-advanced/Enums.md: ViewTypes enum y confMenuType enum definiciones completas
-- ../views/default-listview.md: Vista renderizada en modal para LISTVIEW
-- ../views/default-detailview.md: Vista renderizada en modal para DETAILVIEW
-- ../views/default-lookup-listview.md: Vista renderizada en modal para LOOKUPVIEW
+- ../03-application/ui-services.md: ApplicationUIService methods completos (showModal, closeModal, openConfirmationMenu, etc.)
+- ../03-application/event-bus.md: Event Bus architecture y eventos disponibles framework
+- ../03-application/application-singleton.md: Application.modal.value y Application.confirmationMenu.value state structures
+- ../05-advanced/Enums.md: ViewTypes enum y confMenuType enum definiciones completas
+- [views-overview.md](views-overview.md): Vista renderizada en modal para LISTVIEW/DETAILVIEW/LOOKUPVIEW
 - [LookupItem.md](LookupItem.md): Componente item individual dentro lookup modal
 - [object-input-component.md](object-input-component.md): Input que dispara apertura lookup modal
 - [ToastComponents.md](ToastComponents.md): Sistema toast notifications complementario a modales

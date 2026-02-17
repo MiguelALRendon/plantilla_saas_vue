@@ -657,11 +657,11 @@ ModuleName define text labels modules ModuleIcon define visual icons. Custom Lis
 - [module-custom-components-decorator](./module-custom-components-decorator.md): Decorador ModuleCustomComponents property-level custom input components DetailView forms different scope ListView display bulk records
 - [module-name-decorator](./module-name-decorator.md): Decorador ModuleName define text labels modules custom ListView components SHOULD display module names headers maintaining identity consistency
 - [module-icon-decorator](./module-icon-decorator.md): Decorador ModuleIcon define visual icons modules custom ListView components SHOULD display icons headers visual identity consistency branding
-- [application-views](../../03-application/application-views.md): Application singleton View reactive ref state management coordination changeView() navigation API central integration point
-- [router-integration](../../03-application/router-integration.md): Router view resolution computed properties currentListViewComponent dynamic component rendering orchestration view transitions
-- [base-entity-core](../../02-base-entity/base-entity-core.md): BaseEntity getModuleListComponent() accessor líneas ~260-280 metadata retrieval getElementList() API method data loading save() delete() CRUD operations
-- [default-listview](../../04-components/default-listview.md): DefaultListView framework fallback component generic table layout reference example patterns behaviors expected ListView implementations
-- [view-type-enum](../../05-advanced/enums.md): ViewType enum constants LIST DETAIL discriminating view contexts Application.View.value.type Router conditional rendering coordination
+- [application-singleton](../03-application/application-singleton.md): Application singleton View reactive ref state management coordination changeView() navigation API central integration point
+- [router-integration](../03-application/router-integration.md): Router view resolution computed properties currentListViewComponent dynamic component rendering orchestration view transitions
+- [base-entity-core](../02-base-entity/base-entity-core.md): BaseEntity getModuleListComponent() accessor líneas ~260-280 metadata retrieval getElementList() API method data loading save() delete() CRUD operations
+- [views-overview](../04-components/views-overview.md): DefaultListView framework fallback component generic table layout reference example patterns behaviors expected ListView implementations
+- [view-type-enum](../05-advanced/Enums.md): ViewType enum constants LIST DETAIL discriminating view contexts Application.View.value.type Router conditional rendering coordination
 
 **Ubicación código fuente**: `src/decorations/module_list_component_decorator.ts` (~20 líneas)  
 **Símbolos y exports**: `MODULE_LIST_COMPONENT_KEY` Symbol, `ModuleListComponent` function ClassDecorator, `getModuleListComponent()` accessor BaseEntity  

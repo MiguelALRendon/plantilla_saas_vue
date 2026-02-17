@@ -486,13 +486,13 @@ Optional external permission service handling hierarchical wildcards complex aut
 - [module-name-decorator](./module-name-decorator.md): Decorador ModuleName define labels text modules complementary ModulePermission authorization combined sidebar rendering filtered navigation
 - [module-icon-decorator](./module-icon-decorator.md): Decorador ModuleIcon define visual icon complementary ModulePermission permission-filtered modules icon + name + authorization complete identity
 - [application-singleton](../03-application/application-singleton.md): Application.currentUser reactive ref authenticated user permissions array Application.ModuleList filtered authorization coordination state management
-- [sidebar-component](../04-components/sidebar-component.md): SideBarComponent principal consumer permission filtering availableModules computed property dynamic navigation adapting role
+- [sidebar-component](../04-components/SideBarComponent.md): SideBarComponent principal consumer permission filtering availableModules computed property dynamic navigation adapting role
 - [router-integration](../03-application/router-integration.md): Router navigation guards beforeEach hook checking permissions redirecting unauthorized '/login' '/access-denied' comprehensive security layer
 - [base-entity-core](../02-base-entity/base-entity-core.md): BaseEntity getModulePermission() hasPermission(user) accessors líneas ~200-240 authorization methods inheritance pattern
-- [default-listview](../04-components/default-listview.md): DefaultListView component conditional rendering Create button permission checks canCreate computed property
-- [default-detailview](../04-components/default-detailview.md): DefaultDetailView component conditional actions Edit/Delete permission checks role-appropriate UI
+- [views-overview](../04-components/views-overview.md): DefaultListView component conditional rendering Create button permission checks canCreate computed property
+- [views-overview](../04-components/views-overview.md): DefaultDetailView component conditional actions Edit/Delete permission checks role-appropriate UI
 - [property-name-decorator](./property-name-decorator.md): PropertyName property-level labels different scope ModulePermission module-level authorization distinct concerns
-- [flow-architecture](../02-FLOW-ARCHITECTURE.md): Architecture documentation navigation flows sidebar module selection Application.changeView() Router guards permission integration system-wide patterns
+- [flow-architecture](../../02-FLOW-ARCHITECTURE.md): Architecture documentation navigation flows sidebar module selection Application.changeView() Router guards permission integration system-wide patterns
 
 **Ubicación código fuente**: `src/decorations/module_permission_decorator.ts` (~20 líneas)  
 **Símbolos y exports**: `MODULE_PERMISSION_KEY` Symbol, `ModulePermission` function ClassDecorator, `getModulePermission()` `hasPermission(user)` accessors BaseEntity  

@@ -396,9 +396,9 @@ class Product extends BaseEntity { }
 - ../../06-composables/useInputMetadata.md - Documentación detallada composable
 
 **Otras Capas:**
-- ../../01-decorators/ - Decoradores configuración componentes
-- ../../02-base-entity/ - BaseEntity lógica negocio
-- ../../03-application/ - Application singleton coordinación
+- ../01-decorators/ - Decoradores configuración componentes
+- ../02-base-entity/ - BaseEntity lógica negocio
+- ../03-application/ - Application singleton coordinación
 - ../../05-advanced/Router.md - Configuración Vue Router
 
 ---

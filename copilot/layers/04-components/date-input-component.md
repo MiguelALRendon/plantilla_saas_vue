@@ -974,7 +974,7 @@ reservationDate!: string;
 ## Referencias
 
 - **TextInputComponent:** [text-input-component.md](text-input-component.md)
-- **Validation Decorator:** `../../01-decorators/validation-decorator.md`
+- **Validation Decorator:** `../01-decorators/validation-decorator.md`
 - **useInputMetadata:** [useInputMetadata-composable.md](useInputMetadata-composable.md)
 - **Tutorial Validaciones:** `../../tutorials/02-validations.md`
 

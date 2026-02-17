@@ -844,14 +844,14 @@ describe('useInputMetadata', () => {
 ## 11. Referencias Cruzadas
 
 ### Documentación Relacionada
-- [../../02-base-entity/metadata-access.md](../../02-base-entity/metadata-access.md) - Métodos metadata BaseEntity
-- [../../02-base-entity/validation-system.md](../../02-base-entity/validation-system.md) - Sistema validación
+- [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md) - Métodos metadata BaseEntity
+- [../02-base-entity/validation-system.md](../02-base-entity/validation-system.md) - Sistema validación
 - [form-inputs.md](form-inputs.md) - Componentes input que usan composable
-- [../../01-decorators/property-name-decorator.md](../../01-decorators/property-name-decorator.md) - @PropertyName
-- [../../01-decorators/required-decorator.md](../../01-decorators/required-decorator.md) - @Required
-- [../../01-decorators/disabled-decorator.md](../../01-decorators/disabled-decorator.md) - @Disabled
-- [../../01-decorators/validation-decorator.md](../../01-decorators/validation-decorator.md) - @Validation
-- [../../01-decorators/help-text-decorator.md](../../01-decorators/help-text-decorator.md) - @HelpText
+- [../01-decorators/property-name-decorator.md](../01-decorators/property-name-decorator.md) - @PropertyName
+- [../01-decorators/required-decorator.md](../01-decorators/required-decorator.md) - @Required
+- [../01-decorators/disabled-decorator.md](../01-decorators/disabled-decorator.md) - @Disabled
+- [../01-decorators/validation-decorator.md](../01-decorators/validation-decorator.md) - @Validation
+- [../01-decorators/help-text-decorator.md](../01-decorators/help-text-decorator.md) - @HelpText
 
 ### Código Fuente
 - src/composables/useInputMetadata.ts (implementación composable)

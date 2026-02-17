@@ -1013,14 +1013,14 @@ NO recomendado porque:
 ## 11. Referencias Cruzadas
 
 ### Documentación Relacionada Layers
-- [../../02-base-entity/metadata-access.md](../../02-base-entity/metadata-access.md) - Métodos BaseEntity acceso metadata (getPropertyNameByKey, isRequired, isDisabled, isValidation, requiredMessage, validationMessage, getHelpText)
-- [../../02-base-entity/validation-system.md](../../02-base-entity/validation-system.md) - Sistema validación completo entidades
+- [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md) - Métodos BaseEntity acceso metadata (getPropertyNameByKey, isRequired, isDisabled, isValidation, requiredMessage, validationMessage, getHelpText)
+- [../02-base-entity/validation-system.md](../02-base-entity/validation-system.md) - Sistema validación completo entidades
 - [../04-components/form-inputs.md](../04-components/form-inputs.md) - 10 componentes input framework usando useInputMetadata
-- [../../01-decorators/property-name-decorator.md](../../01-decorators/property-name-decorator.md) - @PropertyName almacena nombre legible
-- [../../01-decorators/required-decorator.md](../../01-decorators/required-decorator.md) - @Required almacena condición y mensaje error
-- [../../01-decorators/disabled-decorator.md](../../01-decorators/disabled-decorator.md) - @Disabled almacena condición deshabilitado
-- [../../01-decorators/validation-decorator.md](../../01-decorators/validation-decorator.md) - @Validation almacena condition y mensaje error
-- [../../01-decorators/help-text-decorator.md](../../01-decorators/help-text-decorator.md) - @HelpText almacena texto ayuda
+- [../01-decorators/property-name-decorator.md](../01-decorators/property-name-decorator.md) - @PropertyName almacena nombre legible
+- [../01-decorators/required-decorator.md](../01-decorators/required-decorator.md) - @Required almacena condición y mensaje error
+- [../01-decorators/disabled-decorator.md](../01-decorators/disabled-decorator.md) - @Disabled almacena condición deshabilitado
+- [../01-decorators/validation-decorator.md](../01-decorators/validation-decorator.md) - @Validation almacena condition y mensaje error
+- [../01-decorators/help-text-decorator.md](../01-decorators/help-text-decorator.md) - @HelpText almacena texto ayuda
 
 ### Código Fuente Ubicación
 - src/composables/useInputMetadata.ts (líneas 1-38 implementación completa composable + interface)

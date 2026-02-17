@@ -373,7 +373,7 @@ Frontend procesa como response real
 **Capa de Base Entity (02-base-entity/)**: Hereda funcionalidad de:
 - crud-operations.md - Métodos save(), update(), delete()
 - validation-system.md - Sistema de 3 niveles de validación
-- serialization.md - Conversión entre instancias y JSON
+- state-and-conversion.md - Conversión entre instancias y JSON
 
 **Capa de Componentes (04-components/)**: Genera automáticamente:
 - TextInputComponent para campos String
@@ -1059,7 +1059,7 @@ Solución:
 **Capa de Base Entity:**
 - [../layers/02-base-entity/crud-operations.md](../layers/02-base-entity/crud-operations.md) - Métodos CRUD de BaseEntity
 - [../layers/02-base-entity/validation-system.md](../layers/02-base-entity/validation-system.md) - Sistema de validación de 3 niveles
-- [../layers/02-base-entity/serialization.md](../layers/02-base-entity/serialization.md) - Serialización y deserialización
+- [../layers/02-base-entity/state-and-conversion.md](../layers/02-base-entity/state-and-conversion.md) - Serialización y deserialización
 
 ### Ejemplos de Referencia
 

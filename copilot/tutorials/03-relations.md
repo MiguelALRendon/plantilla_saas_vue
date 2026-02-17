@@ -459,11 +459,11 @@ Solo items que contienen "widget" en cualquier propiedad se muestran
 
 **Capa de Decoradores (01-decorators/):**
 - default-property-decorator.md - @DefaultProperty
-- unique-property-key-decorator.md - @UniquePropertyKey
+- unique-decorator.md - @UniquePropertyKey
 - tab-order-decorator.md - @TabOrder
 
 **Capa de Base Entity (02-base-entity/):**
-- serialization.md - Serialización de relaciones
+- state-and-conversion.md - Serialización de relaciones
 - crud-operations.md - Guardado de entidades con relaciones
 
 ## 10. Notas de Implementación
@@ -969,7 +969,7 @@ export class Customer extends BaseEntity {
 
 **Capas de Decoradores:**
 - [../layers/01-decorators/default-property-decorator.md](../layers/01-decorators/default-property-decorator.md) - @DefaultProperty
-- [../layers/01-decorators/unique-property-key-decorator.md](../layers/01-decorators/unique-property-key-decorator.md) - @UniquePropertyKey  
+- [../layers/01-decorators/unique-decorator.md](../layers/01-decorators/unique-decorator.md) - @UniquePropertyKey  
 - [../layers/01-decorators/tab-order-decorator.md](../layers/01-decorators/tab-order-decorator.md) - @TabOrder
 
 **Capa de Componentes:**
@@ -978,7 +978,7 @@ export class Customer extends BaseEntity {
 - [../layers/04-components/views-overview.md](../layers/04-components/views-overview.md) - Lookup View
 
 **Capa de Base Entity:**
-- [../layers/02-base-entity/serialization.md](../layers/02-base-entity/serialization.md) - Serialización de relaciones
+- [../layers/02-base-entity/state-and-conversion.md](../layers/02-base-entity/state-and-conversion.md) - Serialización de relaciones
 - [../layers/02-base-entity/crud-operations.md](../layers/02-base-entity/crud-operations.md) - CRUD con relaciones
 
 ### Tutoriales Relacionados

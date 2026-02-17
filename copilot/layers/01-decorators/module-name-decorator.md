@@ -274,9 +274,9 @@ console.log('Symbol value:', (Product as any)[MODULE_NAME_KEY]);
 - [module-icon-decorator.md](module-icon-decorator.md): Decorador complementario para iconos
 - [api-endpoint-decorator.md](api-endpoint-decorator.md): Define endpoint para CRUD
 - [module-permission-decorator.md](module-permission-decorator.md): Control de acceso a módulos
-- ../../02-base-entity/base-entity-core.md: Documentación de BaseEntity donde está definido getModuleName()
-- ../../03-application/application-singleton.md: Application.ModuleList que contiene módulos registrados
-- ../../04-components/SideBarComponent.md: Componente que consume module names
+- ../02-base-entity/base-entity-core.md: Documentación de BaseEntity donde está definido getModuleName()
+- ../03-application/application-singleton.md: Application.ModuleList que contiene módulos registrados
+- ../04-components/SideBarComponent.md: Componente que consume module names
 
 **Archivos de código:**
 - `src/decorations/module_name_decorator.ts`: Implementación del decorador

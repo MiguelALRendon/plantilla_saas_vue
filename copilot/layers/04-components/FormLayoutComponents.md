@@ -702,8 +702,8 @@ Los decoradores @ViewGroup son estáticos. Para títulos dinámicos, renderizar 
 **Documentos Relacionados:**
 - [form-inputs.md](form-inputs.md): Componentes de inputs que se proyectan en FormRow como slot content
 - [core-components.md](core-components.md): Componentes core del framework incluyendo structure general
-- ../views/default-detailview.md: Vista que utiliza FormGroup y FormRow automáticamente para renderizar formularios
-- ../../02-base-entity/base-entity-core.md: Métodos getViewGroups() y getViewGroupRows() que retornan metadata para layout
-- ../../01-decorators/view_group_decorator.md: Decorador @ViewGroup que define agrupación de secciones
-- ../../01-decorators/view_group_row_decorator.md: Decorador @ViewGroupRowDecorator que define tipo de fila (TWO, THREE)
-- ../../05-advanced/Enums.md: ViewGroupRow enum con valores SINGLE, TWO, THREE
+- [views-overview.md](views-overview.md): Vista que utiliza FormGroup y FormRow automáticamente para renderizar formularios
+- ../02-base-entity/base-entity-core.md: Métodos getViewGroups() y getViewGroupRows() que retornan metadata para layout
+- ../01-decorators/view-group-decorator.md: Decorador @ViewGroup que define agrupación de secciones
+- ../01-decorators/view-group-row-decorator.md: Decorador @ViewGroupRowDecorator que define tipo de fila (TWO, THREE)
+- ../05-advanced/Enums.md: ViewGroupRow enum con valores SINGLE, TWO, THREE

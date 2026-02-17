@@ -1509,7 +1509,7 @@ name!: string;
 - `validation-decorator.md` - Mensajes de error vs help text
 - `required-decorator.md` - Campos requeridos con help text
 - `placeholder-decorator.md` - Placeholder vs help text
-- `../../02-base-entity/base-entity-core.md` - getHelpText() implementation
+- `../02-base-entity/base-entity-core.md` - getHelpText() implementation
 - `../../tutorials/02-validations.md` - Help text en formularios
 
 ---

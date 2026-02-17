@@ -1648,7 +1648,7 @@ id!: number;
 - `required-decorator.md` - Disabled ignora Required
 - `validation-decorator.md` - Disabled ignora Validation
 - `hide-in-detail-view-decorator.md` - Alternativa para ocultar completamente
-- `../../02-base-entity/base-entity-core.md` - isDisabled() implementation
+- `../02-base-entity/base-entity-core.md` - isDisabled() implementation
 - `../../tutorials/02-validations.md` - Disabled en tutorial de validaciones
 
 ---

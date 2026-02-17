@@ -256,8 +256,8 @@ Breve descripción de qué contiene esta carpeta.
 
 ### [Categoría si aplica]
 
-- **[ElementoNombre]** ([enlace](./archivo.md)) - Descripción breve de una línea.
-- **[OtroElemento]** ([enlace](./otro.md)) - Descripción breve.
+- **[ElementoNombre]** (enlace: `<ruta-relativa.md>`) - Descripción breve de una línea.
+- **[OtroElemento]** (enlace: `<ruta-relativa.md>`) - Descripción breve.
 
 ## Última Actualización
 [Fecha]

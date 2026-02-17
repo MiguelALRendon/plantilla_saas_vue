@@ -642,10 +642,10 @@ describe('LookupItem', () => {
 
 **Documentos Relacionados:**
 - [core-components.md](core-components.md): Documentación componentes core del framework incluyendo estructura general
-- ../views/default-lookup-listview.md: Vista que utiliza LookupItem para renderizar listas lookup en modales
+- [views-overview.md](views-overview.md): Vista que utiliza LookupItem para renderizar listas lookup en modales
 - [object-input-component.md](object-input-component.md): Input que dispara apertura de modal lookup renderizando LookupItems
 - [modal-components.md](modal-components.md): ModalComponent que envuelve vista lookup conteniendo LookupItems
-- ../../02-base-entity/base-entity-core.md: Método getDefaultPropertyValue() invocado por LookupItem para extraer display value
-- ../../01-decorators/default_property_decorator.md: Decorador @DefaultProperty que define qué propiedad mostrar en LookupItem
-- ../../03-application/ui-services.md: ApplicationUIService.closeModalOnFunction() para cerrar modal al seleccionar LookupItem
-- ../../03-application/application-state.md: Application.Modal.value state que almacena contexto modal incluyendo entityClass y callback
+- ../02-base-entity/base-entity-core.md: Método getDefaultPropertyValue() invocado por LookupItem para extraer display value
+- ../01-decorators/default-property-decorator.md: Decorador @DefaultProperty que define qué propiedad mostrar en LookupItem
+- ../03-application/ui-services.md: ApplicationUIService.closeModalOnFunction() para cerrar modal al seleccionar LookupItem
+- ../03-application/application-singleton.md: Application.Modal.value state que almacena contexto modal incluyendo entityClass y callback

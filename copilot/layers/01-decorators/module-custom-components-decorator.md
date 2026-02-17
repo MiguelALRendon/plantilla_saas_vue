@@ -5,7 +5,7 @@
 - [Module Detail Component](module-detail-component-decorator.md) - ModuleDetailComponent para DetailView completa
 - [Module List Component](module-list-component-decorator.md) - ModuleListComponent para ListView completa
 - [Property Name](property-name-decorator.md) - PropertyName define propiedades con custom components
-- [Base Entity Core](../../02-base-entity/base-entity-core.md) - getModuleCustomComponents accessor
+- [Base Entity Core](../02-base-entity/base-entity-core.md) - getModuleCustomComponents accessor
 
 **Ubicación:** `src/decorations/module_custom_components_decorator.ts`
 
@@ -1396,8 +1396,8 @@ function resolveComponent(propertyName: string, propertyType: any): Component {
 
 ### Documentación de Framework
 
-- [Base Entity Core](../../02-base-entity/base-entity-core.md) - Métodos `getModuleCustomComponents()` y `getCustomComponentForProperty()`
-- [Metadata Access](../../02-base-entity/metadata-access.md) - Sistema de metadata y accessors
+- [Base Entity Core](../02-base-entity/base-entity-core.md) - Métodos `getModuleCustomComponents()` y `getCustomComponentForProperty()`
+- [Metadata Access](../02-base-entity/metadata-access.md) - Sistema de metadata y accessors
 
 ### Decoradores Relacionados
 
@@ -2116,8 +2116,8 @@ export class Product extends BaseEntity {
 - `module-detail-component-decorator.md` - Componente para DetailView
 - `module-list-component-decorator.md` - Componente para ListView
 - `property-name-decorator.md` - Define propiedades
-- `../../02-base-entity/base-entity-core.md` - getModuleCustomComponents()
-- `../../03-application/application-views.md` - Component resolution
+- `../02-base-entity/base-entity-core.md` - getModuleCustomComponents()
+- `../03-application/application-singleton.md` - Component resolution
 
 ---
 

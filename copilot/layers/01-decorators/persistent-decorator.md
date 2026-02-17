@@ -241,8 +241,8 @@ export class TestEntity extends BaseEntity { /* ... */ }
 - [api-endpoint-decorator.md](api-endpoint-decorator.md): Define URL para HTTP requests
 - [api-methods-decorator.md](api-methods-decorator.md): Limita métodos HTTP permitidos
 - [module-name-decorator.md](module-name-decorator.md): Identifica módulo en UI
-- ../../02-base-entity/crud-operations.md: Métodos que verifican @Persistent
-- ../../02-base-entity/base-entity-core.md: Arquitectura BaseEntity
+- ../02-base-entity/crud-operations.md: Métodos que verifican @Persistent
+- ../02-base-entity/base-entity-core.md: Arquitectura BaseEntity
 
 **Archivos de código:**
 - `src/decorations/persistent_decorator.ts`: Implementación del decorador

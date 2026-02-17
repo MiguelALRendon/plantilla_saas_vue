@@ -620,10 +620,10 @@ describe('ConfirmationDialogComponent', () => {
 - [modal-components.md](modal-components.md): Documentación sistema modales completo incluyendo ModalComponent
 - [core-components.md](core-components.md): Componentes core framework estructura general
 - [ToastComponents.md](ToastComponents.md): Toast notifications complementarias dialogs feedback
-- ../../03-application/ui-services.md: ApplicationUIService methods completos documentación
-- ../../03-application/event-bus.md: Event Bus architecture eventos framework
-- ../../03-application/application-state.md: Application.confirmationMenu.value structure
-- ../../05-advanced/Enums.md: confMenuType enum definición completa valores
-- ../../02-base-entity/crud-operations.md: BaseEntity save() delete() invocan dialogs loading
+- ../03-application/ui-services.md: ApplicationUIService methods completos documentación
+- ../03-application/event-bus.md: Event Bus architecture eventos framework
+- ../03-application/application-singleton.md: Application.confirmationMenu.value structure
+- ../05-advanced/Enums.md: confMenuType enum definición completa valores
+- ../02-base-entity/crud-operations.md: BaseEntity save() delete() invocan dialogs loading
 - ../buttons/SaveButton.md: SaveButton workflow validation dialogs
 - ../buttons/DeleteButton.md: DeleteButton confirmation workflow antes delete

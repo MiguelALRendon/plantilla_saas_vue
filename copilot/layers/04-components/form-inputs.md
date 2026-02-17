@@ -867,15 +867,15 @@ describe('TextInputComponent', () => {
 - [list-input-component.md](list-input-component.md): Documentación ListInputComponent selector opciones
 - [useInputMetadata-composable.md](useInputMetadata-composable.md): Documentación composable extracción metadatos
 - [FormLayoutComponents.md](FormLayoutComponents.md): Documentación FormGroup, FormRowTwo, FormRowThree
-- ../../02-base-entity/metadata-access.md: Métodos BaseEntity para acceso metadatos (isRequired, isValidation, isDisabled)
-- ../../01-decorators/required_decorator.md: Decorador @Required para campos obligatorios
-- ../../01-decorators/validation_decorator.md: Decorador @Validation para reglas síncronas
-- ../../01-decorators/async_validation_decorator.md: Decorador @AsyncValidation para reglas asíncronas
-- ../../01-decorators/property_name_decorator.md: Decorador @PropertyName para labels display
-- ../../01-decorators/help_text_decorator.md: Decorador @HelpText para textos ayuda
-- ../../01-decorators/disabled_decorator.md: Decorador @Disabled para deshabilitar campos
-- ../../01-decorators/readonly_decorator.md: Decorador @ReadOnly para campos solo lectura
-- ../../01-decorators/string_type_decorator.md: Decorador @StringTypeDef para subtipos String
-- ../../03-application/ui-services.md: Application.eventBus y Application.View.value para estado global
-- ../views/default-detailview.md: Vista que renderiza inputs automáticamente
+- ../02-base-entity/metadata-access.md: Métodos BaseEntity para acceso metadatos (isRequired, isValidation, isDisabled)
+- ../01-decorators/required-decorator.md: Decorador @Required para campos obligatorios
+- ../01-decorators/validation-decorator.md: Decorador @Validation para reglas síncronas
+- ../01-decorators/async-validation-decorator.md: Decorador @AsyncValidation para reglas asíncronas
+- ../01-decorators/property-name-decorator.md: Decorador @PropertyName para labels display
+- ../01-decorators/help-text-decorator.md: Decorador @HelpText para textos ayuda
+- ../01-decorators/disabled-decorator.md: Decorador @Disabled para deshabilitar campos
+- ../01-decorators/readonly-decorator.md: Decorador @ReadOnly para campos solo lectura
+- ../01-decorators/string-type-decorator.md: Decorador @StringTypeDef para subtipos String
+- ../03-application/ui-services.md: Application.eventBus y Application.View.value para estado global
+- [views-overview.md](views-overview.md): Vista que renderiza inputs automáticamente
 - ../buttons/SaveButton.md: Botón que dispara validateInputs() antes guardar

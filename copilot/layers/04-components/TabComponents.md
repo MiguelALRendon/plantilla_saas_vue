@@ -421,7 +421,7 @@ Para tabs dinámicos condicionales, computed tabs basado en estado de entity. Pa
 
 ## 11. Referencias Cruzadas
 
-Documentos relacionados: array-input-component.md (componente típico dentro de tabs), FormLayoutComponents.md (FormGroupComponent que envuelve tabs), views-overview.md (default_detailview que genera tabs), ../../01-decorators/property-index-decorator.md (ordenamiento de tabs), ../../01-decorators/property-name-decorator.md (nombres de tabs), ../../02-base-entity/metadata-access.md (métodos getArrayKeysOrdered y getArrayPropertyType).
+Documentos relacionados: array-input-component.md (componente típico dentro de tabs), FormLayoutComponents.md (FormGroupComponent que envuelve tabs), views-overview.md (default_detailview que genera tabs), ../01-decorators/property-index-decorator.md (ordenamiento de tabs), ../01-decorators/property-name-decorator.md (nombres de tabs), ../02-base-entity/metadata-access.md (métodos getArrayKeysOrdered y getArrayPropertyType).
 
 Archivos de código fuente: src/components/TabComponent.vue (componente de tab individual), src/components/TabControllerComponent.vue (componente controlador), src/views/default_detailview.vue (vista que usa tabs), src/entities/base_entity.ts (métodos getArrayKeysOrdered).
 

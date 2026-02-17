@@ -288,9 +288,9 @@ Durante app initialization (src/main.ts), entity classes se registran en Applica
 - [module-name-decorator](./module-name-decorator.md): Decorador ModuleName define text labels módulo (singular/plural), complementa ModuleIcon visual identity combined sidebar rendering icon + name
 - [module-permission-decorator](./module-permission-decorator.md): Decorador ModulePermission controla authorization access módulo, independent de icons though permission checks pueden ocultar sidebar items conditionally
 - [application-singleton](../03-application/application-singleton.md): Application.ModuleList reactive ref lista entity classes, SideBarComponent itera lista renderizing icons iteration pattern Application central coordination
-- [sidebar-component](../04-components/sidebar-component.md): SideBarComponent principal UI consumer module icons, renders navigation menu items combining icon + name module representation
-- [icon-service](../03-application/icon-service.md): IconService manages mapping icon names a Vue components, SideBarComponent depends on service resolving icon names dynamic component rendering
-- [flow-architecture](../02-FLOW-ARCHITECTURE.md): Architecture documentation sidebar navigation flow user interaction module selection Application.changeView() router integration icons visual feedback
+- [sidebar-component](../04-components/SideBarComponent.md): SideBarComponent principal UI consumer module icons, renders navigation menu items combining icon + name module representation
+- [ui-services](../03-application/ui-services.md): IconService/Application UI service integration for icon names and dynamic component rendering
+- [flow-architecture](../../02-FLOW-ARCHITECTURE.md): Architecture documentation sidebar navigation flow user interaction module selection Application.changeView() router integration icons visual feedback
 - [base-entity-core](../02-base-entity/base-entity-core.md): BaseEntity implementation getModuleIcon() accessor líneas ~950-960 metadata retrieval pattern Symbol-based storage
 
 **Ubicación código fuente**: `src/decorations/module_icon_decorator.ts` (~25 líneas)  

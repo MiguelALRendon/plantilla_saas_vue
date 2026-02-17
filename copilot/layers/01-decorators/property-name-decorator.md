@@ -344,21 +344,21 @@ Para relaciones bidirectionales (Order has Customer, Customer has Orders array),
 
 ### Base Entity y Metadata
 
-- [../../02-base-entity/base-entity-core.md](../../02-base-entity/base-entity-core.md): Documentación de accessors `getProperties()`, `getPropertyType()`, `getPropertyName()`.
-- [../../02-base-entity/metadata-accessors.md](../../02-base-entity/metadata-accessors.md): Todos los métodos de metadata access en BaseEntity.
+- [../02-base-entity/base-entity-core.md](../02-base-entity/base-entity-core.md): Documentación de accessors `getProperties()`, `getPropertyType()`, `getPropertyName()`.
+- [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md): Todos los métodos de metadata access en BaseEntity.
 
 ### Componentes de Input
 
-- [../../04-components/text-input-component.md](../../04-components/text-input-component.md): Input para PropertyType String.
-- [../../04-components/number-input-component.md](../../04-components/number-input-component.md): Input para PropertyType Number.
-- [../../04-components/object-input-component.md](../../04-components/object-input-component.md): Input para PropertyType BaseEntity classes.
-- [../../04-components/array-input-component.md](../../04-components/array-input-component.md): Input para PropertyType ArrayOf().
-- [../../04-components/list-input-component.md](../../04-components/list-input-component.md): Input para PropertyType Enums.
+- [../04-components/text-input-component.md](../04-components/text-input-component.md): Input para PropertyType String.
+- [../04-components/number-input-component.md](../04-components/number-input-component.md): Input para PropertyType Number.
+- [../04-components/object-input-component.md](../04-components/object-input-component.md): Input para PropertyType BaseEntity classes.
+- [../04-components/array-input-component.md](../04-components/array-input-component.md): Input para PropertyType ArrayOf().
+- [../04-components/list-input-component.md](../04-components/list-input-component.md): Input para PropertyType Enums.
 
 ### Views y Resolución de Componentes
 
-- [../../04-components/default-detail-view.md](../../04-components/default-detail-view.md): DetailView que consume @PropertyName metadata para rendering automático.
-- [../../04-components/default-list-view.md](../../04-components/default-list-view.md): ListView que usa @PropertyName para column headers.
+- [../04-components/views-overview.md](../04-components/views-overview.md): DetailView/ListView que consumen @PropertyName metadata para rendering automático.
+- [../04-components/views-overview.md](../04-components/views-overview.md): ListView que usa @PropertyName para column headers.
 
 ### Tutoriales
 

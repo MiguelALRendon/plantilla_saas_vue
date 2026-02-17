@@ -1265,9 +1265,9 @@ teamMembers?: Array<Employee>;
 
 - **Tutorial Relaciones:** `../../tutorials/03-relations.md`
 - **ObjectInputComponent:** [object-input-component.md](object-input-component.md) - Para relaciones 1:1
-- **ArrayOf Decorator:** `../../01-decorators/property-name-decorator.md`
-- **TabOrder Decorator:** `../../01-decorators/tab-order-decorator.md`
-- **UI Services:** `../../03-application/ui-services.md`
+- **ArrayOf Decorator:** `../01-decorators/property-name-decorator.md`
+- **TabOrder Decorator:** `../01-decorators/tab-order-decorator.md`
+- **UI Services:** `../03-application/ui-services.md`
 
 ---
 

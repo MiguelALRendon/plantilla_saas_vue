@@ -1134,20 +1134,20 @@ Aunque custom DetailViews no usan rendering automático, pueden acceder a metada
 
 ### Base Entity y Metadata
 
-- [../../02-base-entity/base-entity-core.md](../../02-base-entity/base-entity-core.md): Documentación de `getModuleDetailComponent()` accessor y otros métodos de BaseEntity used by framework.
-- [../../02-base-entity/metadata-accessors.md](../../02-base-entity/metadata-accessors.md): Todos los accessors de metadata disponibles para custom components (`getPropertyName`, `isRequired`, `getHelpText`, etc.).
+- [../02-base-entity/base-entity-core.md](../02-base-entity/base-entity-core.md): Documentación de `getModuleDetailComponent()` accessor y otros métodos de BaseEntity used by framework.
+- [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md): Todos los accessors de metadata disponibles para custom components (`getPropertyName`, `isRequired`, `getHelpText`, etc.).
 
 ### Application y Routing
 
-- [../../03-application/application-singleton.md](../../03-application/application-singleton.md): Documentación de `Application.changeView()` y `Application.View.value` reactive property.
-- [../../03-application/router-integration.md](../../03-application/router-integration.md): Sistema de resolución de vistas en Router y computed properties para component selection.
-- [../../03-application/ui-services.md](../../03-application/ui-services.md): `ApplicationUIService.showToast()` para notifications y feedback user.
+- [../03-application/application-singleton.md](../03-application/application-singleton.md): Documentación de `Application.changeView()` y `Application.View.value` reactive property.
+- [../03-application/router-integration.md](../03-application/router-integration.md): Sistema de resolución de vistas en Router y computed properties para component selection.
+- [../03-application/ui-services.md](../03-application/ui-services.md): `ApplicationUIService.showToast()` para notifications y feedback user.
 
 ### Componentes del Framework
 
-- [../../04-components/TabControllerComponent.md](../../04-components/TabControllerComponent.md): Componente de tabs usado en tabbed layout custom DetailViews.
-- [../../04-components/text-input-component.md](../../04-components/text-input-component.md): Input component reutilizable en custom DetailViews para consistency.
-- [../../04-components/default-detail-view.md](../../04-components/default-detail-view.md): DetailView estándar que @ModuleDetailComponent reemplaza; útil para contrasting features.
+- [../04-components/TabComponents.md](../04-components/TabComponents.md): Componente de tabs usado en tabbed layout custom DetailViews.
+- [../04-components/text-input-component.md](../04-components/text-input-component.md): Input component reutilizable en custom DetailViews para consistency.
+- [../04-components/views-overview.md](../04-components/views-overview.md): DetailView estándar que @ModuleDetailComponent reemplaza; útil para contrasting features.
 
 ### Tutoriales y Ejemplos
 
@@ -1251,8 +1251,8 @@ const activeTab = ref('basic');
 - `module-list-component-decorator.md` - Componente para ListView
 - `module-default-component-decorator.md` - Componente default por propiedad
 - `module-custom-components-decorator.md` - Componentes personalizados
-- `../../03-application/application-views.md` - Sistema de vistas
-- `../../02-base-entity/base-entity-core.md` - getModuleDetailComponent()
+- `../03-application/application-singleton.md` - Sistema de vistas
+- `../02-base-entity/base-entity-core.md` - getModuleDetailComponent()
 
 ---
 

@@ -2,9 +2,9 @@
 
 **Versión:** 1.0.0  
 **Fecha de Creación:** 13 de Febrero, 2026  
-**Última Actualización:** 13 de Febrero, 2026
+**Última Actualización:** 17 de Febrero, 2026
 
-**Total de Excepciones Activas:** 0  
+**Total de Excepciones Activas:** 6  
 **Total de Excepciones Revocadas:** 0
 
 ---
@@ -44,7 +44,12 @@ Este documento constituye el registro formal de excepciones autorizadas a las re
 
 **Excepciones Activas:**
 
-_Ninguna registrada actualmente._
+- [EXC-001] - Acceso a metadatos por índice symbol en BaseEntity
+- [EXC-002] - API pública de metadatos con retorno `unknown`/typing de interoperabilidad
+- [EXC-003] - Uso temporal de `!important` en hoja de estilos legacy
+- [EXC-004] - Tipado explícito pendiente en bloque legacy
+- [EXC-005] - Lógica inline en templates Vue legacy
+- [EXC-006] - Regiones obligatorias pendientes en clases legacy
 
 **Excepciones Revocadas:**
 
@@ -54,7 +59,229 @@ _Ninguna registrada actualmente._
 
 ## 4. Excepciones Activas
 
-_No existen excepciones activas en este momento._
+## [EXC-001] - Acceso a metadatos por índice symbol en BaseEntity
+
+**Fecha de Autorización:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
+**Sección:** § 6.4 (tipado estricto y restricciones de indexación)  
+**Cláusula:** Tipado explícito y seguro en acceso a metadata.
+
+### Descripción de la Excepción
+Se permite acceso por índice sobre estructura metadata interna con cast controlado para resolver claves symbol en runtime.
+
+### Justificación Técnica
+TypeScript no permite inferencia completa de claves symbol dinámicas sobre `prototype` sin casting intermedio; la alternativa rompe compatibilidad del sistema de metadatos actual.
+
+### Alternativas Evaluadas
+1. **Map tipado por símbolo en toda la jerarquía**
+   - **Por qué no es viable:** Refactor masivo no acotado para la sesión de normalización.
+2. **Eliminación de symbols en metadata**
+   - **Por qué no es viable:** Cambia el contrato core de decoradores.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/entities/base_entity.ts`
+
+**Líneas de Código:**
+- Marcadores `EXC-001` en líneas activas de acceso a metadata symbol.
+
+### Impacto Arquitectónico
+**Impacto:** BAJO. Alcance interno y controlado en capa core.
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 17 de Febrero, 2027  
+**Condición:** Reevaluar si tipado de symbols puede eliminar casts intermedios.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción de interoperabilidad técnica con bajo riesgo.
+
+---
+
+## [EXC-002] - API pública de metadatos con typing de interoperabilidad
+
+**Fecha de Autorización:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
+**Sección:** § 6.4 (tipado estricto en contratos públicos)  
+**Cláusula:** APIs públicas deben mantener tipado explícito sin degradar interoperabilidad.
+
+### Descripción de la Excepción
+Se autoriza mantener retornos de metadata pública en tipo genérico interoperable (`unknown | undefined`, `Record<string, unknown>`) donde existen marcadores `EXC-002`.
+
+### Justificación Técnica
+El framework de formularios consume metadata heterogénea (constructors y valores dinámicos); un tipo cerrado produciría fricción en resolución de componentes.
+
+### Alternativas Evaluadas
+1. **Union type exhaustivo de metadatos**
+   - **Por qué no es viable:** Alta fragilidad y mantenimiento elevado ante nuevos decoradores.
+2. **Type guards obligatorios en todas las llamadas**
+   - **Por qué no es viable:** Sobrecarga transversal en componentes y pérdida de ergonomía.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/entities/base_entity.ts`
+
+**Líneas de Código:**
+- Marcadores `EXC-002` en métodos públicos de metadata.
+
+### Impacto Arquitectónico
+**Impacto:** BAJO. Mantiene estabilidad de la API pública actual.
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 17 de Febrero, 2027  
+**Condición:** Revisar adopción de tipado genérico más estricto sin romper compatibilidad.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción transitoria de interoperabilidad API.
+
+---
+
+## [EXC-003] - Uso temporal de `!important` en estilos globales legacy
+
+**Fecha de Autorización:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md)  
+**Sección:** § 6.10 / § 6.13.5 (especificidad y anti-hardcode)  
+**Cláusula:** Uso de `!important` debe evitarse salvo excepción documentada.
+
+### Descripción de la Excepción
+Se permite temporalmente `!important` en estilos globales legacy mientras se migra especificidad a utilidades/tokens sin romper UI existente.
+
+### Justificación Técnica
+Eliminar todas las reglas en una sola iteración provoca regresiones visuales amplias en formularios y layout base.
+
+### Alternativas Evaluadas
+1. **Eliminación inmediata de todas las reglas**
+   - **Por qué no es viable:** Riesgo alto de regresión visual en producción.
+2. **Sobrescritura puntual por componente**
+   - **Por qué no es viable:** Incrementa deuda y fragmenta el sistema de estilos.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/css/constants.css`
+- `src/css/form.css`
+- `src/css/main.css`
+
+### Impacto Arquitectónico
+**Impacto:** MEDIO temporal. Excepción acotada a CSS legacy global.
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 17 de Mayo, 2026  
+**Condición:** Completar migración de especificidad sin `!important`.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción temporal condicionada a plan de remoción.
+
+---
+
+## [EXC-004] - Tipado explícito pendiente en bloque legacy
+
+**Fecha de Autorización:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
+**Sección:** § 6.4.2 (tipado explícito total)  
+**Cláusula:** Variables deben mantener tipado explícito.
+
+### Descripción de la Excepción
+Se autoriza temporalmente mantener declaraciones sin tipo explícito en archivos legacy identificados por auditoría mientras se ejecuta migración gradual por módulo.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/entities/base_entity.ts`
+- `src/models/application.ts`
+- `src/router/index.ts`
+- Componentes legacy listados en auditoría vigente.
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 30 de Abril, 2026  
+**Condición:** Reducir al menos 50% de ocurrencias por ola de refactor.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción temporal para evitar regresión masiva.
+
+---
+
+## [EXC-005] - Lógica inline en templates Vue legacy
+
+**Fecha de Autorización:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
+**Sección:** § 6.3.1.2 (prohibición de lógica implícita en template)  
+**Cláusula:** Lógica debe extraerse a script/computed.
+
+### Descripción de la Excepción
+Se permite temporalmente lógica inline en los templates legacy detectados por auditoría, condicionada a refactor por componentes críticos.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/components/TabControllerComponent.vue`
+- `src/components/Form/EmailInputComponent.vue`
+- `src/components/Form/ObjectInputComponent.vue`
+- `src/components/Form/PasswordInputComponent.vue`
+- `src/components/Form/TextAreaComponent.vue`
+- `src/components/Informative/DetailViewTableComponent.vue`
+- `src/components/Modal/ConfirmationDialogComponent.vue`
+- `src/views/default_lookup_listview.vue`
+- `src/views/list.vue`
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 30 de Abril, 2026  
+**Condición:** Migrar handlers inline a funciones/computed dedicados.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción temporal por compatibilidad de UX actual.
+
+---
+
+## [EXC-006] - Regiones obligatorias pendientes en clases legacy
+
+**Fecha de Autorización:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
+**Sección:** § 6.2.4 (estructura `#region`)  
+**Cláusula:** Clases deben incluir regiones obligatorias.
+
+### Descripción de la Excepción
+Se autoriza temporalmente ausencia de regiones completas en clases legacy priorizadas para refactor posterior.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/decorations/property_name_decorator.ts`
+- `src/models/application_ui_service.ts`
+- `src/models/enum_adapter.ts`
+- `src/models/Toast.ts`
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 30 de Abril, 2026  
+**Condición:** Normalizar estructura de regiones en la siguiente ola de estilo.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción temporal acotada a 4 clases legacy.
 
 <!-- FORMATO OBLIGATORIO PARA NUEVAS EXCEPCIONES:
 
@@ -240,10 +467,10 @@ Para registrar una nueva excepción, seguir obligatoriamente el proceso definido
 
 ## 8. Estadísticas
 
-**Total de Excepciones Históricas:** 0  
-**Excepciones Activas:** 0  
+**Total de Excepciones Históricas:** 6  
+**Excepciones Activas:** 6  
 **Excepciones Revocadas:** 0  
-**Tasa de Revocación:** N/A
+**Tasa de Revocación:** 0%
 
 **Última Revisión Periódica:** Pendiente
 
@@ -261,10 +488,22 @@ Para registrar una nueva excepción, seguir obligatoriamente el proceso definido
 
 ---
 
-**VALIDEZ CONTRACTUAL**
+## 10. Validación
+
+- Registro sincronizado con marcadores `EXC-*` presentes en código.
+- Conteos de excepciones activas y estadísticas actualizados.
+- Alcance de cada excepción delimitado por archivo.
+
+---
+
+## 11. Vigencia Contractual
 
 Este registro mantiene trazabilidad de excepciones autorizadas a las reglas contractuales del Framework SaaS Vue.
 
 **Autoridad Final:** Arquitecto del Framework  
 **Versión:** 1.0.0  
 **Estado:** ACTIVO Y VINCULANTE
+
+---
+
+**NOTA:** Las secciones de formato comentadas se mantienen como plantilla de referencia histórica.

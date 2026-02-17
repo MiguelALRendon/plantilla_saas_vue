@@ -1225,8 +1225,8 @@ Máscaras deben ser accesibles para screen readers:
 
 ### Documentación de Framework
 
-- [Base Entity Core](../../02-base-entity/base-entity-core.md) - Método `getMask()`
-- [Metadata Access](../../02-base-entity/metadata-access.md) - Sistema de metadata y accessors
+- [Base Entity Core](../02-base-entity/base-entity-core.md) - Método `getMask()`
+- [Metadata Access](../02-base-entity/metadata-access.md) - Sistema de metadata y accessors
 
 ### Decoradores Relacionados
 
@@ -1275,7 +1275,7 @@ export function useMask(initialValue: string, maskConfig: MaskConfig)
 - `display-format-decorator.md` - DisplayFormat para salida, Mask para entrada
 - `validation-decorator.md` - Validar valor crudo con máscara
 - `help-text-decorator.md` - Help text mostrando ejemplo de máscara
-- `../../02-base-entity/base-entity-core.md` - getMask() implementation
+- `../02-base-entity/base-entity-core.md` - getMask() implementation
 - `../../tutorials/02-validations.md` - Máscaras en tutorial
 
 ---

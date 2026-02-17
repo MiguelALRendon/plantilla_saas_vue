@@ -888,7 +888,7 @@ describe('Product CSS Column Classes', () => {
 - `property-index-decorator.md` - PropertyIndex controla orden
 - `view-group-decorator.md` - ViewGroup organiza campos
 - `view-group-row-decorator.md` - ViewGroupRow + CssColumnClass para layouts
-- `../../02-base-entity/base-entity-core.md` - getCssColumnClass()
+- `../02-base-entity/base-entity-core.md` - getCssColumnClass()
 
 ---
 

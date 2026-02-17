@@ -1253,9 +1253,9 @@ const filteredProperties = computed(() => {
 
 ### Documentación de Framework
 
-- [Base Entity Core](../../02-base-entity/base-entity-core.md) - Métodos `isHideInListView()`, `getListViewProperties()`
-- [Metadata Access](../../02-base-entity/metadata-access.md) - Sistema de metadata y accessors
-- [Static Methods](../../02-base-entity/static-methods.md) - Métodos estáticos de consulta
+- [Base Entity Core](../02-base-entity/base-entity-core.md) - Métodos `isHideInListView()`, `getListViewProperties()`
+- [Metadata Access](../02-base-entity/metadata-access.md) - Sistema de metadata y accessors
+- [Static Methods](../02-base-entity/static-methods.md) - Métodos estáticos de consulta
 
 ### Decoradores Relacionados
 

@@ -480,17 +480,17 @@ Para operaciones que soportan undo (soft delete, bulk updates), toast puede incl
 
 ### Application y Services
 
-- [../../03-application/application-singleton.md](../../03-application/application-singleton.md): Documentación de Application.ToastList y Application.ApplicationUIService.
-- [../../03-application/ui-services.md](../../03-application/ui-services.md): Detalles de showToast() y closeToast() methods en ApplicationUIService.
+- [../03-application/application-singleton.md](../03-application/application-singleton.md): Documentación de Application.ToastList y Application.ApplicationUIService.
+- [../03-application/ui-services.md](../03-application/ui-services.md): Detalles de showToast() y closeToast() methods en ApplicationUIService.
 
 ### BaseEntity Integration
 
-- [../../02-base-entity/crud-operations.md](../../02-base-entity/crud-operations.md): Cómo save() y delete() automáticamente invocan showToast() para feedback.
-- [../../02-base-entity/validation-system.md](../../02-base-entity/validation-system.md): Cómo validation errors disparan ERROR toasts.
+- [../02-base-entity/crud-operations.md](../02-base-entity/crud-operations.md): Cómo save() y delete() automáticamente invocan showToast() para feedback.
+- [../02-base-entity/validation-system.md](../02-base-entity/validation-system.md): Cómo validation errors disparan ERROR toasts.
 
 ### Enums y Constants
 
-- [../../05-advanced/Enums.md](../../05-advanced/Enums.md): Documentación de ToastType enum con valores SUCCESS, ERROR, INFO, WARNING.
+- [../05-advanced/Enums.md](../05-advanced/Enums.md): Documentación de ToastType enum con valores SUCCESS, ERROR, INFO, WARNING.
 
 ### Styling
 
