@@ -286,6 +286,36 @@ Application.ModuleList = new Map([
 ]);
 ```
 
+### 6.7 Prohibición de Lógica en Templates
+
+NUNCA ejecutar lógica compleja (ternarios, manipulación de arrays inline) en event handlers del template. SIEMPRE extraer a métodos:
+
+```typescript
+// ✅ CORRECTO - Método toggleItemSelection en methods
+<button @click="toggleItemSelection(item)">
+    <span :class="GGCLASS">{{ getItemIcon(item) }}</span>
+</button>
+
+methods: {
+    toggleItemSelection(item: BaseEntity) {
+        if (this.selectedItems.includes(item)) {
+            this.selectedItems.splice(this.selectedItems.indexOf(item), 1);
+        } else {
+            this.selectedItems.push(item);
+        }
+    }
+}
+
+// ❌ INCORRECTO - Lógica compleja inline en @click (§06-CODE-STYLING 6.3.1.2)
+<button @click="
+    selectedItems.includes(item)
+        ? selectedItems.splice(selectedItems.indexOf(item), 1)
+        : selectedItems.push(item)
+">
+```
+
+**Referencia Contractual**: §06-CODE-STYLING-STANDARDS 6.3.1.2 - "Los templates DEBEN limitarse a interpolación simple y directivas básicas. Prohibido código implícito, ternarios encadenados, lógica condicional compleja."
+
 ## 7. Prohibiciones
 
 1. NO mutar modelValue prop directamente - Siempre crear nuevo array y emitir update:modelValue
@@ -298,6 +328,7 @@ Application.ModuleList = new Map([
 8. NO usar validación asíncrona - ArrayInputComponent no ejecuta isAsyncValidation()
 9. NO persistir selectedItems entre activaciones de modo - Limpiar al desactivar isSelection
 10. NO asumir orden específico - Array mantiene orden de inserción, no hay sort
+11. NO ejecutar lógica compleja en event handlers de template (@click con ternarios, manipulación de arrays) - Extraer a métodos (§6.3.1.2)
 
 ## 8. Dependencias
 

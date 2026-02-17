@@ -190,7 +190,7 @@ export default {
 }
 
 .list-input-container .arrow {
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-normal) var(--timing-ease);
     transform: rotate(180deg);
 }
 .list-input-container .arrow.active {
@@ -199,7 +199,7 @@ export default {
 
 .list-input-header {
     width: 100%;
-    padding-top: 0.9rem;
+    padding-top: var(--input-container-padding-top);
 }
 
 .list-input-header .list-input-container {
@@ -208,10 +208,10 @@ export default {
     align-items: center;
     width: 100%;
     background-color: var(--bg-gray);
-    padding: 0.75rem;
+    padding: var(--padding-medium);
     box-sizing: border-box;
-    border: 1px solid var(--sky);
-    border-radius: 1rem;
+    border: var(--border-width-thin) solid var(--sky);
+    border-radius: var(--border-radius);
     position: relative;
 }
 
@@ -227,11 +227,11 @@ export default {
 
 .label-and-value .label {
     position: absolute;
-    left: 0.75rem;
-    top: 0.9rem;
+    left: var(--padding-medium);
+    top: var(--input-container-padding-top);
     color: var(--blue-1);
-    font-size: 1rem;
-    transition: 0.5s ease;
+    font-size: var(--font-size-base);
+    transition: all var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;
@@ -242,10 +242,10 @@ export default {
 .label-and-value .label.active {
     color: var(--white);
     background-color: var(--sky);
-    font-size: 0.75rem;
-    top: -1.1rem;
-    left: 1.5rem;
-    padding: 0.1rem 0.25rem 0 0.25rem;
+    font-size: var(--font-size-small);
+    top: var(--label-focused-top);
+    left: var(--label-focused-left);
+    padding: var(--label-focused-padding);
     border-top-left-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
 }
@@ -256,16 +256,16 @@ export default {
 
 .list-input-body {
     box-shadow: var(--shadow-dark);
-    border-radius: 1rem;
+    border-radius: var(--border-radius);
     display: grid;
     grid-template-rows: 0fr;
-    width: 100%;
-    max-height: 300px;
+    padding: var(--padding-medium);
+    max-height: var(--dropdown-max-height);
     overflow-y: auto;
     position: absolute;
     background-color: var(--white);
     z-index: var(--z-modal);
-    transition: grid-template-rows 0.3s ease;
+    transition: grid-template-rows var(--transition-normal) var(--timing-ease);
 }
 .list-input-body.from-bottom {
     bottom: 100%;
@@ -296,7 +296,7 @@ export default {
 
 button:focus .list-input-container {
     background-color: var(--white);
-    border: 2px solid var(--lavender);
+    border: var(--border-width-medium) solid var(--lavender);
 }
 button:disabled {
     background-color: transparent;

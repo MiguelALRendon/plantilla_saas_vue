@@ -67,20 +67,20 @@ export default {
     display: flex;
     flex-direction: row;
     gap: var(--spacing-sm);
-    border-bottom: 2px solid var(--sky);
+    border-bottom: var(--border-width-medium) solid var(--sky);
 }
 
 .tab-container-row .tab {
     padding: var(--spacing-sm) var(--spacing-xl);
     cursor: pointer;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
-    border: 1px solid var(--border-gray);
+    border: var(--border-width-thin) solid var(--border-gray);
     border-bottom: none;
     transition: var(--transition-slow) var(--timing-ease);
 }
 
 .tab-container-row .tab.active {
-    border: 2px solid var(--sky);
+    border: var(--border-width-medium) solid var(--sky);
     border-bottom: none;
     background-color: var(--bg-gray);
 }

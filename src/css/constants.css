@@ -247,6 +247,24 @@
     --label-focused-left: 1.5rem;
     --label-focused-padding: 0.1rem 0.25rem 0 0.25rem;
     --number-input-label-left: 3.5rem;
+    
+    /* Filter effects */
+    --filter-brightness-hover: brightness(0.9);
+    
+    /* Component-specific dimensions */
+    --dropdown-max-height: 300px;
+    --form-group-header-height: 30px;
+    --toast-container-width: 400px;
+    --modal-confirmation-max-width: 400px;
+    --modal-confirmation-max-height: 300px;
+    --modal-loading-width: 400px;
+    --modal-loading-height: 150px;
+    --modal-icon-size: 3rem;
+    --modal-icon-size-large: 120px;
+    --array-input-height-large: 26rem;
+    --array-input-height-medium: 5rem;
+    --array-input-table-height: 2.5rem;
+    --array-input-row-height: 4rem;
 }
 
 .dark-mode {

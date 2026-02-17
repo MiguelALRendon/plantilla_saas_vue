@@ -321,6 +321,59 @@ toggleDarkMode = () => {
 
 Invierte AppConfiguration.value.isDarkMode. CSS reacciona mediante computed property binding :root[data-theme="dark"].
 
+**JSDOC + REGIONS OBLIGATORIOS:** Archivo application_ui_service.ts DEBE cumplir estándares §06-CODE-STYLING-STANDARDS:
+
+1. **JSDoc Obligatorio (§6.2.1):** Clase ApplicationUIService y TODOS sus métodos públicos (14+) DEBEN tener JSDoc descriptivo completo. Para métodos incluir @param con tipo y descripción, @returns cuando aplique. Ejemplo:
+```typescript
+/**
+ * Servicio centralizado gestionar operaciones UI comunes (toasts, modales, confirmaciones, loading screens).
+ * Instanciado únicamente en Application singleton, accesible via Application.ApplicationUIService.
+ */
+export class ApplicationUIService implements ApplicationUIContext {
+    /**
+     * Muestra toast notification agregando instancia a ToastList reactivo
+     * @param {string} message - Mensaje a mostrar en toast
+     * @param {ToastType} type - Tipo de toast (SUCCESS, ERROR, WARNING, INFO)
+     */
+    showToast = (message: string, type: ToastType): void => { ... }
+    
+    /**
+     * Abre modal global estableciendo component y configuración
+     * @param {Component} component - Componente Vue a renderizar en modal
+     */
+    showModal = (component: Component): void => { ... }
+}
+```
+
+2. **Regions Obligatorias (§6.6.1):** Clase DEBE estructurarse con @region PROPERTIES y @region METHODS:
+```typescript
+export class ApplicationUIService {
+    /**
+     * @region PROPERTIES
+     */
+    private app: Application;
+    AppConfiguration: Ref<AppConfiguration>;
+    modal: Ref<Modal>;
+    // ... demás propiedades
+    /**
+     * @endregion
+     */
+    
+    /**
+     * @region METHODS
+     */
+    constructor(app: Application) { ... }
+    toggleDarkMode = () => { ... }
+    showToast = (message: string, type: ToastType): void => { ... }
+    // ... demás métodos
+    /**
+     * @endregion
+     */
+}
+```
+
+Esto garantiza mantenibilidad, documentación auto-generada y cumplimiento contractual estricto.
+
 ## 5. Flujo de Funcionamiento
 
 ### 5.1 Flujo de Toast Notification
@@ -577,6 +630,12 @@ Todo el UI re-renderiza con colores dark
 28. Componentes UI escuchan eventos con on() en onMounted()
 29. Componentes DEBEN off() en onBeforeUnmount() (memory leak prevention)
 30. Delays (setTimeout) necesarios para animaciones CSS sync
+
+### 6.7 JSDoc + Regions
+
+31. SIEMPRE incluir JSDoc completo en clase ApplicationUIService y TODOS métodos públicos (14+) según §06-CODE-STYLING-STANDARDS 6.2.1. Usar @param y @returns cuando corresponda
+32. SIEMPRE estructurar application_ui_service.ts con @region PROPERTIES y @region METHODS según §06-CODE-STYLING-STANDARDS 6.6.1. Permite colapsado IDE y navegación rápida
+33. Toast.ts DEBE incluir JSDoc en propiedades públicas (id, message, type) y constructor con @param
 
 ## 7. Prohibiciones
 

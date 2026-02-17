@@ -37,7 +37,7 @@ export default {
     align-items: center;
     height: calc(100% - var(--topbar-height));
     width: 100%;
-    font-size: 1.5rem;
+    font-size: var(--font-size-large);
     top: var(--topbar-height);
     z-index: var(--z-overlay);
     background-color: var(--white);

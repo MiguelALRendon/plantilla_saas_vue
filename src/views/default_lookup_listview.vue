@@ -51,3 +51,8 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+/* Component-specific styles inherit from global table.css and form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>

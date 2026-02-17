@@ -53,7 +53,7 @@ export default {
 .sidebar span {
     opacity: 0;
     font-weight: 500;
-    transition: opacity var(--transition-normal) var(--timing-ease) 0.2s;
+    transition: opacity var(--transition-normal) var(--timing-ease) var(--transition-fast);
 }
 .sidebar.toggled {
     max-width: var(--sidebar-width-expanded);
@@ -68,7 +68,7 @@ export default {
     max-height: 90px;
     padding: 0;
     overflow: hidden;
-    border-bottom: 1px solid var(--border-gray);
+    border-bottom: var(--border-width-thin) solid var(--border-gray);
     transition: var(--transition-slow) var(--timing-ease);
 }
 .sidebar.toggled .header {
@@ -91,7 +91,7 @@ export default {
     padding: var(--spacing-lg);
     overflow: hidden;
     transition: var(--transition-slow) var(--timing-ease);
-    border-top: 1px solid var(--border-gray);
+    border-top: var(--border-width-thin) solid var(--border-gray);
 }
 .sidebar.toggled .footer {
     height: 100%;

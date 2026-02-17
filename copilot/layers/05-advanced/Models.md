@@ -196,6 +196,59 @@ export class EnumAdapter {
 ```
 **PROBLEMA REVERSE MAPPING:** Enum numérico ToastType {SUCCESS: 0, ERROR: 1} genera runtime {SUCCESS: 0, ERROR: 1, 0: "SUCCESS", 1: "ERROR"} duplicando keys, Object.keys retorna ["0", "1", "SUCCESS", "ERROR"] con duplicados. SOLUCION: isNaN(Number(key)) filtra keys numéricas "0" "1" retornando solo ["SUCCESS", "ERROR"], map genera [{key: "SUCCESS", value: 0}, {key: "ERROR", value: 1}] limpio para ListInputComponent dropdown options.
 
+**JSDOC + REGIONS OBLIGATORIOS:** Todos los archivos TypeScript en src/models/ DEBEN cumplir estándares §06-CODE-STYLING-STANDARDS:
+
+1. **JSDoc Obligatorio (§6.2.1):** Todas las clases, propiedades públicas, constructores y métodos públicos DEBEN tener JSDoc descriptivo completo. Para métodos incluir @param con tipo y descripción, @returns con tipo y descripción. Ejemplo Toast.ts:
+```typescript
+/**
+ * Representa una notificación toast individual con ID autogenerado
+ * utilizada en ApplicationUIService.ToastList para renderizado reactivo.
+ */
+export class Toast {
+    /**
+     * Identificador único autogenerado con Math.random().toString(36)
+     * utilizado como :key en v-for de ToastComponent
+     */
+    id: string;
+    
+    /**
+     * Texto descriptivo mostrado en ToastComponent
+     */
+    message: string;
+    
+    /**
+     * Constructor de Toast que autogenera ID único
+     * @param {string} message - Mensaje a mostrar
+     * @param {ToastType} type - Tipo (SUCCESS, ERROR, WARNING, INFO)
+     */
+    constructor(message: string, type: ToastType) { ... }
+}
+```
+
+2. **Regions Obligatorias (§6.6.1):** Todas las clases DEBEN estructurarse con @region PROPERTIES y @region METHODS. Ejemplo enum_adapter.ts:
+```typescript
+export class EnumAdapter {
+    /**
+     * @region PROPERTIES
+     */
+    private enumRef: Record<string, string | number>;
+    /**
+     * @endregion
+     */
+    
+    /**
+     * @region METHODS
+     */
+    constructor(enumRef: Record<string, string | number>) { ... }
+    getKeyValuePairs(): { key: string; value: number }[] { ... }
+    /**
+     * @endregion
+     */
+}
+```
+
+Esto garantiza mantenibilidad, navegación IDE eficiente y cumplimiento contractual estricto.
+
 ## 5. Flujo de Funcionamiento
 
 **PASO 1 - Inicializar AppConfiguration:**
@@ -243,6 +296,10 @@ Decorador @PropertyType recibe new EnumAdapter(Priority) almacenando metadata, D
 **REGLA 6:** SIEMPRE usar EnumAdapter.getKeyValuePairs() para enums numéricos en dropdowns, NUNCA Object.keys directo con reverse mapping duplicados.
 
 **REGLA 7:** SIEMPRE calcular dropdownMenu position_x position_y verificando viewport boundaries evitando menú cortado fuera pantalla.
+
+**REGLA 8 - JSDOC OBLIGATORIO:** TODOS los archivos TypeScript en src/models/ DEBEN incluir JSDoc completo en clases, propiedades públicas, constructores y métodos públicos. Usar @param y @returns cuando corresponda según §06-CODE-STYLING-STANDARDS 6.2.1. Aplicable a Toast.ts, enum_adapter.ts y todas interfaces.
+
+**REGLA 9 - REGIONS OBLIGATORIAS:** TODAS las clases en src/models/ DEBEN estructurarse con @region PROPERTIES y @region METHODS según §06-CODE-STYLING-STANDARDS 6.6.1. Aplicable a Toast.ts, enum_adapter.ts. Permite colapsado IDE y navegación rápida.
 
 ## 7. Prohibiciones
 

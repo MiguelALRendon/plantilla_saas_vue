@@ -213,6 +213,8 @@ Usuario hace scroll vertical en tbody, header thead permanece sticky visible con
 
 **REGLA 10:** SIEMPRE tokenizar medidas visuales repetibles de tabla (`height`, `padding`, `min-height`, `font-size`, `margins`) usando `constants.css`; solo se permiten literales si son excepciones únicas documentadas.
 
+**REGLA 11:** SIEMPRE extraer lógica compleja de templates (ternarios con instanceof, operador typeof, verificaciones de tipos) a computed properties o methods; NUNCA ejecutar código implícito en interpolaciones `{{ }}` (§06-CODE-STYLING 6.3.1.2).
+
 ## 7. Prohibiciones
 
 **PROHIBIDO:** Hardcodear nombres de columnas ignorando metadata system.
@@ -228,6 +230,8 @@ Usuario hace scroll vertical en tbody, header thead permanece sticky visible con
 **PROHIBIDO:** Remover position sticky de thead perdiendo usabilidad in scroll.
 
 **PROHIBIDO:** Omitir hover effect en rows reduciendo feedback visual de clickeabilidad.
+
+**PROHIBIDO:** Ejecutar lógica compleja en templates (`instanceof`, `typeof`, ternarios complejos con verificaciones de tipos) en lugar de métodos/computed (§6.3.1.2).
 
 ## 8. Dependencias
 

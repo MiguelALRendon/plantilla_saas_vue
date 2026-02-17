@@ -20,11 +20,7 @@
                         v-if="Application.View.entityClass?.getPropertyType(column) !== Array"
                     >
                         <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
-                            {{
-                                item[column] instanceof BaseEntity
-                                    ? item[column].getDefaultPropertyValue()
-                                    : item.getFormattedValue(column)
-                            }}
+                            {{ getCellValue(item, column) }}
                         </span>
 
                         <span
@@ -72,6 +68,11 @@ export default {
         },
         getBooleanIcon(item: BaseEntity, column: string): string {
             return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
+        },
+        getCellValue(item: BaseEntity, column: string): string {
+            return item[column] instanceof BaseEntity
+                ? item[column].getDefaultPropertyValue()
+                : item.getFormattedValue(column);
         },
         openDetailView(entity: BaseEntity) {
             /** Setear entityOid antes de cambiar la vista */
@@ -157,7 +158,7 @@ tfoot tr {
 td {
     padding-inline: var(--spacing-medium);
     padding-block: var(--spacing-small);
-    border-bottom: 1px solid var(--gray-lighter);
+    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
     user-select: none;
     width: 100%;
 }

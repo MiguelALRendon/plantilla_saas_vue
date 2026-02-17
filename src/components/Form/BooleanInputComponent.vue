@@ -131,7 +131,7 @@ export default {
 
 .validation-messages {
     color: var(--red);
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     margin-top: var(--spacing-xs);
     padding-left: var(--spacing-md);
 }
@@ -153,18 +153,18 @@ export default {
 
 .BooleanInput .label-input-boolean {
     color: var(--lavender);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     height: fit-content;
     cursor: pointer;
 }
 
 .BooleanInput .input-button {
-    margin-left: 1rem;
+    margin-left: var(--margin-medium);
 }
 
 .BooleanInput .input-button .icon {
     transform: rotate(180deg);
-    transition: 0.5s ease;
+    transition: all var(--transition-slow) var(--timing-ease);
     color: var(--accent-red);
     border-radius: 100%;
 }
@@ -175,7 +175,7 @@ export default {
 }
 
 .BooleanInput:focus {
-    border: 2px solid var(--lavender);
+    border: var(--border-width-medium) solid var(--lavender);
 }
 .BooleanInput:focus .label-input-boolean {
     color: var(--gray-medium);

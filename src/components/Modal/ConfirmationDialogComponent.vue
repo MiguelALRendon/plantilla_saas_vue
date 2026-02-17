@@ -15,17 +15,7 @@
                             { txterror: dialogInfo.type === confMenuType.ERROR }
                         ]"
                         class="dialog-icon"
-                        >{{
-                            dialogInfo.type === confMenuType.INFO
-                                ? GGICONS.INFO
-                                : dialogInfo.type === confMenuType.SUCCESS
-                                  ? GGICONS.CHECK
-                                  : dialogInfo.type === confMenuType.WARNING
-                                    ? GGICONS.WARNING
-                                    : dialogInfo.type === confMenuType.ERROR
-                                      ? GGICONS.CLOSE
-                                      : ''
-                        }}</span
+                        >{{ dialogIcon }}</span
                     >
                     <p
                         :class="[
@@ -67,6 +57,20 @@ export default {
     computed: {
         dialogInfo() {
             return Application.confirmationMenu.value;
+        },
+        dialogIcon(): string {
+            switch (this.dialogInfo.type) {
+                case confMenuType.INFO:
+                    return GGICONS.INFO;
+                case confMenuType.SUCCESS:
+                    return GGICONS.CHECK;
+                case confMenuType.WARNING:
+                    return GGICONS.WARNING;
+                case confMenuType.ERROR:
+                    return GGICONS.CLOSE;
+                default:
+                    return '';
+            }
         }
     },
     data() {

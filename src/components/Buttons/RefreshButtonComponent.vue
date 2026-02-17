@@ -30,7 +30,7 @@ export default {
 
 <style scoped>
 .button.success-green span {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     margin-right: 0.15rem;
 }
 </style>

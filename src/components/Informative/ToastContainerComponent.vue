@@ -38,13 +38,13 @@ export default {
     top: 0;
     right: 0;
     z-index: var(--z-toast);
-    width: 400px;
+    width: var(--toast-container-width);
     height: 100%;
-    padding-top: calc(50px + 0.5rem);
-    padding-right: 1rem;
+    padding-top: calc(var(--topbar-height) + var(--padding-small));
+    padding-right: var(--padding-large);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--spacing-lg);
     pointer-events: none;
 }
 </style>

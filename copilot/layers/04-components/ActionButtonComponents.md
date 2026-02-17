@@ -36,6 +36,15 @@ El sistema de botones de acción se estructura mediante componentes Vue independ
 
 **Integración con ActionsComponent**: ActionsComponent renderiza dinámicamente Application.ListButtons.value mediante v-for y component :is directive, creando instancia de cada botón en tiempo de ejecución. Cambios en ListButtons.value disparan re-render automático, garantizando que barra de acciones siempre refleje botones apropiados para contexto actual.
 
+**STYLES:** Todos los Action Button Components (GenericButtonComponent, NewButtonComponent, RefreshButtonComponent, ValidateButtonComponent, SaveButtonComponent, SaveAndNewButtonComponent, SendToDeviceButtonComponent) DEBEN incluir bloque `<style scoped>` después del bloque `<script>`. Este bloque permite estilos component-specific que heredan de global constants. Estructura obligatoria:
+```vue
+<style scoped>
+/* Component-specific styles inherit from global form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>
+```
+Este requisito garantiza encapsulación CSS y cumple contrato arquitectural §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1 que establece obligatoriedad de scoped styles en todos los Single File Components Vue.
+
 ## 5. Flujo de Funcionamiento
 
 El flujo operacional comienza cuando Application.changeView() o Application.changeViewToDetailView() o Application.changeViewToListView() ejecuta, disparando actualización de Application.View.value con nueva entityClass, entityObject y viewType. Subsecuentemente, Application.setButtonList() se invoca automáticamente, evaluando nuevo contexto y reconfigurando Application.ListButtons.value.
@@ -107,6 +116,8 @@ Sin markRaw(), Vue intenta hacer componentes reactivos causando overhead inneces
 **Regla de Emisión de Eventos**: Los Action Button Components NO deben emitir eventos custom. Toda comunicación con Application ocurre mediante invocaciones directas de métodos. No usar $emit() ni eventBus en estos componentes.
 
 **Regla de Props**: Los Action Button Components NO reciben props. Acceden a datos necesarios mediante Application singleton. Diseños que  requieran props indican arquitectura incorrecta.
+
+**REGLA 8 - SCOPED STYLES OBLIGATORIOS**: SIEMPRE incluir bloque `<style scoped>` en todos los Action Button Components. Aunque el componente no requiera estilos custom inmediatos, el bloque vacío con comentario contractual es obligatorio para cumplir §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1. Permite extensibilidad futura sin modificar estructura de archivo.
 
 ## 7. Prohibiciones
 

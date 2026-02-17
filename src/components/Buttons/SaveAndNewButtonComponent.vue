@@ -38,7 +38,7 @@ export default {
 
 <style scoped>
 .button.accent span {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     margin-right: 0.15rem;
 }
 </style>

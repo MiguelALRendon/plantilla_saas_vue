@@ -61,19 +61,19 @@ export default {
     max-height: 100vh;
     position: relative;
     z-index: var(--z-base);
-    padding-bottom: 0.5rem;
-    padding-right: 0.5rem;
+    padding-bottom: var(--padding-small);
+    padding-right: var(--padding-small);
     box-sizing: border-box;
     background-color: var(--white);
 }
 .ComponentContainer {
     width: 100%;
     height: 100%;
-    max-height: calc(100vh - 50px);
+    max-height: calc(100vh - var(--topbar-height));
     overflow: auto;
-    padding-top: 1rem;
-    padding-inline: 1rem;
-    padding-bottom: 2rem;
+    padding-top: var(--padding-large);
+    padding-inline: var(--padding-large);
+    padding-bottom: var(--spacing-2xl);
     position: relative;
     background-color: var(--bg-gray);
     border-radius: var(--border-radius);

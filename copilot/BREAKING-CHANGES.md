@@ -307,10 +307,36 @@ PATCH: Correcciones de bugs compatibles
 
 ---
 
+## 11. Autores y Responsables
+
+**Arquitecto Principal del Framework:**
+- MiguelALRendon (Responsable de aprobación de breaking changes)
+
+**Contribuidores:**
+- Equipo de desarrollo del Framework SaaS Vue
+
+**Responsabilidades:**
+- **Arquitecto**: Aprobación/rechazo de breaking changes propuestos
+- **Desarrolladores**: Propuesta y documentación de breaking changes necesarios
+- **Mantenedores**: Actualización de este registro y guías de migración
+
+**Contacto para Propuestas:**
+- Crear issue en repositorio del framework con etiqueta `breaking-change`
+- Seguir template de propuesta definido en este documento (sección 7)
+
+**Historial de Cambios del Documento:**
+
+| Versión | Fecha | Cambios | Autor |
+|---------|-------|---------|-------|
+| 1.0.0 | 13 de Febrero, 2026 | Creación inicial del registro | MiguelALRendon |
+| 1.0.1 | 17 de Febrero, 2026 | Agregada sección 11 (Autores y Responsables) | GitHub Copilot + MiguelALRendon |
+
+---
+
 **VALIDEZ CONTRACTUAL**
 
 Este registro mantiene historial de breaking changes del Framework SaaS Vue.
 
 **Autoridad Final:** Arquitecto del Framework  
-**Versión:** 1.0.0  
+**Versión:** 1.0.1  
 **Estado:** ACTIVO Y VINCULANTE

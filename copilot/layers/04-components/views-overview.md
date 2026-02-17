@@ -541,6 +541,15 @@ export default {
 **Objetos relacionados:**
 - Si propiedad es BaseEntity, muestra getDefaultPropertyValue() de objeto relacionado
 
+**STYLES:** Todos los componentes de vista (default_listview.vue, default_detailview.vue, default_lookup_listview.vue, list.vue, DetailViewTableComponent.vue) DEBEN incluir bloque `<style scoped>` después del bloque `<script>`. Este bloque permite estilos component-specific que heredan de global constants. Estructura obligatoria:
+```vue
+<style scoped>
+/* Component-specific styles inherit from global table.css and form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>
+```
+Este requisito garantiza encapsulación CSS y cumple contrato arquitectural §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1 que establece obligatoriedad de scoped styles en todos los Single File Components Vue.
+
 ## 5. Flujo de Funcionamiento
 
 ### Flujo ListView Completo
@@ -628,6 +637,7 @@ export default {
 18. DetailViewTableComponent DEBE usar getUniquePropertyValue como key único
 19. openDetailView DEBE establecer entityOid antes de invocar changeViewToDetailView
 20. Todas las vistas DEBEN leer entityClass y entity desde Application.View.value
+21. SIEMPRE incluir bloque `<style scoped>` en todos los view components (default_listview, default_detailview, default_lookup_listview, list.vue, DetailViewTableComponent). Aunque el componente no requiera estilos custom inmediatos, el bloque vacío con comentario contractual es obligatorio para cumplir §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1. Permite extensibilidad futura sin modificar estructura de archivo.
 
 ## 7. Prohibiciones
 

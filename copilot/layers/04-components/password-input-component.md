@@ -168,6 +168,22 @@ isValidated(): boolean {
 }
 ```
 
+**STYLES:**
+Según contrato [04-UI-DESIGN-SYSTEM-CONTRACT.md](../../04-UI-DESIGN-SYSTEM-CONTRACT.md) §6.13.1, TODOS los componentes Vue DEBEN tener bloque `<style scoped>` para encapsular estilos y prevenir contaminación CSS global.
+
+```vue
+<style scoped>
+/* Component-specific styles inherit from global form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>
+```
+
+**Características:**
+- Estilos heredan de `/src/css/form.css` (estilos globales de formularios)
+- Scoped attribute asegura que estilos solo aplican a este componente
+- Comentario contractual documenta cumplimiento de §6.13.1
+- Permite override de estilos globales cuando necesario
+
 ## 5. Flujo de Funcionamiento
 
 **PASO 1 - Activación:**
@@ -206,6 +222,8 @@ Si validación falla, isInputValidated se marca false, CSS class nonvalidated se
 **REGLA 6:** SIEMPRE deshabilitar botón toggle cuando input está disabled.
 
 **REGLA 7:** SIEMPRE validar required con trim eliminando espacios en blanco.
+
+**REGLA 8:** SIEMPRE incluir bloque `<style scoped>` en componente Vue (contractual §6.13.1 del 04-UI-DESIGN-SYSTEM-CONTRACT.md).
 
 ## 7. Prohibiciones
 

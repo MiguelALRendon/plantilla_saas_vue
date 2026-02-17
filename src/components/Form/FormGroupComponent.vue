@@ -41,32 +41,32 @@ export default {
 .form-group {
     background-color: var(--white);
     border-radius: var(--border-radius);
-    margin-block: 1rem;
+    margin-block: var(--margin-medium);
     box-shadow: var(--shadow-light);
 }
 
 .form-group-header {
     font-weight: bold;
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     color: var(--gray-medium);
-    padding: 1rem;
-    border-bottom: 1px solid var(--gray-lighter);
-    height: 30px;
-    max-height: 30px;
+    padding: var(--padding-large);
+    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
+    height: var(--form-group-header-height);
+    max-height: var(--form-group-header-height);
     display: flex;
     justify-content: flex-start;
     align-items: center;
 }
 
 .form-group-body {
-    padding-block: 1rem;
-    padding-inline: 0.5rem;
+    padding-block: var(--padding-large);
+    padding-inline: var(--padding-small);
 }
 
 .form-group-body-container {
     display: grid;
     grid-template-rows: 1fr;
-    transition: grid-template-rows 0.3s ease;
+    transition: grid-template-rows var(--transition-normal) var(--timing-ease);
 }
 
 .form-group-body-content {
@@ -80,7 +80,7 @@ export default {
     height: fit-content;
     transform: rotate(180deg);
     height: 100%;
-    transition: transform 0.3s ease;
+    transition: transform var(--transition-normal) var(--timing-ease);
     font-size: 2rem;
     width: 2rem;
 }

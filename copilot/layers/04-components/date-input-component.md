@@ -94,6 +94,22 @@ El method openCalendar() type-casts ref: (this.$refs.dateInput as HTMLInputEleme
 
 El method isValidated() implementa async function con three-level validation structure idéntica a otros input components: required check verifica metadata.required.value && (!modelValue || modelValue.trim() === ''), sync validation verifica !metadata.validated.value (ejecutando entity decorators via BaseEntity), async validation ejecuta await entity.isAsyncValidation(propertyKey). Todos los errores se acumulan en validationMessages array con mensajes desde metadata properties o defaults.
 
+**STYLES:**
+Según contrato [04-UI-DESIGN-SYSTEM-CONTRACT.md](../../04-UI-DESIGN-SYSTEM-CONTRACT.md) §6.13.1, TODOS los componentes Vue DEBEN tener bloque `<style scoped>` para encapsular estilos y prevenir contaminación CSS global.
+
+```vue
+<style scoped>
+/* Component-specific styles inherit from global form.css */
+/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+</style>
+```
+
+**Características:**
+- Estilos heredan de `/src/css/form.css` (estilos globales de formularios)
+- Scoped attribute asegura que estilos solo aplican a este componente
+- Comentario contractual documenta cumplimiento de §6.13.1
+- Permite override de estilos globales cuando necesario
+
 ## 5. Flujo de Funcionamiento
 
 **Montaje Inicial con Fecha Existente:**
@@ -260,6 +276,8 @@ Input nativo DEBE tener class="date-input" para CSS visibility: hidden:
     :value="modelValue"
 />
 ```
+
+**REGLA CONTRACTUAL:** SIEMPRE incluir bloque `<style scoped>` en componente Vue (contractual §6.13.1 del 04-UI-DESIGN-SYSTEM-CONTRACT.md).
 
 ## 7. Prohibiciones
 

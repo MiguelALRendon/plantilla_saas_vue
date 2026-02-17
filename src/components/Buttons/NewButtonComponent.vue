@@ -35,6 +35,6 @@ export default {
 
 <style scoped>
 .button.info span {
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
 }
 </style>

@@ -53,11 +53,7 @@
                         <button
                             class="select-btn"
                             :class="[{ added: selectedItems.includes(item) }]"
-                            @click="
-                                selectedItems.includes(item)
-                                    ? selectedItems.splice(selectedItems.indexOf(item), 1)
-                                    : selectedItems.push(item)
-                            "
+                            @click="toggleItemSelection(item)"
                         >
                             <span :class="GGCLASS">{{ getItemIcon(item) }}</span>
                         </button>
@@ -135,6 +131,13 @@ export default {
     methods: {
         getItemIcon(item: BaseEntity): string {
             return this.selectedItems.includes(item) ? GGICONS.REMOVE : GGICONS.ADD;
+        },
+        toggleItemSelection(item: BaseEntity): void {
+            if (this.selectedItems.includes(item)) {
+                this.selectedItems.splice(this.selectedItems.indexOf(item), 1);
+            } else {
+                this.selectedItems.push(item);
+            }
         },
         openModal(): void {
             Application.ApplicationUIService.showModalOnFunction(
@@ -246,17 +249,17 @@ export default {
 .left-side-space {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-lg);
     box-sizing: border-box;
     height: 100%;
-    padding-block: 0.5rem;
+    padding-block: var(--padding-small);
 }
 .title {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 .table-container {
-    height: 26rem;
+    height: var(--array-input-height-large);
     overflow: hidden;
     box-sizing: border-box;
 }
@@ -264,14 +267,14 @@ export default {
 .table-container .table-header-row {
     display: flex;
     align-items: center;
-    height: 5rem;
+    height: var(--array-input-height-medium);
     background-color: var(--white);
-    border-radius: 1rem;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
-    padding-inline: 1rem;
-    margin-bottom: 0.5rem;
+    padding-inline: var(--padding-large);
+    margin-bottom: var(--margin-small);
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--spacing-lg);
     box-sizing: border-box;
 }
 
@@ -282,7 +285,7 @@ export default {
     display: flex;
     justify-content: flex-end;
     flex-direction: row-reverse;
-    gap: 1rem;
+    gap: var(--spacing-lg);
     box-sizing: border-box;
 }
 
@@ -291,7 +294,7 @@ export default {
     width: 100%;
     height: 20rem;
     background-color: var(--white);
-    border-radius: 1rem;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
     display: flex;
     flex-direction: column;
@@ -326,7 +329,7 @@ export default {
 
 .table td {
     height: 4rem;
-    border-bottom: 1px solid var(--gray-lighter);
+    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
 }
 .table tbody tr:hover {
     background-color: var(--bg-gray);
@@ -335,7 +338,7 @@ export default {
 
 .table thead {
     height: 2.5rem;
-    border-bottom: 1px solid var(--gray-lighter);
+    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
     flex-shrink: 0;
 }
 
@@ -347,7 +350,7 @@ export default {
 
 .table tfoot {
     height: 2.5rem;
-    border-top: 1px solid var(--gray-lighter);
+    border-top: var(--border-width-thin) solid var(--gray-lighter);
     flex-shrink: 0;
 }
 
@@ -361,7 +364,7 @@ export default {
 .select-btn span {
     color: var(--sky);
     transform: rotate(-180deg);
-    transition: 0.5s ease;
+    transition: all var(--transition-slow) var(--timing-ease);
 }
 .select-btn.added span {
     transform: rotate(0deg);
@@ -390,7 +393,7 @@ export default {
     width: 1.5rem;
     height: 1.5rem;
     font-weight: bold;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -401,7 +404,7 @@ export default {
     flex-direction: column;
 }
 .val-list span {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: var(--accent-red);
     margin-bottom: 0.2rem;
 }

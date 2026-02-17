@@ -8,6 +8,6 @@
 .form-row-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    column-gap: 1rem;
+    column-gap: var(--spacing-lg);
 }
 </style>
