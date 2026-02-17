@@ -285,7 +285,7 @@ class ApplicationClass implements ApplicationUIContext {
         const currentRoute = this.router.currentRoute.value;
 
         if (entity) {
-            /** Navigate to detailview with OID or 'new' */
+            /** Navigate to detailview with entity ID or 'new' */
             const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
             if (currentRoute.path !== targetPath) {
                 this.router

@@ -280,6 +280,41 @@ Antes de considerar completada cualquier modificación:
 3. Confirmar que descripciones sean actuales y precisas
 4. Validar orden consistente de listado
 
+#### 6.4.7 PROHIBICIÓN ABSOLUTA de Índices en Carpetas de Código Fuente
+
+**REGLA INQUEBRANTABLE:**
+
+NINGUNA carpeta dentro de `/src/` PUEDE contener archivos README.md, INDEX.md o cualquier archivo de documentación Markdown.
+
+**Alcance de la prohibición:**
+- `/src/` y TODAS sus subcarpetas recursivamente
+- Incluye: entities, decorations, components, models, enums, types, views, router, css, constants, composables
+- Incluye subcarpetas anidadas: components/Form, components/Modal, etc.
+
+**Justificación:**
+- La documentación técnica del framework reside EXCLUSIVAMENTE en `/copilot/`
+- El código fuente en `/src/` es IMPLEMENTACIÓN, no documentación
+- README.md en carpetas de código genera duplicación y desincronización
+- El principio SPEC-FIRST establece `/copilot/` como única fuente de verdad documental
+
+**Detección y corrección:**
+
+Si se detecta presencia de README.md o INDEX.md dentro de `/src/`:
+1. **ELIMINAR inmediatamente** el archivo
+2. Verificar que su contenido esté documentado correctamente en `/copilot/layers/`
+3. Si el README.md contenía información no documentada, migrarla a archivo .md correspondiente en `/copilot/`
+
+**Excepciones:** 
+NINGUNA. Esta prohibición NO admite excepciones bajo ninguna circunstancia.
+
+**Comando de verificación:**
+```bash
+# DEBE retornar 0 archivos
+find src/ -name "README.md" -o -name "INDEX.md"
+```
+
+Si el comando anterior retorna archivos, es violación CRÍTICA del contrato que debe corregirse inmediatamente.
+
 ### 6.5 Estructura Documental Obligatoria
 
 Cada archivo MD de documentación técnica debe contener:

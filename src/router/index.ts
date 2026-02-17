@@ -44,7 +44,7 @@ const router: Router = createRouter({
  */
 router.beforeEach(async (to, _from, next) => {
     const moduleName = to.params.module as string;
-    const oid = to.params.oid as string;
+    const entityObjectId = to.params.oid as string;
 
     /** Find the corresponding module class from ModuleList by name matching */
     const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
@@ -63,31 +63,31 @@ router.beforeEach(async (to, _from, next) => {
         const currentModuleName = currentModule
             ? (currentModule.getModuleName() || currentModule.name).toLowerCase()
             : '';
-        const currentOid = Application.View.value.entityOid;
+        const currentEntityId = Application.View.value.entityOid;
 
         /** Only update Application if URL is different from current state to prevent loops */
-        if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
-            if (oid && to.meta.viewType === 'detail') {
+        if (currentModuleName !== moduleName.toLowerCase() || currentEntityId !== (entityObjectId || '')) {
+            if (entityObjectId && to.meta.viewType === 'detail') {
                 /** Detail view - Handle entity creation or editing */
-                if (oid === 'new') {
+                if (entityObjectId === 'new') {
                     const newEntity: BaseEntity = concreteModuleClass.createNewInstance();
                     Application.View.value.entityClass = moduleClass;
                     Application.View.value.entityObject = newEntity;
                     Application.View.value.component = moduleClass.getModuleDetailComponent();
                     Application.View.value.viewType = ViewTypes.DETAILVIEW;
-                    Application.View.value.entityOid = oid;
+                    Application.View.value.entityOid = entityObjectId;
                     Application.setButtonList();
                 } else {
                     try {
-                        const loadedEntity: BaseEntity = await concreteModuleClass.getElement(oid);
+                        const loadedEntity: BaseEntity = await concreteModuleClass.getElement(entityObjectId);
                         Application.View.value.entityClass = moduleClass;
                         Application.View.value.entityObject = loadedEntity;
                         Application.View.value.component = moduleClass.getModuleDetailComponent();
                         Application.View.value.viewType = ViewTypes.DETAILVIEW;
-                        Application.View.value.entityOid = oid;
+                        Application.View.value.entityOid = entityObjectId;
                         Application.setButtonList();
                     } catch (error: unknown) {
-                        console.error('[Router] Failed to load entity for OID:', oid, error);
+                        console.error('[Router] Failed to load entity with ID:', entityObjectId, error);
                         next(false);
                         return;
                     }

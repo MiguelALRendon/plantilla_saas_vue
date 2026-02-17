@@ -32,7 +32,7 @@ import {
     UNIQUE_KEY,
     VALIDATION_KEY,
     VIEW_GROUP_KEY,
-    VIEW_GROUP_ROW_KEY
+    VIEW_GROUP_ROW_KEY,
 } from '@/decorations';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
@@ -48,7 +48,7 @@ import type {
     HttpMethod,
     ReadOnlyMetadata,
     RequiredMetadata,
-    ValidationMetadata
+    ValidationMetadata,
 } from '@/decorations';
 import type { ViewGroupRow } from '@/enums/view_group_row';
 
@@ -116,10 +116,10 @@ export abstract class BaseEntity {
     public _isSaving?: boolean = false;
 
     /**
-     * Object identifier used for entity tracking
-     * Optional unique identifier for runtime object management
+     * Unique identifier for entity tracking and runtime object management
+     * Optional property used by the framework to track entity instances across views and operations
      */
-    public oid?: string;
+    public entityObjectId?: string;
     /**
      * @endregion
      */
@@ -150,7 +150,7 @@ export abstract class BaseEntity {
      * Clears the entity loading state
      * Indicates async operations have completed
      */
-    public loaded(): void {
+    public clearLoadingState(): void {
         this._isLoading = false;
     }
 
@@ -1456,13 +1456,13 @@ export abstract class BaseEntity {
     /**
      * Retrieves a single entity from the API by its unique identifier
      * Executes afterGetElement lifecycle hook on success
-     * @param oid The unique identifier of the entity
+     * @param entityObjectId The unique identifier of the entity to retrieve
      * @returns Promise resolving to entity instance
      * @throws Error if ApiEndpoint not defined or API request fails
      */
     public static async getElement<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
-        oid: string
+        entityObjectId: string
     ): Promise<T> {
         const endpoint = this.getApiEndpoint();
 
@@ -1471,7 +1471,7 @@ export abstract class BaseEntity {
         }
 
         try {
-            const response = await Application.axiosInstance.get(`${endpoint}/${oid}`);
+            const response = await Application.axiosInstance.get(`${endpoint}/${entityObjectId}`);
             const mappedData = this.mapFromPersistentKeys(response.data as EntityData);
             const instance = new this(mappedData);
             instance.afterGetElement();

@@ -126,7 +126,7 @@ router.beforeEach((to, _from, next) => {
     }
 
     const moduleName = to.params.module as string;
-    const oid = to.params.oid as string;
+    const entityObjectId = to.params.oid as string;
 
     // Buscar el módulo correspondiente
     const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
@@ -139,21 +139,21 @@ router.beforeEach((to, _from, next) => {
         // necesitamos actualizar Application
         const currentModule = Application.View.value.entityClass;
         const currentModuleName = currentModule ? (currentModule.getModuleName() || currentModule.name).toLowerCase() : '';
-        const currentOid = Application.View.value.entityOid;
+        const currentEntityId = Application.View.value.entityOid;
         
         // Solo actualizar Application si la URL es diferente de lo que Application tiene
-        if (currentModuleName !== moduleName.toLowerCase() || currentOid !== (oid || '')) {
-            if (oid && to.meta.viewType === 'detail') {
+        if (currentModuleName !== moduleName.toLowerCase() || currentEntityId !== (entityObjectId || '')) {
+            if (entityObjectId && to.meta.viewType === 'detail') {
                 // Vista de detalle - setear entityOid
-                Application.View.value.entityOid = oid;
+                Application.View.value.entityOid = entityObjectId;
                 
-                // Si el OID es 'new', crear una nueva instancia
-                if (oid === 'new') {
+                // Si el entity ID es 'new', crear una nueva instancia
+                if (entityObjectId === 'new') {
                     const newEntity = moduleClass.createNewInstance();
                     Application.changeViewToDetailView(newEntity);
                 } else {
-                    // Para OIDs existentes, componente maneja carga
-                    console.log('[Router] Preparando detail view para OID:', oid);
+                    // Para entity IDs existentes, componente maneja carga
+                    console.log('[Router] Preparando detail view para entity ID:', entityObjectId);
                 }
                 
             } else {
@@ -180,7 +180,7 @@ router.beforeEach((to, _from, next) => {
 
 **Sync Check**: Solo actualiza Application si URL difiere de Application.View state (evita loops).
 
-**DetailView Handling**: Si oid === 'new', crea instancia con createNewInstance() y sincroniza View. Si oid existente, ejecuta `moduleClass.getElement(oid)` y sincroniza View con la entidad cargada.
+**DetailView Handling**: Si entityObjectId === 'new', crea instancia con createNewInstance() y sincroniza View. Si entityObjectId existente, ejecuta `moduleClass.getElement(entityObjectId)` y sincroniza View con la entidad cargada.
 
 **ListView Handling**: Limpia entityOid y llama changeViewToListView() si viewType no es LISTVIEW.
 

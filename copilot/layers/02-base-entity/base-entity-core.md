@@ -60,7 +60,7 @@ export abstract class BaseEntity {
     public _isLoading: boolean = false;
     public _originalState?: Record<string, any>;
     public _isSaving?: boolean = false;
-    public oid?: string;
+    public entityObjectId?: string;
 }
 ```
 
@@ -69,7 +69,7 @@ export abstract class BaseEntity {
 - `_isLoading` - Flag booleano que indica si la entidad está cargando datos
 - `_originalState` - Record opcional que almacena snapshot del estado para dirty checking
 - `_isSaving` - Flag booleano que indica si operación de guardado está en progreso
-- `oid` - String opcional para identificador de objeto
+- `entityObjectId` - String opcional para identificador único del objeto de entidad
 
 ### 4.2. Constructor
 
@@ -87,8 +87,8 @@ El constructor recibe un objeto de datos plano, asigna todas sus propiedades a l
 **setLoading(): void**  
 Establece _isLoading en true.
 
-**loaded(): void**  
-Establece _isLoading en false.
+**clearLoadingState(): void**  
+Establece _isLoading en false, indicando que la carga de datos ha finalizado.
 
 **getLoadingState(): boolean**  
 Retorna el valor actual de _isLoading.
@@ -384,7 +384,7 @@ Los siguientes métodos proveen acceso a metadatos de decoradores (documentació
 
 9. **NO emitir 'validate-inputs' manualmente:** Evento 'validate-inputs' SOLO DEBE emitirse mediante validateInputs(). Emisión manual puede causar inconsistencias.
 
-10. **NO asumir presencia de oid:** Propiedad oid es opcional y NO DEBE asumirse presente sin verificación.
+10. **NO asumir presencia de entityObjectId:** Propiedad entityObjectId es opcional y NO DEBE asumirse presente sin verificación.
 
 ## 8. Dependencias
 
