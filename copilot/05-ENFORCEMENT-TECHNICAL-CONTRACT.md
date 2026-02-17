@@ -31,7 +31,7 @@ Este contrato NO aplica a:
 
 ## 3. Definiciones Clave
 
-**Enforcement Técnico:** Conjunto de mecanismos obligatorios de verificación, validación y auditoría que garantizan el cumplimiento de los contratos del framework antes de la integración de código al repositorio.
+**Enforcement Técnico:** Conjunto de mecanismos obligatorios de verificación, validación y revisión que garantizan el cumplimiento de los contratos del framework antes de la integración de código al repositorio.
 
 **Autoverificación Obligatoria del Modelo (AOM):** Proceso contractualmente exigible mediante el cual un agente de IA debe declarar explícitamente qué cláusulas contractuales cumple su código generado, identificar conflictos potenciales y justificar excepciones antes de presentar su propuesta al arquitecto.
 
@@ -2001,10 +2001,10 @@ Este contrato está diseñado para entorno con:
 
 Si este contrato se introduce en proyecto existente:
 
-**FASE 1 - Auditoría (Semana 1):**
+**FASE 1 - Revisión (Semana 1):**
 - Revisar código existente contra contratos
 - Identificar violaciones, excepciones implícitas, breaking changes no documentados
-- Generar auditoría en `/copilot/AUDITORIA-ENFORCEMENT.md`
+- Generar revisión en `/copilot/REVISIÓN-ENFORCEMENT.md`
 
 **FASE 2 - Registro (Semana 2):**
 - Crear `/copilot/EXCEPCIONES.md` y registrar excepciones detectadas

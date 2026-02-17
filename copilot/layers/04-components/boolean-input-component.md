@@ -347,6 +347,11 @@ DefaultDetailView calls entity.isValidated() → BaseEntity iterates properties 
 
 ## 10. Notas de Implementación
 
+### Normalización Contractual (2026-02-17)
+
+- Los estados `.disabled` y `.nonvalidated` deben implementarse sin `!important`.
+- La prioridad visual de estados se logra por orden y especificidad de selectores scoped.
+
 ### Definición de Entidad Básica
 
 ```typescript

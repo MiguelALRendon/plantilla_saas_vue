@@ -167,7 +167,7 @@ export default {
 
 .txtinfo,
 .txtinfo span {
-    color: var(--blue-1) !important;
+    color: var(--blue-1);
 }
 .txtsuccess,
 .txtsuccess span {

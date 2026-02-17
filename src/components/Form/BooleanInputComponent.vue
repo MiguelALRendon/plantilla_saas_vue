@@ -187,14 +187,14 @@ export default {
     background-color: var(--gray-lighter);
 }
 .boolean-input-container.disabled .BooleanInput label {
-    color: var(--gray-light) !important;
+    color: var(--gray-light);
 }
 .boolean-input-container.disabled .BooleanInput span {
-    background-color: var(--gray-light) !important;
-    color: var(--gray-lighter) !important;
+    background-color: var(--gray-light);
+    color: var(--gray-lighter);
 }
 
 .boolean-input-container.nonvalidated .BooleanInput label {
-    color: var(--accent-red) !important;
+    color: var(--accent-red);
 }
 </style>

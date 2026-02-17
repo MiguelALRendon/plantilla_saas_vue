@@ -807,7 +807,7 @@ Todo otro valor literal está **PROHIBIDO**.
 - Position: `position: absolute`, `position: relative`
 - Valores absolutos: `opacity: 0`, `opacity: 1`, `z-index: 0`
 
-#### 6.13.6 Auditoría de Conformidad
+#### 6.13.6 Revisión de Conformidad
 
 **Checklist obligatorio para componentes Vue:**
 
@@ -995,7 +995,7 @@ Cambios en versión 2.0.0 (15 de Febrero, 2026):
 - § 6.13.3: Tokenización obligatoria en estilos scoped
 - § 6.13.4: Estructura de selectores en componentes Vue
 - § 6.13.5: Prohibiciones específicas en estilos scoped
-- § 6.13.6: Auditoría de conformidad con checklist
+- § 6.13.6: Revisión de conformidad con checklist
 - § 6.13.7: Flujo de trabajo correcto para estilos en componentes
 - Actualizado § 7.2: Prohibiciones de hardcode - incluye prohibiciones específicas para componentes Vue
 - Enfatizado principio de centralización absoluta: constants.css como fuente única de verdad
@@ -1017,7 +1017,7 @@ Cambios en versión 1.0.0 (13 de Febrero, 2026):
 
 Para sistemas existentes que deban cumplir este contrato:
 
-1. **Auditoría de Hardcode:** Identificar valores literales repetidos
+1. **Revisión de Hardcode:** Identificar valores literales repetidos
 2. **Tokenización:** Extraer valores a `constants.css`
 3. **Refactorización:** Reemplazar literales por `var(--token)`
 4. **Validación:** Confirmar ausencia de valores hardcodeados
@@ -1183,6 +1183,12 @@ Agregar:
 ```markdown
 - [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md) - Contrato de sistema de diseño UI/CSS
 ```
+
+### 10.7 Normalización de Overrides Legacy (2026-02-17)
+
+- Los archivos `/src/css/main.css`, `/src/css/form.css`, `/src/css/constants.css` y estilos scoped de componentes Vue deben remover overrides con `!important` no justificados.
+- Queda prohibido usar atributos `style="..."` inline en templates para resolver layout; debe reemplazarse por clases CSS del componente.
+- La prioridad de estilos debe resolverse mediante especificidad, orden de cascada y tokenización, sin excepciones implícitas.
 
 ## 11. Referencias Cruzadas
 

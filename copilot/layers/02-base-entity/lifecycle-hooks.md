@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-Los lifecycle hooks (ganchos del ciclo de vida) son métodos que se ejecutan automáticamente en momentos específicos del ciclo de vida de una entidad durante operaciones CRUD. Permiten ejecutar lógica custom antes y después de operaciones críticas (save, delete, validación) sin modificar los métodos principales. Los hooks disponibles son: beforeSave() que ejecuta pre-validación, afterSave() que ejecuta post-persistencia exitosa, beforeDelete() que ejecuta pre-eliminación, afterDelete() que ejecuta post-eliminación exitosa, y onValidated() que ejecuta post-validación completa. Estos mecanismos permiten implementar patrones como auditoría automática, soft deletes, normalización de datos, cache invalidation, y notificaciones externas de forma declarativa sin alterar la lógica CRUD base.
+Los lifecycle hooks (ganchos del ciclo de vida) son métodos que se ejecutan automáticamente en momentos específicos del ciclo de vida de una entidad durante operaciones CRUD. Permiten ejecutar lógica custom antes y después de operaciones críticas (save, delete, validación) sin modificar los métodos principales. Los hooks disponibles son: beforeSave() que ejecuta pre-validación, afterSave() que ejecuta post-persistencia exitosa, beforeDelete() que ejecuta pre-eliminación, afterDelete() que ejecuta post-eliminación exitosa, y onValidated() que ejecuta post-validación completa. Estos mecanismos permiten implementar patrones como revisión automática, soft deletes, normalización de datos, cache invalidation, y notificaciones externas de forma declarativa sin alterar la lógica CRUD base.
 
 ## 2. Alcance
 

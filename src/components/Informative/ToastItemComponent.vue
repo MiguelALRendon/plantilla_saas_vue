@@ -160,7 +160,7 @@ export default {
 }
 
 .toast span {
-    color: var(--white) !important;
+    color: var(--white);
     width: 90%;
 }
 </style>

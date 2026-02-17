@@ -1,7 +1,7 @@
 body, html {
     margin: 0;
     padding: 0;
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Inter', sans-serif;
     color: var(--gray-medium);
 }
 
@@ -18,7 +18,7 @@ button {
     cursor: pointer;
     background-color: transparent;
     padding: 0;
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Inter', sans-serif;
     display: flex;
     align-items: center;
 }
@@ -56,7 +56,7 @@ table, span{color: var(--gray-medium);}
     border-radius: var(--border-radius);
 }
 .button span{
-    color: var(--button-color) !important;
+    color: var(--button-color);
 }
 .button:hover {
     filter: brightness(0.9);
@@ -66,7 +66,7 @@ table, span{color: var(--gray-medium);}
     color: var(--white);
 }
 .button.fill span{
-    color: var(--white) !important;
+    color: var(--white);
 }
 
 .button.primary { --button-color: var(--btn-primary); }
@@ -86,5 +86,5 @@ button:disabled, .button[disabled] {
     filter: none;
 }
 button:disabled span, .button[disabled] span {
-    color: var(--gray-light) !important;
+    color: var(--gray-light);
 }

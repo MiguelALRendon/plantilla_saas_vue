@@ -362,7 +362,7 @@ User select items + click Eliminar → ArrayInputComponent.showDeleteModal() →
 - [object-input-component.md](object-input-component.md) - Relaciones 1:1
 - [text-input-component.md](text-input-component.md) - Input simple
 - [TabComponents.md](TabComponents.md) - Sistema de tabs
-- [DefaultViews.md](DefaultViews.md) - DefaultDetailView que renderiza arrays
+- [views-overview.md](views-overview.md) - DefaultDetailView que renderiza arrays
 - property-name-decorator.md - Decorador @ArrayOf
 - tab-order-decorator.md - Decorador @TabOrder
 - validation-decorator.md - Decorador @Validation
@@ -378,6 +378,12 @@ User select items + click Eliminar → ArrayInputComponent.showDeleteModal() →
 - Warehouse → Inventory (almacenes con inventario)
 
 ## 10. Notas de Implementación
+
+### Normalización Contractual (2026-02-17)
+
+- Se elimina el uso de `style` inline en template. El layout debe resolverse con clases CSS del componente.
+- Se elimina el uso de `!important` en reglas de estado (`selected`, `selection`, `display`) para cumplir contrato UI/CSS.
+- Cualquier override visual debe resolverse por especificidad controlada o estructura de selectores, nunca por `!important`.
 
 ### Definición de Entidades Completa
 
@@ -582,7 +588,7 @@ console.log('Selected items:', this.selectedItems);
 **Componentes Relacionados:**
 - [object-input-component.md](object-input-component.md) - Relaciones 1:1 con objetos
 - [TabComponents.md](TabComponents.md) - Sistema de tabs que contienen arrays
-- [DefaultViews.md](DefaultViews.md) - DefaultDetailView que renderiza arrays
+- [views-overview.md](views-overview.md) - DefaultDetailView que renderiza arrays
 - [modal-components.md](modal-components.md) - Modales usados para agregar y confirmar
 
 **Decoradores:**

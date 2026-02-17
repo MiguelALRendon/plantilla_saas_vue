@@ -433,6 +433,11 @@ Esta ubicación asegura que ToastContainer esté siempre presente independientem
 
 ## 10. Notas de Implementación
 
+### Normalización Contractual (2026-02-17)
+
+- `ToastItemComponent` debe evitar `!important` en estilos de texto y resolver prioridad por selectores.
+- Los estados visuales del toast se mantienen por clases (`toast-success`, `toast-error`, etc.) y tokens de diseño.
+
 ### Optimización de Performance con Muchos Toasts
 
 Si aplicación genera many toasts simultáneamente (10+ en ráfaga), considerar limitar cantidad máxima visible. Pattern: Application.ToastList.slice(0, 5) muestra solo los 5 más recientes, older toasts automáticamente removidos. Alternative: implementar queue system donde solo 3-5 toasts se muestran simultáneamente, resto en queue esperando. Demasiados toasts apilados causan clutter visual y degradan UX; toasts deben ser sparse y significativos, no información log continuous.
@@ -475,8 +480,8 @@ Para operaciones que soportan undo (soft delete, bulk updates), toast puede incl
 
 ### Componentes Relacionados
 
-- [LoadingPopupComponent.md](LoadingPopupComponent.md): Popup de loading mostrado durante operaciones asíncronas, complementa feedback de toasts.
-- [ConfirmationDialogComponent.md](ConfirmationDialogComponent.md): Dialog modal para confirmaciones pre-action, trabaja en secuencia con toast post-action feedback.
+- [modal-components.md](modal-components.md): Popup de loading mostrado durante operaciones asíncronas, complementa feedback de toasts.
+- [DialogComponents.md](DialogComponents.md): Dialog modal para confirmaciones pre-action, trabaja en secuencia con toast post-action feedback.
 
 ### Application y Services
 
@@ -494,7 +499,7 @@ Para operaciones que soportan undo (soft delete, bulk updates), toast puede incl
 
 ### Styling
 
-- [../../css/main.css](../../css/main.css): CSS variables para toast gradients, shadows, y transitions.
+- [../../../src/css/main.css](../../../src/css/main.css): CSS variables para toast gradients, shadows, y transitions.
 
 ### Guías de Uso
 

@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-El decorator Disabled marca propiedad como deshabilitada en interfaz de usuario, impidiendo edición por usuario Y excluyendo valor de requests HTTP al backend. Los campos disabled se muestran visualmente deshabilitados (grayed out, opacity reducida, cursor not-allowed) pero mantienen visibilidad para propósitos informativos (audit fields, computed values, auto-generated IDs). Critical para IDs auto-incrementales que backend genera, campos de auditoría (createdAt, updatedAt, createdBy) que backend gestiona, SKUs o códigos que no deben modificarse post-creation, valores calculados que frontend muestra pero backend no necesita recibir, y prevención de edición según estado (orden completada, factura pagada, documento aprobado). Disabled difiere fundamentalmente de ReadOnly: Disabled NO envía valor al backend en save() (excluded de toDictionary()), NO valida el campo (Required/Validation ignorados), y tiene estilo visual más evidente (grayed out vs solo non-editable). ReadOnly envía valor al backend, valida normalmente, y tiene estilo visual menos intrusivo. Soporta conditional disabling mediante functions que evalúan estado de entity: `@Disabled((entity) => entity.status === 'locked')`.
+El decorator Disabled marca propiedad como deshabilitada en interfaz de usuario, impidiendo edición por usuario Y excluyendo valor de requests HTTP al backend. Los campos disabled se muestran visualmente deshabilitados (grayed out, opacity reducida, cursor not-allowed) pero mantienen visibilidad para propósitos informativos (audit fields, computed values, auto-generated IDs). Critical para IDs auto-incrementales que backend genera, campos de revisión (createdAt, updatedAt, createdBy) que backend gestiona, SKUs o códigos que no deben modificarse post-creation, valores calculados que frontend muestra pero backend no necesita recibir, y prevención de edición según estado (orden completada, factura pagada, documento aprobado). Disabled difiere fundamentalmente de ReadOnly: Disabled NO envía valor al backend en save() (excluded de toDictionary()), NO valida el campo (Required/Validation ignorados), y tiene estilo visual más evidente (grayed out vs solo non-editable). ReadOnly envía valor al backend, valida normalmente, y tiene estilo visual menos intrusivo. Soporta conditional disabling mediante functions que evalúan estado de entity: `@Disabled((entity) => entity.status === 'locked')`.
 
 ## 2. Alcance
 
@@ -1337,7 +1337,7 @@ export class Product extends BaseEntity {
 
 ---
 
-### 3. Deshabilitar Campos de Auditoría
+### 3. Deshabilitar Campos de Revisión
 
 ```typescript
 export class Product extends BaseEntity {
@@ -1348,7 +1348,7 @@ export class Product extends BaseEntity {
     @PropertyName('Product Name', String)
     name!: string;
     
-    // Campos de auditoría: siempre disabled
+    // Campos de revisión: siempre disabled
     @PropertyName('Created At', Date)
     @Disabled()
     createdAt!: Date;
@@ -1364,7 +1364,7 @@ export class Product extends BaseEntity {
 ```
 
 **Resultado:**
-- Campos de auditoría visibles pero no editables
+- Campos de revisión visibles pero no editables
 - NO se envían al servidor (servidor los gestiona)
 
 ---
@@ -1537,7 +1537,7 @@ export class Product extends BaseEntity {
 | **Se envía al servidor** | ❌ No | ✅ Sí |
 | **Se valida** | ❌ No | ✅ Sí |
 | **Estilo visual** | Grayed out, opacidad baja | Normal, solo sin cursor de edición |
-| **Uso típico** | IDs, campos de auditoría | Campos calculados, referencias |
+| **Uso típico** | IDs, campos de revisión | Campos calculados, referencias |
 
 ### Ejemplo Comparativo
 

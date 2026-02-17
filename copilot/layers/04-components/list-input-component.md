@@ -270,6 +270,11 @@ Desarrollador define enum OrderStatus, crea adapter en vista, pasa a ListInputCo
 
 ## 10. Notas de Implementación
 
+### Normalización Contractual (2026-02-17)
+
+- Los estilos de estado (`selected`, `disabled`, `nonvalidated`, `focus`) deben implementarse sin `!important`.
+- El componente debe mantener estados visuales por clases CSS y selectores específicos, sin overrides forzados.
+
 **EJEMPLO ENUM Y ENTITY:**
 ```typescript
 enum OrderStatus {

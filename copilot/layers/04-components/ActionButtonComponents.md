@@ -243,8 +243,8 @@ Action Button Components se relacionan con los siguientes documentos técnicos:
 
 **Documentos de Componentes**:
 - [ActionsComponent.md](ActionsComponent.md): Componente contenedor que renderiza dinámicamente todos los action buttons desde Application.ListButtons.value
-- [default_detailview.md](default_detailview.md): Vista de detalle donde mayoría de botones (Save, Validate, SaveAndNew) son relevantes y visibles
-- [default_listview.md](default_listview.md): Vista de lista donde NewButtonComponent y RefreshButtonComponent son únicos botones visibles
+- [../../../src/views/default_detailview.vue](../../../src/views/default_detailview.vue): Vista de detalle donde mayoría de botones (Save, Validate, SaveAndNew) son relevantes y visibles
+- [../../../src/views/default_listview.vue](../../../src/views/default_listview.vue): Vista de lista donde NewButtonComponent y RefreshButtonComponent son únicos botones visibles
 - [TopBarComponent.md](TopBarComponent.md): Componente de barra superior que contiene ActionsComponent en su layout
 
 **Documentos de Core**:
@@ -262,10 +262,10 @@ Action Button Components se relacionan con los siguientes documentos técnicos:
 - [../../01-FRAMEWORK-OVERVIEW.md](../../01-FRAMEWORK-OVERVIEW.md): Overview de arquitectura explicando rol de action buttons en operaciones del usuario
 
 **Documentos de Estilo**:
-- [../../css/constants.css](../../css/constants.css): Define CSS variables para colores de botones (--info-blue, --success-green, --warning-orange, etc.)
+- [../../../src/css/constants.css](../../../src/css/constants.css): Define CSS variables para colores de botones (--info-blue, --success-green, --warning-orange, etc.)
 
 **Documentos de Enums**:
-- [../05-advanced/ViewType.md](../05-advanced/ViewType.md): Documenta enum ViewType usado en Application.setButtonList() para determinar configuración de botones
+- [../05-advanced/Types.md](../05-advanced/Types.md): Documenta enum ViewType usado en Application.setButtonList() para determinar configuración de botones
 
 **Ejemplos de Uso**:
 - [../../examples/classic-module-example.md](../../examples/classic-module-example.md): Ejemplo completo mostrando cómo decoradores @Persistent influyen en botones visibles en vistas generadas automáticamente

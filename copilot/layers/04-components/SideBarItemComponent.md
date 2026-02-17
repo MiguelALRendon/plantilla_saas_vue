@@ -223,7 +223,7 @@ SideBarItemComponent se relaciona con los siguientes documentos técnicos:
 
 **Documentos de Core**:
 - [../02-base-entity/base-entity-core.md](../02-base-entity/base-entity-core.md): Documentación de BaseEntity incluyendo métodos getModuleName() y getModuleIcon() consumidos por este componente
-- [../02-base-entity/entity-metadata-system.md](../02-base-entity/entity-metadata-system.md): Sistema de metadata que subyace a los métodos getter invocados por el componente
+- [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md): Sistema de metadata que subyace a los métodos getter invocados por el componente
 - [../03-application/application-singleton.md](../03-application/application-singleton.md): Documentación detallada de Application.View y Application.changeViewToDefaultView utilizados por el componente
 
 **Documentos de Decoradores**:
@@ -235,7 +235,7 @@ SideBarItemComponent se relaciona con los siguientes documentos técnicos:
 - [../../01-FRAMEWORK-OVERVIEW.md](../../01-FRAMEWORK-OVERVIEW.md): Overview de arquitectura incluyendo rol de componentes de navegaciónen framework SaaS
 
 **Documentos de Estilo**:
-- [../../css/constants.css](../../css/constants.css): Define CSS variables utilizadas en estilos del componente (--sidebar-min-width, --grad-red-warm, etc.)
+- [../../../src/css/constants.css](../../../src/css/constants.css): Define CSS variables utilizadas en estilos del componente (--sidebar-min-width, --grad-red-warm, etc.)
 
 **Ejemplos de Uso**:
 - [../../examples/classic-module-example.md](../../examples/classic-module-example.md): Ejemplo completo mostrando cómo decoradores @ModuleName y @ModuleIcon permiten renderizado automático en sidebar

@@ -13,7 +13,7 @@
             </div>
 
             <div class="right-side-space">
-                <div class="TextInput" style="width: 100%">
+                <div class="TextInput search-input-container">
                     <label class="label-input">Buscar {{ moduleName }}</label>
                     <input type="text" class="main-input" placeholder=" " v-model="search" :disabled="disabled" />
                 </div>
@@ -295,7 +295,7 @@ export default {
     box-shadow: var(--shadow-light);
     display: flex;
     flex-direction: column;
-    border-collapse: collapse !important;
+    border-collapse: collapse;
 }
 
 .table thead,
@@ -352,11 +352,11 @@ export default {
 }
 
 .table tr.selected {
-    background-color: var(--beige) !important;
+    background-color: var(--beige);
 }
 
 .selection {
-    display: none !important;
+    display: none;
 }
 .select-btn span {
     color: var(--sky);
@@ -368,8 +368,12 @@ export default {
     color: var(--accent-red);
 }
 .selection.display {
-    display: flex !important;
+    display: flex;
     max-width: 3rem;
+}
+
+.search-input-container {
+    width: 100%;
 }
 
 .advice {

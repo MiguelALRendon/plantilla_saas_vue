@@ -967,7 +967,7 @@ export default {
 - [form-inputs.md](form-inputs.md) - Sistema completo inputs
 - [FormLayoutComponents.md](FormLayoutComponents.md) - FormGroup y FormRow components
 - [LookupItem.md](LookupItem.md) - Item seleccionable lookup
-- [TabComponent.md](TabComponent.md) - Sistema tabs
+- [TabComponents.md](TabComponents.md) - Sistema tabs
 - [../02-base-entity/metadata-access.md](../02-base-entity/metadata-access.md) - Métodos metadata BaseEntity
 - [../02-base-entity/base-entity-core.md](../02-base-entity/base-entity-core.md) - Sistema ViewGroup y ViewGroupRow
 - [../03-application/application-singleton.md](../03-application/application-singleton.md) - Gestión vistas Application

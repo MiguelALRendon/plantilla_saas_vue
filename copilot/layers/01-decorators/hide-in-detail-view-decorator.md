@@ -6,7 +6,7 @@ El decorador `@HideInDetailView()` oculta una propiedad en vistas de detalle (De
 
 **Casos de uso principales:**
 - Campos calculados de solo lectura que aportan valor en tablas pero no requieren edición
-- Timestamps de auditoría que deben mostrarse como información contextual pero no son editables
+- Timestamps de revisión que deben mostrarse como información contextual pero no son editables
 - IDs internos y códigos de referencia útiles para identificación rápida en listas
 - Información derivada de otras propiedades que se calcula automáticamente
 - Agregaciones y valores estadísticos que se muestran como resumen en tablas
@@ -435,7 +435,7 @@ export class Order extends BaseEntity {
 }
 ```
 
-### 6.2. Timestamps de Auditoría Deben Usar @HideInDetailView
+### 6.2. Timestamps de Revisión Deben Usar @HideInDetailView
 
 **Regla:** Campos como `createdAt`, `updatedAt`, `deletedAt` deben ocultarse en formularios porque se gestionan automáticamente por el sistema.
 

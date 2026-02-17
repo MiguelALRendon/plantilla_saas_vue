@@ -7,7 +7,7 @@ El decorador `@HideInListView()` oculta una propiedad en vistas de lista (ListVi
 **Casos de uso principales:**
 - Campos de texto largo como descripciones, contenido HTML, o documentación extensa que rompen el layout de tablas
 - Información sensible que debe visualizarse solo en contextos de edición controlada
-- Metadatos técnicos como timestamps, IDs internos, o datos de auditoría relevantes solo en detalle
+- Metadatos técnicos como timestamps, IDs internos, o datos de revisión relevantes solo en detalle
 - Estructuras de datos complejas como JSON, arrays de objetos, o relaciones anidadas difíciles de representar en celdas
 - Campos que requieren renderizado especial o formateo avanzado incompatible con formato tabular simple
 
@@ -447,9 +447,9 @@ export class BlogPost extends BaseEntity {
 }
 ```
 
-### 6.2. Metadatos de Auditoría Pueden Usar @HideInListView
+### 6.2. Metadatos de Revisión Pueden Usar @HideInListView
 
-**Regla:** Timestamps y campos de auditoría pueden ocultarse en ListView si no son críticos para identificación visual rápida.
+**Regla:** Timestamps y campos de revisión pueden ocultarse en ListView si no son críticos para identificación visual rápida.
 
 ```typescript
 // CORRECTO - Metadatos ocultos

@@ -1385,8 +1385,6 @@ public getMask(propertyKey: string): string | undefined {
 
 **Ubicación esperada:** Debería agregarse en BaseEntity alrededor de línea 345, junto con otros métodos de UI como `getHelpText()`.
 
-**Referencia:** Ver [AUDITORIA-INCONSISTENCIAS.md](../../AUDITORIA-INCONSISTENCIAS.md) inconsistencia IM-03 para más detalles.
-
 ## 11. Referencias Cruzadas
 
 **Documentos relacionados:**
@@ -1395,7 +1393,7 @@ public getMask(propertyKey: string): string | undefined {
 - validation-system.md: Uso de métodos de validación (isRequired, isValidation, etc)
 - ../01-decorators/: Documentación de cada decorador que escribe metadata
 - ../../02-FLOW-ARCHITECTURE.md: Flujos donde se usan métodos de acceso
-- ../../04-components/DefaultViews.md: Componentes que consumen metadata
+- ../04-components/views-overview.md: Componentes que consumen metadata
 
 **Archivos fuente:**
 - src/entities/base_entity.ts: Implementación de todos los métodos de acceso

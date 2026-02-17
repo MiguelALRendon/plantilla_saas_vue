@@ -1585,7 +1585,7 @@ La definición de variables CSS en componentes:
 - Fragmenta el sistema de diseño unificado
 - Crea duplicación no controlada de valores
 - Rompe la fuente única de verdad (`constants.css`)
-- Impide auditoría centralizada de tokens
+- Impide revisión centralizada de tokens
 - Viola el principio de tokenización universal establecido en `04-UI-DESIGN-SYSTEM-CONTRACT.md` § 6.4
 
 **Flujo correcto:**
@@ -2762,7 +2762,7 @@ Antes de commit, verificar:
 **Medición:**
 - Commits rechazados por violación de reglas
 - Code reviews enfocados en este contrato
-- Auditorías periódicas de código
+- Revisiones periódicas de código
 
 **No aceptable:**
 - Código con `any`

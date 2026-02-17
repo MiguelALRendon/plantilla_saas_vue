@@ -291,15 +291,15 @@ export default {
     background-color: var(--sky);
 }
 .list-input-item.selected span {
-    color: var(--white) !important;
+    color: var(--white);
 }
 
 button:focus .list-input-container {
-    background-color: var(--white) !important;
-    border: 2px solid var(--lavender) !important;
+    background-color: var(--white);
+    border: 2px solid var(--lavender);
 }
 button:disabled {
-    background-color: transparent !important;
+    background-color: transparent;
 }
 
 .ListInput.disabled {
@@ -309,24 +309,24 @@ button:disabled {
 .ListInput.disabled .list-input-container,
 .ListInput.disabled .list-input-container .label,
 .ListInput.disabled .list-input-container span {
-    border-color: var(--gray-light) !important;
-    color: var(--gray-light) !important;
+    border-color: var(--gray-light);
+    color: var(--gray-light);
 }
 .ListInput.disabled .list-input-container .label.active {
-    background-color: var(--gray-lighter) !important;
+    background-color: var(--gray-lighter);
 }
 
 .ListInput.nonvalidated .list-input-container {
-    border-color: var(--accent-red) !important;
+    border-color: var(--accent-red);
 }
 .ListInput.nonvalidated .list-input-container,
 .ListInput.nonvalidated .list-input-container .label,
 .ListInput.nonvalidated .list-input-container span {
-    border-color: var(--accent-red) !important;
-    color: var(--accent-rose) !important;
+    border-color: var(--accent-red);
+    color: var(--accent-rose);
 }
 .ListInput.nonvalidated .list-input-container .label.active {
-    background-color: var(--accent-red) !important;
-    color: var(--white) !important;
+    background-color: var(--accent-red);
+    color: var(--white);
 }
 </style>

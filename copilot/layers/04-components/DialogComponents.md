@@ -439,6 +439,11 @@ Finally block alternativa usa hideLoadingMenu() garantizando cleanup si success 
 
 ## 10. Notas de Implementación
 
+### Normalización Contractual (2026-02-17)
+
+- Los estilos de `ConfirmationDialogComponent` (`.txtinfo`, `.txtsuccess`, `.txtwarning`, `.txterror`) deben aplicarse sin `!important`.
+- La jerarquía visual debe resolverse por agrupación de selectores y orden de cascada.
+
 ### Confirmation Dialog Async Callback con Loading
 
 ```typescript

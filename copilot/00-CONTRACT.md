@@ -526,7 +526,7 @@ La reestructuración no constituye autorización para recreación del contenido.
 
 #### 6.7.11 Separación Obligatoria entre Detección y Corrección
 
-Durante procesos de auditoría, verificación o análisis documental:
+Durante procesos de revisión, verificación o análisis documental:
 
 Prohibido:
 - Corregir inconsistencias en el mismo paso en que se detectan.
@@ -585,12 +585,12 @@ Todo archivo de documentación técnica del framework DEBE cumplir obligatoriame
 
 - README.md o INDEX.md de carpetas contenedoras (naturaleza específica de índice documental)
 - Archivos de estado temporal (ESTADO-*.md)
-- Archivos de auditoría (AUDITORIA-*.md)
+- Archivos de revisión (REVISIÓN-*.md)
 - Archivos de índices estructurales (INDICE-*.md)
 
 **Validación:**
 
-Durante cualquier proceso de reestructuración, auditoría o creación de documentación, el cumplimiento de este formato debe verificarse ANTES de considerar el archivo como completo.
+Durante cualquier proceso de reestructuración, revisión o creación de documentación, el cumplimiento de este formato debe verificarse ANTES de considerar el archivo como completo.
 
 ### 6.8 Sistema UI/CSS
 
@@ -837,7 +837,7 @@ Cambios en versión 2.2.0 (13 de Febrero, 2026):
 Cambios en versión 2.1.0 (12 de Febrero, 2026):
 - Adición de Cláusula 6.7.12: Formato Documental Obligatorio de 11 Secciones
 - Establecimiento de estructura normalizada para toda documentación técnica
-- Definición de excepciones al formato (READMEs, archivos de estado/auditoría)
+- Definición de excepciones al formato (READMEs, archivos de estado/revisión)
 
 Cambios en versión 2.0.0:
 - Reestructuración bajo formato unificado de 11 secciones

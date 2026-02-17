@@ -199,14 +199,14 @@ Eliminar todas las reglas en una sola iteración provoca regresiones visuales am
 **Cláusula:** Variables deben mantener tipado explícito.
 
 ### Descripción de la Excepción
-Se autoriza temporalmente mantener declaraciones sin tipo explícito en archivos legacy identificados por auditoría mientras se ejecuta migración gradual por módulo.
+Se autoriza temporalmente mantener declaraciones sin tipo explícito en archivos legacy identificados por revisión mientras se ejecuta migración gradual por módulo.
 
 ### Alcance de la Excepción
 **Archivos Afectados:**
 - `src/entities/base_entity.ts`
 - `src/models/application.ts`
 - `src/router/index.ts`
-- Componentes legacy listados en auditoría vigente.
+- Componentes legacy listados en revisión vigente.
 
 ### Fecha de Revisión Futura
 **Próxima Revisión:** 30 de Abril, 2026  
@@ -230,7 +230,7 @@ Se autoriza temporalmente mantener declaraciones sin tipo explícito en archivos
 **Cláusula:** Lógica debe extraerse a script/computed.
 
 ### Descripción de la Excepción
-Se permite temporalmente lógica inline en los templates legacy detectados por auditoría, condicionada a refactor por componentes críticos.
+Se permite temporalmente lógica inline en los templates legacy detectados por revisión, condicionada a refactor por componentes críticos.
 
 ### Alcance de la Excepción
 **Archivos Afectados:**

@@ -25,7 +25,7 @@ Este ejemplo implementa:
 
 ## 3. Definiciones Clave
 
-**PurchaseOrder**: Entidad central que representa una orden de compra completa. Contiene información del cliente, direcciones, items, totales financieros, estado, pago y auditoría.
+**PurchaseOrder**: Entidad central que representa una orden de compra completa. Contiene información del cliente, direcciones, items, totales financieros, estado, pago y revisión.
 
 **OrderStatus**: Enum que define los estados posibles de una orden (DRAFT, PENDING, APPROVED, IN_PROGRESS, SHIPPED, DELIVERED, CANCELLED). Las transiciones entre estados están controladas mediante el método changeStatus.
 
