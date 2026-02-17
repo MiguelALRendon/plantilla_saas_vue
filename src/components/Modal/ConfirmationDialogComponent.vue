@@ -121,8 +121,8 @@ export default {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 400px;
-    max-height: 300px;
+    max-width: var(--modal-confirmation-max-width);
+    max-height: var(--modal-confirmation-max-height);
     background-color: var(--white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);

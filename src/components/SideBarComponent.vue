@@ -65,7 +65,7 @@ export default {
 .sidebar .header {
     height: var(--topbar-height);
     opacity: 0;
-    max-height: 90px;
+    max-height: var(--sidebar-header-max-height);
     padding: 0;
     overflow: hidden;
     border-bottom: var(--border-width-thin) solid var(--border-gray);
@@ -79,7 +79,7 @@ export default {
 
 .sidebar .body {
     flex-grow: 1;
-    max-height: calc(100vh - 160px);
+    max-height: calc(100vh - var(--sidebar-body-offset));
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -87,7 +87,7 @@ export default {
 .sidebar .footer {
     height: 0%;
     opacity: 0;
-    max-height: 70px;
+    max-height: var(--sidebar-footer-max-height);
     padding: var(--spacing-lg);
     overflow: hidden;
     transition: var(--transition-slow) var(--timing-ease);

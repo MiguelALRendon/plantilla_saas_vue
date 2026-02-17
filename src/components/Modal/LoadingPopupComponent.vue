@@ -68,8 +68,8 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 400px;
-    height: 150px;
+    width: var(--modal-loading-width);
+    height: var(--modal-loading-height);
     transition: var(--transition-normal) var(--timing-bounce);
     transform: var(--transform-scale-min);
 }
@@ -78,7 +78,7 @@ export default {
 }
 
 .spin-icon {
-    font-size: 120px;
+    font-size: var(--modal-icon-size-large);
     font-weight: bold;
     color: var(--green-soft);
     animation: spin var(--animation-spin-duration) var(--timing-bounce) infinite;

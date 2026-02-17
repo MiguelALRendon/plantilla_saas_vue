@@ -145,7 +145,7 @@ export default {
     align-items: center;
     border-radius: var(--border-radius);
     transition: var(--transition-slow) var(--timing-ease);
-    border: 0px solid transparent;
+    border: 0 solid transparent;
 }
 .BooleanInput:hover {
     background-color: var(--bg-gray);

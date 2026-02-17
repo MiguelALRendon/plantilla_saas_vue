@@ -157,13 +157,13 @@ closeModal delega a ApplicationUIService que emite hide-modal, espera 300ms anim
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--overlay-dark);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
     opacity: 1;
-    transition: opacity 0.25s ease;
+    transition: opacity var(--transition-quick) var(--timing-ease);
 }
 
 .modal-background.closed {
@@ -176,24 +176,68 @@ closeModal delega a ApplicationUIService que emite hide-modal, espera 300ms anim
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
     max-width: 60vw;
-    max-height: calc(60vh + 55px);
+    max-height: calc(60vh + var(--modal-header-footer-height));
     width: 100%;
     height: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transform: scale(1);
-    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transform: var(--transform-scale-full);
+    transition: transform var(--transition-normal) var(--timing-bounce);
 }
 
 .modal-background.closed .modal-structure {
-    max-width: 0px;
-    max-height: 0px;
+    max-width: 0;
+    max-height: 0;
     transform: scale(0.9);
+}
+
+.modal-head {
+    height: var(--modal-header-footer-height);
+    padding-block: var(--spacing-xs);
+    padding-inline: var(--spacing-lg);
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.modal-body {
+    flex-grow: 1;
+    max-height: calc(60vh - var(--modal-header-footer-height));
+    height: 100%;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+    margin-inline: var(--spacing-sm);
+    box-sizing: border-box;
+    background-color: var(--bg-gray);
+    border-radius: var(--border-radius);
+}
+
+.modal-footer {
+    height: var(--modal-header-footer-height);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    padding-inline: var(--spacing-lg);
+    gap: var(--spacing-md);
 }
 ```
 
-Animaciones entrada/salida: opacity transition 250ms background, transform scale transition 300ms cubic-bezier bounce structure. closed class cambia opacity 0 y scale 0.9 para efecto zoom-out. pointer-events: none previene interacción durante animación salida.
+**TOKENS CSS OBLIGATORIOS (04-UI-DESIGN-SYSTEM-CONTRACT §6.4):**
+- `var(--modal-header-footer-height)`: Altura de header y footer (55px, debe crearse en constants.css)
+- `var(--z-modal)`: Z-index del modal (1000 definido en constants.css)
+- `var(--overlay-dark)`: Color de fondo del overlay (rgba(0, 0, 0, 0.5))
+- `var(--transition-quick)`, `var(--transition-normal)`: Duraciones de transición (0.25s, 0.3s)
+- `var(--timing-ease)`, `var(--timing-bounce)`: Funciones de timing
+- `var(--transform-scale-full)`: Escala completa para animación (scale(1))
+- Usar `0` sin unidad en lugar de `0px` para valores cero
+
+Animaciones entrada/salida: opacity transition var(--transition-quick) background, transform scale transition var(--transition-normal) var(--timing-bounce) structure. closed class cambia opacity 0 y scale 0.9 para efecto zoom-out. pointer-events: none previene interacción durante animación salida.
 
 ### ConfirmationDialogComponent
 
@@ -314,34 +358,104 @@ beforeUnmount() {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: var(--overlay-dark);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1500;
-    transition: opacity 0.3s ease;
+    z-index: var(--z-toast);
+    transition: opacity var(--transition-normal) var(--timing-ease);
+}
+
+.confirmation-dialog-container.closed {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .confirmation-dialog-card {
-    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--modal-confirmation-max-width);
+    max-height: var(--modal-confirmation-max-height);
+    background-color: var(--white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
-    min-width: 400px;
-    max-width: 600px;
-    padding: 1.5rem;
+    overflow: hidden;
+    transition: var(--transition-normal) var(--timing-bounce);
+}
+
+.confirmation-dialog-container.closed .confirmation-dialog-card {
+    transform: var(--transform-scale-min);
+}
+
+.confirmation-dialog-header {
+    padding-bottom: var(--spacing-sm);
+    padding-top: var(--spacing-lg);
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.confirmation-dialog-body {
+    padding: var(--spacing-sm);
+    flex: 1;
+    overflow-y: auto;
+}
+
+.confirmation-dialog-center {
+    text-align: center;
+    background-color: var(--bg-gray);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius);
+}
+
+.confirmation-dialog-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+    padding-top: var(--spacing-sm);
+    padding-inline: var(--spacing-lg);
+    flex-shrink: 0;
 }
 
 .dialog-icon {
-    font-size: 80px;
+    font-size: var(--modal-icon-size);
 }
 
-.txtinfo { color: var(--info-blue); }
-.txtsuccess { color: var(--success-green); }
-.txtwarning { color: var(--warning-orange); }
-.txterror { color: var(--error-red); }
+.txtinfo,
+.txtinfo span {
+    color: var(--blue-1);
+}
+
+.txtsuccess,
+.txtsuccess span {
+    color: var(--green-main);
+}
+
+.txtwarning,
+.txtwarning span {
+    color: var(--warning);
+}
+
+.txterror,
+.txterror span {
+    color: var(--accent-red);
+}
 ```
 
-Z-index 1500 mayor que ModalComponent (1000), permitiendo confirmación sobre modal activo. Background rgba(0, 0, 0, 0.6) más oscuro que modal para mayor prominencia.
+**TOKENS CSS OBLIGATORIOS (04-UI-DESIGN-SYSTEM-CONTRACT §6.4):**
+- `var(--modal-confirmation-max-width)`: Ancho máximo del card (400px definido en constants.css)
+- `var(--modal-confirmation-max-height)`: Alto máximo del card (300px definido en constants.css)
+- `var(--modal-icon-size)`: Tamaño del icono de confirmación (3rem definido en constants.css)
+- `var(--z-toast)`: Z-index del overlay (1500 definido en constants.css)
+- `var(--overlay-dark)`: Color de fondo del overlay (rgba(0, 0, 0, 0.5))
+- `var(--transition-normal)`, `var(--timing-ease)`, `var(--timing-bounce)`: Transiciones
+- `var(--transform-scale-min)`: Escala mínima para animación (scale(0.01))
+- Todos los colores usan tokens: `var(--blue-1)`, `var(--green-main)`, `var(--warning)`, `var(--accent-red)`
+
+Z-index usa token `var(--z-toast)` (1500) mayor que ModalComponent (`var(--z-modal)` 1000), permitiendo confirmación sobre modal activo. Background usa token `var(--overlay-dark)` asegurando consistencia visual.
 
 ### LoadingPopupComponent
 
@@ -395,14 +509,14 @@ beforeUnmount() {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--overlay-dark);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1100;
+    z-index: var(--z-toast);
     pointer-events: none;
     opacity: 0;
-    transition: 0.3s ease;
+    transition: var(--transition-normal) var(--timing-ease);
 }
 
 .loading-popup-component-container.active {
@@ -410,19 +524,48 @@ beforeUnmount() {
     opacity: 1;
 }
 
+.loading-popup-component-card {
+    background-color: var(--white);
+    padding: var(--spacing-2xl);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-dark);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: var(--modal-loading-width);
+    height: var(--modal-loading-height);
+    transition: var(--transition-normal) var(--timing-bounce);
+    transform: var(--transform-scale-min);
+}
+
+.loading-popup-component-container.active .loading-popup-component-card {
+    transform: var(--transform-scale-full);
+}
+
 .spin-icon {
-    font-size: 120px;
-    color: var(--success-green);
-    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    font-size: var(--modal-icon-size-large);
+    font-weight: bold;
+    color: var(--green-soft);
+    animation: spin var(--animation-spin-duration) var(--timing-bounce) infinite;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% { transform: var(--transform-rotate-0); }
+    100% { transform: var(--transform-rotate-360); }
 }
 ```
 
-Z-index 1100 entre ModalComponent (1000) y ConfirmationDialog (1500). Animation spin 1.5s infinite con cubic-bezier bounce effect. Font-size 120px para spinner prominente. Color verde success indicando proceso activo.
+**TOKENS CSS OBLIGATORIOS (04-UI-DESIGN-SYSTEM-CONTRACT §6.4):**
+- `var(--modal-loading-width)`: Ancho del card (400px definido en constants.css)
+- `var(--modal-loading-height)`: Alto del card (150px definido en constants.css)
+- `var(--modal-icon-size-large)`: Tamaño del spinner (120px definido en constants.css)
+- `var(--z-toast)`: Z-index del overlay (1500 definido en constants.css)
+- `var(--overlay-dark)`: Color de fondo del overlay (rgba(0, 0, 0, 0.5))
+- `var(--transition-normal)`, `var(--timing-ease)`, `var(--timing-bounce)`: Transiciones
+- `var(--transform-scale-min)`, `var(--transform-scale-full)`: Escalas de animación
+- `var(--animation-spin-duration)`: Duración de rotación del spinner (1.5s)
+
+Z-index usa token `var(--z-toast)` (1500) para máxima prioridad visual. Animation spin usa token `var(--animation-spin-duration)` (1.5s) con timing function `var(--timing-bounce)`. Font-size usa token `var(--modal-icon-size-large)` (120px) para spinner prominente. Color verde soft indicando proceso activo.
 
 **Delay Mínimo Pattern:**
 ```typescript
@@ -550,6 +693,8 @@ hideLoadingMenu() {
 
 9. **Bindings dinámicos de clase DEBEN evitar concatenación `+`**: en templates de modales, usar arrays/objetos en `:class` en lugar de construir strings concatenadas.
 
+10. **TODOS los valores CSS DEBEN usar tokens de constants.css (04-UI-CONTRACT §6.4)**: PROHIBICIÓN ABSOLUTA de valores hardcoded. LoadingPopupComponent DEBE usar `var(--modal-loading-width)`, `var(--modal-loading-height)`, `var(--modal-icon-size-large)`. ConfirmationDialogComponent DEBE usar `var(--modal-confirmation-max-width)`, `var(--modal-confirmation-max-height)`, `var(--modal-icon-size)`. ModalComponent DEBE usar `var(--modal-header-footer-height)`. Todos los z-index, colores, spacing, transitions DEBEN usar tokens. Viola Política Anti-Hardcode usar valores literales.
+
 ## 7. Prohibiciones
 
 1. **NUNCA instanciar modales localmente en vistas**: No crear <ModalComponent /> en templates de vistas individuales. Los modales son globales App.vue. Instanciación local causa múltiples instances conflictivas con state inconsistente.
@@ -565,6 +710,8 @@ hideLoadingMenu() {
 6. **NUNCA ejecutar código síncrono pesado en confirmationAction**: El callback confirmationAction ejecuta en main thread bloqueante. No ejecutar loops largos, operaciones síncronas pesadas. Para operaciones asíncronas, usar async/await con showLoadingMenu() dentro callback.
 
 7. **NUNCA asumir que modal persiste después closeModal**: Después closeModal(), Application.modal.value.modalView se limpia a null. No intentar acceder componente renderizado, datos temporales modal, o state después cierre. Modal state es transitorio destruído al cerrar.
+
+8. **NUNCA hardcodear valores CSS en componentes modales (04-UI-CONTRACT §6.4)**: PROHIBICIÓN ABSOLUTA de valores literales. NO usar `width: 400px`, usar `width: var(--modal-loading-width)`. NO usar `font-size: 120px`, usar `font-size: var(--modal-icon-size-large)`. NO usar `max-width: 300px`, usar `max-width: var(--modal-confirmation-max-height)`. NO usar `z-index: 1500`, usar `z-index: var(--z-toast)`. Cualquier valor literal CSS es violación contractual crítica de Política Anti-Hardcode. Tokens se definen en `/src/css/constants.css` como fuente única de verdad.
 
 ## 8. Dependencias
 

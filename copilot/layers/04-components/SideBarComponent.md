@@ -187,7 +187,17 @@ El componente DEBE declarar bloque `<style scoped>` para evitar fuga de estilos 
 
 ### 6.8 Z-Index con Tokens
 
-El sidebar DEBE usar `z-index` mediante tokens CSS (`var(--z-dropdown)` o equivalente contractual) y NO valores numéricos directos.
+El sidebar DEBE usar `z-index` mediante tokens CSS (`var(--z-sidebar)`) y NO valores numéricos directos.
+
+### 6.9 Tokens CSS Obligatorios
+
+TODOS los valores CSS en SideBarComponent DEBEN usar tokens de constants.css (04-UI-CONTRACT §6.4). Valores numéricos directos (90px, 160px, 70px, 0.5s, etc.) están PROHIBIDOS. SIEMPRE usar:
+- var(--sidebar-width-collapsed), var(--sidebar-width-expanded) para anchos
+- var(--sidebar-header-max-height), var(--sidebar-body-offset), var(--sidebar-footer-max-height) para alturas
+- var(--z-sidebar) para z-index
+- var(--transition-normal), var(--transition-quick) para transiciones
+- var(--spacing-lg), var(--spacing-xxl) para padding/heights
+- var(--white) para colores
 
 ## 7. Prohibiciones
 
@@ -201,6 +211,12 @@ El sidebar DEBE usar `z-index` mediante tokens CSS (`var(--z-dropdown)` o equiva
 8. NO hardcodear lista de módulos - Siempre iterar desde Application.ModuleList
 9. NO almacenar referencia a EventBus en data - Usar Application.eventBus directamente
 10. NO modificar toggled desde template - Solo desde callback de EventBus
+11. NO hardcodear valores CSS en SideBarComponent (04-UI-CONTRACT §6.4) - SIEMPRE usar tokens de constants.css. Ejemplos de valores prohibidos:
+    - NO usar `max-width: 90px`, usar `max-width: var(--sidebar-header-max-height)`
+    - NO usar `max-height: calc(100vh - 160px)`, usar `max-height: calc(100vh - var(--sidebar-body-offset))`
+    - NO usar `max-height: 70px`, usar `max-height: var(--sidebar-footer-max-height)`
+    - NO usar `transition: 0.5s ease`, usar `transition: var(--transition-normal) var(--timing-ease)`
+    - NO usar `z-index: 100`, usar `z-index: var(--z-sidebar)`
 
 ## 8. Dependencias
 
@@ -387,14 +403,14 @@ Para pantallas pequeñas, considerar sidebar absolute con slide-in:
 .sidebar {
     display: flex;
     flex-direction: column;
-    max-width: 68px;
+    max-width: var(--sidebar-width-collapsed);
     width: 100%;
-    transition: 0.5s ease;
+    transition: var(--transition-normal) var(--timing-ease);
     overflow: hidden;
 }
 
 .sidebar.toggled {
-    max-width: 250px;
+    max-width: var(--sidebar-width-expanded);
 }
 ```
 
@@ -403,8 +419,8 @@ Para pantallas pequeñas, considerar sidebar absolute con slide-in:
 ```css
 .sidebar span {
     opacity: 0;
-    font-weight: 500;
-    transition: opacity 0.3s ease 0.2s;
+    font-weight: var(--font-medium);
+    transition: opacity var(--transition-quick) var(--timing-ease) 0.2s;
 }
 
 .sidebar.toggled span {
@@ -416,18 +432,18 @@ Para pantallas pequeñas, considerar sidebar absolute con slide-in:
 
 ```css
 .sidebar .header {
-    height: 50px;
+    height: var(--spacing-xxl);
     opacity: 0;
-    max-height: 90px;
+    max-height: var(--sidebar-header-max-height);
     padding: 0;
     overflow: hidden;
-    transition: 0.5s ease;
+    transition: var(--transition-normal) var(--timing-ease);
 }
 
 .sidebar.toggled .header {
     height: 100%;
     opacity: 1;
-    padding: 1rem;
+    padding: var(--spacing-lg);
 }
 ```
 
@@ -436,7 +452,7 @@ Para pantallas pequeñas, considerar sidebar absolute con slide-in:
 ```css
 .sidebar .body {
     flex-grow: 1;
-    max-height: calc(100vh - 160px);
+    max-height: calc(100vh - var(--sidebar-body-offset));
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -447,12 +463,32 @@ Para pantallas pequeñas, considerar sidebar absolute con slide-in:
 ```css
 .sidebar {
     position: relative;
-    z-index: 100;
+    z-index: var(--z-sidebar);
     background-color: var(--white);
 }
 ```
 
-Sidebar debe estar encima de content (z-index: 1) pero debajo de modales (z-index: 1000).
+Sidebar debe estar encima de content pero debajo de modales y dropdowns.
+
+### TOKENS CSS OBLIGATORIOS
+
+**TODOS** los valores CSS en SideBarComponent.vue DEBEN usar tokens de constants.css (04-UI-CONTRACT §6.4):
+
+- **--sidebar-width-collapsed: 68px** → Ancho del sidebar colapsado (solo iconos visibles)
+- **--sidebar-width-expanded: 250px** → Ancho del sidebar expandido (iconos + texto)
+- **--sidebar-header-max-height: 90px** → Altura máxima del header del sidebar
+- **--sidebar-body-offset: 160px** → Offset para calcular altura máxima del body (100vh - offset)
+- **--sidebar-footer-max-height: 70px** → Altura máxima del footer del sidebar (actualmente placeholder)
+- **--z-sidebar: 100** → Z-index del sidebar (encima de content, debajo de modals/dropdowns)
+- **--transition-normal: 0.5s** → Duración transición de expansión/colapso
+- **--transition-quick: 0.3s** → Duración transición de fade de texto
+- **--timing-ease: ease** → Timing function para transiciones suaves
+- **--spacing-lg: 1rem** → Padding del header expandido
+- **--spacing-xxl: 50px** → Altura del header colapsado
+- **--font-medium: 500** → Font weight del texto en sidebar items
+- **--white: #FFFFFF** → Color de fondo del sidebar
+
+La altura del body se calcula mediante `calc(100vh - var(--sidebar-body-offset))` donde `--sidebar-body-offset` representa la suma aproximada de header + footer (90px + 70px = 160px). El sidebar usa `--z-sidebar` para posicionar encima del contenido principal pero debajo de elementos flotantes como modales (--z-modal: 1000) y dropdowns (--z-dropdown: 200).
 
 ### Agregar Nuevo Módulo
 

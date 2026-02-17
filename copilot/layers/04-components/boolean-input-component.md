@@ -255,6 +255,16 @@ SIEMPRE usar ternary operator para iconos, NO v-if/v-else:
 <span v-else>{{ GGICONS.CANCEL }}</span>
 ```
 
+### 6.7 Tokens CSS Obligatorios
+
+TODOS los valores CSS en BooleanInputComponent DEBEN usar tokens de constants.css (04-UI-CONTRACT §6.4). Valores numéricos directos (1rem, 0.5s, 100%, etc.) están PROHIBIDOS. SIEMPRE usar:
+- var(--spacing-xs), var(--spacing-xxs), var(--spacing-lg) para spacing
+- var(--border-radius-large), var(--border-radius-full) para border-radius
+- var(--transition-normal), var(--timing-ease) para transiciones
+- var(--font-size-base) para font-size
+- var(--lavender), var(--accent-red), var(--btn-info), var(--white), var(--bg-gray) para colores
+- Usar 0 sin unidades para valores cero (unit-less zero), NO 0px, 0rem, etc.
+
 ## 7. Prohibiciones
 
 1. NO usar input type="checkbox" - Component es button element, no checkbox nativo
@@ -267,6 +277,12 @@ SIEMPRE usar ternary operator para iconos, NO v-if/v-else:
 8. NO usar v-model directamente en template - Usar computed property value con get/set
 9. NO omitir transiciones CSS - Icon debe animar con transform rotate transition 0.5s
 10. NO renderizar help-text cuando vacío - Usar v-if="metadata.helpText.value" para conditional rendering
+11. NO hardcodear valores CSS en BooleanInputComponent (04-UI-CONTRACT §6.4) - SIEMPRE usar tokens de constants.css. Ejemplos de valores prohibidos:
+    - NO usar `margin-left: 1rem`, usar `margin-left: var(--spacing-lg)`
+    - NO usar `border-radius: 100%`, usar `border-radius: var(--border-radius-full)`
+    - NO usar `transition: 0.5s ease`, usar `transition: var(--transition-normal) var(--timing-ease)`
+    - NO usar `border: 0px solid transparent`, usar `border: 0 solid transparent` (unit-less zero)
+    - NO usar `font-size: 1rem`, usar `font-size: var(--font-size-base)`
 
 ## 8. Dependencias
 
@@ -751,13 +767,13 @@ sendNotifications!: boolean;
 .BooleanInput {
     display: flex;
     flex-direction: row;
-    margin-block: .5rem;
-    padding: 0.5rem .25rem;
+    margin-block: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-xxs);
     cursor: pointer;
     align-items: center;
-    border-radius: 1rem;
-    transition: 0.5s ease;
-    border: 0px solid transparent;
+    border-radius: var(--border-radius-large);
+    transition: var(--transition-normal) var(--timing-ease);
+    border: 0 solid transparent;
 }
 
 .BooleanInput:hover {
@@ -765,12 +781,14 @@ sendNotifications!: boolean;
 }
 ```
 
+**Nota importante:** El valor `border: 0 solid transparent` usa cero sin unidades (unit-less zero), que es la forma correcta y preferida en CSS para valores cero (04-UI-CONTRACT §6.4). Usar `0px`, `0rem`, etc. es innecesario y agrega bytes extra sin beneficio.
+
 ### Label
 
 ```css
 .BooleanInput .label-input-boolean {
     color: var(--lavender);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     height: fit-content;
     cursor: pointer;
 }
@@ -780,14 +798,14 @@ sendNotifications!: boolean;
 
 ```css
 .BooleanInput .input-button {
-    margin-left: 1rem;
+    margin-left: var(--spacing-lg);
 }
 
 .BooleanInput .input-button .icon {
     transform: rotate(180deg);
-    transition: 0.5s ease;
+    transition: var(--transition-normal) var(--timing-ease);
     color: var(--accent-red);
-    border-radius: 100%;
+    border-radius: var(--border-radius-full);
 }
 
 .BooleanInput .input-button.true .icon {
@@ -796,6 +814,24 @@ sendNotifications!: boolean;
     color: var(--white);
 }
 ```
+
+**TOKENS CSS OBLIGATORIOS:**
+
+- **--spacing-xs: 0.5rem** → Margin-block y padding vertical del botón
+- **--spacing-xxs: 0.25rem** → Padding horizontal del botón
+- **--spacing-lg: 1rem** → Margin-left del input-button
+- **--border-radius-large: 1rem** → Border-radius del botón (esquinas redondeadas)
+- **--border-radius-full: 100%** → Border-radius del icono (círculo perfecto)
+- **--transition-normal: 0.5s** → Duración de transiciones de hover y rotación de icono
+- **--timing-ease: ease** → Timing function para transiciones suaves
+- **--font-size-base: 1rem** → Font-size del label
+- **--bg-gray: #F5F5F5** → Background-color en hover
+- **--lavender: #8B7FBF** → Color del label
+- **--accent-red: #E74C3C** → Color del icono en estado false
+- **--btn-info: #3498DB** → Background-color del icono en estado true
+- **--white: #FFFFFF** → Color del icono en estado true
+
+El icono usa `border-radius: var(--border-radius-full)` que equivale a `100%` para crear forma circular perfecta. El botón usa transition con duración `var(--transition-normal)` (0.5s) para animar tanto el hover como la rotación del icono de 180deg (false) a 0deg (true).
 
 ### Estados
 

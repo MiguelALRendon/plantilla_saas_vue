@@ -130,19 +130,19 @@ export default {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
     max-width: 60vw;
-    max-height: calc(60vh + 55px);
+    max-height: calc(60vh + var(--modal-header-footer-height));
     width: 100%;
     height: 100%;
     overflow: hidden;
     transition: var(--transition-normal) var(--timing-bounce);
 }
 .modal-structure.closed {
-    max-width: 0px;
-    max-height: 0px;
+    max-width: 0;
+    max-height: 0;
 }
 
 .modal-head {
-    height: 55px;
+    height: var(--modal-header-footer-height);
     padding-block: var(--spacing-xs);
     padding-inline: var(--spacing-lg);
     width: 100%;
@@ -165,7 +165,7 @@ export default {
 
 .modal-body {
     flex-grow: 1;
-    max-height: calc(60vh - 55px);
+    max-height: calc(60vh - var(--modal-header-footer-height));
     height: 100%;
     overflow-y: auto;
     padding: var(--spacing-lg);
@@ -176,7 +176,7 @@ export default {
 }
 
 .modal-footer {
-    height: 55px;
+    height: var(--modal-header-footer-height);
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
