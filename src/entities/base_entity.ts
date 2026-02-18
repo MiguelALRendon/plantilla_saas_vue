@@ -38,6 +38,7 @@ import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
 import { ToastType } from '@/enums/ToastType';
 import Application from '@/models/application';
+import { deepClone, deepEqual } from '@/utils/deep_compare';
 import DefaultDetailView from '@/views/default_detailview.vue';
 import DefaultListview from '@/views/default_listview.vue';
 
@@ -49,19 +50,16 @@ import type {
     ReadOnlyMetadata,
     RequiredMetadata,
     ValidationMetadata,
-} from '@/decorations';
+} from '@/types/decorator.types';
 import type { ViewGroupRow } from '@/enums/view_group_row';
-
-type EntityData = Record<string, unknown>;
-type MetadataRecord = Record<PropertyKey, unknown>;
-type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: EntityData) => T;
-type ConcreteEntityClass<T extends BaseEntity = BaseEntity> = EntityConstructor<T> & {
-    getApiEndpoint(): string | undefined;
-    mapFromPersistentKeys(data: EntityData): EntityData;
-    getPersistentKeys(): Record<string, string>;
-    getPropertyKeyByPersistentKey(persistentKey: string): string | undefined;
-    getElementList(filter?: string): Promise<T[]>;
-};
+import type {
+    ConcreteEntityClass,
+    DecoratedConstructor,
+    EntityData,
+    MetadataRecord,
+    TransformableEntityClass,
+} from '@/types/entity.types';
+import type { TransformationSchema } from '@/types/service.types';
 
 function getErrorMessage(error: unknown): string {
     if (error && typeof error === 'object') {
@@ -131,7 +129,15 @@ export abstract class BaseEntity {
      */
     constructor(data: EntityData) {
         Object.assign(this, data);
-        this._originalState = structuredClone(this.toPersistentObject());
+        this._originalState = deepClone(this.toPersistentObject());
+    }
+
+    private static getStaticDecoratedConstructorMetadata<T extends BaseEntity>(this: typeof BaseEntity): DecoratedConstructor<T> {
+        return this as DecoratedConstructor<T>;
+    }
+
+    private static getStaticDecoratedPrototypeMetadata<T extends BaseEntity>(this: typeof BaseEntity): MetadataRecord {
+        return this.getStaticDecoratedConstructorMetadata<T>().prototype;
     }
 
     /**
@@ -237,7 +243,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their display order indices
      */
     public getPropertyIndices(): Record<string, number> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         return (proto[PROPERTY_INDEX_KEY] as Record<string, number>) || {};
     }
 
@@ -246,7 +252,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their CSS class names
      */
     public getCSSClasses(): Record<string, string> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         return (proto[CSS_COLUMN_CLASS_KEY] as Record<string, string>) || {};
     }
 
@@ -273,7 +279,7 @@ export abstract class BaseEntity {
      * @returns The default display value for this entity
      */
     public getDefaultPropertyValue(): unknown { // EXC-002: Public metadata API
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
         const propertyName = constructorMetadata[DEFAULT_PROPERTY_KEY] as string | undefined; // EXC-001: Symbol index access
         if (!propertyName) {
             return undefined;
@@ -287,7 +293,7 @@ export abstract class BaseEntity {
      * @returns The primary key value
      */
     public getPrimaryPropertyValue(): unknown {
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
         const propertyName = constructorMetadata[PRIMARY_PROPERTY_KEY] as string | undefined;
         if (!propertyName) {
             return undefined;
@@ -300,7 +306,7 @@ export abstract class BaseEntity {
      * @returns The property key name or undefined if not defined
      */
     public getPrimaryPropertyKey(): string | undefined {
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
         return constructorMetadata[PRIMARY_PROPERTY_KEY] as string | undefined;
     }
 
@@ -310,7 +316,7 @@ export abstract class BaseEntity {
      * @returns The unique identifier value
      */
     public getUniquePropertyValue(): unknown {
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
         const propertyName = constructorMetadata[UNIQUE_KEY] as string | undefined;
         if (!propertyName) {
             return undefined;
@@ -323,7 +329,7 @@ export abstract class BaseEntity {
      * @returns The unique property key name or undefined if not defined
      */
     public getUniquePropertyKey(): string | undefined {
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
         return constructorMetadata[UNIQUE_KEY] as string | undefined;
     }
 
@@ -333,7 +339,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their string type definitions
      */
     public getStringType(): Record<string, StringType> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const stringTypes = (proto[STRING_TYPE_KEY] as Record<string, StringType>) || {};
         const properties = (this.constructor as typeof BaseEntity).getProperties();
         const result: Record<string, StringType> = {};
@@ -351,7 +357,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their view group names
      */
     public getViewGroups(): Record<string, string> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         return (proto[VIEW_GROUP_KEY] as Record<string, string>) || {};
     }
 
@@ -361,7 +367,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their ViewGroupRow configurations
      */
     public getViewGroupRows(): Record<string, ViewGroupRow> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         return (proto[VIEW_GROUP_ROW_KEY] as Record<string, ViewGroupRow>) || {};
     }
 
@@ -372,7 +378,7 @@ export abstract class BaseEntity {
      * @returns True if property is required, false otherwise
      */
     public isRequired(propertyKey: string): boolean {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
         const metadata = requiredFields[propertyKey];
 
@@ -395,7 +401,7 @@ export abstract class BaseEntity {
      * @returns Custom validation message or undefined
      */
     public requiredMessage(propertyKey: string): string | undefined {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
         const metadata = requiredFields[propertyKey];
         return metadata?.message;
@@ -407,7 +413,7 @@ export abstract class BaseEntity {
      * @returns True if validation passes, false otherwise
      */
     public isValidation(propertyKey: string): boolean {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
         const rule = validationRules[propertyKey];
 
@@ -424,7 +430,7 @@ export abstract class BaseEntity {
      * @returns Validation error message or undefined
      */
     public validationMessage(propertyKey: string): string | undefined {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
         const rule = validationRules[propertyKey];
         return rule?.message;
@@ -437,7 +443,7 @@ export abstract class BaseEntity {
      * @returns True if property should be disabled, false otherwise
      */
     public isDisabled(propertyKey: string): boolean {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const disabledFields = (proto[DISABLED_KEY] as Record<string, DisabledMetadata>) ?? {};
         const metadata = disabledFields[propertyKey];
 
@@ -455,7 +461,7 @@ export abstract class BaseEntity {
      * @returns Promise resolving to true if valid, false if invalid
      */
     public async isAsyncValidation(propertyKey: string): Promise<boolean> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
         const rule = asyncValidationRules[propertyKey];
 
@@ -477,7 +483,7 @@ export abstract class BaseEntity {
      * @returns Async validation error message or undefined
      */
     public asyncValidationMessage(propertyKey: string): string | undefined {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
         const rule = asyncValidationRules[propertyKey];
         return rule?.message;
@@ -489,7 +495,7 @@ export abstract class BaseEntity {
      * @returns Display format function or template string, or undefined
      */
     public getDisplayFormat(propertyKey: string): DisplayFormatValue | undefined {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const displayFormats = (proto[DISPLAY_FORMAT_KEY] as Record<string, DisplayFormatValue>) ?? {};
         return displayFormats[propertyKey];
     }
@@ -523,7 +529,7 @@ export abstract class BaseEntity {
      * @returns Help text string or undefined
      */
     public getHelpText(propertyKey: string): string | undefined {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const helpTexts = (proto[HELP_TEXT_KEY] as Record<string, string>) ?? {};
         return helpTexts[propertyKey];
     }
@@ -534,7 +540,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their tab order indices
      */
     public getTabOrders(): Record<string, number> {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         return (proto[TAB_ORDER_KEY] as Record<string, number>) || {};
     }
 
@@ -570,7 +576,7 @@ export abstract class BaseEntity {
      * @returns True if property is read-only, false otherwise
      */
     public isReadOnly(propertyKey: string): boolean {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const readOnlyFields = (proto[READONLY_KEY] as Record<string, ReadOnlyMetadata>) ?? {};
         const metadata = readOnlyFields[propertyKey];
 
@@ -605,7 +611,7 @@ export abstract class BaseEntity {
      * @returns True if property should be hidden in detail view
      */
     public isHideInDetailView(propertyKey: string): boolean {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const hideFields = (proto[HIDE_IN_DETAIL_VIEW_KEY] as Record<string, boolean>) ?? {};
         return hideFields[propertyKey] === true;
     }
@@ -616,7 +622,7 @@ export abstract class BaseEntity {
      * @returns True if property should be hidden in list view
      */
     public isHideInListView(propertyKey: string): boolean {
-        const proto = (this.constructor as typeof BaseEntity).prototype as unknown as MetadataRecord;
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const hideFields = (proto[HIDE_IN_LIST_VIEW_KEY] as Record<string, boolean>) ?? {};
         return hideFields[propertyKey] === true;
     }
@@ -685,7 +691,7 @@ export abstract class BaseEntity {
             errors.push('El módulo no tiene definido @ModuleIcon');
         }
 
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
 
         if (!constructorMetadata[DEFAULT_PROPERTY_KEY]) {
             errors.push('El módulo no tiene definido @DefaultProperty');
@@ -744,7 +750,7 @@ export abstract class BaseEntity {
      * @returns True if entity has Persistent decorator
      */
     public isPersistent(): boolean {
-        const constructorMetadata = this.constructor as unknown as MetadataRecord;
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
         return !!constructorMetadata[PERSISTENT_KEY];
     }
 
@@ -863,7 +869,7 @@ export abstract class BaseEntity {
 
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
-            this._originalState = structuredClone(this.toPersistentObject());
+            this._originalState = deepClone(this.toPersistentObject());
             this._isSaving = false;
             this.afterSave();
             Application.ApplicationUIService.hideLoadingMenu();
@@ -925,7 +931,7 @@ export abstract class BaseEntity {
             const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
-            this._originalState = structuredClone(this.toPersistentObject());
+            this._originalState = deepClone(this.toPersistentObject());
             this._isSaving = false;
             this.afterUpdate();
             return this;
@@ -1003,7 +1009,7 @@ export abstract class BaseEntity {
      */
     public async refresh(filter: string = ''): Promise<this[]> {
         try {
-            const entityClass = this.constructor as unknown as ConcreteEntityClass<this>;
+            const entityClass = (this.constructor as typeof BaseEntity) as Pick<ConcreteEntityClass<this>, 'getElementList'>;
             const instances = await entityClass.getElementList(filter);
             this.afterRefresh();
             return instances;
@@ -1028,12 +1034,7 @@ export abstract class BaseEntity {
      * @returns True if entity has been modified since load
      */
     public getDirtyState(): boolean {
-        const snapshotJson: string = JSON.stringify(this._originalState);
-        const actualJson: string = JSON.stringify(this.toPersistentObject());
-        console.log('Snapshot:', snapshotJson);
-        console.log('Actual:', actualJson);
-        console.log('Dirty State:', snapshotJson !== actualJson);
-        return snapshotJson !== actualJson;
+        return !deepEqual(this._originalState, this.toPersistentObject());
     }
 
     /**
@@ -1042,7 +1043,7 @@ export abstract class BaseEntity {
      */
     public resetChanges(): void {
         if (this._originalState) {
-            Object.assign(this, structuredClone(this._originalState));
+            Object.assign(this, deepClone(this._originalState));
         }
     }
 
@@ -1170,7 +1171,7 @@ export abstract class BaseEntity {
      * @returns Map of all property keys to their display names
      */
     public static getAllPropertiesNonFilter(): Record<string, string> {
-        const proto = this.prototype as unknown as MetadataRecord;
+        const proto = this.getStaticDecoratedPrototypeMetadata();
         return (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
     }
 
@@ -1180,7 +1181,7 @@ export abstract class BaseEntity {
      * @returns Map of scalar property keys to their display names
      */
     public static getProperties(): Record<string, string> {
-        const proto = this.prototype as unknown as MetadataRecord;
+        const proto = this.getStaticDecoratedPrototypeMetadata();
         const properties = (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
         const propertyTypes = this.getPropertyTypes();
         const filtered: Record<string, string> = {};
@@ -1199,7 +1200,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their TypeScript type constructors
      */
     public static getPropertyTypes(): Record<string, unknown> { // EXC-002: Public metadata API
-        const proto = this.prototype as unknown as MetadataRecord; // EXC-001: Symbol index access
+        const proto = this.getStaticDecoratedPrototypeMetadata(); // EXC-001: Symbol index access
         return (proto[PROPERTY_TYPE_KEY] as Record<string, unknown>) || {};
     }
 
@@ -1225,7 +1226,7 @@ export abstract class BaseEntity {
             return undefined;
         }
 
-        const proto = this.prototype as unknown as MetadataRecord;
+        const proto = this.getStaticDecoratedPrototypeMetadata();
         const arrayTypes = (proto[ARRAY_ELEMENT_TYPE_KEY] as Record<string, unknown>) || {};
         const entityType = arrayTypes[propertyKey] as typeof BaseEntity | undefined;
 
@@ -1271,7 +1272,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to their CSS class names
      */
     public static getCSSClasses(): Record<string, string> {
-        const proto = this.prototype as unknown as MetadataRecord;
+        const proto = this.getStaticDecoratedPrototypeMetadata();
         return (proto[CSS_COLUMN_CLASS_KEY] as Record<string, string>) || {};
     }
 
@@ -1280,7 +1281,7 @@ export abstract class BaseEntity {
      * @returns The module name or undefined
      */
     public static getModuleName(): string | undefined {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return metadata[MODULE_NAME_KEY] as string | undefined;
     }
 
@@ -1289,7 +1290,7 @@ export abstract class BaseEntity {
      * @returns The permission identifier or undefined
      */
     public static getModulePermission(): string | undefined {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return metadata[MODULE_PERMISSION_KEY] as string | undefined;
     }
 
@@ -1298,7 +1299,7 @@ export abstract class BaseEntity {
      * @returns The icon identifier or undefined
      */
     public static getModuleIcon(): string | undefined {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return metadata[MODULE_ICON_KEY] as string | undefined;
     }
 
@@ -1307,7 +1308,7 @@ export abstract class BaseEntity {
      * @returns Vue component for list view, defaults to DefaultListview
      */
     public static getModuleListComponent(): Component {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return (metadata[MODULE_LIST_COMPONENT_KEY] as Component) || DefaultListview;
     }
 
@@ -1316,7 +1317,7 @@ export abstract class BaseEntity {
      * @returns Vue component for detail view, defaults to DefaultDetailView
      */
     public static getModuleDetailComponent(): Component {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return (metadata[MODULE_DETAIL_COMPONENT_KEY] as Component) || DefaultDetailView;
     }
 
@@ -1326,7 +1327,7 @@ export abstract class BaseEntity {
      * @returns Vue component for default view, defaults to DefaultListview
      */
     public static getModuleDefaultComponent(): Component {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return (metadata[MODULE_DEFAULT_COMPONENT_KEY] as Component) || DefaultListview;
     }
 
@@ -1335,7 +1336,7 @@ export abstract class BaseEntity {
      * @returns Map of component names to Vue components, or null if none defined
      */
     public static getModuleCustomComponents(): Map<string, Component> | null {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return (metadata[MODULE_CUSTOM_COMPONENTS_KEY] as Map<string, Component>) || null;
     }
 
@@ -1352,7 +1353,7 @@ export abstract class BaseEntity {
      * @returns API endpoint URL or undefined
      */
     public static getApiEndpoint(): string | undefined {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return metadata[API_ENDPOINT_KEY] as string | undefined;
     }
 
@@ -1361,7 +1362,7 @@ export abstract class BaseEntity {
      * @returns Array of allowed HTTP methods or undefined if all allowed
      */
     public static getApiMethods(): HttpMethod[] | undefined {
-        const metadata = this as unknown as MetadataRecord;
+        const metadata = this.getStaticDecoratedConstructorMetadata();
         return metadata[API_METHODS_KEY] as HttpMethod[] | undefined;
     }
 
@@ -1383,7 +1384,7 @@ export abstract class BaseEntity {
      * @returns Map of property keys to persistent key names
      */
     public static getPersistentKeys(): Record<string, string> {
-        const proto = this.prototype as unknown as MetadataRecord;
+        const proto = this.getStaticDecoratedPrototypeMetadata();
         return (proto[PERSISTENT_KEY_KEY] as Record<string, string>) || {};
     }
 
@@ -1423,11 +1424,17 @@ export abstract class BaseEntity {
         data: EntityData
     ): EntityData {
         const persistentKeys = this.getPersistentKeys();
-        const mapped: EntityData = {};
+        let mapped: EntityData = {};
 
         for (const [propertyKey, value] of Object.entries(data)) {
             const persistentKey = persistentKeys[propertyKey];
             mapped[persistentKey || propertyKey] = value;
+        }
+
+        const schema = this.getResolvedTransformationSchema();
+
+        if (Object.keys(schema).length > 0) {
+            mapped = Application.ApplicationDataService.applyTransformationsToAPI<EntityData>(mapped, schema);
         }
 
         return mapped;
@@ -1443,14 +1450,88 @@ export abstract class BaseEntity {
         this: typeof BaseEntity,
         data: EntityData
     ): EntityData {
-        const mapped: EntityData = {};
+        let mapped: EntityData = {};
 
         for (const [persistentKey, value] of Object.entries(data)) {
             const propertyKey = this.getPropertyKeyByPersistentKey(persistentKey);
             mapped[propertyKey || persistentKey] = value;
         }
 
+        const schema = this.getResolvedTransformationSchema();
+
+        if (Object.keys(schema).length > 0) {
+            mapped = Application.ApplicationDataService.applyTransformationsFromAPI<EntityData>(mapped, schema);
+        }
+
         return mapped;
+    }
+
+    /**
+     * Builds automatic transformation schema from property metadata and merges optional entity overrides.
+     * @returns Transformation schema for current entity class.
+     */
+    private static getResolvedTransformationSchema(this: typeof BaseEntity): TransformationSchema {
+        const automaticSchema = this.getAutomaticTransformationSchema();
+        const transformableClass = this as Pick<TransformableEntityClass, 'transformationSchema'>;
+
+        return {
+            ...automaticSchema,
+            ...(transformableClass.transformationSchema ?? {}),
+        };
+    }
+
+    /**
+     * Generates automatic transformations based on @PropertyName type metadata.
+     * @returns Auto-generated transformation schema.
+     */
+    private static getAutomaticTransformationSchema(this: typeof BaseEntity): TransformationSchema {
+        const propertyTypes = this.getPropertyTypes();
+        const schema: TransformationSchema = {};
+
+        for (const [propertyKey, propertyType] of Object.entries(propertyTypes)) {
+            if (propertyType === Date) {
+                schema[propertyKey] = Application.ApplicationDataService.transformers.date;
+                continue;
+            }
+
+            if (propertyType === Boolean) {
+                schema[propertyKey] = Application.ApplicationDataService.transformers.boolean;
+                continue;
+            }
+
+            if (propertyType === Number) {
+                schema[propertyKey] = {
+                    fromAPI: Application.ApplicationDataService.transformers.decimal.fromAPI,
+                    toAPI: (value: unknown): unknown => value,
+                };
+                continue;
+            }
+
+            if (this.isEnumPropertyType(propertyType)) {
+                schema[propertyKey] = Application.ApplicationDataService.transformers.enum(propertyType);
+            }
+        }
+
+        return schema;
+    }
+
+    /**
+     * Determines whether a property type metadata value represents an enum object.
+     * @param propertyType Property type metadata value.
+     * @returns True when metadata is enum-like.
+     */
+    private static isEnumPropertyType(propertyType: unknown): propertyType is Record<string, string | number> {
+        if (!propertyType || typeof propertyType !== 'object' || Array.isArray(propertyType)) {
+            return false;
+        }
+
+        const enumValues = Object.values(propertyType as Record<string, unknown>);
+
+        if (enumValues.length === 0) {
+            return false;
+        }
+
+        return enumValues.every((value) => typeof value === 'string' || typeof value === 'number');
     }
 
     /**

@@ -34,6 +34,12 @@ Proveer índice de navegación para documentación del singleton Application y s
 
 16 de Febrero, 2026
 
+### Actualización Fase 1 (18 de Febrero, 2026)
+
+- Integración de `ApplicationDataService` como servicio auxiliar de capa 4
+- Transformación automática por metadatos habilitada desde BaseEntity usando ApplicationDataService
+- Endurecimiento del interceptor HTTP con manejo de estados y retry con backoff
+
 ---
 
 ## Archivos de Especificación (4)

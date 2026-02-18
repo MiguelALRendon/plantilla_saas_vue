@@ -41,6 +41,11 @@ Centralizar navegación y referencia semántica de los decoradores del framework
 
 16 de Febrero, 2026
 
+### Actualización Fase 1 (18 de Febrero, 2026)
+
+- Se incorpora catálogo de validadores predefinidos en `src/validators/common_validators.ts`
+- El catálogo reutiliza `@Validation` y `@AsyncValidation` sin agregar símbolos nuevos
+
 ---
 
 ## Categorización de Decoradores

@@ -1,7 +1,7 @@
 <template>
     <div class="form-group">
         <div class="form-group-header">
-            <span>{{ title }}</span>
+            <span>{{ props.title }}</span>
         </div>
 
         <div class="form-group-body">
@@ -14,27 +14,14 @@
     </div>
 </template>
 
-<script lang="ts">
-import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import ICONS from '@/constants/icons';
+<script setup lang="ts">
+interface Props {
+    title: string;
+}
 
-export default {
-    name: 'FormGroupComponent',
-    props: {
-        title: {
-            type: String,
-            required: true,
-            default: ''
-        }
-    },
-    data() {
-        return {
-            ICONS,
-            GGCLASS,
-            GGICONS
-        };
-    }
-};
+const props = withDefaults(defineProps<Props>(), {
+    title: '',
+});
 </script>
 
 <style scoped>

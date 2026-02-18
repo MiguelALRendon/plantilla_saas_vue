@@ -151,6 +151,29 @@ Patrón Singleton con constructor privado, getInstance() retorna única instanci
 - Uso: `Application.ApplicationUIService.openToast('Message', ToastType.SUCCESS)`
 - Ubicación: Línea 121
 
+### 4.3.1 Extensión Fase 1: ApplicationDataService
+
+Application incorpora un servicio auxiliar para transformación de datos sin alterar el patrón Singleton ni el rol de orquestación de la capa 4.
+
+**Reglas obligatorias de esta extensión:**
+- Debe instanciarse dentro del constructor de ApplicationClass
+- Debe ser consumido por BaseEntity vía Application (sin bypass desde UI)
+- Solo encapsula transformaciones y utilidades de datos (no lógica CRUD)
+- Debe exponer transformadores predefinidos `date`, `decimal`, `boolean`, `enum`
+- Debe habilitar transformación automática por metadatos sin configuración manual obligatoria en cada entidad
+- Debe permitir override opcional por entidad vía `transformationSchema` cuando exista caso especial
+
+### 4.3.2 Extensión Fase 1: Manejo HTTP robusto
+
+El interceptor de `axiosInstance` debe cubrir al menos estados 401, 403, 404, 422, 500, 502, 503 y error de red, manteniendo feedback visual por `ApplicationUIService`.
+
+**Reglas obligatorias de retry:**
+- Retry sólo para 500/502/503
+- Usar contador de reintentos en `config` de Axios
+- Aplicar backoff exponencial
+- Respetar `AppConfiguration.apiRetryAttempts`
+- Al agotar reintentos, retornar `Promise.reject(error)`
+
 **router: Router | null**
 - Inicialización: null en constructor, asignado con initializeRouter(router)
 - Propósito: Referencia a Vue Router para navegación programática

@@ -38,114 +38,95 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
-export default {
-    name: 'DateInputComponent',
-    props: {
-        entityClass: {
-            type: Function as unknown as () => typeof BaseEntity,
-            required: true
-        },
-        entity: {
-            type: Object as () => BaseEntity,
-            required: true
-        },
-        propertyKey: {
-            type: String,
-            required: true
-        },
-        modelValue: {
-            type: String,
-            required: true,
-            default: ''
-        }
-    },
-    setup(props) {
-        const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
-        return {
-            metadata
-        };
-    },
-    mounted() {
-        Application.eventBus.on('validate-inputs', this.handleValidation);
-    },
-    beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.handleValidation);
-    },
-    data() {
-        return {
-            GGICONS,
-            GGCLASS,
-            textInputId: `text-input-${this.propertyKey}`,
-            isInputValidated: true,
-            validationMessages: [] as string[]
-        };
-    },
-    computed: {
-        formattedDate(): string {
-            if (!this.modelValue) return '';
+interface Props {
+    entityClass: typeof BaseEntity;
+    entity: BaseEntity;
+    propertyKey: string;
+    modelValue?: string;
+}
 
-            const date = new Date(`${this.modelValue}T00:00:00`);
+const props = withDefaults(defineProps<Props>(), {
+    modelValue: ''
+});
 
-            if (isNaN(date.getTime())) return '';
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string): void;
+}>();
 
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
+const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+const dateInput = ref<HTMLInputElement | null>(null);
+const isInputValidated = ref(true);
+const validationMessages = ref<string[]>([]);
 
-            return `${day}/${month}/${year}`;
-        }
-    },
-    methods: {
-        updateDate(event: Event) {
-            const value = (event.target as HTMLInputElement).value;
-            this.$emit('update:modelValue', value);
-        },
-        openCalendar() {
-            (this.$refs.dateInput as HTMLInputElement).showPicker();
-        },
-        async isValidated(): Promise<boolean> {
-            var validated = true;
-            this.validationMessages = [];
+const formattedDate = computed<string>(() => {
+    if (!props.modelValue) return '';
 
-            if (this.metadata.required.value && (!this.modelValue || this.modelValue.trim() === '')) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
-                );
-            }
-            if (!this.metadata.validated.value) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
-                );
-            }
+    const date = new Date(`${props.modelValue}T00:00:00`);
 
-            /** Validación asíncrona */
-            const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-            if (!isAsyncValid) {
-                validated = false;
-                const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-                if (asyncMessage) {
-                    this.validationMessages.push(asyncMessage);
-                }
-            }
+    if (isNaN(date.getTime())) return '';
 
-            return validated;
-        },
-        async handleValidation() {
-            this.isInputValidated = await this.isValidated();
-            if (!this.isInputValidated) {
-                Application.View.value.isValid = false;
-            }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+});
+
+function updateDate(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    emit('update:modelValue', value);
+}
+
+function openCalendar(): void {
+    dateInput.value?.showPicker?.();
+}
+
+async function isValidated(): Promise<boolean> {
+    let validated = true;
+    validationMessages.value = [];
+
+    if (metadata.required.value && (!props.modelValue || props.modelValue.trim() === '')) {
+        validated = false;
+        validationMessages.value.push(metadata.requiredMessage.value || `${metadata.propertyName} is required.`);
+    }
+    if (!metadata.validated.value) {
+        validated = false;
+        validationMessages.value.push(metadata.validatedMessage.value || `${metadata.propertyName} is not valid.`);
+    }
+
+    const isAsyncValid = await props.entity.isAsyncValidation(props.propertyKey);
+    if (!isAsyncValid) {
+        validated = false;
+        const asyncMessage = props.entity.asyncValidationMessage(props.propertyKey);
+        if (asyncMessage) {
+            validationMessages.value.push(asyncMessage);
         }
     }
-};
+
+    return validated;
+}
+
+async function handleValidation(): Promise<void> {
+    isInputValidated.value = await isValidated();
+    if (!isInputValidated.value) {
+        Application.View.value.isValid = false;
+    }
+}
+
+onMounted(() => {
+    Application.eventBus.on('validate-inputs', handleValidation);
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('validate-inputs', handleValidation);
+});
 </script>
 
 <style scoped>

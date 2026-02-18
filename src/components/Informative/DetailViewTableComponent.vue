@@ -3,8 +3,9 @@
         <thead>
             <tr>
                 <td
-                    v-for="(item, key) in Application.View.entityClass?.getProperties()"
-                    :class="Application.View.entityClass?.getCSSClasses()[key]"
+                    v-for="(item, key) in Application.View.value.entityClass?.getProperties()"
+                    :key="key"
+                    :class="Application.View.value.entityClass?.getCSSClasses()[key]"
                 >
                     {{ item }}
                 </td>
@@ -12,19 +13,19 @@
         </thead>
 
         <tbody>
-            <tr v-for="item in data" @click="openDetailView(item)">
-                <template v-for="column in item.getKeys()">
+            <tr v-for="item in data" :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')" @click="openDetailView(item)">
+                <template v-for="column in item.getKeys()" :key="column">
                     <td
                         :class="item.getCSSClasses()[column]"
                         class="table-row"
-                        v-if="Application.View.entityClass?.getPropertyType(column) !== Array"
+                        v-if="Application.View.value.entityClass?.getPropertyType(column) !== Array"
                     >
-                        <span v-if="Application.View.entityClass?.getPropertyType(column) !== Boolean">
+                        <span v-if="Application.View.value.entityClass?.getPropertyType(column) !== Boolean">
                             {{ getCellValue(item, column) }}
                         </span>
 
                         <span
-                            v-else-if="Application.View.entityClass?.getPropertyType(column) === Boolean"
+                            v-else-if="Application.View.value.entityClass?.getPropertyType(column) === Boolean"
                             :class="[GGCLASS, item.toObject()[column] ? 'row-check' : 'row-cancel']"
                             class="boolean-row"
                         >
@@ -41,64 +42,67 @@
     </table>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { onMounted, ref, watch, type Ref } from 'vue';
+
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
-export default {
-    name: 'DetailViewTableComponent',
-    methods: {
-        async loadData(): Promise<void> {
-            const entityClass = Application.View.value.entityClass as
-                | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
-                | null;
 
-            if (!entityClass) {
-                this.data = [];
-                return;
-            }
+const data: Ref<BaseEntity[]> = ref([]);
 
-            try {
-                const entities = await entityClass.getElementList('');
-                this.data = entities;
-            } catch (error: unknown) {
-                console.error('[DetailViewTableComponent] Failed to load entity list', error);
-                this.data = [];
-            }
-        },
-        getBooleanIcon(item: BaseEntity, column: string): string {
-            return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
-        },
-        getCellValue(item: BaseEntity, column: string): string {
-            const value = item[column];
-            return value instanceof BaseEntity
-                ? String(value.getDefaultPropertyValue() ?? '')
-                : item.getFormattedValue(column);
-        },
-        openDetailView(entity: BaseEntity) {
-            /** Setear entityOid antes de cambiar la vista */
-            const uniqueValue = entity.getUniquePropertyValue();
-            if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
-                Application.View.value.entityOid = 'new';
-            } else {
-                Application.View.value.entityOid = String(uniqueValue);
-            }
-            Application.changeViewToDetailView(entity as BaseEntity);
-        }
-    },
-    mounted() {
-        this.loadData();
-    },
-    data() {
-        return {
-            Application,
-            BaseEntity,
-            data: [] as BaseEntity[],
-            GGICONS,
-            GGCLASS
-        };
+async function loadData(): Promise<void> {
+    const entityClass = Application.View.value.entityClass as
+        | (typeof BaseEntity & (new (input: Record<string, unknown>) => BaseEntity))
+        | null;
+
+    if (!entityClass) {
+        data.value = [];
+        return;
     }
-};
+
+    try {
+        data.value = await entityClass.getElementList('');
+    } catch (error: unknown) {
+        console.error('[DetailViewTableComponent] Failed to load entity list', error);
+        data.value = [];
+    }
+}
+
+function getBooleanIcon(item: BaseEntity, column: string): string {
+    return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
+}
+
+function getCellValue(item: BaseEntity, column: string): string {
+    const value = item[column];
+
+    return value instanceof BaseEntity
+        ? String(value.getDefaultPropertyValue() ?? '')
+        : item.getFormattedValue(column);
+}
+
+function openDetailView(entity: BaseEntity): void {
+    const uniqueValue = entity.getUniquePropertyValue();
+
+    if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
+        Application.View.value.entityOid = 'new';
+    } else {
+        Application.View.value.entityOid = String(uniqueValue);
+    }
+
+    Application.changeViewToDetailView(entity);
+}
+
+watch(
+    () => Application.View.value.entityClass,
+    () => {
+        loadData();
+    }
+);
+
+onMounted((): void => {
+    loadData();
+});
 </script>
 
 <style scoped>

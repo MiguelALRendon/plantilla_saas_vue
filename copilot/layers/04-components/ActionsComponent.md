@@ -111,6 +111,12 @@ setTimeout(() => {
 
 ## 4. Descripción Técnica
 
+### 4.0 Actualización Fase 1 (18 de Febrero, 2026)
+
+- El componente fue migrado de Options API a Composition API con `<script setup lang="ts">`.
+- Se mantiene el contrato funcional: render dinámico desde `Application.ListButtons` y opacidad por posición de scroll.
+- Se añadió `:key` al `v-for` de componentes para mejorar estabilidad de renderizado.
+
 ActionsComponent utiliza Vue Options API:
 
 ```vue

@@ -13,23 +13,9 @@
             :value="modelValue?.getDefaultPropertyValue()"
             :disabled="metadata.disabled.value"
             readonly="true"
-            @input="$emit('update:modelValue', modelValue)"
+            @input="emitCurrentValue"
         />
-        <button
-            class="right"
-            @click="
-                Application.ApplicationUIService.showModalOnFunction(
-                    modelType,
-                    (param: unknown) => {
-                        if (param === undefined || param instanceof BaseEntity) {
-                            setNewValue(param);
-                        }
-                    },
-                    ViewTypes.LOOKUPVIEW
-                )
-            "
-            :disabled="metadata.disabled.value"
-        >
+        <button class="right" @click="openModal" :disabled="metadata.disabled.value">
             <span :class="GGCLASS">{{ GGICONS.SEARCH }}</span>
         </button>
     </div>
@@ -43,106 +29,98 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
-import { PropType } from 'vue';
 import { useInputMetadata } from '@/composables/useInputMetadata';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
-export default {
-    name: 'ObjectInputComponent',
-    props: {
-        entityClass: {
-            type: Function as unknown as () => typeof BaseEntity,
-            required: true
-        },
-        entity: {
-            type: Object as () => BaseEntity,
-            required: true
-        },
-        propertyKey: {
-            type: String,
-            required: true
-        },
-        modelValue: {
-            type: Object as PropType<BaseEntity>,
-            required: false,
-            default: () => new EmptyEntity({})
-        },
-        modelType: {
-            type: Function as unknown as PropType<typeof BaseEntity>,
-            required: true
-        }
-    },
-    setup(props) {
-        const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
-        return {
-            metadata
-        };
-    },
-    mounted() {
-        Application.eventBus.on('validate-inputs', this.handleValidation);
-    },
-    beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.handleValidation);
-    },
-    methods: {
-        setNewValue(newValue: BaseEntity | undefined): void {
-            this.$emit('update:modelValue', newValue);
-        },
-        async isValidated(): Promise<boolean> {
-            let validated: boolean = true;
-            this.validationMessages = [];
+interface Props {
+    entityClass: typeof BaseEntity;
+    entity: BaseEntity;
+    propertyKey: string;
+    modelValue?: BaseEntity;
+    modelType: typeof BaseEntity;
+}
 
-            if (
-                this.metadata.required.value &&
-                (this.modelValue === null || this.modelValue === undefined || this.modelValue instanceof EmptyEntity)
-            ) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
-                );
-            }
-            if (!this.metadata.validated.value) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
-                );
-            }
+const props = withDefaults(defineProps<Props>(), {
+    modelValue: () => new EmptyEntity({}) as BaseEntity
+});
 
-            /** Validación asíncrona */
-            const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-            if (!isAsyncValid) {
-                validated = false;
-                const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-                if (asyncMessage) {
-                    this.validationMessages.push(asyncMessage);
-                }
-            }
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: BaseEntity): void;
+}>();
 
-            return validated;
-        },
-        async handleValidation() {
-            this.isInputValidated = await this.isValidated();
-            if (!this.isInputValidated) {
-                Application.View.value.isValid = false;
-            }
-        }
-    },
-    data() {
-        return {
-            GGICONS,
-            GGCLASS,
-            Application,
-            ViewTypes,
-            BaseEntity,
-            isInputValidated: true,
-            validationMessages: [] as string[]
-        };
+const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+const isInputValidated = ref(true);
+const validationMessages = ref<string[]>([]);
+
+function setNewValue(newValue: BaseEntity): void {
+    emit('update:modelValue', newValue);
+}
+
+function emitCurrentValue(): void {
+    if (props.modelValue) {
+        emit('update:modelValue', props.modelValue);
     }
-};
+}
+
+function openModal(): void {
+    Application.ApplicationUIService.showModalOnFunction(
+        props.modelType,
+        (param: unknown) => {
+            if (param instanceof BaseEntity) {
+                setNewValue(param);
+            }
+        },
+        ViewTypes.LOOKUPVIEW
+    );
+}
+
+async function isValidated(): Promise<boolean> {
+    let validated = true;
+    validationMessages.value = [];
+
+    if (
+        metadata.required.value &&
+        (props.modelValue === null || props.modelValue === undefined || props.modelValue instanceof EmptyEntity)
+    ) {
+        validated = false;
+        validationMessages.value.push(metadata.requiredMessage.value || `${metadata.propertyName} is required.`);
+    }
+    if (!metadata.validated.value) {
+        validated = false;
+        validationMessages.value.push(metadata.validatedMessage.value || `${metadata.propertyName} is not valid.`);
+    }
+
+    const isAsyncValid = await props.entity.isAsyncValidation(props.propertyKey);
+    if (!isAsyncValid) {
+        validated = false;
+        const asyncMessage = props.entity.asyncValidationMessage(props.propertyKey);
+        if (asyncMessage) {
+            validationMessages.value.push(asyncMessage);
+        }
+    }
+
+    return validated;
+}
+
+async function handleValidation(): Promise<void> {
+    isInputValidated.value = await isValidated();
+    if (!isInputValidated.value) {
+        Application.View.value.isValid = false;
+    }
+}
+
+onMounted(() => {
+    Application.eventBus.on('validate-inputs', handleValidation);
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('validate-inputs', handleValidation);
+});
 </script>
 
 <style scoped>

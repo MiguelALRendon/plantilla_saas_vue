@@ -54,6 +54,23 @@ El sistema de métodos de estado y conversión gestiona el ciclo de vida de la e
 
 ## 4. Descripción Técnica
 
+### 4.0 Actualización Fase 1 (Estabilización)
+
+BaseEntity adopta dos mejoras de robustez sin cambiar API pública:
+
+1. **Dirty State robusto:** reemplazar comparación por `JSON.stringify` con comparación profunda (`deepEqual`) para evitar falsos positivos por orden de llaves o estructuras anidadas.
+2. **Snapshot seguro:** reemplazar `structuredClone` por `deepClone` para mantener comportamiento consistente en diferentes tipos de dato usados por entidades.
+
+Además, los métodos de mapeo de persistencia (`mapToPersistentKeys`, `mapFromPersistentKeys`) deben aplicar transformación automática por metadatos de tipo (`@PropertyName(..., Type)`) consumiendo `Application.ApplicationDataService`.
+
+`transformationSchema` estático por entidad se mantiene como mecanismo **opcional de override**, no como requisito para usuarios finales.
+
+**Contrato de compatibilidad:**
+- No se cambia la firma pública de `getDirtyState()` ni `resetChanges()`
+- No se altera el almacenamiento canónico de metadatos en `prototype[SYMBOL]`
+- Si no existe `transformationSchema`, el mapeo mantiene comportamiento actual
+- La transformación automática debe funcionar sin configuración manual en entidades comunes
+
 ### Métodos de Loading State
 
 #### setLoading() - Marcar Inicio de Carga

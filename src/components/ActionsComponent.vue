@@ -1,41 +1,37 @@
 <template>
     <div class="floating-actions" :class="{ 'at-top': isAtTop }">
-        <component v-for="component in Application.ListButtons" :is="component" />
+        <component v-for="component in Application.ListButtons" :is="component" :key="String(component)" />
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
+
 import Application from '@/models/application';
 
-export default {
-    name: 'ActionsComponent',
-    data() {
-        return {
-            Application,
-            isAtTop: true,
-            scrollContainer: null as HTMLElement | null
-        };
-    },
-    mounted() {
-        this.scrollContainer = this.$el.closest('.ComponentContainer');
-        if (this.scrollContainer) {
-            this.scrollContainer.addEventListener('scroll', this.handleScroll);
-            this.handleScroll();
-        }
-    },
-    beforeUnmount() {
-        if (this.scrollContainer) {
-            this.scrollContainer.removeEventListener('scroll', this.handleScroll);
-        }
-    },
-    methods: {
-        handleScroll() {
-            if (this.scrollContainer) {
-                this.isAtTop = this.scrollContainer.scrollTop === 0;
-            }
-        }
+const isAtTop: Ref<boolean> = ref(true);
+const scrollContainer: Ref<HTMLElement | null> = ref(null);
+
+function handleScroll(): void {
+    if (scrollContainer.value) {
+        isAtTop.value = scrollContainer.value.scrollTop === 0;
     }
-};
+}
+
+onMounted((): void => {
+    scrollContainer.value = document.querySelector('.ComponentContainer');
+
+    if (scrollContainer.value) {
+        scrollContainer.value.addEventListener('scroll', handleScroll);
+        handleScroll();
+    }
+});
+
+onBeforeUnmount((): void => {
+    if (scrollContainer.value) {
+        scrollContainer.value.removeEventListener('scroll', handleScroll);
+    }
+});
 </script>
 
 <style scoped>

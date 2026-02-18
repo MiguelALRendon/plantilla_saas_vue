@@ -197,6 +197,33 @@ if (!user.isValidation('age')) {
 
 ## 6. Reglas Obligatorias
 
+### 6.0 Extensión Fase 1: Validadores predefinidos
+
+Se habilita el uso de utilidades en `src/validators/common_validators.ts` para estandarizar reglas repetidas sin crear nuevos símbolos de metadatos.
+
+**Reglas de uso:**
+- `Validators.*` debe construir decoradores reutilizando `@Validation` existente
+- `AsyncValidators.*` debe construir decoradores reutilizando `@AsyncValidation` existente
+- Está prohibido crear nuevos `Symbol(...)` para estos helpers
+- Los helpers sólo encapsulan reglas; el almacenamiento sigue en `VALIDATION_KEY` y `ASYNC_VALIDATION_KEY`
+
+**Catálogo mínimo esperado:**
+
+**Numerador contractual del catálogo (para evaluación):**
+
+1. **VALCAT-01:** `Validators.email`
+2. **VALCAT-02:** `Validators.minLength`
+3. **VALCAT-03:** `Validators.maxLength`
+4. **VALCAT-04:** `Validators.range`
+5. **VALCAT-05:** `Validators.min`
+6. **VALCAT-06:** `Validators.max`
+7. **VALCAT-07:** `Validators.pattern`
+8. **VALCAT-08:** `Validators.url`
+9. **VALCAT-09:** `Validators.phone`
+10. **VALCAT-10:** `Validators.notFuture`
+11. **VALCAT-11:** `Validators.notPast`
+12. **VALCAT-12:** `AsyncValidators.unique` (validación remota de unicidad)
+
 ### 6.1 Aplicación del Decorador
 
 1. @Validation debe aplicarse a property decorator, nunca a clase

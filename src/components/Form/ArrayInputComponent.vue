@@ -67,182 +67,149 @@
         </table>
     </div>
 </template>
-<script lang="ts">
+<script setup lang="ts">
 import { BaseEntity } from '@/entities/base_entity';
-import { PropType } from 'vue';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
-export default {
-    name: 'ArrayInputComponent',
-    components: {},
-    props: {
-        modelValue: {
-            type: Array<BaseEntity>,
-            required: true,
-            default: () => []
-        },
-        typeValue: {
-            type: Function as unknown as PropType<typeof BaseEntity | undefined>,
-            required: true
-        },
-        entity: {
-            type: Object as PropType<BaseEntity>,
-            required: false
-        },
-        propertyKey: {
-            type: String,
-            required: false
-        },
-        required: {
-            type: Boolean,
-            required: false,
-            default: false
-        },
-        requireddMessage: {
-            type: String,
-            required: false,
-            default: ''
-        },
-        disabled: {
-            type: Boolean,
-            required: false,
-            default: false
-        },
-        validated: {
-            type: Boolean,
-            required: false,
-            default: true
-        },
-        validatedMessage: {
-            type: String,
-            required: false,
-            default: ''
-        }
-    },
-    mounted() {
-        Application.eventBus.on('validate-inputs', this.handleValidation);
-    },
-    beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.handleValidation);
-    },
-    methods: {
-        getItemIcon(item: BaseEntity): string {
-            return this.selectedItems.includes(item) ? GGICONS.REMOVE : GGICONS.ADD;
-        },
-        toggleItemSelection(item: BaseEntity): void {
-            if (this.selectedItems.includes(item)) {
-                this.selectedItems.splice(this.selectedItems.indexOf(item), 1);
-            } else {
-                this.selectedItems.push(item);
-            }
-        },
-        openModal(): void {
-            Application.ApplicationUIService.showModalOnFunction(
-                this.typeValue!,
-                (param: unknown): void => {
-                    if (param === undefined || param instanceof BaseEntity) {
-                        this.addSelectedElement(param);
-                    }
-                },
-                ViewTypes.LOOKUPVIEW
-            );
-        },
-        addSelectedElement(newElement: BaseEntity | undefined): void {
-            if (newElement) {
-                const updatedArray = [...this.modelValue, newElement];
-                this.$emit('update:modelValue', updatedArray);
-            }
-        },
-        toggleSelection() {
-            this.isSelection = !this.isSelection;
-            if (!this.isSelection) {
-                this.selectedItems = [];
-            }
-        },
-        showDeleteModal() {
-            Application.ApplicationUIService.openConfirmationMenu(
-                confMenuType.WARNING,
-                'Confirmar eliminación',
-                'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',
-                () => {
-                    const updatedArray = this.modelValue.filter((item) => !this.selectedItems.includes(item));
-                    this.$emit('update:modelValue', updatedArray);
-                    this.selectedItems = [];
-                    this.isSelection = false;
-                }
-            );
-        },
-        async isValidated(): Promise<boolean> {
-            this.validationMessages = [];
+interface Props {
+    modelValue: BaseEntity[];
+    typeValue?: typeof BaseEntity;
+    entity?: BaseEntity;
+    propertyKey?: string;
+    required?: boolean;
+    requireddMessage?: string;
+    disabled?: boolean;
+    validated?: boolean;
+    validatedMessage?: string;
+}
 
-            if (this.required && (!this.modelValue || this.modelValue.length === 0)) {
-                this.validationMessages.push(
-                    this.requireddMessage || `${this.typeValue?.getModuleName()} is required.`
-                );
-            }
+const props = withDefaults(defineProps<Props>(), {
+    required: false,
+    requireddMessage: '',
+    disabled: false,
+    validated: true,
+    validatedMessage: ''
+});
 
-            /** Validación tradicional (síncrona) usando entity si está disponible */
-            if (this.entity && this.propertyKey) {
-                const isValid = this.entity.isValidation(this.propertyKey);
-                if (!isValid) {
-                    const validationMsg = this.entity.validationMessage(this.propertyKey);
-                    this.validationMessages.push(validationMsg || `${this.typeValue?.getModuleName()} is not valid.`);
-                }
-            } else if (!this.validated) {
-                /** Fallback a la prop validated si no hay entity/propertyKey */
-                this.validationMessages.push(
-                    this.validatedMessage || `${this.typeValue?.getModuleName()} is not valid.`
-                );
-            }
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: BaseEntity[]): void;
+}>();
 
-            return this.validationMessages.length === 0;
-        },
-        async handleValidation() {
-            this.isInputValidated = await this.isValidated();
-            if (!this.isInputValidated) {
-                Application.View.value.isValid = false;
-            }
-        }
-    },
-    computed: {
-        moduleIcon(): string | undefined {
-            return this.typeValue?.getModuleIcon();
-        },
-        moduleName(): string | undefined {
-            return this.typeValue?.getModuleName();
-        },
-        selectionIcon(): string {
-            return this.isSelection ? GGICONS.SELECT_CHECKBOX : GGICONS.SELECT_VOID;
-        },
-        filteredData() {
-            if (!this.search) {
-                return this.modelValue;
-            }
-            return this.modelValue.filter((item) => {
-                const defaultValue = item.getDefaultPropertyValue();
-                if (defaultValue && typeof defaultValue === 'string') {
-                    return defaultValue.toLowerCase().includes(this.search.toLowerCase());
-                }
-                return false;
-            });
-        }
-    },
-    data() {
-        return {
-            Application,
-            GGICONS,
-            GGCLASS,
-            search: '',
-            isSelection: false,
-            isInputValidated: true,
-            selectedItems: [] as BaseEntity[],
-            validationMessages: [] as string[]
-        };
+const search = ref('');
+const isSelection = ref(false);
+const isInputValidated = ref(true);
+const selectedItems = ref<BaseEntity[]>([]);
+const validationMessages = ref<string[]>([]);
+
+const moduleIcon = computed<string | undefined>(() => props.typeValue?.getModuleIcon());
+const moduleName = computed<string | undefined>(() => props.typeValue?.getModuleName());
+const selectionIcon = computed<string>(() => (isSelection.value ? GGICONS.SELECT_CHECKBOX : GGICONS.SELECT_VOID));
+
+const filteredData = computed<BaseEntity[]>(() => {
+    if (!search.value) {
+        return props.modelValue;
     }
-};
+    return props.modelValue.filter((item) => {
+        const defaultValue = item.getDefaultPropertyValue();
+        if (defaultValue && typeof defaultValue === 'string') {
+            return defaultValue.toLowerCase().includes(search.value.toLowerCase());
+        }
+        return false;
+    });
+});
+
+function getItemIcon(item: BaseEntity): string {
+    return selectedItems.value.includes(item) ? GGICONS.REMOVE : GGICONS.ADD;
+}
+
+function toggleItemSelection(item: BaseEntity): void {
+    if (selectedItems.value.includes(item)) {
+        selectedItems.value.splice(selectedItems.value.indexOf(item), 1);
+    } else {
+        selectedItems.value.push(item);
+    }
+}
+
+function openModal(): void {
+    if (!props.typeValue) return;
+
+    Application.ApplicationUIService.showModalOnFunction(
+        props.typeValue,
+        (param: unknown): void => {
+            if (param === undefined || param instanceof BaseEntity) {
+                addSelectedElement(param);
+            }
+        },
+        ViewTypes.LOOKUPVIEW
+    );
+}
+
+function addSelectedElement(newElement: BaseEntity | undefined): void {
+    if (newElement) {
+        const updatedArray = [...props.modelValue, newElement];
+        emit('update:modelValue', updatedArray);
+    }
+}
+
+function toggleSelection(): void {
+    isSelection.value = !isSelection.value;
+    if (!isSelection.value) {
+        selectedItems.value = [];
+    }
+}
+
+function showDeleteModal(): void {
+    Application.ApplicationUIService.openConfirmationMenu(
+        confMenuType.WARNING,
+        'Confirmar eliminación',
+        'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',
+        () => {
+            const updatedArray = props.modelValue.filter((item) => !selectedItems.value.includes(item));
+            emit('update:modelValue', updatedArray);
+            selectedItems.value = [];
+            isSelection.value = false;
+        }
+    );
+}
+
+async function isValidated(): Promise<boolean> {
+    validationMessages.value = [];
+
+    if (props.required && (!props.modelValue || props.modelValue.length === 0)) {
+        validationMessages.value.push(props.requireddMessage || `${props.typeValue?.getModuleName()} is required.`);
+    }
+
+    if (props.entity && props.propertyKey) {
+        const isValid = props.entity.isValidation(props.propertyKey);
+        if (!isValid) {
+            const validationMsg = props.entity.validationMessage(props.propertyKey);
+            validationMessages.value.push(validationMsg || `${props.typeValue?.getModuleName()} is not valid.`);
+        }
+    } else if (!props.validated) {
+        validationMessages.value.push(props.validatedMessage || `${props.typeValue?.getModuleName()} is not valid.`);
+    }
+
+    return validationMessages.value.length === 0;
+}
+
+async function handleValidation(): Promise<void> {
+    isInputValidated.value = await isValidated();
+    if (!isInputValidated.value) {
+        Application.View.value.isValid = false;
+    }
+}
+
+onMounted(() => {
+    Application.eventBus.on('validate-inputs', handleValidation);
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('validate-inputs', handleValidation);
+});
 </script>
 
 <style scoped>

@@ -4,6 +4,8 @@
     </div>
 </template>
 
+<script setup lang="ts"></script>
+
 <style scoped>
 .form-row-3 {
     display: grid;

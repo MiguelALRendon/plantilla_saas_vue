@@ -39,6 +39,12 @@ Los componentes operan exclusivamente en el contexto de formularios de detalle C
 
 ## 4. Descripción Técnica
 
+### 4.0 Actualización Fase 1 (18 de Febrero, 2026)
+
+- `FormGroupComponent` fue migrado a Composition API usando `<script setup lang="ts">`.
+- El prop `title` mantiene compatibilidad y se tipa mediante `defineProps` + `withDefaults`.
+- No hubo cambios en estructura HTML ni tokens CSS.
+
 ### FormGroupComponent
 
 **Archivo:** src/components/Form/FormGroupComponent.vue

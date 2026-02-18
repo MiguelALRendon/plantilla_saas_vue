@@ -30,157 +30,139 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
-export default {
-    name: 'NumberInputComponent',
-    props: {
-        entityClass: {
-            type: Function as unknown as () => typeof BaseEntity,
-            required: true
-        },
-        entity: {
-            type: Object as () => BaseEntity,
-            required: true
-        },
-        propertyKey: {
-            type: String,
-            required: true
-        },
-        modelValue: {
-            type: Number,
-            required: true,
-            default: 0
-        }
-    },
-    setup(props) {
-        const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
-        return {
-            metadata
-        };
-    },
-    mounted() {
-        Application.eventBus.on('validate-inputs', this.handleValidation);
-    },
-    beforeUnmount() {
-        Application.eventBus.off('validate-inputs', this.handleValidation);
-    },
-    data() {
-        return {
-            GGICONS,
-            GGCLASS,
-            textInputId: `text-input-${this.propertyKey}`,
-            isInputValidated: true,
-            validationMessages: [] as string[],
-            isFocused: false
-        };
-    },
-    methods: {
-        handleKeyPress(event: KeyboardEvent) {
-            const char = event.key;
-            const currentValue = (event.target as HTMLInputElement).value;
+interface Props {
+    entityClass: typeof BaseEntity;
+    entity: BaseEntity;
+    propertyKey: string;
+    modelValue?: number;
+}
 
-            /** Permitir: números, punto decimal, signo menos al inicio */
-            const isNumber = /^\d$/.test(char);
-            const isDot = char === '.' && !currentValue.includes('.');
-            const isMinus = char === '-' && currentValue.length === 0;
+const props = withDefaults(defineProps<Props>(), {
+    modelValue: 0
+});
 
-            if (!isNumber && !isDot && !isMinus) {
-                event.preventDefault();
-            }
-        },
-        handleInput(event: Event) {
-            const inputValue = (event.target as HTMLInputElement).value;
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: number): void;
+}>();
 
-            if (inputValue === '' || inputValue === '-') {
-                return;
-            }
+const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+const isInputValidated = ref(true);
+const validationMessages = ref<string[]>([]);
+const isFocused = ref(false);
 
-            const numValue = parseFloat(inputValue);
+const containerClasses = computed<Record<string, boolean>>(() => ({
+    disabled: metadata.disabled.value,
+    nonvalidated: !isInputValidated.value
+}));
 
-            if (!isNaN(numValue)) {
-                this.$emit('update:modelValue', numValue);
-            }
-        },
-        handleFocus() {
-            this.isFocused = true;
-        },
-        handleBlur() {
-            this.isFocused = false;
-            if (this.modelValue === null || this.modelValue === undefined || isNaN(this.modelValue)) {
-                this.$emit('update:modelValue', 0);
-            }
-        },
-        incrementValue() {
-            const newValue = (this.modelValue || 0) + 1;
-            this.$emit('update:modelValue', newValue);
-        },
-        decrementValue() {
-            const newValue = (this.modelValue || 0) - 1;
-            this.$emit('update:modelValue', newValue);
-        },
-        async isValidated(): Promise<boolean> {
-            var validated = true;
-            this.validationMessages = [];
+const displayValue = computed<string>(() => {
+    if (isFocused.value) {
+        return props.modelValue?.toString() || '';
+    }
 
-            if (this.metadata.required.value && (this.modelValue === null || this.modelValue === undefined)) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
-                );
-            }
-            if (!this.metadata.validated.value) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
-                );
-            }
+    const format = props.entity.getDisplayFormat(props.propertyKey);
 
-            /** Validación asíncrona */
-            const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-            if (!isAsyncValid) {
-                validated = false;
-                const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-                if (asyncMessage) {
-                    this.validationMessages.push(asyncMessage);
-                }
-            }
+    if (format) {
+        return props.entity.getFormattedValue(props.propertyKey);
+    }
 
-            return validated;
-        },
-        async handleValidation() {
-            this.isInputValidated = await this.isValidated();
-            if (!this.isInputValidated) {
-                Application.View.value.isValid = false;
-            }
-        }
-    },
-    computed: {
-        containerClasses(): Record<string, boolean> {
-            return {
-                disabled: this.metadata.disabled.value,
-                nonvalidated: !this.isInputValidated
-            };
-        },
-        displayValue(): string {
-            if (this.isFocused) {
-                return this.modelValue?.toString() || '';
-            }
+    return props.modelValue?.toString() || '0';
+});
 
-            const format = this.entity.getDisplayFormat(this.propertyKey);
+function handleKeyPress(event: KeyboardEvent): void {
+    const char = event.key;
+    const currentValue = (event.target as HTMLInputElement).value;
 
-            if (format) {
-                return this.entity.getFormattedValue(this.propertyKey);
-            }
+    const isNumber = /^\d$/.test(char);
+    const isDot = char === '.' && !currentValue.includes('.');
+    const isMinus = char === '-' && currentValue.length === 0;
 
-            return this.modelValue?.toString() || '0';
+    if (!isNumber && !isDot && !isMinus) {
+        event.preventDefault();
+    }
+}
+
+function handleInput(event: Event): void {
+    const inputValue = (event.target as HTMLInputElement).value;
+
+    if (inputValue === '' || inputValue === '-') {
+        return;
+    }
+
+    const numValue = parseFloat(inputValue);
+
+    if (!isNaN(numValue)) {
+        emit('update:modelValue', numValue);
+    }
+}
+
+function handleFocus(): void {
+    isFocused.value = true;
+}
+
+function handleBlur(): void {
+    isFocused.value = false;
+    if (props.modelValue === null || props.modelValue === undefined || isNaN(props.modelValue)) {
+        emit('update:modelValue', 0);
+    }
+}
+
+function incrementValue(): void {
+    const newValue = (props.modelValue || 0) + 1;
+    emit('update:modelValue', newValue);
+}
+
+function decrementValue(): void {
+    const newValue = (props.modelValue || 0) - 1;
+    emit('update:modelValue', newValue);
+}
+
+async function isValidated(): Promise<boolean> {
+    let validated = true;
+    validationMessages.value = [];
+
+    if (metadata.required.value && (props.modelValue === null || props.modelValue === undefined)) {
+        validated = false;
+        validationMessages.value.push(metadata.requiredMessage.value || `${metadata.propertyName} is required.`);
+    }
+    if (!metadata.validated.value) {
+        validated = false;
+        validationMessages.value.push(metadata.validatedMessage.value || `${metadata.propertyName} is not valid.`);
+    }
+
+    const isAsyncValid = await props.entity.isAsyncValidation(props.propertyKey);
+    if (!isAsyncValid) {
+        validated = false;
+        const asyncMessage = props.entity.asyncValidationMessage(props.propertyKey);
+        if (asyncMessage) {
+            validationMessages.value.push(asyncMessage);
         }
     }
-};
+
+    return validated;
+}
+
+async function handleValidation(): Promise<void> {
+    isInputValidated.value = await isValidated();
+    if (!isInputValidated.value) {
+        Application.View.value.isValid = false;
+    }
+}
+
+onMounted(() => {
+    Application.eventBus.on('validate-inputs', handleValidation);
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('validate-inputs', handleValidation);
+});
 </script>
 
 <style scoped>

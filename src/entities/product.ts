@@ -25,6 +25,7 @@ import {
     ViewGroup,
 } from '@/decorations';
 import { StringType } from '@/enums/string_type.ts';
+import { AsyncValidators, Validators } from '@/validators';
 
 import { BaseEntity } from './base_entity.ts';
 
@@ -101,6 +102,7 @@ export class Product extends BaseEntity {
     @DisplayFormat('{value} Pz.')
     @HelpText('Cantidad disponible en inventario')
     @CSSColumnClass('table-length-short')
+    @Validators.min(0, 'El stock debe ser mayor o igual a 0')
     @Required(true)
     stock!: number;
 
@@ -138,6 +140,8 @@ export class Product extends BaseEntity {
     @PropertyIndex(9)
     @PropertyName('Email', String)
     @StringTypeDef(StringType.EMAIL)
+    @Validators.email('Formato de email inválido')
+    @AsyncValidators.unique('/api/products/validate-email', 'El email ya está registrado')
     @Required(true)
     @HelpText('Email de contacto del proveedor')
     @AsyncValidation(async (entity: Product) => {

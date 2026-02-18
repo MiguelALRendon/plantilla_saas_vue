@@ -34,6 +34,12 @@ Indexar la documentación funcional y técnica de BaseEntity como motor core del
 
 16 de Febrero, 2026
 
+### Actualización Fase 1 (18 de Febrero, 2026)
+
+- Dirty state migrado a comparación profunda (`deepEqual`)
+- Snapshot de estado migrado a `deepClone`
+- Mapeo persistente con transformación automática por metadatos + `transformationSchema` opcional como override
+
 ---
 
 ## Archivos de Especificación (9)

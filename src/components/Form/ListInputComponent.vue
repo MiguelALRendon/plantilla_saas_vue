@@ -1,5 +1,9 @@
 <template>
-    <div class="ListInput" :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]">
+    <div
+        ref="rootElement"
+        class="ListInput"
+        :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
+    >
         <button
             class="list-input-header"
             @click="openOptions"
@@ -21,10 +25,7 @@
                     v-for="value in formattedEnumValues"
                     :class="[{ selected: modelValue == value.value }]"
                     :key="value.key"
-                    @click="
-                        $emit('update:modelValue', value.value);
-                        droped = false;
-                    "
+                    @click="selectOption(value.value)"
                 >
                     <span>{{ value.displayKey }}</span>
                 </div>
@@ -41,139 +42,123 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { EnumAdapter } from '@/models/enum_adapter';
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
-export default {
-    name: 'ListInputComponent',
-    mounted() {
-        document.addEventListener('click', this.handleClickOutside);
-        Application.eventBus.on('validate-inputs', this.handleValidation);
-    },
-    beforeUnmount() {
-        document.removeEventListener('click', this.handleClickOutside);
-        Application.eventBus.off('validate-inputs', this.handleValidation);
-    },
-    methods: {
-        parseValue(key: string): string {
-            return key
-                .toLowerCase()
-                .split('_')
-                .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-                .join(' ');
-        },
-        openOptions() {
-            const rect = document.getElementById(`id-4-click-on${this.metadata.propertyName}`)?.getBoundingClientRect();
-            if (rect) {
-                this.fromBottom = window.innerHeight - rect.bottom < 300;
-            }
-            this.droped = !this.droped;
-        },
+interface Props {
+    entityClass: typeof BaseEntity;
+    entity: BaseEntity;
+    propertyKey: string;
+    propertyEnumValues: EnumAdapter;
+    modelValue?: string | number;
+}
 
-        handleClickOutside(event: MouseEvent) {
-            if (this.droped) {
-                const dropdown = this.$el;
-                if (!dropdown) return;
+const props = withDefaults(defineProps<Props>(), {
+    modelValue: ''
+});
 
-                if (!dropdown.contains(event.target as Node)) {
-                    this.droped = false;
-                }
-            }
-        },
-        async isValidated(): Promise<boolean> {
-            var validated = true;
-            this.validationMessages = [];
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string | number): void;
+}>();
 
-            if (this.metadata.required.value && this.modelValue === '') {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.requiredMessage.value || `${this.metadata.propertyName} is required.`
-                );
-            }
-            if (!this.metadata.validated.value) {
-                validated = false;
-                this.validationMessages.push(
-                    this.metadata.validatedMessage.value || `${this.metadata.propertyName} is not valid.`
-                );
-            }
+const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+const droped = ref(false);
+const fromBottom = ref(false);
+const isInputValidated = ref(true);
+const validationMessages = ref<string[]>([]);
+const rootElement = ref<HTMLElement | null>(null);
 
-            /** Validación asíncrona */
-            const isAsyncValid = await this.entity.isAsyncValidation(this.propertyKey);
-            if (!isAsyncValid) {
-                validated = false;
-                const asyncMessage = this.entity.asyncValidationMessage(this.propertyKey);
-                if (asyncMessage) {
-                    this.validationMessages.push(asyncMessage);
-                }
-            }
+function parseValue(key: string): string {
+    return key
+        .toLowerCase()
+        .split('_')
+        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+        .join(' ');
+}
 
-            return validated;
-        },
-        async handleValidation() {
-            this.isInputValidated = await this.isValidated();
-            if (!this.isInputValidated) {
-                Application.View.value.isValid = false;
-            }
-        }
-    },
-    props: {
-        entityClass: {
-            type: Function as unknown as () => typeof BaseEntity,
-            required: true
-        },
-        entity: {
-            type: Object as () => BaseEntity,
-            required: true
-        },
-        propertyKey: {
-            type: String,
-            required: true
-        },
-        propertyEnumValues: {
-            type: Object as () => EnumAdapter,
-            required: true
-        },
-        modelValue: {
-            type: [String, Number],
-            required: true,
-            default: ''
-        }
-    },
-    setup(props) {
-        const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
-        return {
-            metadata
-        };
-    },
-    computed: {
-        formattedEnumValues(): Array<{ key: string; value: string | number; displayKey: string }> {
-            return this.propertyEnumValues.getKeyValuePairs().map((pair) => ({
-                key: pair.key,
-                value: pair.value,
-                displayKey: this.parseValue(pair.key)
-            }));
-        },
-        actualOption(): String | number {
-            var value =
-                this.propertyEnumValues.getKeyValuePairs().find((pair) => pair.value === this.modelValue)?.key || '';
-            return this.parseValue(value);
-        }
-    },
-    data() {
-        return {
-            GGCLASS,
-            GGICONS,
-            droped: false,
-            fromBottom: false,
-            isInputValidated: true,
-            validationMessages: [] as string[]
-        };
+const formattedEnumValues = computed<Array<{ key: string; value: string | number; displayKey: string }>>(() =>
+    props.propertyEnumValues.getKeyValuePairs().map((pair) => ({
+        key: pair.key,
+        value: pair.value,
+        displayKey: parseValue(pair.key)
+    }))
+);
+
+const actualOption = computed<string | number>(() => {
+    const value = props.propertyEnumValues.getKeyValuePairs().find((pair) => pair.value === props.modelValue)?.key || '';
+    return parseValue(value);
+});
+
+function openOptions(): void {
+    const rect = document.getElementById(`id-4-click-on${metadata.propertyName}`)?.getBoundingClientRect();
+    if (rect) {
+        fromBottom.value = window.innerHeight - rect.bottom < 300;
     }
-};
+    droped.value = !droped.value;
+}
+
+function selectOption(value: string | number): void {
+    emit('update:modelValue', value);
+    droped.value = false;
+}
+
+function handleClickOutside(event: MouseEvent): void {
+    if (droped.value) {
+        const dropdown = rootElement.value;
+        if (!dropdown) return;
+
+        if (!dropdown.contains(event.target as Node)) {
+            droped.value = false;
+        }
+    }
+}
+
+async function isValidated(): Promise<boolean> {
+    let validated = true;
+    validationMessages.value = [];
+
+    if (metadata.required.value && props.modelValue === '') {
+        validated = false;
+        validationMessages.value.push(metadata.requiredMessage.value || `${metadata.propertyName} is required.`);
+    }
+    if (!metadata.validated.value) {
+        validated = false;
+        validationMessages.value.push(metadata.validatedMessage.value || `${metadata.propertyName} is not valid.`);
+    }
+
+    const isAsyncValid = await props.entity.isAsyncValidation(props.propertyKey);
+    if (!isAsyncValid) {
+        validated = false;
+        const asyncMessage = props.entity.asyncValidationMessage(props.propertyKey);
+        if (asyncMessage) {
+            validationMessages.value.push(asyncMessage);
+        }
+    }
+
+    return validated;
+}
+
+async function handleValidation(): Promise<void> {
+    isInputValidated.value = await isValidated();
+    if (!isInputValidated.value) {
+        Application.View.value.isValid = false;
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+    Application.eventBus.on('validate-inputs', handleValidation);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside);
+    Application.eventBus.off('validate-inputs', handleValidation);
+});
 </script>
 
 <style scoped>

@@ -1,7 +1,8 @@
 ﻿import { Component, markRaw, ref, Ref } from 'vue';
 import type { Router } from 'vue-router';
 
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { AxiosError, AxiosInstance } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
 import {
@@ -15,11 +16,14 @@ import {
 import { BaseEntity } from '@/entities/base_entity';
 import { Product } from '@/entities/product.ts';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
+import { ToastType } from '@/enums/ToastType';
 import { ViewTypes } from '@/enums/view_type';
 
 import type { Events } from '@/types/events';
+import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
 import { AppConfiguration } from './AppConfiguration';
+import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
 import { confirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
@@ -103,6 +107,12 @@ class ApplicationClass implements ApplicationUIContext {
      */
     ToastList: Ref<Toast[]>;
     /**
+     * Service class for API/entity data transformations
+     * Type: ApplicationDataService
+     * Provides reusable transformers for date, decimal, boolean and enum values
+     */
+    ApplicationDataService: ApplicationDataService;
+    /**
      * Service class for managing UI interactions and user feedback
      * Type: ApplicationUIService
      * Provides methods for showing toasts, modals, and confirmation dialogs
@@ -169,6 +179,7 @@ class ApplicationClass implements ApplicationUIContext {
         }) as Ref<confirmationMenu>;
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
         this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;
+        this.ApplicationDataService = new ApplicationDataService();
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
             timeout: this.AppConfiguration.value.apiTimeout,
@@ -192,10 +203,104 @@ class ApplicationClass implements ApplicationUIContext {
 
         this.axiosInstance.interceptors.response.use(
             (response) => response,
-            (error) => {
-                if (error.response?.status === 401) {
-                    localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
+            async (error: AxiosError) => {
+                const status = error.response?.status;
+                const requestConfig = error.config as RetryableAxiosRequestConfig | undefined;
+
+                if (requestConfig && requestConfig.__retryCount === undefined) {
+                    requestConfig.__retryCount = 0;
                 }
+
+                if (status === undefined) {
+                    this.ApplicationUIService.showToast(
+                        'Error de conexión. Verifica tu conexión a internet.',
+                        ToastType.ERROR
+                    );
+                    return Promise.reject(error);
+                }
+
+                switch (status) {
+                    case 401:
+                        localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
+                        this.ApplicationUIService.showToast(
+                            'Sesión expirada. Por favor, inicia sesión nuevamente.',
+                            ToastType.ERROR
+                        );
+
+                        if (this.router) {
+                            this.router.push('/login').catch(() => {});
+                        }
+                        break;
+
+                    case 403:
+                        this.ApplicationUIService.showToast(
+                            'No tienes permisos para realizar esta acción.',
+                            ToastType.ERROR
+                        );
+                        break;
+
+                    case 404:
+                        this.ApplicationUIService.showToast(
+                            'El recurso solicitado no fue encontrado.',
+                            ToastType.WARNING
+                        );
+                        break;
+
+                    case 422: {
+                        const responseData = error.response?.data as Record<string, unknown> | undefined;
+                        const validationErrors = responseData?.errors as Record<string, unknown> | undefined;
+
+                        if (validationErrors && Object.keys(validationErrors).length > 0) {
+                            const messages = Object.values(validationErrors)
+                                .flatMap((item) => (Array.isArray(item) ? item : [item]))
+                                .map((item) => String(item))
+                                .join(', ');
+
+                            this.ApplicationUIService.showToast(
+                                `Errores de validación: ${messages}`,
+                                ToastType.ERROR
+                            );
+                        } else {
+                            this.ApplicationUIService.showToast(
+                                'Error de validación en los datos enviados.',
+                                ToastType.ERROR
+                            );
+                        }
+                        break;
+                    }
+
+                    case 500:
+                    case 502:
+                    case 503:
+                        if (
+                            requestConfig &&
+                            (requestConfig.__retryCount ?? 0) < this.AppConfiguration.value.apiRetryAttempts
+                        ) {
+                            requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
+
+                            this.ApplicationUIService.showToast(
+                                `Error del servidor. Reintentando (${requestConfig.__retryCount}/${this.AppConfiguration.value.apiRetryAttempts})...`,
+                                ToastType.WARNING
+                            );
+
+                            const delay = Math.pow(2, requestConfig.__retryCount) * 1000;
+                            await new Promise((resolve) => setTimeout(resolve, delay));
+                            return this.axiosInstance.request(requestConfig);
+                        }
+
+                        this.ApplicationUIService.showToast(
+                            'Error del servidor. Por favor, intenta más tarde.',
+                            ToastType.ERROR
+                        );
+                        break;
+
+                    default:
+                        this.ApplicationUIService.showToast(
+                            `Error inesperado: ${status}`,
+                            ToastType.ERROR
+                        );
+                }
+
                 return Promise.reject(error);
             }
         );

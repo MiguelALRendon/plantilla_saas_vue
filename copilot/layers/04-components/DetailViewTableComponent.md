@@ -35,6 +35,13 @@ Método que recibe entity del click de fila, obtiene uniqueValue con getUniquePr
 
 ## 4. Descripción Técnica
 
+### 4.0 Actualización Fase 1 (18 de Febrero, 2026)
+
+- El componente fue migrado a Composition API con `<script setup lang="ts">`.
+- `loadData()` ahora se ejecuta en `onMounted` y reacciona a cambios de `Application.View.value.entityClass` mediante `watch`.
+- Se añadieron llaves (`:key`) en iteraciones de columnas y filas para renderizado estable.
+- Se conserva el flujo de navegación a detalle vía `Application.changeViewToDetailView(entity)`.
+
 **TEMPLATE ESTRUCTURA:**
 ```html
 <table>
