@@ -13,7 +13,7 @@ import {
     ValidateButtonComponent
 } from '@/components/Buttons';
 import { BaseEntity } from '@/entities/base_entity';
-import { Product } from '@/entities/product';
+import { Product } from '@/entities/product.ts';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 

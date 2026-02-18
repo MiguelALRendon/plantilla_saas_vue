@@ -70,8 +70,9 @@ export default {
             return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
         },
         getCellValue(item: BaseEntity, column: string): string {
-            return item[column] instanceof BaseEntity
-                ? item[column].getDefaultPropertyValue()
+            const value = item[column];
+            return value instanceof BaseEntity
+                ? String(value.getDefaultPropertyValue() ?? '')
                 : item.getFormattedValue(column);
         },
         openDetailView(entity: BaseEntity) {
