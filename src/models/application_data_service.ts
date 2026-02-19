@@ -1,4 +1,16 @@
+import type { BaseEntity } from '@/entities/base_entity';
 import type { TransformationSchema } from '@/types/service.types';
+
+/**
+ * Concrete entity constructor type for instantiable entities.
+ */
+type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: Record<string, unknown>) => T;
+
+/**
+ * Abstract entity constructor type that accepts both abstract and concrete constructors.
+ * Used for type metadata where the actual constructor may be abstract (BaseEntity subclasses).
+ */
+type AbstractEntityConstructor<T extends BaseEntity = BaseEntity> = abstract new (data: Record<string, unknown>) => T;
 
 /**
  * Service for data transformations between API payloads and entity values.
@@ -73,6 +85,38 @@ export class ApplicationDataService {
 
                 const enumValues = Object.values(enumType);
                 return enumValues.includes(value as T[keyof T]) ? (value as T[keyof T]) : null;
+            },
+        }),
+        entity: <T extends BaseEntity>(entityConstructor: AbstractEntityConstructor<T>) => ({
+            toAPI: (value: T | null | undefined): Record<string, unknown> | null => {
+                if (!value) {
+                    return null;
+                }
+
+                return value.toPersistentObject();
+            },
+            fromAPI: (value: Record<string, unknown> | null | undefined): T | null => {
+                if (!value || typeof value !== 'object') {
+                    return null;
+                }
+
+                return new (entityConstructor as EntityConstructor<T>)(value);
+            },
+        }),
+        arrayOfEntities: <T extends BaseEntity>(entityConstructor: AbstractEntityConstructor<T>) => ({
+            toAPI: (value: T[] | null | undefined): Record<string, unknown>[] | null => {
+                if (!value || !Array.isArray(value)) {
+                    return null;
+                }
+
+                return value.map((item) => item.toPersistentObject());
+            },
+            fromAPI: (value: Record<string, unknown>[] | null | undefined): T[] | null => {
+                if (!value || !Array.isArray(value)) {
+                    return null;
+                }
+
+                return value.map((item) => new (entityConstructor as EntityConstructor<T>)(item));
             },
         }),
     };

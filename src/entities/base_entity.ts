@@ -1509,6 +1509,24 @@ export abstract class BaseEntity {
 
             if (this.isEnumPropertyType(propertyType)) {
                 schema[propertyKey] = Application.ApplicationDataService.transformers.enum(propertyType);
+                continue;
+            }
+
+            if (propertyType === Array) {
+                const arrayElementType = this.getArrayPropertyType(propertyKey);
+                if (arrayElementType) {
+                    schema[propertyKey] = Application.ApplicationDataService.transformers.arrayOfEntities(
+                        arrayElementType
+                    );
+                }
+                continue;
+            }
+
+            if (typeof propertyType === 'function' && propertyType.prototype instanceof BaseEntity) {
+                schema[propertyKey] = Application.ApplicationDataService.transformers.entity(
+                    propertyType as typeof BaseEntity
+                );
+                continue;
             }
         }
 

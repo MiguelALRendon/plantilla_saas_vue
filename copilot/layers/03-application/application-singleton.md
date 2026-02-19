@@ -159,9 +159,74 @@ Application incorpora un servicio auxiliar para transformación de datos sin alt
 - Debe instanciarse dentro del constructor de ApplicationClass
 - Debe ser consumido por BaseEntity vía Application (sin bypass desde UI)
 - Solo encapsula transformaciones y utilidades de datos (no lógica CRUD)
-- Debe exponer transformadores predefinidos `date`, `decimal`, `boolean`, `enum`
+- Debe exponer transformadores predefinidos `date`, `decimal`, `boolean`, `enum`, `entity`, `arrayOfEntities`
 - Debe habilitar transformación automática por metadatos sin configuración manual obligatoria en cada entidad
 - Debe permitir override opcional por entidad vía `transformationSchema` cuando exista caso especial
+
+#### 4.3.1.1 Sistema de Tipos para Constructores de Entidades
+
+**Tipos de constructores definidos:**
+
+```typescript
+type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: Record<string, unknown>) => T;
+```
+
+- **Propósito:** Constructor concreto (instanciable) para entidades específicas
+- **Uso:** Instanciación directa de entidades en transformadores
+- **Restricción:** No acepta clases abstractas
+
+```typescript
+type AbstractEntityConstructor<T extends BaseEntity = BaseEntity> = abstract new (data: Record<string, unknown>) => T;
+```
+
+- **Propósito:** Constructor abstracto o concreto para metadatos de tipo
+- **Uso:** Parámetros de transformadores que reciben metadatos de `@PropertyName` o `@ArrayElementType`
+- **Ventaja:** Acepta `typeof BaseEntity` (abstracto) proveniente de `getArrayPropertyType()` o `getPropertyType()`
+- **Conversión interna:** Los transformadores castean a `EntityConstructor<T>` antes de instanciar
+
+**Transformadores de entidades:**
+
+```typescript
+entity: <T extends BaseEntity>(entityConstructor: AbstractEntityConstructor<T>) => ({
+    toAPI: (value: T | null | undefined): Record<string, unknown> | null
+    fromAPI: (value: Record<string, unknown> | null | undefined): T | null
+})
+```
+
+- **Parámetro:** `entityConstructor` tipo `AbstractEntityConstructor<T>`
+- **toAPI:** Llama `value.toPersistentObject()` (sin verificación instanceof por ser abstracto)
+- **fromAPI:** Instancia con `new (entityConstructor as EntityConstructor<T>)(value)`
+- **Uso desde BaseEntity:** `transformers.entity(propertyType as typeof BaseEntity)`
+
+```typescript
+arrayOfEntities: <T extends BaseEntity>(entityConstructor: AbstractEntityConstructor<T>) => ({
+    toAPI: (value: T[] | null | undefined): Record<string, unknown>[] | null
+    fromAPI: (value: Record<string, unknown>[] | null | undefined): T[] | null
+})
+```
+
+- **Parámetro:** `entityConstructor` tipo `AbstractEntityConstructor<T>`
+- **toAPI:** Mapea array llamando `item.toPersistentObject()` en cada elemento
+- **fromAPI:** Mapea array instanciando `new (entityConstructor as EntityConstructor<T>)(item)` para cada elemento
+- **Uso desde BaseEntity:** `transformers.arrayOfEntities(arrayElementType)` donde `arrayElementType: typeof BaseEntity | undefined`
+
+**Resolución del problema de tipos abstractos:**
+
+Antes (TypeScript error 2352):
+```typescript
+// Error: Cannot assign abstract constructor to non-abstract constructor
+transformers.arrayOfEntities(
+    arrayElementType as new (data: Record<string, unknown>) => BaseEntity
+)
+```
+
+Después (Type-safe):
+```typescript
+// Acepta typeof BaseEntity directamente
+transformers.arrayOfEntities(arrayElementType)
+```
+
+**Ubicación:** `/src/models/application_data_service.ts` líneas 1-13
 
 ### 4.3.2 Extensión Fase 1: Manejo HTTP robusto
 

@@ -71,6 +71,41 @@ Además, los métodos de mapeo de persistencia (`mapToPersistentKeys`, `mapFromP
 - Si no existe `transformationSchema`, el mapeo mantiene comportamiento actual
 - La transformación automática debe funcionar sin configuración manual en entidades comunes
 
+#### 4.0.1 Transformación Automática de Entidades y Arrays
+
+**Problema resuelto:** Los transformadores `entity` y `arrayOfEntities` de `ApplicationDataService` ahora aceptan constructores abstractos mediante el tipo `AbstractEntityConstructor<T>`, eliminando errores de tipado TypeScript 2352.
+
+**Implementación en `getAutomaticTransformationSchema()`:**
+
+```typescript
+// Para propiedades de tipo Array con @ArrayElementType
+if (propertyType === Array) {
+    const arrayElementType = this.getArrayPropertyType(propertyKey);
+    if (arrayElementType) {  // arrayElementType: typeof BaseEntity | undefined
+        schema[propertyKey] = Application.ApplicationDataService.transformers.arrayOfEntities(
+            arrayElementType  // Sin casteo necesario
+        );
+    }
+}
+
+// Para propiedades de tipo BaseEntity subclass
+if (typeof propertyType === 'function' && propertyType.prototype instanceof BaseEntity) {
+    schema[propertyKey] = Application.ApplicationDataService.transformers.entity(
+        propertyType as typeof BaseEntity  // Casteo a tipo abstracto
+    );
+}
+```
+
+**Type safety garantizado:**
+- `AbstractEntityConstructor<T>` acepta tanto `typeof BaseEntity` (abstracto) como `typeof Product` (concreto)
+- Transformadores castean internamente a `EntityConstructor<T>` antes de instanciar con `new`
+- Eliminación de validación `instanceof` en `entity.toAPI` por incompatibilidad con constructores abstractos
+- Conversión type-safe sin usar `as unknown as` o doble casteo
+
+**Ubicación:** `/src/entities/base_entity.ts` líneas 1515-1532 (método `getAutomaticTransformationSchema`)
+
+**Referencia cruzada:** Ver `/copilot/layers/03-application/application-singleton.md` § 4.3.1.1 para detalles de tipos de constructores.
+
 ### Métodos de Loading State
 
 #### setLoading() - Marcar Inicio de Carga
