@@ -508,6 +508,42 @@ class ApplicationClass implements ApplicationUIContext {
     initializeRouter(router: Router) {
         this.router = router;
     }
+
+    /**
+     * Registers an entity class as a module in the application.
+     *
+     * Performs a uniqueness check on `getModuleName()` before pushing to `ModuleList`
+     * to prevent route collisions (two modules with the same name would map to the
+     * same `:module` route parameter, making one unreachable).
+     *
+     * @param moduleClass - The entity class to register
+     * @returns `true` if the module was registered; `false` if a duplicate was detected (module skipped)
+     *
+     * @example
+     * ```typescript
+     * Application.registerModule(CustomerEntity);
+     * Application.registerModule(ProductEntity);
+     * ```
+     */
+    registerModule(moduleClass: typeof BaseEntity): boolean {
+        const incomingName = moduleClass.getModuleName()?.toLowerCase() ?? moduleClass.name.toLowerCase();
+        const isDuplicate = this.ModuleList.value.some((existing) => {
+            const existingName = existing.getModuleName()?.toLowerCase() ?? existing.name.toLowerCase();
+            return existingName === incomingName;
+        });
+
+        if (isDuplicate) {
+            console.warn(
+                `[Application] Duplicate module name detected: "${incomingName}". ` +
+                `The module "${moduleClass.name}" was NOT registered to prevent route collision. ` +
+                `Ensure each entity has a unique @ModuleName value.`
+            );
+            return false;
+        }
+
+        this.ModuleList.value.push(moduleClass);
+        return true;
+    }
     /**
      * @endregion
      */
@@ -533,6 +569,6 @@ class ApplicationClass implements ApplicationUIContext {
 
 const Application = ApplicationClass.getInstance();
 
-Application.ModuleList.value.push(Product);
+Application.registerModule(Product);
 export default Application;
 export { Application };

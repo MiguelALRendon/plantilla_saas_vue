@@ -1295,6 +1295,29 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Checks whether a user has permission to access this module.
+     *
+     * If the module has no `@ModulePermission` decorator the module is accessible
+     * to all users and this method returns `true`.  Otherwise the supplied
+     * `userPermissions` array must contain the required permission string.
+     *
+     * @param {string[]} userPermissions - The list of permission identifiers held by the current user
+     * @returns {boolean} True when the user is allowed to access the module; false otherwise
+     *
+     * @example
+     * ```typescript
+     * if (ProductoEntity.hasPermission(currentUser.permissions)) {
+     *   // Show productos module in sidebar
+     * }
+     * ```
+     */
+    public static hasPermission(userPermissions: string[]): boolean {
+        const required = this.getModulePermission();
+        if (required === undefined) return true;
+        return userPermissions.includes(required);
+    }
+
+    /**
      * Retrieves the module icon defined by ModuleIcon decorator
      * @returns The icon identifier or undefined
      */

@@ -10,6 +10,8 @@
 ### Jerarquía Normativa
 
 ```
+CONSTITUTION: .specify/memory/constitution.md (Principios Fundamentales)
+    ↓
 MI LÓGICA (Axiomas A1-A4)
     ↓
 CORE: 00-CONTRACT.md (Contrato Principal)
@@ -29,6 +31,7 @@ QS: 03-QUICK-START.md (Guía)
 
 | ID | Archivo | Tipo | Propósito | Líneas | Versión | Estado |
 |---|---|---|---|---|---|---|
+| CONST | .specify/memory/constitution.md | Constitución | Principios fundamentales no negociables | 420+ | v1.0.0 | ACTIVO |
 | CORE | 00-CONTRACT.md | Contrato Vinculante | Reglas obligatorias y MI LÓGICA | 950+ | v2.3.0 | ACTIVO |
 | FWK | 01-FRAMEWORK-OVERVIEW.md | Documento Descriptivo | Visión general arquitectura | 792 | v1.0.0 | ACTIVO |
 | FLOW | 02-FLOW-ARCHITECTURE.md | Documento Descriptivo | Flujos del sistema | 921 | v1.0.0 | ACTIVO |
