@@ -9,17 +9,26 @@
 ## Table of Contents
 
 1. [User Scenarios & Testing](#1-user-scenarios--testing)
-2. [Requirements — Layer 1: Decoradores](#2-requirements--layer-1-decoradores-31-decoradores)
-3. [Requirements — Layer 2: BaseEntity](#3-requirements--layer-2-baseentity)
-4. [Requirements — Layer 3: Application Singleton](#4-requirements--layer-3-application-singleton)
-5. [Requirements — Layer 4: UI Components](#5-requirements--layer-4-ui-components)
-6. [Requirements — Layer 5: Advanced (Enums, Models, Router, Types)](#6-requirements--layer-5-advanced)
-7. [Requirements — Layer 6: Composables](#7-requirements--layer-6-composables)
+2. [Requirements — Layer 2: Decoradores](#2-requirements--layer-2-decoradores-31-decoradores)
+3. [Requirements — Layer 3: BaseEntity](#3-requirements--layer-3-baseentity)
+4. [Requirements — Layer 4: Application Singleton](#4-requirements--layer-4-application-singleton)
+5. [Requirements — Layer 5: UI Components](#5-requirements--layer-5-ui-components)
+6. [Requirements — Layer 1+5: Advanced (Entities, Enums, Models, Router, Types)](#6-requirements--layer-15-advanced)
+7. [Requirements — Layer 5: Composables](#7-requirements--layer-5-composables)
 8. [Architecture Flows](#8-architecture-flows)
 9. [UI Design System Contract](#9-ui-design-system-contract)
 10. [Code Styling Standards](#10-code-styling-standards)
 11. [Key Entities & Data Models](#11-key-entities--data-models)
 12. [Success Criteria](#12-success-criteria)
+
+> **Nota sobre numeración de capas**: Los números de sección en este spec (§2–§7) son índices de sección de documento, no números de capa arquitectónica. La arquitectura de 5 capas canónica está definida en [`/copilot/00-CONTRACT.md`](/copilot/00-CONTRACT.md) (AXIOMA A1):
+> | Capa Arquitectónica | Nombre | Sección del Spec |
+> |---|---|---|
+> | Capa 1 | Entidades (Declaración) | §6 Advanced |
+> | Capa 2 | Decoradores (Metadatos) | §2 |
+> | Capa 3 | BaseEntity (Lógica CRUD) | §3 |
+> | Capa 4 | Application (Orquestador) | §4 |
+> | Capa 5 | UI Components (Generados) | §5, §7 |
 
 ---
 

@@ -75,7 +75,7 @@
 - [x] T027 [P] Implement `@HelpText(text: string)` and `HELP_TEXT_KEY` Symbol in `src/decorations/help_text_decorator.ts`; export from index.ts
 - [x] T028 [P] Implement `@HideInDetailView()` and `HIDE_IN_DETAIL_VIEW_KEY` Symbol in `src/decorations/hide_in_detail_view_decorator.ts`; store as array of property keys; export from index.ts
 - [x] T029 [P] Implement `@HideInListView()` and `HIDE_IN_LIST_VIEW_KEY` Symbol in `src/decorations/hide_in_list_view_decorator.ts`; store as array of property keys; export from index.ts
-- [x] T030 [P] Implement `@Mask(mask: string, side: MaskSide)` and `MASK_KEY` Symbol in `src/decorations/mask_decorator.ts`; store `{ mask, side }` per property key; DO NOT export from index.ts yet (spec: unexported until ready)
+- [x] T030 [P] Implement `@Mask(mask: string, side: MaskSide)` and `MASK_KEY` Symbol in `src/decorations/mask_decorator.ts`; store `{ mask, side }` per property key; initially unexported — subsequently exported via T175 Polish
 - [x] T031 [P] Implement `@PersistentKey(backendKey: string)` and `PERSISTENT_KEY_KEY` Symbol in `src/decorations/persistent_key_decorator.ts`; export from index.ts
 - [x] T032 [P] Implement `@PropertyIndex(index: number)` and `PROPERTY_INDEX_KEY` Symbol in `src/decorations/property_index_decorator.ts`; default `Number.MAX_SAFE_INTEGER`; export from index.ts
 - [x] T033 [P] Implement `@PropertyName(name: string, type)` with `PROPERTY_NAME_KEY`, `PROPERTY_TYPE_KEY`, `ARRAY_ELEMENT_TYPE_KEY` Symbols in `src/decorations/property_name_decorator.ts`; handle Array type by storing element type in ARRAY_ELEMENT_TYPE_KEY; export from index.ts
@@ -91,10 +91,10 @@
 
 ### 2D — Enums and Types System
 
-- [x] T041 [P] Create `src/enums/view_types.ts` with `export enum ViewTypes { LISTVIEW=0, DETAILVIEW=1, DEFAULTVIEW=2, CUSTOMVIEW=3, LOOKUPVIEW=4 }`
+- [x] T041 [P] Create `src/enums/view_type.ts` with `export enum ViewTypes { LISTVIEW=0, DETAILVIEW=1, DEFAULTVIEW=2, CUSTOMVIEW=3, LOOKUPVIEW=4 }`
 - [x] T042 [P] Create `src/enums/string_type.ts` with `export enum StringType { EMAIL=0, PASSWORD=1, TEXT=2, TELEPHONE=3, URL=4, TEXTAREA=5 }`
 - [x] T043 [P] Create `src/enums/view_group_row.ts` with `export enum ViewGroupRow { SINGLE='single', PAIR='pair', TRIPLE='triple' }`
-- [x] T044 [P] Create `src/enums/toast_type.ts` with `export enum ToastType { SUCCESS=0, ERROR=1, INFO=2, WARNING=3 }`
+- [x] T044 [P] Create `src/enums/ToastType.ts` with `export enum ToastType { SUCCESS=0, ERROR=1, INFO=2, WARNING=3 }` (PascalCase filename per actual implementation)
 - [x] T045 [P] Create `src/enums/conf_menu_type.ts` with `export enum ConfMenuType { INFO=0, SUCCESS=1, WARNING=2, ERROR=3 }`
 - [x] T046 [P] Create `src/enums/mask_sides.ts` with `export enum MaskSides { START=0, END=1 }` (internal use only, do not expose publicly yet)
 - [x] T047 [P] Create `src/types/events.ts` with typed `Events` interface for all 11 EventBus event names
@@ -104,12 +104,12 @@
 
 ### 2E — Models and Interfaces
 
-- [x] T049 [P] Create `src/models/app_configuration.ts` with `AppConfiguration` interface (all 13 fields per spec §4.9)
-- [x] T050 [P] Create `src/models/view.ts` with `View` interface (`entityClass`, `entityObject`, `component`, `viewType`, `isValid`, `entityOid`)
+- [x] T049 [P] Create `src/models/AppConfiguration.ts` with `AppConfiguration` interface (all 13 fields per spec §4.9) (PascalCase filename per actual implementation)
+- [x] T050 [P] Create `src/models/View.ts` with `View` interface (`entityClass`, `entityObject`, `component`, `viewType`, `isValid`, `entityOid`) (PascalCase filename per actual implementation)
 - [x] T051 [P] Create `src/models/modal.ts` with `Modal` interface for global modal state
 - [x] T052 [P] Create `src/models/dropdown_menu.ts` with `DropdownMenu` interface for contextual menu state
 - [x] T053 [P] Create `src/models/confirmation_menu.ts` with `confirmationMenu` interface for dialog state
-- [x] T054 [P] Create `src/models/toast.ts` with `Toast` class; constructor generates random 9-char ID via `Math.random().toString(36).substr(2, 9)`
+- [x] T054 [P] Create `src/models/Toast.ts` with `Toast` class; constructor generates random 9-char ID via `Math.random().toString(36).substr(2, 9)` (PascalCase filename per actual implementation)
 - [x] T055 [P] Create `src/models/application_ui_context.ts` with `ApplicationUIContext` interface grouping all reactive UI state refs
 - [x] T056 [P] Create `src/models/enum_adapter.ts` with `EnumAdapter` class; implement `getKeyValuePairs(enumRef)` filtering numeric reverse-mapping keys with `isNaN(Number(key))`
 
@@ -168,9 +168,9 @@
 - [x] T100 Implement `changeView(entityClass, entity, component, viewType, oid)` with dirty-state guard: call `entity?.getDirtyState()`, if true open confirmation dialog before proceeding in `src/models/application.ts`
 - [x] T101 Implement `changeViewToListView(moduleClass)`, `changeViewToDetailView(entity)`, `changeViewToDefaultView(moduleClass)` navigation convenience methods in `src/models/application.ts`
 - [x] T102 Implement `setButtonList()` — LISTVIEW: `[NewButtonComponent, RefreshButtonComponent]`; DETAILVIEW+persistent: full 6 buttons; DETAILVIEW+not persistent: `[ValidateButtonComponent]`; called 405ms after view change in `src/models/application.ts`
-- [x] T103 Implement `ApplicationUIService` methods group on `ApplicationClass`: `showToast()`, `showModal()`, `showModalOnFunction()`, `closeModal()`, `closeModalOnFunction()` in `src/models/application.ts`
-- [x] T104 Implement `ApplicationUIService` UI control methods: `openDropdownMenu()`, `closeDropdownMenu()` (clears after 500ms), `openConfirmationMenu()`, `showLoadingScreen()`, `hideLoadingScreen()`, `showLoadingMenu()`, `hideLoadingMenu()`, `toggleSidebar()`, `toggleDarkMode()` in `src/models/application.ts`
-- [x] T105 Implement `ApplicationDataService` with transformer utilities: `date`, `decimal`, `boolean`, `enum(enumRef)`, `entity(constructor)`, `arrayOfEntities(constructor)` in `src/models/application.ts`
+- [x] T103 Implement `ApplicationUIService` class with modal methods: `showToast()`, `showModal()`, `showModalOnFunction()`, `closeModal()`, `closeModalOnFunction()` — extracted to `src/models/application_ui_service.ts`; instantiated on `ApplicationClass` as `this.ApplicationUIService`
+- [x] T104 Implement remaining `ApplicationUIService` UI control methods in `src/models/application_ui_service.ts`: `openDropdownMenu()`, `closeDropdownMenu()` (clears after 500ms), `openConfirmationMenu()`, `showLoadingScreen()`, `hideLoadingScreen()`, `showLoadingMenu()`, `hideLoadingMenu()`, `toggleSidebar()`, `toggleDarkMode()`
+- [x] T105 Implement `ApplicationDataService` class with transformer utilities: `date`, `decimal`, `boolean`, `enum(enumRef)`, `entity(constructor)`, `arrayOfEntities(constructor)` — extracted to `src/models/application_data_service.ts`; instantiated on `ApplicationClass` as `this.ApplicationDataService`
 - [x] T106 Export the singleton: `const Application = ApplicationClass.getInstance(); export default Application; export { Application };` in `src/models/application.ts`
 
 ---
@@ -344,7 +344,7 @@
 
 ### Lookup and Object Input (UC-003)
 
-- [x] T164 [P] [US3] Implement `LookupItem.vue`: receives entity as prop; on click calls `Application.ApplicationUIService.closeModalOnFunction(entity)` to pass selected entity back to ObjectInputComponent callback in `src/components/LookupItem.vue`
+- [x] T164 [P] [US3] Implement `LookupItemComponent.vue`: receives entity as prop; on click calls `Application.ApplicationUIService.closeModalOnFunction(entity)` to pass selected entity back to ObjectInputComponent callback in `src/components/Informative/LookupItemComponent.vue`
 - [x] T165 [US3] Implement `src/views/default_lookup_listview.vue`: calls `getElementList()` on target entity class; renders `LookupItem` for each result; used inside modal for object selection in `src/views/default_lookup_listview.vue`
 - [x] T166 [US3] Implement `ObjectInputComponent.vue` (activates for properties whose type extends BaseEntity): displays `getDefaultPropertyValue()` of related entity; on click calls `Application.ApplicationUIService.showModalOnFunction(entity, onCloseFunction, ViewTypes.LOOKUPVIEW)` to open lookup; `onCloseFunction` emits `update:modelValue` with selected entity in `src/components/Form/ObjectInputComponent.vue`
 
@@ -372,6 +372,15 @@
 **Purpose**: Technical debt resolution, developer experience improvements, and validation of quickstart scenario end-to-end.
 
 - [ ] T172 [P] Apply `#region`/`#endregion` comments to all Vue component `<script>` sections that are missing them (PROPERTIES, METHODS, LIFECYCLE, OVERRIDES sections per code standards)
+- [x] T182 [P] Create `src/enums/detail_type.ts` with `export enum DetailTypes { NEW, EDIT }` — tracks new vs edit state in router detail view navigation
+- [x] T183 [P] Create `src/types/decorator.types.ts` — barrel re-export of all decorator types from `src/decorations/index.ts`: `AsyncValidationMetadata`, `DisabledMetadata`, `DisplayFormatValue`, `HttpMethod`, `ReadOnlyMetadata`, `RequiredMetadata`, `ValidationMetadata`
+- [x] T184 [P] Create `src/types/entity.types.ts` with entity type aliases used by BaseEntity and Application: `EntityData`, `MetadataRecord`, `EntityConstructor<T>`, `ConcreteEntityClass<T>`, `DecoratedPrototype<T>`, `DecoratedConstructor<T>`, `TransformableEntityClass<T>`
+- [x] T185 [P] Create `src/types/service.types.ts` with API and transformation types: `TransformFunction`, `Transformer`, `TransformationSchema`, `RetryableAxiosRequestConfig` (axios retry metadata extension); consumed by `ApplicationDataService` and `BaseEntity`
+- [x] T186 [P] Create `src/types/ui.types.ts` with UI state type aliases: `EntityCtor` (= `typeof BaseEntity`) and `ViewState` interface mirroring `View`; consumed by `ApplicationUIContext` and `ApplicationUIService`
+- [x] T187 [P] Create `src/types/index.ts` barrel re-exporting all type modules: `decorator.types`, `entity.types`, `service.types`, `ui.types`, `events`
+- [x] T188 [P] Create `src/utils/deep_compare.ts` with `deepEqual(obj1, obj2): boolean` (recursive structural comparison) and `deepClone<T>(obj: T): T` (structured clone via `JSON.parse/stringify` fallback); used internally by `BaseEntity.getDirtyState()` and `BaseEntity` constructor snapshot
+- [x] T189 [P] Implement `GenericButtonComponent.vue` — base button stub providing shared button template and scoped style anchor; no props; used as baseline for button system in `src/components/Buttons/GenericButtonComponent.vue`
+- [x] T190 [US1] Implement `src/views/list.vue` — minimal home/debug view with dark mode toggle button (`Application.ApplicationUIService.toggleDarkMode()`); serves as initial landing route distinct from `default_listview.vue`
 - [x] T173 [P] Add JSDoc `/** ... */` comments to all public methods in `src/entities/base_entity.ts` and `src/models/application.ts`
 - [x] T174 [P] Replace any remaining raw number literals in Vue components with CSS token references (`var(--z-modal)`, etc.) across `src/components/`
 - [x] T175 [P] Export `@Mask` decorator from `src/decorations/index.ts` and document status (currently listed as unexported in spec §FR-021); requires `MaskSides` enum also exported from `src/enums/`
@@ -468,7 +477,7 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 |------|---------------|-----------|
 | tsconfig missing experimentalDecorators | T001, T006 | Phase 1 gates on this check |
 | Circular import Application ↔ BaseEntity | T093–T106 | Use lazy `import()` in Application where BaseEntity methods are called (EXC-001) |
-| @Mask unexported | T030, T175 | Decorator implemented but NOT added to index.ts until T175 Polish |
+| @Mask unexported | T030, T175 | Decorator implemented but NOT added to index.ts until T175 Polish — ✅ now exported |
 | Route collision from duplicate @ModuleName | T107–T108, T179 | Uniqueness check in ModuleList.push() added in T179 Polish |
 | @AsyncValidation UX degradation | T023, T081, T141 | Debounce strategy or defer to save-time via short-circuit (L1+L2 must pass first) |
 
@@ -494,7 +503,8 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 4: US2 | T141–T155 | US2 | 9 of 15 |
 | Phase 5: US3 | T156–T171 | US3 | 8 of 16 |
 | Polish | T172–T181 | — | 9 of 10 |
-| **TOTAL** | **181 tasks** | | **~105 parallelizable** |
+| Polish (additions) | T182–T190 | T190=US1 | 8 of 9 |
+| **TOTAL** | **190 tasks** | | **~114 parallelizable** |
 
 **Per user story**:
 - **US1**: 22 tasks (T119–T140)
