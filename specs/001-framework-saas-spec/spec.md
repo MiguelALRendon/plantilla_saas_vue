@@ -549,7 +549,7 @@ price!: number;
 
 **BaseEntity accessor**: `getMask(key: string): { mask: string, side: MaskSide } | undefined`
 
-**Note**: @Mask is defined but NOT currently exported from `src/decorations/index.ts`. Cannot be used until exported.
+> ~~**Note**: @Mask is defined but NOT currently exported from `src/decorations/index.ts`. Cannot be used until exported.~~ **Resolved T175**: `@Mask` and `MaskSides` are fully exported from `src/decorations/index.ts`. `getMask()` instance method added to `BaseEntity`.
 
 ---
 
@@ -1651,12 +1651,13 @@ Application.eventBus.on('validate-inputs', () => {
 | ViewGroupRow | SINGLE('single'), PAIR('pair'), TRIPLE('triple') | Form column layout |
 | ToastType | SUCCESS(0), ERROR(1), INFO(2), WARNING(3) | Toast visual style |
 | ConfMenuType | INFO(0), SUCCESS(1), WARNING(2), ERROR(3) | Confirmation dialog style |
-| DetailTypes | NEW(0), EDIT(1) | NOT IMPLEMENTED — do not use |
-| MaskSides | START(0), END(1) | Used by @Mask (currently unexported) |
+| DetailTypes | NEW(0), EDIT(1) | Defined — reserved for future router use; do not use in application code |
+| MaskSides | START(0), END(1) | Used by @Mask — exported from `src/decorations/index.ts` |
 
 **Rules**:
 - ALWAYS use enum constants, never raw numbers.
-- NEVER use DetailTypes or MaskSides — not implemented.
+- `DetailTypes` is defined but reserved; do not use in application code.
+- `StringType.TELEPHONE` and `StringType.URL` fall back to `TextInputComponent` until dedicated input components are implemented.
 
 ---
 

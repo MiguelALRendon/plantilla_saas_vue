@@ -14,7 +14,6 @@ import {
     ValidateButtonComponent
 } from '@/components/Buttons';
 import { BaseEntity } from '@/entities/base_entity';
-import { Product } from '@/entities/product.ts';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ToastType } from '@/enums/ToastType';
 import { ViewTypes } from '@/enums/view_type';
@@ -180,6 +179,7 @@ class ApplicationClass implements ApplicationUIContext {
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
         this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;
         this.ApplicationDataService = new ApplicationDataService();
+        this.ApplicationUIService = new ApplicationUIService(this);
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
             timeout: this.AppConfiguration.value.apiTimeout,
@@ -304,8 +304,6 @@ class ApplicationClass implements ApplicationUIContext {
                 return Promise.reject(error);
             }
         );
-
-        this.ApplicationUIService = new ApplicationUIService(this);
     }
 
     /**
@@ -330,7 +328,7 @@ class ApplicationClass implements ApplicationUIContext {
             this.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
                 'Salir sin guardar',
-                'Tienes cambios sin guardar. Â¿EstÃ¡s seguro de que quieres salir sin guardar?',
+                'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?',
                 () => {
                     this.setViewChanges(entityClass, component, viewType, entity);
                 }
@@ -361,7 +359,6 @@ class ApplicationClass implements ApplicationUIContext {
 
         if (entity) {
             const uniqueValue = entity.getUniquePropertyValue();
-            console.log('[Application] Unique value for entity:', uniqueValue);
             if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
                 this.View.value.entityOid = 'new';
             } else {
@@ -510,6 +507,15 @@ class ApplicationClass implements ApplicationUIContext {
     }
 
     /**
+     * Initializes the application with the provided router instance
+     * Canonical bootstrap method name per spec §8.1 Flow
+     * @param router Vue Router instance to use for navigation
+     */
+    initializeApplication(router: Router) {
+        this.initializeRouter(router);
+    }
+
+    /**
      * Registers an entity class as a module in the application.
      *
      * Performs a uniqueness check on `getModuleName()` before pushing to `ModuleList`
@@ -568,7 +574,5 @@ class ApplicationClass implements ApplicationUIContext {
 }
 
 const Application = ApplicationClass.getInstance();
-
-Application.registerModule(Product);
 export default Application;
 export { Application };

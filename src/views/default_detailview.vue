@@ -146,14 +146,13 @@ export default {
         };
     },
     mounted() {
-        /**
-         * FUTURE: Aquí se implementará la lógica para cargar la entidad desde la API
-         * usando Application.View.value.entityOid cuando entityObject sea null
-         * Ejemplo:
-         * if (!this.entity && Application.View.value.entityOid) {
-         *     this.loadEntityFromAPI(Application.View.value.entityOid);
-         * }
-         */
+        /** Guard: ensure entity is initialized before template accesses metadata — handles direct URL navigation (spec §8.3) */
+        if (!this.entity) {
+            this.entity = Application.View.value.entityClass
+                ? Application.View.value.entityClass.createNewInstance()
+                : new EmptyEntity({});
+            Application.View.value.entityObject = this.entity;
+        }
     },
     computed: {
         defaultPropertyValue(): string {
@@ -198,8 +197,12 @@ export default {
                     showObjectInput: !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity,
                     showDateInput: propType === Date,
                     showBooleanInput: propType === Boolean,
-                    showListInput: propType instanceof EnumAdapter,
-                    showTextInput: propType === String && stringType == StringType.TEXT,
+                    showListInput: this.entity.isEnumProperty(prop),
+                    showTextInput: propType === String && (
+                        stringType === StringType.TEXT ||
+                        stringType === StringType.TELEPHONE ||
+                        stringType === StringType.URL
+                    ),
                     showTextAreaInput: propType === String && stringType == StringType.TEXTAREA,
                     showEmailInput: propType === String && stringType == StringType.EMAIL,
                     showPasswordInput: propType === String && stringType == StringType.PASSWORD
@@ -249,8 +252,7 @@ export default {
     },
     methods: {
         /**
-         * FUTURE: Método para cargar entidad desde API
-         * async loadEntityFromAPI(oid: string) {
+         * FUTURE: async loadEntityFromAPI(oid: string) {
          *     try {
          *         const response = await Application.axiosInstance.get(
          *             `${this.entityClass.getApiEndpoint()}/${oid}`
@@ -285,7 +287,7 @@ export default {
             return this.entityClass.getPropertyType(prop) as typeof BaseEntity;
         },
         getEnumAdapter(prop: string): EnumAdapter {
-            return this.entityClass.getPropertyType(prop) as EnumAdapter;
+            return new EnumAdapter(this.entityClass.getPropertyType(prop) as Record<string, string | number>);
         },
         getNumberModel(prop: string): number {
             return Number(this.entity[prop] ?? 0);
@@ -327,8 +329,8 @@ export default {
             this.entity[prop] = value;
         },
         getArrayListsTabs(): Array<string> {
-            var returnList: Array<string> = [];
-            var listTypes = this.entity.getArrayKeysOrdered();
+            const returnList: Array<string> = [];
+            const listTypes = this.entity.getArrayKeysOrdered();
             for (let i = 0; i < listTypes.length; i++) {
                 returnList.push(this.entityClass.getPropertyNameByKey(listTypes[i])!);
             }

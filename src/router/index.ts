@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import type { Router } from 'vue-router';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
+import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 
 const routes: Array<RouteRecordRaw> = [
@@ -43,6 +44,24 @@ const router: Router = createRouter({
  * Prevents infinite loops by comparing current state before updating
  */
 router.beforeEach(async (to, _from, next) => {
+    /** Dirty state guard — spec §8.7 Navigation with Dirty State Guard */
+    const currentEntity = Application.View.value.entityObject;
+    if (currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
+        Application.ApplicationUIService.openConfirmationMenu(
+            confMenuType.WARNING,
+            'Salir sin guardar',
+            '¿Estás seguro de que quieres salir sin guardar?',
+            () => {
+                Application.View.value.entityObject = null;
+                router.push(to.fullPath).catch(() => {});
+            },
+            'Salir',
+            'Cancelar'
+        );
+        next(false);
+        return;
+    }
+
     const moduleName = to.params.module as string;
     const entityObjectId = to.params.oid as string;
 
@@ -115,8 +134,8 @@ router.beforeEach(async (to, _from, next) => {
  * After-navigation guard for logging successful navigations
  * Logs path and entityOid for debugging synchronization
  */
-router.afterEach((to) => {
-    console.log('[Router] Navigated to:', to.path, '| entityOid:', Application.View.value.entityOid);
+router.afterEach((_to) => {
+    /** Navigation hook reserved for analytics or logging (currently no-op) */
 });
 
 export default router;

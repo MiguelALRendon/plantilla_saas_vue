@@ -18,6 +18,7 @@ import {
     MODULE_ICON_KEY,
     MODULE_LIST_COMPONENT_KEY,
     MODULE_NAME_KEY,
+    MASK_KEY,
     MODULE_PERMISSION_KEY,
     PERSISTENT_KEY,
     PERSISTENT_KEY_KEY,
@@ -161,6 +162,14 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Clears the entity loading state — spec §3.3 canonical name
+     * Alias for clearLoadingState() per spec requirements
+     */
+    public loaded(): void {
+        this._isLoading = false;
+    }
+
+    /**
      * Retrieves the current loading state of the entity
      * @returns True if entity is loading, false otherwise
      */
@@ -217,6 +226,15 @@ export abstract class BaseEntity {
             const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
             return indexA - indexB;
         });
+    }
+
+    /**
+     * Retrieves ordered values for the entity
+     * Values are returned in the same order as getKeys() — spec §3.11
+     * @returns Array of property values in display order
+     */
+    public getValues(): unknown[] {
+        return this.getKeys().map((key) => this[key]);
     }
 
     /**
@@ -535,6 +553,28 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Retrieves the mask configuration for a property
+     * Defined by \@Mask decorator, used for structured input formatting
+     * @param propertyKey The property key to query
+     * @returns Mask configuration (mask template and side) or undefined
+     */
+    public getMask(propertyKey: string): { mask: string; side: unknown } | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const masks = (proto[MASK_KEY] as Record<string, { mask: string; side: unknown }>) ?? {};
+        return masks[propertyKey];
+    }
+
+    /**
+     * Determines if a property type is an enum (for ListInput rendering)
+     * @param propertyKey The property key to check
+     * @returns True if the property type stored for this key is an enum object
+     */
+    public isEnumProperty(propertyKey: string): boolean {
+        const propType = (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
+        return (this.constructor as typeof BaseEntity).isEnumPropertyType(propType);
+    }
+
+    /**
      * Retrieves tab order indices for all properties
      * Used for keyboard navigation and tab order in forms
      * @returns Map of property keys to their tab order indices
@@ -790,10 +830,6 @@ export abstract class BaseEntity {
             errors.push('La entidad no tiene definido @ApiEndpoint');
         }
 
-        if (!this.getApiMethods()) {
-            errors.push('La entidad no tiene definido @ApiMethods');
-        }
-
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
@@ -837,6 +873,9 @@ export abstract class BaseEntity {
      * @throws Error if persistence configuration invalid, validation fails, or API request fails
      */
     public async save(): Promise<this> {
+        // Step 1: beforeSave() hook — spec §3.6 step 1, SC-012 requires this before validateInputs
+        this.beforeSave();
+
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
@@ -850,7 +889,6 @@ export abstract class BaseEntity {
         }
 
         this._isSaving = true;
-        this.beforeSave();
         Application.ApplicationUIService.showLoadingMenu();
         await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -1558,10 +1596,11 @@ export abstract class BaseEntity {
 
     /**
      * Determines whether a property type metadata value represents an enum object.
+     * Made public to allow view components to detect enum properties — used by isEnumProperty() instance method.
      * @param propertyType Property type metadata value.
      * @returns True when metadata is enum-like.
      */
-    private static isEnumPropertyType(propertyType: unknown): propertyType is Record<string, string | number> {
+    public static isEnumPropertyType(propertyType: unknown): propertyType is Record<string, string | number> {
         if (!propertyType || typeof propertyType !== 'object' || Array.isArray(propertyType)) {
             return false;
         }

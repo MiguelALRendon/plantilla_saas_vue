@@ -2,6 +2,7 @@ import { createApp, App as VueApp } from 'vue';
 import './css/main.css';
 import './css/constants.css';
 import './css/form.css';
+import './css/table.css';
 import App from './App.vue';
 import Application from '@/models/application';
 import router from '@/router';
