@@ -6,8 +6,10 @@ import './css/table.css';
 import App from './App.vue';
 import Application from '@/models/application';
 import router from '@/router';
+import { Product } from '@/entities/product';
 
 Application.initializeRouter(router);
+Application.registerModule(Product);
 
 const app: VueApp = createApp(App);
 app.use(router);

@@ -16,8 +16,14 @@ const routes: Array<RouteRecordRaw> = [
                 const moduleName = firstModule.getModuleName() || firstModule.name;
                 return `/${moduleName.toLowerCase()}`;
             }
-            return '/';
+            /** Fallback: avoid self-redirect loop when no modules are loaded yet */
+            return '/loading';
         }
+    },
+    {
+        path: '/loading',
+        name: 'Loading',
+        component: { template: '<loading-screen-component />' }
     },
     {
         path: '/:module',
