@@ -9,5 +9,5 @@ export { default as TextAreaComponent } from '@/components/Form/TextAreaComponen
 export { default as BooleanInputComponent } from '@/components/Form/BooleanInputComponent.vue';
 export { default as EmailInputComponent } from '@/components/Form/EmailInputComponent.vue';
 export { default as PasswordInputComponent } from '@/components/Form/PasswordInputComponent.vue';
-export { default as ListInputComponent } from '@/components/Form/ListInputComponent.vue';
+export { default as EnumInputComponent } from '@/components/Form/EnumInputComponent.vue';
 export { default as ArrayInputComponent } from '@/components/Form/ArrayInputComponent.vue';

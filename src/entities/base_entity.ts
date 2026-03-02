@@ -565,13 +565,18 @@ export abstract class BaseEntity {
     }
 
     /**
-     * Determines if a property type is an enum (for ListInput rendering)
+     * Determines if a property type is an enum (for EnumInput rendering)
+     * The decorator stores enum types as EnumAdapter instances — detected via duck-typing.
      * @param propertyKey The property key to check
-     * @returns True if the property type stored for this key is an enum object
+     * @returns True if the stored type is an EnumAdapter instance
      */
     public isEnumProperty(propertyKey: string): boolean {
         const propType = (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
-        return (this.constructor as typeof BaseEntity).isEnumPropertyType(propType);
+        return (
+            !!propType &&
+            typeof propType === 'object' &&
+            typeof (propType as Record<string, unknown>)['getKeyValuePairs'] === 'function'
+        );
     }
 
     /**

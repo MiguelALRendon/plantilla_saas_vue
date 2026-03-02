@@ -1,7 +1,7 @@
 <template>
     <div
         ref="rootElement"
-        class="ListInput"
+        class="EnumInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
         <button
@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.ListInput {
+.EnumInput {
     width: 100%;
     position: relative;
 }
@@ -287,30 +287,30 @@ button:disabled {
     background-color: transparent;
 }
 
-.ListInput.disabled {
+.EnumInput.disabled {
     pointer-events: none;
     cursor: not-allowed;
 }
-.ListInput.disabled .list-input-container,
-.ListInput.disabled .list-input-container .label,
-.ListInput.disabled .list-input-container span {
+.EnumInput.disabled .list-input-container,
+.EnumInput.disabled .list-input-container .label,
+.EnumInput.disabled .list-input-container span {
     border-color: var(--gray-light);
     color: var(--gray-light);
 }
-.ListInput.disabled .list-input-container .label.active {
+.EnumInput.disabled .list-input-container .label.active {
     background-color: var(--gray-lighter);
 }
 
-.ListInput.nonvalidated .list-input-container {
+.EnumInput.nonvalidated .list-input-container {
     border-color: var(--accent-red);
 }
-.ListInput.nonvalidated .list-input-container,
-.ListInput.nonvalidated .list-input-container .label,
-.ListInput.nonvalidated .list-input-container span {
+.EnumInput.nonvalidated .list-input-container,
+.EnumInput.nonvalidated .list-input-container .label,
+.EnumInput.nonvalidated .list-input-container span {
     border-color: var(--accent-red);
     color: var(--accent-rose);
 }
-.ListInput.nonvalidated .list-input-container .label.active {
+.EnumInput.nonvalidated .list-input-container .label.active {
     background-color: var(--accent-red);
     color: var(--white);
 }

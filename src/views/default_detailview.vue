@@ -46,8 +46,8 @@
                             @update:model-value="setBooleanModel(prop, $event)"
                         />
 
-                        <ListInputComponent
-                            v-if="propertyMetadata[prop].showListInput"
+                        <EnumInputComponent
+                            v-if="propertyMetadata[prop].showEnumInput"
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
@@ -165,7 +165,7 @@ export default {
                 showObjectInput: boolean;
                 showDateInput: boolean;
                 showBooleanInput: boolean;
-                showListInput: boolean;
+                showEnumInput: boolean;
                 showTextInput: boolean;
                 showTextAreaInput: boolean;
                 showEmailInput: boolean;
@@ -179,7 +179,7 @@ export default {
                     showObjectInput: boolean;
                     showDateInput: boolean;
                     showBooleanInput: boolean;
-                    showListInput: boolean;
+                    showEnumInput: boolean;
                     showTextInput: boolean;
                     showTextAreaInput: boolean;
                     showEmailInput: boolean;
@@ -197,7 +197,7 @@ export default {
                     showObjectInput: !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity,
                     showDateInput: propType === Date,
                     showBooleanInput: propType === Boolean,
-                    showListInput: this.entity.isEnumProperty(prop),
+                    showEnumInput: this.entity.isEnumProperty(prop),
                     showTextInput: propType === String && (
                         stringType === StringType.TEXT ||
                         stringType === StringType.TELEPHONE ||
@@ -287,7 +287,8 @@ export default {
             return this.entityClass.getPropertyType(prop) as typeof BaseEntity;
         },
         getEnumAdapter(prop: string): EnumAdapter {
-            return new EnumAdapter(this.entityClass.getPropertyType(prop) as Record<string, string | number>);
+            // The decorator already stores the type as an EnumAdapter instance — return it directly.
+            return this.entityClass.getPropertyType(prop) as EnumAdapter;
         },
         getNumberModel(prop: string): number {
             return Number(this.entity[prop] ?? 0);
