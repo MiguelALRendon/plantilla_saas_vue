@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import type { Router } from 'vue-router';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
+import type { EntityCtor } from '@/models/View';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 
@@ -96,7 +97,7 @@ router.beforeEach(async (to, _from, next) => {
                 /** Detail view - Handle entity creation or editing */
                 if (entityObjectId === 'new') {
                     const newEntity: BaseEntity = concreteModuleClass.createNewInstance();
-                    Application.View.value.entityClass = moduleClass;
+                    Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                     Application.View.value.entityObject = newEntity;
                     Application.View.value.component = moduleClass.getModuleDetailComponent();
                     Application.View.value.viewType = ViewTypes.DETAILVIEW;
@@ -105,7 +106,7 @@ router.beforeEach(async (to, _from, next) => {
                 } else {
                     try {
                         const loadedEntity: BaseEntity = await concreteModuleClass.getElement(entityObjectId);
-                        Application.View.value.entityClass = moduleClass;
+                        Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                         Application.View.value.entityObject = loadedEntity;
                         Application.View.value.component = moduleClass.getModuleDetailComponent();
                         Application.View.value.viewType = ViewTypes.DETAILVIEW;
@@ -119,7 +120,7 @@ router.beforeEach(async (to, _from, next) => {
                 }
             } else {
                 /** List view - Display table of entities */
-                Application.View.value.entityClass = moduleClass;
+                Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                 Application.View.value.entityObject = null;
                 Application.View.value.component = moduleClass.getModuleListComponent();
                 Application.View.value.viewType = ViewTypes.LISTVIEW;
