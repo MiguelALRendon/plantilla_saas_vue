@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 .DS_Store
 dist
+build
 dist-ssr
 coverage
 *.local
@@ -24,6 +25,8 @@ coverage
 .vscode/*
 !.vscode/extensions.json
 .idea
+Thumbs.db
+*.tmp
 *.suo
 *.ntvs*
 *.njsproj

@@ -25,7 +25,7 @@ import {
     ViewGroup,
 } from '@/decorations';
 import { StringType } from '@/enums/string_type.ts';
-import { AsyncValidators, Validators } from '@/validators';
+import { /*AsyncValidators, */Validators } from '@/validators';
 
 import { BaseEntity } from './base_entity.ts';
 
@@ -141,7 +141,7 @@ export class Product extends BaseEntity {
     @PropertyName('Email', String)
     @StringTypeDef(StringType.EMAIL)
     @Validators.email('Formato de email inválido')
-    @AsyncValidators.unique('/api/products/validate-email', 'El email ya está registrado')
+    // @AsyncValidators.unique('/api/products/validate-email', 'El email ya está registrado')
     @Required(true)
     @HelpText('Email de contacto del proveedor')
     @AsyncValidation(async (entity: Product) => {

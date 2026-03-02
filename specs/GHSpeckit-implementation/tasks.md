@@ -390,6 +390,7 @@
 - [x] T179 [P] Add uniqueness validation to `Application.ModuleList.value.push()` — warn if two modules have the same `getModuleName()` (risk: route collision per plan.md risk registry) in `src/models/application.ts`
 - [x] T180 [P] Verify `src/router/index.ts` has no `any` types (TypeScript constraint per spec §6.3)
 - [x] T181 [P] Verify `src/entities/base_entity.ts` has no `any` in signatures, casts, or catch blocks; replace with `unknown` + type guards per spec §3 TypeScript constraints
+- [x] T191 [P] Extract date-time suffix literal into global constant `DATE_TIME_LOCAL_SUFFIX`; replace all usages with template literals `${value}${DATE_TIME_LOCAL_SUFFIX}` in Date inputs and detail view; codify variable+text concatenation prohibition in spec §10.2
 
 ---
 

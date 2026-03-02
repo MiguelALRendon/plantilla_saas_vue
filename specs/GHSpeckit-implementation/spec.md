@@ -2063,6 +2063,9 @@ Toggled via `ApplicationUIService.toggleDarkMode()`.
 
 - **Single quotes** by default: `const x = 'hello';`
 - Template literals when variables are interpolated
+- String concatenation with variable + text is FORBIDDEN (e.g., `variable + 'text'`)
+- For variable + text composition, use template literals only: `${variable}${CONSTANT_TEXT}`
+- Repeated text fragments (e.g., date/time suffixes) MUST be extracted to shared constants
 - **Semicolons**: MANDATORY everywhere
 
 ---

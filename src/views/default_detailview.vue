@@ -34,7 +34,7 @@
                             :entity="entity"
                             :property-key="prop"
                             :model-value="getDateModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
+                            @update:model-value="setDateModel(prop, $event)"
                         />
 
                         <BooleanInputComponent
@@ -128,6 +128,7 @@ import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import { EnumAdapter } from '@/models/enum_adapter';
+import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
 
 export default {
     name: 'DefaultDetailView',
@@ -304,7 +305,7 @@ export default {
         getDateModel(prop: string): string {
             const value = this.entity[prop];
             if (!value) return '';
-            const date = value instanceof Date ? value : new Date(String(value));
+            const date = value instanceof Date ? value : new Date(`${String(value)}${DATE_TIME_LOCAL_SUFFIX}`);
             if (isNaN(date.getTime())) return '';
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -313,6 +314,9 @@ export default {
         },
         setStringModel(prop: string, value: string): void {
             this.entity[prop] = value;
+        },
+        setDateModel(prop: string, value: string): void {
+            this.entity[prop] = value ? new Date(`${value}${DATE_TIME_LOCAL_SUFFIX}`) : null;
         },
         getBooleanModel(prop: string): boolean {
             return Boolean(this.entity[prop]);

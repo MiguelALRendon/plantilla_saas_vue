@@ -1,0 +1,1 @@
+export const DATE_TIME_LOCAL_SUFFIX = 'T00:00:00';

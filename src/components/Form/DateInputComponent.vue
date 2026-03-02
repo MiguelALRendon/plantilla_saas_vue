@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
@@ -69,9 +70,9 @@ const formattedDate = computed<string>(() => {
     if (!props.modelValue) return '';
 
     // Prefer YYYY-MM-DD (from input[type=date]); fall back to parsing arbitrary date strings
-    let date = new Date(`${props.modelValue}T00:00:00`);
+    let date = new Date(`${props.modelValue}${DATE_TIME_LOCAL_SUFFIX}`);
     if (isNaN(date.getTime())) {
-        date = new Date(props.modelValue);
+        date = new Date(`${props.modelValue}${DATE_TIME_LOCAL_SUFFIX}`);
     }
 
     if (isNaN(date.getTime())) return '';
