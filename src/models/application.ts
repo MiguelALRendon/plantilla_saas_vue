@@ -26,6 +26,7 @@ import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
 import { confirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
+import type { EntityCtor } from './View';
 import { View } from './View';
 
 import type { ApplicationUIContext } from './application_ui_context';
@@ -352,7 +353,7 @@ class ApplicationClass implements ApplicationUIContext {
         viewType: ViewTypes,
         entity: BaseEntity | null = null
     ) => {
-        this.View.value.entityClass = entityClass;
+        this.View.value.entityClass = entityClass as unknown as EntityCtor;
         this.View.value.entityObject = entity;
         this.View.value.component = component;
         this.View.value.viewType = viewType;

@@ -68,7 +68,11 @@ const validationMessages = ref<string[]>([]);
 const formattedDate = computed<string>(() => {
     if (!props.modelValue) return '';
 
-    const date = new Date(`${props.modelValue}T00:00:00`);
+    // Prefer YYYY-MM-DD (from input[type=date]); fall back to parsing arbitrary date strings
+    let date = new Date(`${props.modelValue}T00:00:00`);
+    if (isNaN(date.getTime())) {
+        date = new Date(props.modelValue);
+    }
 
     if (isNaN(date.getTime())) return '';
 

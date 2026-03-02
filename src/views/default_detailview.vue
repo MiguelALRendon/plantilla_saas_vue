@@ -33,7 +33,7 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            :model-value="getStringModel(prop)"
+                            :model-value="getDateModel(prop)"
                             @update:model-value="setStringModel(prop, $event)"
                         />
 
@@ -140,21 +140,23 @@ export default {
         return {
             StringType,
             EnumAdapter,
-            BaseEntity,
-            entity: Application.View.value.entityObject as BaseEntity,
-            entityClass: Application.View.value.entityClass as typeof BaseEntity
+            BaseEntity
         };
     },
     mounted() {
-        /** Guard: ensure entity is initialized before template accesses metadata — handles direct URL navigation (spec §8.3) */
-        if (!this.entity) {
-            this.entity = Application.View.value.entityClass
+        if (!Application.View.value.entityObject) {
+            Application.View.value.entityObject = Application.View.value.entityClass
                 ? Application.View.value.entityClass.createNewInstance()
                 : new EmptyEntity({});
-            Application.View.value.entityObject = this.entity;
         }
     },
     computed: {
+        entity(): BaseEntity {
+            return (Application.View.value.entityObject ?? new EmptyEntity({})) as BaseEntity;
+        },
+        entityClass(): typeof BaseEntity {
+            return (Application.View.value.entityClass ?? BaseEntity) as typeof BaseEntity;
+        },
         defaultPropertyValue(): string {
             return String(this.entity.getDefaultPropertyValue() ?? '');
         },
@@ -298,6 +300,16 @@ export default {
         },
         getStringModel(prop: string): string {
             return String(this.entity[prop] ?? '');
+        },
+        getDateModel(prop: string): string {
+            const value = this.entity[prop];
+            if (!value) return '';
+            const date = value instanceof Date ? value : new Date(String(value));
+            if (isNaN(date.getTime())) return '';
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         },
         setStringModel(prop: string, value: string): void {
             this.entity[prop] = value;
