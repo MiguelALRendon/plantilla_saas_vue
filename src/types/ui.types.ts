@@ -9,7 +9,7 @@ import type { AppConfiguration } from '@/models/app_configuration';
 import type { DropdownMenu } from '@/models/dropdown_menu';
 import type { Events } from '@/types/events';
 import type { Modal } from '@/models/modal';
-import type { Toast } from '@/models/toast';
+import type { Toast } from '@/models/Toast';
 
 /**
  * Entity constructor alias used in UI state.
