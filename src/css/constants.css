@@ -245,6 +245,7 @@
     --textarea-min-height: 7rem;
     --icon-button-width: 2.5rem;
     --input-container-padding-top: 0.9rem;
+    --enum-input-container-padding-top: 1.75rem;
     --label-initial-top: 1.7rem;
     --label-focused-top: -0.1rem;
     --label-focused-left: 1.5rem;

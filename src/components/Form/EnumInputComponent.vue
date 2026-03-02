@@ -197,7 +197,6 @@ onBeforeUnmount(() => {
     box-sizing: border-box;
     border: var(--border-width-thin) solid var(--sky);
     border-radius: var(--border-radius);
-    position: relative;
 }
 
 .list-input-header label {
@@ -213,7 +212,7 @@ onBeforeUnmount(() => {
 .label-and-value .label {
     position: absolute;
     left: var(--padding-medium);
-    top: var(--input-container-padding-top);
+    top: var(--enum-input-container-padding-top);
     color: var(--blue-1);
     font-size: var(--font-size-base);
     transition: all var(--transition-slow) var(--timing-ease);
