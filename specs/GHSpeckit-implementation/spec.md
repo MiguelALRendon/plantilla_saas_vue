@@ -1969,6 +1969,8 @@ src/css/table.css       → Table-specific styles
 - NO hardcoded values anywhere (no `16px`, no `#fff`, no `1000`).
 - ALL values MUST use `var(--token-name)` from constants.css.
 - NO local CSS variables in `<style scoped>` — all variables are global.
+- Sizing properties (`width`, `height`, `padding`, `margin`, `gap`, `font-size`) MUST use relative units (`rem`, `em`, `%`, `vw`, `vh`, `clamp()`) or CSS token references. Fixed `px` values are only permitted for shell structural elements (TopBar, Sidebar) as defined in §9.5.
+- NO fixed container widths (`width: 1200px` ❌). Use `max-width: 1200px` or `width: 100%` instead (✔).
 
 ---
 
@@ -1988,17 +1990,33 @@ src/css/table.css       → Table-specific styles
 /* LoadingScreenComponent uses z-index: 99999 (intentional exception during transitions) */
 ```
 
-**Breakpoints**:
+**Breakpoints** (canonical 6-tier system — all declared as CSS tokens):
 ```css
 :root {
-    --breakpoint-mobile:  767px;
-    --breakpoint-tablet:  1023px;
-    --breakpoint-laptop:  1439px;
-    /* Desktop: ≥ 1440px — the default (no variable) */
+    --breakpoint-xl:      1400px;  /* Desktop XL        ≥ 1401px default */
+    --breakpoint-lg:      1200px;  /* Desktop estándar  1201px–1400px */
+    --breakpoint-md:       992px;  /* Laptop            993px–1200px */
+    --breakpoint-sm:       768px;  /* Tablet horizontal 769px–992px  */
+    --breakpoint-xs:       576px;  /* Tablet vertical / móvil grande 577px–768px */
+    --breakpoint-xxs:      480px;  /* Móvil pequeño     ≤ 480px      */
 }
 ```
 
-**Responsive strategy**: Desktop-first. Start with large-screen layout, add `@media (max-width: var(--breakpoint-mobile))` overrides for mobile.
+**@media usage** — ALWAYS reference token, NEVER use raw pixel values:
+```css
+/* ✔ Correct */
+@media (max-width: var(--breakpoint-xl))  { }
+@media (max-width: var(--breakpoint-lg))  { }
+@media (max-width: var(--breakpoint-md))  { }
+@media (max-width: var(--breakpoint-sm))  { }
+@media (max-width: var(--breakpoint-xs))  { }
+@media (max-width: var(--breakpoint-xxs)) { }
+
+/* ❌ Forbidden */
+@media (max-width: 1400px) { }   /* raw px — violates §9.1 */
+```
+
+**Responsive strategy**: Desktop-first. The base ruleset targets the largest viewport (≥ 1401px). Each `@media` tier overrides progressively smaller viewports. All layout, sizing, and spacing declarations MUST include overrides for applicable breakpoints (see §9.7).
 
 ---
 
@@ -2033,6 +2051,8 @@ src/css/table.css       → Table-specific styles
 - ToastContainer z-index: `var(--z-toast)` = 1500
 - LoadingScreenComponent z-index: 99999 (intentional — top priority during transitions)
 
+**Shell structural px exception**: The fixed `px` values listed above (TopBar, Sidebar, LoadingScreen offset) are the ONLY permitted hardcoded pixel dimensions in the entire codebase. They define the immutable shell skeleton that all content areas are calculated against via `calc()`. All content-level components MUST use relative units per §9.1. This exception does NOT extend to margins, paddings, font sizes, or any property outside the shell skeleton.
+
 ---
 
 ### 9.6 Dark Mode
@@ -2045,6 +2065,106 @@ Controlled by `AppConfiguration.value.isDarkMode`. Token overrides in:
 ```
 
 Toggled via `ApplicationUIService.toggleDarkMode()`.
+
+---
+
+### 9.7 Responsive Coverage Rules
+
+#### 9.7.1 Viewport Meta Tag (Mandatory)
+
+`index.html` MUST declare:
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+```
+Absence of this tag invalidates all responsive behaviour.
+
+#### 9.7.2 @media Obligation
+
+Every `<style scoped>` block in `.vue` files and every `.css` file MUST include `@media` overrides for all breakpoints where layout, sizing, or spacing changes. Specifically:
+
+- **Mandatory coverage**: `width`, `height`, `max-width`, `min-width`, `padding`, `margin`, `gap`, `grid-template-columns`, `flex-direction`, `font-size`, `display` changes.
+- **Exempt from @media requirement**: `color`, `background-color`, `font-family`, `border-color`, `opacity`, `transition`, `z-index`, `cursor`, `pointer-events`.
+- Not every breakpoint requires an override — only declare overrides where a visual difference is required at that viewport.
+
+**Pattern**:
+```css
+/* Base (Desktop XL ≥ 1401px) */
+.my-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+@media (max-width: var(--breakpoint-xl)) {
+    .my-container { grid-template-columns: repeat(3, 1fr); } /* unchanged — can omit */
+}
+@media (max-width: var(--breakpoint-lg)) {
+    .my-container { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: var(--breakpoint-md)) {
+    .my-container { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+}
+@media (max-width: var(--breakpoint-sm)) {
+    .my-container { grid-template-columns: 1fr; padding: 1rem; }
+}
+@media (max-width: var(--breakpoint-xs)) {
+    .my-container { padding: 0.75rem; }
+}
+@media (max-width: var(--breakpoint-xxs)) {
+    .my-container { padding: 0.5rem; }
+}
+```
+
+#### 9.7.3 Relative Units (Mandatory)
+
+All sizing declarations MUST use relative units. Permitted units:
+
+| Unit | Use Case |
+|------|----------|
+| `rem` | Font sizes, spacing based on root font size |
+| `em` | Spacing relative to local font size |
+| `%` | Container-relative widths and heights |
+| `vw` / `vh` | Viewport-relative full-screen elements |
+| `clamp(min, val, max)` | Typography and padding that scales continuously — preferred over breakpoints for `font-size` |
+| `calc()` | Combining units (e.g., `calc(100vh - 50px)` for shell offset) |
+| `fr` | Grid column/row fractions |
+
+#### 9.7.4 Fluid Containers (Mandatory)
+
+- All content-level containers MUST use `display: flex` or `display: grid`.
+- Direct children of flex containers MUST NOT have fixed widths; use `flex: 1`, `min-width: 0`, or `%`.
+- `flex-wrap: wrap` is REQUIRED on all flex containers whose children may reflow at smaller viewports.
+
+**Prohibited**:
+```css
+❌ width: 1200px;           /* fixed content width */
+❌ flex-wrap: nowrap;        /* on content containers — forces horizontal scroll */
+```
+
+**Permitted**:
+```css
+✔ max-width: 1200px;        /* limits max size but allows shrinking */
+✔ width: 100%;              /* fills available space */
+✔ flex-wrap: wrap;          /* allows reflow */
+```
+
+#### 9.7.5 Table Overflow Rule (Exception to flex-wrap)
+
+Table components (`DetailViewTableComponent`, `ArrayInputComponent`, and any `<table>` element) are **exempt from `flex-wrap`**. Instead:
+
+- Table cells MUST constrain text overflow with the CSS triplet:
+```css
+.table-cell {
+    max-width: 200px;          /* adjust per column */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;   /* renders "..." at truncation point */
+}
+```
+- Maximum visible characters per cell: **40 characters** (enforced via `max-width` calibrated to the column's `@CSSColumnClass`).
+- `flex-wrap: nowrap` IS permitted on table row containers.
+- Table containers (`<div class="table-wrapper">`) MUST use `overflow-x: auto` to enable horizontal scroll on small viewports rather than breaking layout.
 
 ---
 
@@ -2448,6 +2568,17 @@ beforeSave() executes BEFORE validateInputs(). afterSave() executes ONLY after s
 Module with @ModulePermission('admin.write') must return false for users without the permission and true for users with it.
 
 **Test**: `Entity.hasPermission({ permissions: ['admin.read'] }) === false`. `Entity.hasPermission({ permissions: ['admin.write'] }) === true`.
+
+---
+
+### SC-016 — Responsive Coverage Compliance
+All `<style scoped>` blocks in `.vue` files and all `.css` files MUST declare `@media` breakpoint overrides for every layout, sizing, and spacing property. No raw pixel values may appear in `@media` rules (must reference `var(--breakpoint-*)` tokens). All content containers MUST use relative units for sizing. Table cells MUST apply the overflow ellipsis CSS triplet.
+
+**Test**: Regex audit of all `.vue` and `.css` files:
+1. No `@media (max-width: [0-9]+px)` literals — all must use `var(--breakpoint-*)` tokens.
+2. No `width: [0-9]+px` on content containers (shell exceptions: `68px`, `250px`, `50px`).
+3. All `<style scoped>` blocks containing `width|height|padding|margin|gap` MUST contain at least one `@media` block.
+4. All `.table-cell`-equivalent selectors MUST include `overflow: hidden`, `white-space: nowrap`, `text-overflow: ellipsis`.
 
 ---
 

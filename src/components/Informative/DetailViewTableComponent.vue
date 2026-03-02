@@ -110,7 +110,7 @@ onMounted((): void => {
 
 table {
     width: 100%;
-    height: calc(100vh - var(--topbar-height) - (var(--spacing-2xl) * 2) - var(--detail-table-footer-offset));
+    height: calc(100vh - var(--topbar-height) - (var(--spacing-2xl) * 2.5) - var(--detail-table-footer-offset));
     background-color: var(--white);
     border-radius: var(--border-radius);
     display: flex;
