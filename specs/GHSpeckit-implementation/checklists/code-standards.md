@@ -30,17 +30,12 @@
 
 ## Formateo — Strings con Variables (§6.1.3)
 
-- [ ] **Prohibición absoluta** de operador `+` para concatenar strings con variables
-  > **⚠️ FALLO** — `src/models/application.ts` líneas 537–538: template literals unidos con `+` para continuar cadena larga:
-  > ```typescript
-  > `[Application] Duplicate module name detected: "${incomingName}". ` +
-  > `The module "${moduleClass.name}" was NOT registered...`
-  > ```
-  > Debe consolidarse en un solo template literal multilínea o usar string único.
+- [X] **Prohibición absoluta** de operador `+` para concatenar strings con variables
+  > **✅ RESUELTO** — `src/models/application.ts` corregido: los 3 segmentos unidos con `+` consolidados en un único template literal.
 - [X] Todo string con variables usa **template literals** (backticks `` ` ``)
-  > En todo el resto del código revisado (application.ts, base_entity.ts, decorators) las interpolaciones usan template literals correctamente.
-- [ ] Sin mezcla de concatenación y template literals en el mismo string
-  > **⚠️ FALLO** — misma ubicación que el ítem anterior: se mezclan template literals + operador `+`.
+  > En todo el código revisado (application.ts, base_entity.ts, decorators) las interpolaciones usan template literals correctamente.
+- [X] Sin mezcla de concatenación y template literals en el mismo string
+  > **✅ RESUELTO** — misma ubicación corregida en `src/models/application.ts` — eliminados operadores `+` entre template literals.
 
 ---
 
@@ -197,8 +192,8 @@
   > `changeView`, `setButtonList`, `registerModule`, `_isLoading`, `_isSaving` — todos camelCase o con prefijo `_` para privados.
 - [X] Constantes de módulo: `UPPER_SNAKE_CASE` (`MODULE_NAME_KEY`, `API_ENDPOINT_KEY`)
   > `API_ENDPOINT_KEY`, `MODULE_NAME_KEY`, `PROPERTY_NAME_KEY`, `CSS_COLUMN_CLASS_KEY` — todos UPPER_SNAKE_CASE.
-- [ ] Archivos: `snake_case` para `.ts` y `.vue` (`base_entity.ts`, `TextInputComponent.vue`)
-  > **⚠️ EXCEPCIÓN NO DOCUMENTADA** — `src/enums/ToastType.ts` usa PascalCase en lugar de `toast_type.ts`. `src/models/AppConfiguration.ts`, `src/models/Toast.ts`, `src/models/View.ts` también violan la convención. Total: 4 archivos con naming incorrecto.
+- [X] Archivos: `snake_case` para `.ts` y `.vue` (`base_entity.ts`, `TextInputComponent.vue`)
+  > **✅ RESUELTO** — Renombrados 4 archivos a snake_case: `ToastType.ts`→`toast_type.ts`, `AppConfiguration.ts`→`app_configuration.ts`, `Toast.ts`→`toast.ts`, `View.ts`→`view.ts`. Todos los imports actualizados (7 archivos). TypeScript compila sin errores nuevos.
 - [X] Enums y sus miembros: `PascalCase` para nombre del enum, `UPPER_CASE` para los valores
   > `ViewTypes { LISTVIEW, DETAILVIEW }`, `StringType { EMAIL, PASSWORD, TEXT }`, `ToastType { SUCCESS, ERROR, INFO, WARNING }` — todos correctos.
 - [X] Sin nombres ambiguos, abreviados o no auto-descriptivos
@@ -214,7 +209,7 @@
 |------|-------------|--------|
 | Indentación 4 espacios (+ EditorConfig) | §6.1.1 | ✅ PASS |
 | Comillas simples en TypeScript | §6.1.2 | ✅ PASS |
-| Template literals (sin `+`) | §6.1.3 | ❌ FAIL |
+| Template literals (sin `+`) | §6.1.3 | ✅ PASS |
 | Semicolons presentes | §6.1.4 | ✅ PASS |
 | Trailing commas multilinea | §6.1.6 | ✅ PASS |
 | Import order jerárquico | §6.2.1 | ✅ PASS |
@@ -222,5 +217,5 @@
 | Sin `any` en ningún archivo | §6.4.1 | ✅ PASS |
 | JSDoc en propiedades/métodos públicos | §6.5 | ✅ PASS |
 | Commits formato estructurado | §6.6 | ❌ FAIL |
-| Naming conventions (archivos) | §6.9 | ❌ FAIL |
+| Naming conventions (archivos) | §6.9 | ✅ PASS |
 | Naming conventions (clases/métodos) | §6.9 | ✅ PASS |

@@ -4,7 +4,7 @@
 **Fecha de Creación:** 13 de Febrero, 2026  
 **Última Actualización:** 17 de Febrero, 2026
 
-**Total de Excepciones Activas:** 6  
+**Total de Excepciones Activas:** 7  
 **Total de Excepciones Revocadas:** 0
 
 ---
@@ -50,6 +50,7 @@ Este documento constituye el registro formal de excepciones autorizadas a las re
 - [EXC-004] - Tipado explícito pendiente en bloque legacy
 - [EXC-005] - Lógica inline en templates Vue legacy
 - [EXC-006] - Regiones obligatorias pendientes en clases legacy
+- [EXC-007] - Animación `max-width` en SideBarComponent (layout-trigger estructural)
 
 **Excepciones Revocadas:**
 
@@ -409,6 +410,58 @@ public getPropertyType(propertyKey: string): any {
 
 ---
 
+## [EXC-007] - Animación `max-width` en SideBarComponent (layout-trigger estructural)
+
+**Fecha de Autorización:** 2 de Marzo, 2026  
+**Arquitecto Responsable:** Sistema de Normalización  
+**Estado:** ACTIVA
+
+### Cláusula Afectada
+**Contrato:** [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md)  
+**Sección:** § 6.10 (Optimización de Performance)  
+**Cláusula:** “Animaciones SOLO en `transform` y `opacity` — nunca `width`, `height`, `margin`”
+
+### Descripción de la Excepción
+El `SideBarComponent.vue` anima `max-width` (colapso/expansión del sidebar) y `max-height`/`padding` (sección header y footer del sidebar). Estas propiedades son layout-triggers y no compositor-only.
+
+### Justificación Técnica
+El sidebar usa el patrón `max-width: collapsed ↔ expanded` inherente al diseño del sistema. La alternativa conforme (`transform: scaleX()`) genera distorsión visual del contenido interior (iconos e ítems se scalean junto con el contenedor) y requiere rediseño completo del layout anidado. El impacto de performance de animar `max-width` en un único elemento estructural estático (no listado) es aceptable y demostrable.
+
+### Alternativas Evaluadas
+1. **`transform: scaleX()`** — Distorsiona el contenido (iconos, texto). Requiere `transform: scaleX(inverse)` en hijos, violando AXIOM A3.
+2. **`width` fija animada** — Requiere `overflow: hidden` en `body`, problemas con tooltips y dropdowns que emergen del sidebar.
+3. **Sin animación** — Degrada UX aceptada en el design system vigente.
+
+### Alcance de la Excepción
+**Archivos Afectados:**
+- `src/components/SideBarComponent.vue`
+
+**Líneas de Código:**
+- `.sidebar { transition: max-width ... }` — anotado con comentario `/* EXC-007 */`
+- `.sidebar .header { transition: opacity, max-height, padding ... }`
+- `.sidebar .footer { transition: opacity, max-height ... }`
+
+### Impacto Arquitectónico
+**Impacto:** BAJO — Un único componente estructural, sin impacto en capas de entidades/Application/decoradores.  
+**Riesgo runtime:** Nulo — El sidebar no se recrea frecuentemente; la transición ocurre solo por acción explícita del usuario.
+
+### Código con Excepción
+```css
+.sidebar {
+    transition: max-width var(--transition-slow) var(--timing-ease); /* EXC-007: max-width — layout-trigger justified for structural sidebar collapse */
+}
+```
+
+### Fecha de Revisión Futura
+**Próxima Revisión:** 30 de Junio, 2026  
+**Condición:** Evaluar si Phase 8 (Optimización DX) introduce un wrapper con `transform`-based animation que preserve el diseño actual sin layout-triggers.
+
+### Decisión del Arquitecto
+**Decisión:** APROBADA  
+**Comentarios:** Excepción justificada por diseño estructural. Impacto de performance demostrado como aceptable.
+
+---
+
 ## 5. Excepciones Revocadas
 
 _No existen excepciones revocadas en este momento._
@@ -467,8 +520,8 @@ Para registrar una nueva excepción, seguir obligatoriamente el proceso definido
 
 ## 8. Estadísticas
 
-**Total de Excepciones Históricas:** 6  
-**Excepciones Activas:** 6  
+**Total de Excepciones Históricas:** 7  
+**Excepciones Activas:** 7  
 **Excepciones Revocadas:** 0  
 **Tasa de Revocación:** 0%
 

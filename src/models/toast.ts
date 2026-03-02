@@ -1,4 +1,4 @@
-import { ToastType } from '@/enums/ToastType';
+import { ToastType } from '@/enums/toast_type';
 
 /**
  * Representa una notificación toast individual con ID autogenerado

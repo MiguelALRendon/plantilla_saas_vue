@@ -930,7 +930,7 @@ Application.changeView() calls getDirtyState() and opens a confirmation dialog i
 3. validateInputs() — if false, hide loading and return this
 4. validatePersistenceConfiguration() — if false, return this
 5. Obtain endpoint = getApiEndpoint()
-6. toObject() serialization
+6. toPersistentObject() serialization
 7. If isNew(): POST ${endpoint} with data
 8. Else: PUT ${endpoint}/${getPrimaryPropertyValue()} with data
 9. Object.assign(this, response.data) + update _originalState
@@ -1580,7 +1580,7 @@ Application.eventBus.on('validate-inputs', () => {
 - Below groups: array property tabs using getArrayKeysOrdered()
 
 **default_lookup_listview.vue**:
-- Renders LookupItem components for entity selection in ObjectInputComponent modals
+- Renders LookupItemComponent items for entity selection in ObjectInputComponent modals
 
 **DetailViewTableComponent**:
 - Headers: getProperties() filtered by !isHideInListView
@@ -1630,9 +1630,9 @@ Application.eventBus.on('validate-inputs', () => {
 
 ---
 
-### 5.15 LookupItem Component
+### 5.15 LookupItemComponent
 
-**File**: `src/components/LookupItem.vue`
+**File**: `src/components/Informative/LookupItemComponent.vue`
 
 **On click**: `Application.ApplicationUIService.closeModalOnFunction(entity)` — passes selected entity back to ObjectInputComponent callback.
 
@@ -1927,7 +1927,7 @@ User clicks SaveButton
   → validatePersistenceConfiguration() — if false: return
   → validateApiMethod('POST'/'PUT') — if false: return
   → endpoint = entity.getApiEndpoint()
-  → data = mapToPersistentKeys(entity.toObject())
+  → data = mapToPersistentKeys(entity.toPersistentObject())
   → if isNew():  POST endpoint, data
     else:        PUT endpoint/pkValue, data
   → Object.assign(entity, mapFromPersistentKeys(response.data))

@@ -11,8 +11,8 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type { Toast } from '@/models/Toast';
-import { ToastType } from '@/enums/ToastType';
+import type { Toast } from '@/models/toast';
+import { ToastType } from '@/enums/toast_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 
 export default {

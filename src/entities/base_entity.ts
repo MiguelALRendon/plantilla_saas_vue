@@ -37,7 +37,7 @@ import {
 } from '@/decorations';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
-import { ToastType } from '@/enums/ToastType';
+import { ToastType } from '@/enums/toast_type';
 import Application from '@/models/application';
 import { deepClone, deepEqual } from '@/utils/deep_compare';
 import DefaultDetailView from '@/views/default_detailview.vue';

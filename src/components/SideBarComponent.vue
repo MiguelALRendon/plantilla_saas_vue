@@ -44,7 +44,7 @@ export default {
     width: 100%;
     height: 100%;
     max-height: 100vh;
-    transition: var(--transition-slow) var(--timing-ease);
+    transition: max-width var(--transition-slow) var(--timing-ease); /* EXC-007: max-width — layout-trigger justified for structural sidebar collapse */
     position: relative;
     z-index: var(--z-dropdown);
     background-color: var(--white);
@@ -69,7 +69,9 @@ export default {
     padding: 0;
     overflow: hidden;
     border-bottom: var(--border-width-thin) solid var(--border-gray);
-    transition: var(--transition-slow) var(--timing-ease);
+    transition: opacity var(--transition-slow) var(--timing-ease),
+                max-height var(--transition-slow) var(--timing-ease),
+                padding var(--transition-slow) var(--timing-ease);
 }
 .sidebar.toggled .header {
     height: 100%;
@@ -90,7 +92,8 @@ export default {
     max-height: var(--sidebar-footer-max-height);
     padding: var(--spacing-lg);
     overflow: hidden;
-    transition: var(--transition-slow) var(--timing-ease);
+    transition: opacity var(--transition-slow) var(--timing-ease),
+                max-height var(--transition-slow) var(--timing-ease);
     border-top: var(--border-width-thin) solid var(--border-gray);
 }
 .sidebar.toggled .footer {

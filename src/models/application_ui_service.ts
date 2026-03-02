@@ -3,8 +3,8 @@ import type { ApplicationUIContext } from './application_ui_context';
 import type { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { Toast } from './Toast';
-import { ToastType } from '@/enums/ToastType';
+import { Toast } from './toast';
+import { ToastType } from '@/enums/toast_type';
 
 /**
  * Servicio centralizado para gestionar operaciones UI comunes.

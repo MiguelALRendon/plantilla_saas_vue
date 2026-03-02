@@ -385,8 +385,8 @@
 - [x] T174 [P] Replace any remaining raw number literals in Vue components with CSS token references (`var(--z-modal)`, etc.) across `src/components/`
 - [x] T175 [P] Export `@Mask` decorator from `src/decorations/index.ts` and document status (currently listed as unexported in spec §FR-021); requires `MaskSides` enum also exported from `src/enums/`
 - [x] T176 [P] Implement `hasPermission(user): boolean` static method on BaseEntity reading `@ModulePermission` for future route guard use in `src/entities/base_entity.ts`
-- [ ] T177 [US1] Run `quickstart.md` scenario end-to-end: create Customer entity, register in ModuleList, verify sidebar + list + detail + save + validation work per UC-001 acceptance criteria in `src/entities/`
-- [ ] T178 [P] Verify SC-001 through SC-009 success criteria from spec.md §12 pass in browser
+- [x] T177 [US1] Run `quickstart.md` scenario end-to-end: create Customer entity, register in ModuleList, verify sidebar + list + detail + save + validation work per UC-001 acceptance criteria in `src/entities/`
+- [x] T178 [P] Verify SC-001 through SC-009 success criteria from spec.md §12 pass in browser
 - [x] T179 [P] Add uniqueness validation to `Application.ModuleList.value.push()` — warn if two modules have the same `getModuleName()` (risk: route collision per plan.md risk registry) in `src/models/application.ts`
 - [x] T180 [P] Verify `src/router/index.ts` has no `any` types (TypeScript constraint per spec §6.3)
 - [x] T181 [P] Verify `src/entities/base_entity.ts` has no `any` in signatures, casts, or catch blocks; replace with `unknown` + type guards per spec §3 TypeScript constraints

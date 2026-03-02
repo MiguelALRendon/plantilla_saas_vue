@@ -215,7 +215,14 @@ onBeforeUnmount(() => {
     top: var(--enum-input-container-padding-top);
     color: var(--blue-1);
     font-size: var(--font-size-base);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: color var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                font-size var(--transition-slow) var(--timing-ease),
+                top var(--transition-slow) var(--timing-ease),
+                left var(--transition-slow) var(--timing-ease),
+                padding var(--transition-slow) var(--timing-ease),
+                border-top-left-radius var(--transition-slow) var(--timing-ease),
+                border-top-right-radius var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;

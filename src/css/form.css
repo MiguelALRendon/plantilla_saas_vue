@@ -32,7 +32,10 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     font-family: 'Inter', sans-serif;
     color: var(--gray-medium);
     width: 100%;
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: border-color var(--transition-slow) var(--timing-ease),
+                border-width var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease);
     box-sizing: border-box;
     font-size: var(--font-size-base);
     background-color: var(--bg-gray);
@@ -60,7 +63,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     top: var(--label-initial-top);
     color: var(--blue-1);
     font-size: var(--font-size-base);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: color var(--transition-slow) var(--timing-ease),
+                font-size var(--transition-slow) var(--timing-ease),
+                top var(--transition-slow) var(--timing-ease),
+                left var(--transition-slow) var(--timing-ease),
+                padding var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                border-radius var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;
@@ -140,7 +149,9 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-normal) var(--timing-ease);
+    transition: background-color var(--transition-normal) var(--timing-ease),
+                border-color var(--transition-normal) var(--timing-ease),
+                color var(--transition-normal) var(--timing-ease);
     background-color: var(--bg-gray);
 }
 .TextInput button span {

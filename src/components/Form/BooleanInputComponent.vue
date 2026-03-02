@@ -138,7 +138,9 @@ onBeforeUnmount(() => {
 
 .BooleanInput .input-button .icon {
     transform: rotate(180deg);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: transform var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease);
     color: var(--accent-red);
     border-radius: 100%;
 }

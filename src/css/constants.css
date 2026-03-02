@@ -234,7 +234,7 @@
     --table-width-extra-large: 300px;
     
     /* Dimensiones de componentes */
-    --button-height: 2rem;
+    --button-height: 2.75rem; /* Mínimo WCAG: 44px touch target (44/16 = 2.75rem) */
     --header-height: var(--topbar-height);
     --footer-height: 3rem;
     --dropdown-default-width: 250px;

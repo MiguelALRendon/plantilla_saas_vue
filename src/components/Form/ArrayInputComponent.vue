@@ -331,7 +331,8 @@ onBeforeUnmount(() => {
 .select-btn span {
     color: var(--sky);
     transform: rotate(-180deg);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: transform var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease);
 }
 .select-btn.added span {
     transform: rotate(0deg);

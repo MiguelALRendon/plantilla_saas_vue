@@ -15,23 +15,23 @@ import {
 } from '@/components/Buttons';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { ToastType } from '@/enums/ToastType';
+import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
 
 import type { Events } from '@/types/events';
 import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
-import { AppConfiguration } from './AppConfiguration';
+import { AppConfiguration } from './app_configuration';
 import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
 import { confirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
-import type { EntityCtor } from './View';
-import { View } from './View';
+import type { EntityCtor } from './view';
+import { View } from './view';
 
 import type { ApplicationUIContext } from './application_ui_context';
 import type { Modal } from './modal';
-import type { Toast } from './Toast';
+import type { Toast } from './toast';
 
 /**
  * Main application singleton class that manages UI state, routing, and modals
@@ -541,9 +541,7 @@ class ApplicationClass implements ApplicationUIContext {
 
         if (isDuplicate) {
             console.warn(
-                `[Application] Duplicate module name detected: "${incomingName}". ` +
-                `The module "${moduleClass.name}" was NOT registered to prevent route collision. ` +
-                `Ensure each entity has a unique @ModuleName value.`
+                `[Application] Duplicate module name detected: "${incomingName}". The module "${moduleClass.name}" was NOT registered to prevent route collision. Ensure each entity has a unique @ModuleName value.`
             );
             return false;
         }
