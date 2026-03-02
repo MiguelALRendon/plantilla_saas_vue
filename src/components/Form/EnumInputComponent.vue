@@ -12,7 +12,7 @@
         >
             <div class="list-input-container">
                 <div class="label-and-value">
-                    <label class="label" :class="[{ active: actualOption != '' }]">{{ metadata.propertyName }}</label>
+                    <label class="label" :class="[{ active: actualOption != '' }, { focused: droped }]">{{ metadata.propertyName }}</label>
                     <label class="value" :class="[{ active: actualOption != '' }]">{{ actualOption }}</label>
                 </div>
                 <span class="arrow" :class="[GGCLASS, { active: droped }]">{{ GGICONS.ARROW_UP }}</span>
@@ -235,6 +235,17 @@ onBeforeUnmount(() => {
     border-top-right-radius: 0.5rem;
 }
 
+.label-and-value .label.focused {
+    color: var(--white);
+    background-color: var(--lavender);
+    font-size: var(--font-size-small);
+    top: var(--label-focused-top);
+    left: var(--label-focused-left);
+    padding: var(--label-focused-padding);
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
 .label-and-value .value.active {
     color: var(--gray-medium);
 }
@@ -244,10 +255,10 @@ onBeforeUnmount(() => {
     border-radius: var(--border-radius);
     display: grid;
     grid-template-rows: 0fr;
-    padding: var(--padding-medium);
-    max-height: var(--dropdown-max-height);
-    overflow-y: auto;
+    overflow: hidden;
     position: absolute;
+    width: 100%;
+    left: 0;
     background-color: var(--white);
     z-index: var(--z-modal);
     transition: grid-template-rows var(--transition-normal) var(--timing-ease);
@@ -263,6 +274,7 @@ onBeforeUnmount(() => {
 .list-input-items-wrapper {
     min-height: 0;
     overflow-y: auto;
+    max-height: var(--dropdown-max-height);
 }
 
 .list-input-item {
@@ -291,13 +303,17 @@ button:disabled {
     pointer-events: none;
     cursor: not-allowed;
 }
+.EnumInput.disabled .list-input-body {
+    grid-template-rows: 0fr !important;
+}
 .EnumInput.disabled .list-input-container,
 .EnumInput.disabled .list-input-container .label,
 .EnumInput.disabled .list-input-container span {
     border-color: var(--gray-light);
     color: var(--gray-light);
 }
-.EnumInput.disabled .list-input-container .label.active {
+.EnumInput.disabled .list-input-container .label.active,
+.EnumInput.disabled .list-input-container .label.focused {
     background-color: var(--gray-lighter);
 }
 
@@ -310,7 +326,8 @@ button:disabled {
     border-color: var(--accent-red);
     color: var(--accent-rose);
 }
-.EnumInput.nonvalidated .list-input-container .label.active {
+.EnumInput.nonvalidated .list-input-container .label.active,
+.EnumInput.nonvalidated .list-input-container .label.focused {
     background-color: var(--accent-red);
     color: var(--white);
 }
