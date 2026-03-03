@@ -68,7 +68,7 @@ export default {
     position: relative;
     z-index: var(--z-base);
     padding-bottom: var(--padding-small);
-    padding-right: var(--padding-small);
+    padding-inline: var(--padding-small);
     box-sizing: border-box;
     background-color: var(--white);
 }

@@ -1,6 +1,13 @@
 <template>
     <div class="app-container" :class="containerClass">
         <SideBarComponent />
+        <!-- Sidebar backdrop overlay — only interactive at ≤1200px when sidebar is open.
+             Clicking it closes the floating sidebar without triggering content below. -->
+        <div
+            class="sidebar-overlay"
+            :class="{ visible: sidebarOpen }"
+            @click="closeSidebar"
+        />
         <ComponentContainerComponent />
         <ToastContainerComponent />
         <ModalComponent />
@@ -11,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 
 import ComponentContainerComponent from './components/ComponentContainerComponent.vue';
 import SideBarComponent from './components/SideBarComponent.vue';
@@ -26,6 +33,28 @@ import ToastContainerComponent from './components/Informative/ToastContainerComp
 const containerClass = computed<string>(() => {
     return Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : '';
 });
+
+// Track sidebar open/closed state to control overlay visibility.
+// Initialized to match SideBarComponent initial state (open only at > 1200px).
+const sidebarOpen = ref(typeof window !== 'undefined' ? window.innerWidth > 1200 : true);
+// #endregion
+
+// #region METHODS
+function closeSidebar(): void {
+    Application.ApplicationUIService.setSidebar(false);
+}
+// #endregion
+
+// #region LIFECYCLE
+onMounted(() => {
+    Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
+        sidebarOpen.value = state !== undefined ? !!state : !sidebarOpen.value;
+    });
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('toggle-sidebar');
+});
 // #endregion
 </script>
 
@@ -35,5 +64,30 @@ const containerClass = computed<string>(() => {
     flex-direction: row;
     max-height: 100vh;
     height: 100vh;
+}
+
+/* Sidebar backdrop — covers content area to let user dismiss the floating sidebar.
+   Hidden by default; only active below 1200px via .visible class + media query.
+   z-index: 499 — just below the sidebar's --z-overlay (500) but above all content. */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: var(--overlay-dark);
+    z-index: 499;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-slow) var(--timing-ease);
+}
+
+/* 1200px matches the sidebar floating breakpoint in SideBarComponent.vue */
+@media (max-width: 1200px) {
+    .sidebar-overlay {
+        display: block;
+    }
+    .sidebar-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 </style>

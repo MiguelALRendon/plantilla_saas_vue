@@ -1,45 +1,49 @@
 <template>
-    <table>
-        <thead>
-            <tr>
-                <td
-                    v-for="(item, key) in Application.View.value.entityClass?.getProperties()"
-                    :key="key"
-                    :class="Application.View.value.entityClass?.getCSSClasses()[key]"
-                >
-                    {{ item }}
-                </td>
-            </tr>
-        </thead>
-
-        <tbody>
-            <tr v-for="item in data" :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')" @click="openDetailView(item)">
-                <template v-for="column in item.getKeys()" :key="column">
+    <!-- .table-wrapper is the SINGLE scroll container for both header and body.
+         This ensures the sticky header always aligns with the scrolling body columns. -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
                     <td
-                        :class="item.getCSSClasses()[column]"
-                        class="table-row"
-                        v-if="Application.View.value.entityClass?.getPropertyType(column) !== Array"
+                        v-for="(item, key) in Application.View.value.entityClass?.getProperties()"
+                        :key="key"
+                        :class="Application.View.value.entityClass?.getCSSClasses()[key]"
                     >
-                        <span v-if="Application.View.value.entityClass?.getPropertyType(column) !== Boolean">
-                            {{ getCellValue(item, column) }}
-                        </span>
-
-                        <span
-                            v-else-if="Application.View.value.entityClass?.getPropertyType(column) === Boolean"
-                            :class="[GGCLASS, item.toObject()[column] ? 'row-check' : 'row-cancel']"
-                            class="boolean-row"
-                        >
-                            {{ getBooleanIcon(item, column) }}
-                        </span>
+                        {{ item }}
                     </td>
-                </template>
-            </tr>
-        </tbody>
+                </tr>
+            </thead>
 
-        <tfoot>
-            <tr></tr>
-        </tfoot>
-    </table>
+            <tbody>
+                <tr v-for="item in data" :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')" @click="openDetailView(item)">
+                    <template v-for="column in item.getKeys()" :key="column">
+                        <td
+                            :class="item.getCSSClasses()[column]"
+                            class="table-row"
+                            v-if="Application.View.value.entityClass?.getPropertyType(column) !== Array"
+                        >
+                            <span v-if="Application.View.value.entityClass?.getPropertyType(column) !== Boolean">
+                                {{ getCellValue(item, column) }}
+                            </span>
+
+                            <span
+                                v-else-if="Application.View.value.entityClass?.getPropertyType(column) === Boolean"
+                                :class="[GGCLASS, item.toObject()[column] ? 'row-check' : 'row-cancel']"
+                                class="boolean-row"
+                            >
+                                {{ getBooleanIcon(item, column) }}
+                            </span>
+                        </td>
+                    </template>
+                </tr>
+            </tbody>
+
+            <tfoot>
+                <tr></tr>
+            </tfoot>
+        </table>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -114,15 +118,27 @@ onMounted((): void => {
 <style scoped>
 @import '@/css/table.css';
 
-table {
+/* ─── Single-scroll-container table layout ────────────────────────────────────
+   .table-wrapper is the ONE element that scrolls (both x and y).
+   thead uses position:sticky so it remains visible during vertical scroll while
+   ALSO tracking horizontal scroll — both move inside the same scroll viewport.
+   This eliminates the previous thead/tbody misalignment caused by having a
+   separate overflow-x:auto on tbody (which created an independent scroll context).
+──────────────────────────────────────────────────────────────────────────────── */
+.table-wrapper {
     width: 100%;
     height: calc(100vh - var(--topbar-height) - (var(--spacing-2xl) * 2.5) - var(--detail-table-footer-offset));
     background-color: var(--white);
     border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
+    overflow: auto; /* single scroll context — both axes */
+}
+
+table {
+    width: 100%;
+    min-width: max-content; /* prevent table from squishing below its natural column-sum width */
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-light);
-    overflow: auto;
 }
 
 thead {
@@ -131,11 +147,12 @@ thead {
     position: sticky;
     top: 0;
     z-index: var(--z-base);
+    background-color: var(--white); /* opaque so rows don't bleed through on scroll */
 }
 
 thead tr {
     display: flex;
-    width: 100%;
+    min-width: 100%;
 }
 
 thead td {
@@ -145,15 +162,12 @@ thead td {
 tbody {
     display: block;
     width: 100%;
-    overflow-y: auto;
-    overflow-x: auto;
-    flex: 1;
-    scrollbar-gutter: stable;
+    /* No overflow here — .table-wrapper owns all scroll, ensuring header stays in sync */
 }
 
 tbody tr {
     display: flex;
-    width: 100%;
+    min-width: 100%; /* at least fills wrapper width; cells' min-widths can push it wider */
 }
 
 tfoot {
@@ -163,7 +177,7 @@ tfoot {
 
 tfoot tr {
     display: flex;
-    width: 100%;
+    min-width: 100%;
 }
 
 td {
@@ -171,7 +185,13 @@ td {
     padding-block: var(--spacing-small);
     border-bottom: var(--border-width-thin) solid var(--gray-lighter);
     user-select: none;
-    width: 100%;
+    flex-shrink: 0; /* cells never shrink below their declared width */
+}
+
+/* Flexible column that fills remaining row space (used by .table-length-full) */
+td:not([class*='table-length-']) {
+    flex: 1;
+    min-width: var(--table-width-small); /* fallback minimum so unstyled cols stay readable */
 }
 
 tr {
@@ -201,5 +221,14 @@ tbody tr:hover {
 }
 .boolean-row.row-cancel {
     color: var(--accent-red);
+}
+
+/* Mobile: reduce internal padding so more columns fit before scroll kicks in */
+@media (max-width: 768px) {
+    td {
+        padding-inline: var(--spacing-sm);
+        padding-block: var(--spacing-xs);
+        font-size: var(--font-size-sm);
+    }
 }
 </style>

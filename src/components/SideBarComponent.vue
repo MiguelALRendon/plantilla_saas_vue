@@ -24,7 +24,7 @@ export default {
     data() {
         return {
             Application,
-            toggled: true
+            toggled: typeof window !== 'undefined' ? window.innerWidth > 1200 : true
         };
     },
     // #endregion
@@ -34,6 +34,8 @@ export default {
         Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
             this.toggled = state !== undefined ? state : !this.toggled;
         });
+        // Sync TopBarComponent with initial state derived from viewport width
+        Application.eventBus.emit('toggle-sidebar', this.toggled);
     },
     beforeUnmount() {
         Application.eventBus.off('toggle-sidebar');
@@ -107,18 +109,34 @@ export default {
     opacity: 1;
 }
 
-/* Mobile (var(--breakpoint-mobile) = 768px — raw value required: var() unsupported in @media per CSS spec) */
-@media (max-width: 768px) {
+/* Floating sidebar — shown as fixed overlay below 1200px.
+   Sidebar leaves flex flow so ComponentContainer always fills full width.
+   Uses transform (not max-width) for smooth slide-in/out animation.
+   1200px raw value corresponds to --breakpoint-laptop threshold design intent;
+   var() is unsupported in @media per CSS spec. */
+@media (max-width: 1200px) {
     .sidebar {
         position: fixed;
+        left: 0;
+        top: 0;
         height: 100vh;
+        max-width: var(--sidebar-width-expanded);
         z-index: var(--z-overlay);
-        max-width: 0;
-        padding: 0;
+        transform: translateX(-105%); /* fully off-screen left */
+        transition: transform var(--transition-slow) var(--timing-ease),
+                    box-shadow var(--transition-slow) var(--timing-ease);
     }
     .sidebar.toggled {
-        max-width: var(--sidebar-width-expanded);
+        transform: translateX(0); /* slide in */
         box-shadow: var(--shadow-dark);
+        max-width: var(--sidebar-width-expanded);
+    }
+    /* Always show text labels when sidebar is a floating drawer */
+    .sidebar span {
+        opacity: 0;
+    }
+    .sidebar.toggled span {
+        opacity: 1;
     }
 }
 </style>
