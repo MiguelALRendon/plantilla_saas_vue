@@ -16,7 +16,7 @@
             @input="emitCurrentValue"
         />
         <button class="right" @click="openModal" :disabled="metadata.disabled.value">
-            <span :class="GGCLASS">{{ GGICONS.SEARCH }}</span>
+            <span :class="[GGCLASS]">{{ GGICONS.SEARCH }}</span>
         </button>
     </div>
 

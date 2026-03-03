@@ -9,7 +9,7 @@
             </label>
 
             <div :class="['input-button', { true: modelValue }]">
-                <span :class="GGCLASS" class="icon">{{ displayIcon }}</span>
+                <span :class="[GGCLASS]" class="icon">{{ displayIcon }}</span>
             </div>
         </button>
 

@@ -9,6 +9,7 @@
             placeholder=" "
             :value="modelValue"
             :disabled="metadata.disabled.value"
+            :readonly="metadata.readonly.value"
             @input="handleInput"
         />
 
@@ -22,6 +23,8 @@
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
+import { MaskSides } from '@/enums/mask_sides';
+import { applyMask } from '@/utils/mask';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface Props {
@@ -47,7 +50,22 @@ const validationMessages = ref<string[]>([]);
 
 // #region METHODS
 function handleInput(event: Event): void {
-    emit('update:modelValue', (event.target as HTMLTextAreaElement).value);
+    const target = event.target as HTMLTextAreaElement;
+    const maskData = props.entity.getMask(props.propertyKey);
+
+    if (!maskData) {
+        emit('update:modelValue', target.value);
+        return;
+    }
+
+    const masked = applyMask(
+        target.value,
+        maskData.mask,
+        (maskData.side as MaskSides | undefined) ?? MaskSides.START
+    );
+
+    target.value = masked;
+    emit('update:modelValue', masked);
 }
 
 function isValidated(): boolean {

@@ -35,10 +35,32 @@ export default {
     },
     // #endregion
 
+    // #region METHODS
+    methods: {
+        registerModuleCustomComponents() {
+            const moduleClass = Application.View.value.entityClass;
+            const customComponents = moduleClass?.getModuleCustomComponents();
+
+            if (!customComponents || customComponents.size === 0) {
+                return;
+            }
+
+            const app = (this as unknown as { $: { appContext: { app: { component: (name: string, component?: Component) => unknown } } } }).$.appContext.app;
+
+            for (const [name, component] of customComponents.entries()) {
+                if (!app.component(name)) {
+                    app.component(name, markRaw(component));
+                }
+            }
+        }
+    },
+    // #endregion
+
     // #region LIFECYCLE
     created() {
         const init = Application.View.value.component;
         if (init) {
+            this.registerModuleCustomComponents();
             this.currentComponent = markRaw(init);
         }
 
@@ -48,6 +70,7 @@ export default {
                 if (newVal) {
                     Application.ApplicationUIService.showLoadingScreen();
                     await new Promise((resolve) => setTimeout(resolve, 400));
+                    this.registerModuleCustomComponents();
                     this.currentComponent = markRaw(newVal);
                     Application.ApplicationUIService.hideLoadingScreen();
                 }

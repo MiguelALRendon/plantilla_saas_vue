@@ -111,6 +111,10 @@ button:disabled span, .button[disabled] span {
     display: inline;
 }
 
+.btn-icon {
+    font-size: var(--font-size-lg);
+}
+
 /* Laptop / tablet and below (var(--breakpoint-md) = 992px) */
 @media (max-width: 992px) {
     .btn-label {

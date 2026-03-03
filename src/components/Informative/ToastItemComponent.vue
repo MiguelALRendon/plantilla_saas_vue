@@ -3,7 +3,7 @@
         <div class="toast" :class="setToastClass()" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
             <span>{{ toast.message }}</span>
             <button class="toast-close-button" @click="handleClose">
-                <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
             </button>
         </div>
     </div>

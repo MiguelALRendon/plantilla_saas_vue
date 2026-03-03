@@ -1,6 +1,6 @@
 <template>
     <button class="button secondary" @click="saveItem">
-        <span :class="GGCLASS">{{ GGICONS.SAVE }}</span>
+        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.SAVE }}</span>
         <span class="btn-label">Save</span>
     </button>
 </template>
@@ -35,7 +35,7 @@ export default {
 </script>
 
 <style scoped>
-.button.secondary span {
+.button.secondary .btn-icon {
     font-size: var(--font-size-lg);
     margin-right: 0.15rem;
 }

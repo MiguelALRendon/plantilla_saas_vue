@@ -505,7 +505,7 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 5: US3 | T156–T171 | US3 | 8 of 16 |
 | Polish | T172–T181 | — | 9 of 10 |
 | Polish (additions) | T182–T190 | T190=US1 | 8 of 9 |
-| **TOTAL** | **190 tasks** | | **~114 parallelizable** |
+| **TOTAL** | **191 tasks** | | **~115 parallelizable** |
 
 **Per user story**:
 - **US1**: 22 tasks (T119–T140)

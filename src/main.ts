@@ -8,7 +8,7 @@ import Application from '@/models/application';
 import router from '@/router';
 import { Product } from '@/entities/product';
 
-Application.initializeRouter(router);
+Application.initializeApplication(router);
 Application.registerModule(Product);
 
 const app: VueApp = createApp(App);

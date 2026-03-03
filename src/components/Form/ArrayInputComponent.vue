@@ -22,7 +22,7 @@
                     :disabled="selectedItems.length == 0 || disabled"
                     @click="showDeleteModal"
                 >
-                    <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.DELETE }}</span>
                     <span class="btn-label">Eliminar</span>
                 </button>
                 <button
@@ -30,11 +30,11 @@
                     @click="toggleSelection"
                     :disabled="modelValue.length == 0 || disabled"
                 >
-                    <span :class="GGCLASS">{{ selectionIcon }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ selectionIcon }}</span>
                     <span class="btn-label">Seleccionar</span>
                 </button>
                 <button class="button secondary fill" @click="openModal" :disabled="disabled">
-                    <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.ADD }}</span>
                     <span class="btn-label">Agregar</span>
                 </button>
             </div>
@@ -56,7 +56,7 @@
                                 :class="[{ added: selectedItems.includes(item) }]"
                                 @click="toggleItemSelection(item)"
                             >
-                                <span :class="GGCLASS">{{ getItemIcon(item) }}</span>
+                                <span :class="[GGCLASS]">{{ getItemIcon(item) }}</span>
                             </button>
                         </td>
                         <td v-for="property in item.getKeys()">

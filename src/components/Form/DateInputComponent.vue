@@ -12,7 +12,7 @@
             placeholder=" "
             :value="formattedDate"
             :disabled="metadata.disabled.value"
-            readonly
+            :readonly="true"
         />
         <input
             ref="dateInput"
@@ -21,11 +21,11 @@
             type="date"
             class="date-input"
             :value="modelValue"
-            :disabled="metadata.disabled.value"
+            :disabled="metadata.disabled.value || metadata.readonly.value"
             @input="updateDate"
         />
-        <button class="right" @click="openCalendar" :disabled="metadata.disabled.value">
-            <span :class="GGCLASS">{{ GGICONS.CALENDAR }}</span>
+        <button class="right" @click="openCalendar" :disabled="metadata.disabled.value || metadata.readonly.value">
+            <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
         </button>
     </div>
 
@@ -88,11 +88,19 @@ const formattedDate = computed<string>(() => {
 
 // #region METHODS
 function updateDate(event: Event): void {
+    if (metadata.readonly.value) {
+        return;
+    }
+
     const value = (event.target as HTMLInputElement).value;
     emit('update:modelValue', value);
 }
 
 function openCalendar(): void {
+    if (metadata.readonly.value) {
+        return;
+    }
+
     dateInput.value?.showPicker?.();
 }
 

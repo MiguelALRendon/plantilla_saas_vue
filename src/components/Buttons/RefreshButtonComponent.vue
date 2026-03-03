@@ -1,6 +1,6 @@
 <template>
     <button class="button success-green" @click="refreshList">
-        <span :class="GGCLASS">{{ GGICONS.REFRESH }}</span>
+        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.REFRESH }}</span>
         <span class="btn-label">Refresh</span>
     </button>
 </template>
@@ -35,7 +35,7 @@ export default {
 </script>
 
 <style scoped>
-.button.success-green span {
+.button.success-green .btn-icon {
     font-size: var(--font-size-lg);
     margin-right: 0.15rem;
 }

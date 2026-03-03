@@ -12,10 +12,11 @@
             placeholder=" "
             :value="modelValue"
             :disabled="metadata.disabled.value"
+            :readonly="metadata.readonly.value"
             @input="handleInput"
         />
-        <button class="right" @click="togglePasswordVisibility" :disabled="metadata.disabled.value">
-            <span :class="GGCLASS">{{ visibilityIcon }}</span>
+        <button class="right" @click="togglePasswordVisibility" :disabled="metadata.disabled.value || metadata.readonly.value">
+            <span :class="[GGCLASS]">{{ visibilityIcon }}</span>
         </button>
     </div>
 
@@ -33,6 +34,8 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
+import { MaskSides } from '@/enums/mask_sides';
+import { applyMask } from '@/utils/mask';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface Props {
@@ -65,7 +68,22 @@ function togglePasswordVisibility(): void {
 }
 
 function handleInput(event: Event): void {
-    emit('update:modelValue', (event.target as HTMLInputElement).value);
+    const target = event.target as HTMLInputElement;
+    const maskData = props.entity.getMask(props.propertyKey);
+
+    if (!maskData) {
+        emit('update:modelValue', target.value);
+        return;
+    }
+
+    const masked = applyMask(
+        target.value,
+        maskData.mask,
+        (maskData.side as MaskSides | undefined) ?? MaskSides.START
+    );
+
+    target.value = masked;
+    emit('update:modelValue', masked);
 }
 
 async function isValidated(): Promise<boolean> {

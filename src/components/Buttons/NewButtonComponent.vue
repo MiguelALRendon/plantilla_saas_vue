@@ -1,6 +1,6 @@
 <template>
     <button class="button info" @click="openNewDetailView">
-        <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.ADD }}</span>
         <span class="btn-label">New</span>
     </button>
 </template>
@@ -40,7 +40,8 @@ export default {
 </script>
 
 <style scoped>
-.button.info span {
+.button.info.btn-icon,
+.button.info .btn-icon {
     font-size: var(--font-size-lg);
 }
 </style>

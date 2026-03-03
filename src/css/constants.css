@@ -234,7 +234,7 @@
     --table-width-extra-large: 300px;
     
     /* Dimensiones de componentes */
-    --button-height: 2.75rem; /* Mínimo WCAG: 44px touch target (44/16 = 2.75rem) */
+    --button-height: 2rem; /* Mínimo WCAG: 44px touch target (44/16 = 2.75rem) */
     --header-height: var(--topbar-height);
     --footer-height: 3rem;
     --dropdown-default-width: 250px;
@@ -301,4 +301,10 @@
     --green-main: #2f6f6e;
     --green-soft: #3a8f7a;
     --green-deep: #1f4f46;
+}
+
+@media (max-width: 992px) {
+    :root {
+        --button-height: 2.75rem;
+    }
 }

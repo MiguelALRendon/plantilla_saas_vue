@@ -1,6 +1,6 @@
 <template>
     <button class="button accent" @click="saveItem">
-        <span :class="GGCLASS">{{ GGICONS.SAVE2 }}</span>
+        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.SAVE2 }}</span>
         <span class="btn-label">Save and New</span>
     </button>
 </template>
@@ -43,7 +43,7 @@ export default {
 </script>
 
 <style scoped>
-.button.accent span {
+.button.accent .btn-icon {
     font-size: var(--font-size-lg);
     margin-right: 0.15rem;
 }

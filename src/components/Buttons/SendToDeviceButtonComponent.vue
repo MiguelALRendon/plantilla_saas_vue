@@ -1,6 +1,6 @@
 <template>
     <button class="button primary" @click="">
-        <span :class="GGCLASS">{{ GGICONS.DEVICES }}</span>
+        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.DEVICES }}</span>
         <span class="btn-label">Send to Device</span>
     </button>
 </template>

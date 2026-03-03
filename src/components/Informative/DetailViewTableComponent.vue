@@ -6,22 +6,21 @@
             <thead>
                 <tr>
                     <td
-                        v-for="(item, key) in Application.View.value.entityClass?.getProperties()"
-                        :key="key"
-                        :class="Application.View.value.entityClass?.getCSSClasses()[key]"
+                        v-for="column in getVisibleColumns()"
+                        :key="column"
+                        :class="Application.View.value.entityClass?.getCSSClasses()[column]"
                     >
-                        {{ item }}
+                        {{ Application.View.value.entityClass?.getProperties()[column] }}
                     </td>
                 </tr>
             </thead>
 
             <tbody>
                 <tr v-for="item in data" :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')" @click="openDetailView(item)">
-                    <template v-for="column in item.getKeys()" :key="column">
+                    <template v-for="column in getVisibleColumns(item)" :key="column">
                         <td
                             :class="item.getCSSClasses()[column]"
                             class="table-row"
-                            v-if="Application.View.value.entityClass?.getPropertyType(column) !== Array"
                         >
                             <span v-if="Application.View.value.entityClass?.getPropertyType(column) !== Boolean">
                                 {{ getCellValue(item, column) }}
@@ -86,6 +85,29 @@ function getCellValue(item: BaseEntity, column: string): string {
     return value instanceof BaseEntity
         ? String(value.getDefaultPropertyValue() ?? '')
         : item.getFormattedValue(column);
+}
+
+function getVisibleColumns(entity?: BaseEntity): string[] {
+    const entityClass = Application.View.value.entityClass;
+
+    if (!entityClass) {
+        return [];
+    }
+
+    const sourceKeys = entity ? entity.getKeys() : Object.keys(entityClass.getProperties());
+
+    return sourceKeys.filter((column) => {
+        if (entityClass.getPropertyType(column) === Array) {
+            return false;
+        }
+
+        if (entity) {
+            return !entity.isHideInListView(column);
+        }
+
+        const tempEntity = entityClass.createNewInstance();
+        return !tempEntity.isHideInListView(column);
+    });
 }
 
 function openDetailView(entity: BaseEntity): void {

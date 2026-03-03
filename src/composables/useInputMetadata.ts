@@ -5,6 +5,7 @@ export interface InputMetadata {
     propertyName: string;
     required: ComputedRef<boolean>;
     disabled: ComputedRef<boolean>;
+    readonly: ComputedRef<boolean>;
     validated: ComputedRef<boolean>;
     requiredMessage: ComputedRef<string | undefined>;
     validatedMessage: ComputedRef<string | undefined>;
@@ -20,6 +21,7 @@ export function useInputMetadata(
 
     const required = computed(() => entity.isRequired(propertyKey));
     const disabled = computed(() => entity.isDisabled(propertyKey));
+    const readonly = computed(() => entity.isReadOnly(propertyKey));
     const validated = computed(() => entity.isValidation(propertyKey));
     const requiredMessage = computed(() => entity.requiredMessage(propertyKey));
     const validatedMessage = computed(() => entity.validationMessage(propertyKey));
@@ -29,6 +31,7 @@ export function useInputMetadata(
         propertyName,
         required,
         disabled,
+        readonly,
         validated,
         requiredMessage,
         validatedMessage,

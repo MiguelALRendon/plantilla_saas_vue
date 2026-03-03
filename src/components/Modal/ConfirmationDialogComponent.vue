@@ -35,11 +35,11 @@
                     class="button info fill"
                     @click="Application.ApplicationUIService.acceptConfigurationMenu()"
                 >
-                    <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
+                        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
                     <span class="btn-label">{{ dialogInfo.acceptButtonText || 'Aceptar' }}</span>
                 </button>
                 <button class="button alert fill" @click="Application.ApplicationUIService.closeConfirmationMenu()">
-                    <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                     <span class="btn-label">{{ dialogInfo.cancelButtonText || 'Cancelar' }}</span>
                 </button>
             </div>

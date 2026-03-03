@@ -10,7 +10,7 @@
                 </div>
 
                 <button class="close-button" @click="closeModal">
-                    <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                 </button>
             </div>
 
@@ -20,11 +20,11 @@
 
             <div class="modal-footer">
                 <button class="button info fill">
-                    <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
                     <span class="btn-label">Aceptar</span>
                 </button>
                 <button class="button alert fill" @click="closeModal">
-                    <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                     <span class="btn-label">Cerrar</span>
                 </button>
             </div>

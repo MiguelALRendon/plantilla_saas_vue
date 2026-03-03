@@ -715,6 +715,23 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Builds API payload from persistent properties excluding disabled fields.
+     * Read-only properties remain included to satisfy server-side contract.
+     * @returns API-ready payload mapped to persistent keys
+     */
+    public buildRequestPayload(): EntityData {
+        const payload = this.toPersistentObject();
+
+        for (const key of Object.keys(payload)) {
+            if (this.isDisabled(key)) {
+                delete payload[key];
+            }
+        }
+
+        return this.mapToPersistentKeys(payload);
+    }
+
+    /**
      * Validates that the module has all required decorator configurations
      * Checks for ModuleName, ModuleIcon, DefaultProperty, and PrimaryProperty
      * @returns True if configuration is valid, false otherwise (shows error dialog)
@@ -895,7 +912,7 @@ export abstract class BaseEntity {
         try {
             this.onSaving();
             const endpoint = this.getApiEndpoint();
-            const dataToSend = this.mapToPersistentKeys(this.toObject());
+            const dataToSend = this.buildRequestPayload();
 
             let response;
             if (this.isNew()) {
@@ -964,7 +981,7 @@ export abstract class BaseEntity {
             this.onUpdating();
             const endpoint = this.getApiEndpoint();
             const uniqueKey = this.getUniquePropertyValue();
-            const dataToSend = this.mapToPersistentKeys(this.toObject());
+            const dataToSend = this.buildRequestPayload();
 
             const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
             const mappedData = this.mapFromPersistentKeys(response.data);
