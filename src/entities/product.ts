@@ -160,6 +160,47 @@ export class Product extends BaseEntity {
     @Required(true)
     password!: string;
 
+    @PropertyIndex(11)
+    @PropertyName('Phone', String)
+    @StringTypeDef(StringType.TELEPHONE)
+    @HelpText('Formato: XXX XXX XXXX')
+    phone!: string;
+
+    @PropertyIndex(12)
+    @PropertyName('Website URL', String)
+    @StringTypeDef(StringType.URL)
+    @HelpText('Debe iniciar con http:// o https://')
+    websiteUrl!: string;
+
+    @PropertyIndex(13)
+    @PropertyName('Image URL', String)
+    @StringTypeDef(StringType.URL_IMAGE)
+    @HelpText('URL de imagen para previsualización')
+    imageUrl!: string;
+
+    @PropertyIndex(14)
+    @PropertyName('Search Query', String)
+    @StringTypeDef(StringType.SEARCH)
+    searchQuery!: string;
+
+    @PropertyIndex(15)
+    @PropertyName('Card Number', String)
+    @StringTypeDef(StringType.CREDIT_CARD)
+    @HelpText('Formato: XXXX XXXX XXXX XXXX')
+    cardNumber!: string;
+
+    @PropertyIndex(16)
+    @PropertyName('Card Date', String)
+    @StringTypeDef(StringType.CREDIT_CARD_DATE)
+    @HelpText('Formato: MM/YY')
+    cardDate!: string;
+
+    @PropertyIndex(17)
+    @PropertyName('Card CVV', String)
+    @StringTypeDef(StringType.CREDIT_CARD_CVV)
+    @HelpText('Máximo 3 dígitos')
+    cardCvv!: string;
+
     /**
      * Array of related Product entities forming a collection.
      * Required field with validation ensuring minimum of 4 products in the list.

@@ -11,6 +11,8 @@ export const GGICONS = {
     CANCEL: 'cancel',
     CHECK: 'check',
     MAIL: 'mail',
+    PHONE: 'phone',
+    CREDIT_CARD: 'credit_card',
     ARROW_UP: 'keyboard_control_key',
     ARROW_LEFT: 'arrow_left',
     INFO: 'info_i',

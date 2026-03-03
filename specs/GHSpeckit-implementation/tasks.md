@@ -391,6 +391,15 @@
 - [x] T180 [P] Verify `src/router/index.ts` has no `any` types (TypeScript constraint per spec §6.3)
 - [x] T181 [P] Verify `src/entities/base_entity.ts` has no `any` in signatures, casts, or catch blocks; replace with `unknown` + type guards per spec §3 TypeScript constraints
 - [x] T191 [P] Extract date-time suffix literal into global constant `DATE_TIME_LOCAL_SUFFIX`; replace all usages with template literals `${value}${DATE_TIME_LOCAL_SUFFIX}` in Date inputs and detail view; codify variable+text concatenation prohibition in spec §10.2
+- [x] T192 [US1] Extend `StringType` runtime coverage in `default_detailview.vue` to dispatch dedicated components for `TELEPHONE`, `URL`, `URL_IMAGE`, `SEARCH`, `CREDIT_CARD`, `CREDIT_CARD_DATE`, and `CREDIT_CARD_CVV`
+- [x] T193 [P] Implement `TelephoneInputComponent.vue` with optional `lenght` prop (default `10`), text-only numeric capture, and format `XXX XXX XXXX`
+- [x] T194 [P] Implement `UrlInputComponent.vue` with `http/https` validation and disabled-state anchor rendering using CSS blue token
+- [x] T195 [P] Implement `UrlImageInputComponent.vue` with URL validation and image preview area capped at `15rem`
+- [x] T196 [P] Implement `SearchInputComponent.vue` with integrated search button and shared validation contract
+- [x] T197 [P] Implement `CreditCardInputComponent.vue` with numeric-only input and format `XXXX XXXX XXXX XXXX`
+- [x] T198 [P] Implement `CreditCardDateInputComponent.vue` with format `XX/XX` and month/year range validation (`01-12` / `01-99`)
+- [x] T199 [P] Implement `CreditCardCvvInputComponent.vue` with numeric-only max 3 digits
+- [x] T200 [US1] Add Product entity sample fields to exercise all new `StringType` inputs and export components in `src/components/Form/index.ts`
 
 ---
 

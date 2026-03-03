@@ -92,6 +92,69 @@
                             :model-value="getStringModel(prop)"
                             @update:model-value="setStringModel(prop, $event)"
                         />
+
+                        <TelephoneInputComponent
+                            v-if="propertyMetadata[prop].showTelephoneInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <UrlInputComponent
+                            v-if="propertyMetadata[prop].showUrlInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <UrlImageInputComponent
+                            v-if="propertyMetadata[prop].showUrlImageInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <SearchInputComponent
+                            v-if="propertyMetadata[prop].showSearchInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <CreditCardInputComponent
+                            v-if="propertyMetadata[prop].showCreditCardInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <CreditCardDateInputComponent
+                            v-if="propertyMetadata[prop].showCreditCardDateInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <CreditCardCvvInputComponent
+                            v-if="propertyMetadata[prop].showCreditCardCvvInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
                         <!---------------------------------------------->
                     </div>
                 </component>
@@ -181,6 +244,13 @@ export default {
                 showTextAreaInput: boolean;
                 showEmailInput: boolean;
                 showPasswordInput: boolean;
+                showTelephoneInput: boolean;
+                showUrlInput: boolean;
+                showUrlImageInput: boolean;
+                showSearchInput: boolean;
+                showCreditCardInput: boolean;
+                showCreditCardDateInput: boolean;
+                showCreditCardCvvInput: boolean;
             }
         > {
             const metadata: Record<
@@ -195,6 +265,13 @@ export default {
                     showTextAreaInput: boolean;
                     showEmailInput: boolean;
                     showPasswordInput: boolean;
+                    showTelephoneInput: boolean;
+                    showUrlInput: boolean;
+                    showUrlImageInput: boolean;
+                    showSearchInput: boolean;
+                    showCreditCardInput: boolean;
+                    showCreditCardDateInput: boolean;
+                    showCreditCardCvvInput: boolean;
                 }
             > = {};
             const keys = this.entity.getKeys();
@@ -209,14 +286,17 @@ export default {
                     showDateInput: propType === Date,
                     showBooleanInput: propType === Boolean,
                     showEnumInput: this.entity.isEnumProperty(prop),
-                    showTextInput: propType === String && (
-                        stringType === StringType.TEXT ||
-                        stringType === StringType.TELEPHONE ||
-                        stringType === StringType.URL
-                    ),
+                    showTextInput: propType === String && stringType === StringType.TEXT,
                     showTextAreaInput: propType === String && stringType == StringType.TEXTAREA,
                     showEmailInput: propType === String && stringType == StringType.EMAIL,
-                    showPasswordInput: propType === String && stringType == StringType.PASSWORD
+                    showPasswordInput: propType === String && stringType == StringType.PASSWORD,
+                    showTelephoneInput: propType === String && stringType == StringType.TELEPHONE,
+                    showUrlInput: propType === String && stringType == StringType.URL,
+                    showUrlImageInput: propType === String && stringType == StringType.URL_IMAGE,
+                    showSearchInput: propType === String && stringType == StringType.SEARCH,
+                    showCreditCardInput: propType === String && stringType == StringType.CREDIT_CARD,
+                    showCreditCardDateInput: propType === String && stringType == StringType.CREDIT_CARD_DATE,
+                    showCreditCardCvvInput: propType === String && stringType == StringType.CREDIT_CARD_CVV
                 };
             }
             return metadata;

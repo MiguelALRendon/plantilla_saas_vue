@@ -37,6 +37,12 @@ Thumbs.db
 
 .eslintcache
 
+# Python virtual environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
 # Cypress
 /cypress/videos/
 /cypress/screenshots/
