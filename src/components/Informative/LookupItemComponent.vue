@@ -15,11 +15,14 @@ export default {
             required: true,
         },
     },
+
+    // #region COMPUTED
     computed: {
         defaultPropertyValue(): unknown {
             return (this.itemFromList as BaseEntity).getDefaultPropertyValue();
         },
     },
+    // #endregion
 };
 </script>
 

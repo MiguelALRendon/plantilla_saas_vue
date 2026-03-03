@@ -54,6 +54,8 @@ import Application from '@/models/application';
 
 export default {
     name: 'ConfirmationDialogComponent',
+
+    // #region COMPUTED
     computed: {
         dialogInfo() {
             return Application.confirmationMenu.value;
@@ -73,6 +75,9 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             Application,
@@ -82,6 +87,9 @@ export default {
             isShowing: false
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('show-confirmation', () => {
             this.isShowing = true;
@@ -94,6 +102,7 @@ export default {
         Application.eventBus.off('show-confirmation');
         Application.eventBus.off('hide-confirmation');
     }
+    // #endregion
 };
 </script>
 

@@ -19,12 +19,17 @@ export default {
     components: {
         SideBarItemComponent
     },
+
+    // #region PROPERTIES
     data() {
         return {
             Application,
             toggled: true
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
             this.toggled = state !== undefined ? state : !this.toggled;
@@ -33,6 +38,7 @@ export default {
     beforeUnmount() {
         Application.eventBus.off('toggle-sidebar');
     }
+    // #endregion
 };
 </script>
 
@@ -99,5 +105,20 @@ export default {
 .sidebar.toggled .footer {
     height: 100%;
     opacity: 1;
+}
+
+/* Mobile (var(--breakpoint-mobile) = 768px — raw value required: var() unsupported in @media per CSS spec) */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: var(--z-overlay);
+        max-width: 0;
+        padding: 0;
+    }
+    .sidebar.toggled {
+        max-width: var(--sidebar-width-expanded);
+        box-shadow: var(--shadow-dark);
+    }
 }
 </style>

@@ -31,6 +31,8 @@ import listView from '@/views/list.vue';
 
 export default {
     name: 'TopBarComponent',
+
+    // #region METHODS
     methods: {
         toggleSidebar() {
             Application.ApplicationUIService.toggleSidebar();
@@ -43,6 +45,9 @@ export default {
             Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
         }
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         title() {
             return Application.View.value.entityClass?.getModuleName() ?? 'Default';
@@ -51,6 +56,9 @@ export default {
             return Application.View.value.entityClass?.getModuleIcon() ?? '';
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             ICONS,
@@ -58,6 +66,9 @@ export default {
             toggled_bar: true
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
             this.toggled_bar = state !== undefined ? state : !this.toggled_bar;
@@ -66,6 +77,7 @@ export default {
     beforeUnmount() {
         Application.eventBus.off('toggle-sidebar');
     }
+    // #endregion
 };
 </script>
 

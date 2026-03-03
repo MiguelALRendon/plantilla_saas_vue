@@ -38,6 +38,8 @@ import { Component } from 'vue';
 
 export default {
     name: 'ModalComponent',
+
+    // #region METHODS
     methods: {
         closeModal() {
             Application.ApplicationUIService.closeModal();
@@ -48,6 +50,9 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             ICONS,
@@ -58,6 +63,9 @@ export default {
             isShowing: false
         };
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         modalModuleIcon(): string | undefined {
             return this.modalModule?.getModuleIcon();
@@ -88,6 +96,9 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         window.addEventListener('keydown', this.handleKeydown);
         Application.eventBus.on('show-modal', () => {
@@ -102,6 +113,7 @@ export default {
         Application.eventBus.off('show-modal');
         Application.eventBus.off('hide-modal');
     }
+    // #endregion
 };
 </script>
 

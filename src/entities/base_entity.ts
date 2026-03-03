@@ -92,10 +92,8 @@ function getErrorMessage(error: unknown): string {
 export abstract class BaseEntity {
     [key: string]: unknown;
 
-    /**
-     * @region PROPERTIES
-     * Instance properties for entity state management
-     */
+    // #region PROPERTIES — Instance properties for entity state management
+
     /**
      * Indicates whether the entity is currently in a loading state
      * Used by UI components to show loading indicators
@@ -119,9 +117,8 @@ export abstract class BaseEntity {
      * Optional property used by the framework to track entity instances across views and operations
      */
     public entityObjectId?: string;
-    /**
-     * @endregion
-     */
+
+    // #endregion
 
     /**
      * Creates a new BaseEntity instance
@@ -141,10 +138,8 @@ export abstract class BaseEntity {
         return this.getStaticDecoratedConstructorMetadata<T>().prototype;
     }
 
-    /**
-     * @region METHODS
-     * Instance methods for entity operations and metadata access
-     */
+    // #region METHODS — Instance methods for entity operations and metadata access
+
     /**
      * Sets the entity to loading state
      * Used to indicate async operations in progress

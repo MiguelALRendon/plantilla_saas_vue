@@ -45,6 +45,7 @@ interface Props {
     modelType: typeof BaseEntity;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: () => new EmptyEntity({}) as BaseEntity
 });
@@ -56,7 +57,9 @@ const emit = defineEmits<{
 const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
 const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
+// #endregion
 
+// #region METHODS
 function setNewValue(newValue: BaseEntity): void {
     emit('update:modelValue', newValue);
 }
@@ -113,7 +116,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -121,6 +126,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

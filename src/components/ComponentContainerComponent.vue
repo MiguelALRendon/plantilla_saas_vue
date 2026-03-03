@@ -24,6 +24,8 @@ export default {
         LoadingScreenComponent,
         ActionsComponent
     },
+
+    // #region PROPERTIES
     data() {
         return {
             GGICONS,
@@ -31,6 +33,9 @@ export default {
             currentComponent: null as Component | null
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     created() {
         const init = Application.View.value.component;
         if (init) {
@@ -49,6 +54,7 @@ export default {
             }
         );
     }
+    // #endregion
 };
 </script>
 
@@ -78,5 +84,19 @@ export default {
     background-color: var(--bg-gray);
     border-radius: var(--border-radius);
     box-sizing: border-box;
+}
+
+/* Mobile (var(--breakpoint-mobile) = 768px — raw value required: var() unsupported in @media per CSS spec) */
+@media (max-width: 768px) {
+    .ViewContainer {
+        padding-bottom: 0;
+        padding-right: 0;
+    }
+    .ComponentContainer {
+        padding-top: var(--padding-medium);
+        padding-inline: var(--padding-small);
+        padding-bottom: var(--spacing-xl);
+        border-radius: 0;
+    }
 }
 </style>

@@ -371,7 +371,7 @@
 
 **Purpose**: Technical debt resolution, developer experience improvements, and validation of quickstart scenario end-to-end.
 
-- [ ] T172 [P] Apply `#region`/`#endregion` comments to all Vue component `<script>` sections that are missing them (PROPERTIES, METHODS, LIFECYCLE, OVERRIDES sections per code standards)
+- [x] T172 [P] Apply `#region`/`#endregion` comments to all Vue component `<script>` sections that are missing them (PROPERTIES, METHODS, LIFECYCLE, OVERRIDES sections per code standards)
 - [x] T182 [P] Create `src/enums/detail_type.ts` with `export enum DetailTypes { NEW, EDIT }` — tracks new vs edit state in router detail view navigation
 - [x] T183 [P] Create `src/types/decorator.types.ts` — barrel re-export of all decorator types from `src/decorations/index.ts`: `AsyncValidationMetadata`, `DisabledMetadata`, `DisplayFormatValue`, `HttpMethod`, `ReadOnlyMetadata`, `RequiredMetadata`, `ValidationMetadata`
 - [x] T184 [P] Create `src/types/entity.types.ts` with entity type aliases used by BaseEntity and Application: `EntityData`, `MetadataRecord`, `EntityConstructor<T>`, `ConcreteEntityClass<T>`, `DecoratedPrototype<T>`, `DecoratedConstructor<T>`, `TransformableEntityClass<T>`

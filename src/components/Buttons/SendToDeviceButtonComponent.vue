@@ -10,13 +10,19 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 
 export default {
     name: 'NewButtonComponent',
+
+    // #region METHODS
     methods: {},
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             GGCLASS,
             GGICONS
         };
     }
+    // #endregion
 };
 </script>
 

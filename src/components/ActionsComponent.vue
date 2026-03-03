@@ -9,15 +9,20 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 
 import Application from '@/models/application';
 
+// #region PROPERTIES
 const isAtTop: Ref<boolean> = ref(true);
 const scrollContainer: Ref<HTMLElement | null> = ref(null);
+// #endregion
 
+// #region METHODS
 function handleScroll(): void {
     if (scrollContainer.value) {
         isAtTop.value = scrollContainer.value.scrollTop === 0;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted((): void => {
     scrollContainer.value = document.querySelector('.ComponentContainer');
 
@@ -32,6 +37,7 @@ onBeforeUnmount((): void => {
         scrollContainer.value.removeEventListener('scroll', handleScroll);
     }
 });
+// #endregion
 </script>
 
 <style scoped>

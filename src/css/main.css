@@ -88,3 +88,31 @@ button:disabled, .button[disabled] {
 button:disabled span, .button[disabled] span {
     color: var(--gray-light);
 }
+
+/* ============================================================
+   RESPONSIVE OVERRIDES
+   Note: CSS var() cannot be used in @media conditions.
+   Raw breakpoint values correspond to design tokens:
+     768px  → var(--breakpoint-mobile)
+     1024px → var(--breakpoint-tablet)
+   See: src/css/constants.css §6.7 Desktop-First breakpoints
+   ============================================================ */
+
+/* Tablet and below (var(--breakpoint-tablet) = 1024px) */
+@media (max-width: 1024px) {
+    .button {
+        padding-inline: var(--padding-medium);
+    }
+}
+
+/* Mobile (var(--breakpoint-mobile) = 768px) */
+@media (max-width: 768px) {
+    body, html {
+        font-size: var(--font-size-sm);
+    }
+
+    .button {
+        padding-inline: var(--padding-small);
+        font-size: var(--font-size-sm);
+    }
+}

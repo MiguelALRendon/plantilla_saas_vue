@@ -24,6 +24,8 @@ export default {
             required: true
         }
     },
+
+    // #region METHODS
     methods: {
         setToastClass(): string {
             switch (this.toast.type) {
@@ -88,6 +90,9 @@ export default {
             this.dismissToast();
         }
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         setTimeout(() => {
             this.showToast = true;
@@ -98,6 +103,9 @@ export default {
         this.clearDismissTimer();
         this.clearRemoveTimer();
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             GGICONS,
@@ -110,6 +118,7 @@ export default {
             isDismissing: false
         };
     }
+    // #endregion
 };
 </script>
 

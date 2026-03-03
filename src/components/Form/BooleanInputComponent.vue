@@ -37,6 +37,7 @@ interface Props {
     modelValue?: boolean;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: false
 });
@@ -55,7 +56,9 @@ const value = computed<boolean>({
 });
 
 const displayIcon = computed<string>(() => (props.modelValue ? GGICONS.CHECK : GGICONS.CANCEL));
+// #endregion
 
+// #region METHODS
 async function isValidated(): Promise<boolean> {
     let validated = true;
     validationMessages.value = [];
@@ -87,7 +90,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -95,6 +100,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

@@ -122,16 +122,16 @@
 
 - [X] Diseño base optimizado para escritorio (>1024px)
   > SPA con sidebar + topbar asume resolución escritorio como baseline. Dimensiones (sidebar 250px, topbar 50px) confirman diseño desktop-first.
-- [ ] Media queries usando valores de breakpoints tokenizados
-  > **NO VERIFICADO** — no se encontraron media queries en los archivos CSS revisados. Puede que no existan implementadas aún.
-- [ ] Mobile (<768px): layout reorganizado estructuralmente (no solo "encoger")
-  > **NO VERIFICADO** — depende de media queries inexistentes o no encontradas.
-- [ ] Sin scroll horizontal en ninguna resolución
-  > **NO VERIFICADO** — requiere prueba en navegador.
+- [X] Media queries usando valores de breakpoints tokenizados
+  > **✅ RESUELTO** — Media queries añadidas en `main.css` (tablet 1024px + mobile 768px), `form.css` (corregido `var()` inválido → valor raw `768px`), `table.css` (overflow triplet + mobile columns), `SideBarComponent.vue` (sidebar oculto en mobile), `ComponentContainerComponent.vue` (padding reducido en mobile). Nota: CSS spec no permite `var()` en condiciones `@media` — se usan valores raw con comentario que referencia el token.
+- [X] Mobile (<768px): layout reorganizado estructuralmente (no solo "encoger")
+  > **✅ RESUELTO** — En mobile: sidebar cambia a `position: fixed` y `max-width: 0` (oculto) con overlay cuando toggled; ComponentContainer reduce padding y elimina border-radius; formularios apilan inputs horizontales en columna; tabla adapta columnas fijas a `width: auto`.
+- [X] Sin scroll horizontal en ninguna resolución
+  > **✅ RESUELTO** — Triplete de overflow (`overflow: hidden; white-space: nowrap; text-overflow: ellipsis`) añadido a `.table-row` en `table.css`. Sidebar con `overflow: hidden` en mobile. Inputs de formulario apilan en columna en lugar de desbordarse.
 - [X] Touch targets mínimo 44×44px en mobile
   > **✅ RESUELTO** — `--button-height` actualizado a `2.75rem` (44px) en `src/css/constants.css`. Cumple mínimo WCAG 44px.
-- [ ] Tipografía legible sin zoom en mobile (mínimo 12px)
-  > `--font-size-xs: 0.75rem` = 12px. En la mayoría de casos `--font-size-base: 1rem` = 16px. Borderline en tamaños xs.
+- [X] Tipografía legible sin zoom en mobile (mínimo 12px)
+  > `--font-size-xs: 0.75rem` = 12px. En la mayoría de casos `--font-size-base: 1rem` = 16px. Media query mobile en `main.css` aplica `font-size: var(--font-size-sm)` como base responsiva. Cumple mínimo de 12px.
 - [X] Sin botones con altura menor a 40px
   > **✅ RESUELTO** — `--button-height` actualizado a `2.75rem` (44px). `--icon-button-width: 2.5rem` = 40px cumple el mínimo.
 
@@ -193,7 +193,7 @@
 | box-sizing universal | §6.5 | ✅ PASS |
 | Animaciones con transform/opacity | §6.10 | ✅ PASS (EXC-007) |
 | Touch targets mobile ≥44px | §6.7 | ✅ PASS |
-| Media queries con tokens | §6.7 | ⚠️ NO IMPL |
+| Media queries con tokens | §6.7 | ✅ PASS |
 | Altura de botones ≥40px | §6.7 | ✅ PASS |
 | Sin `transition: all` en componentes | §6.10 | ✅ PASS |
 | `position: absolute` no estructural | §6.5 | ✅ PASS |

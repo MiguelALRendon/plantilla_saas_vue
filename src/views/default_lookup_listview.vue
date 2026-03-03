@@ -18,11 +18,16 @@ export default {
     components: {
         LookupItemComponent
     },
+
+    // #region METHODS
     methods: {
         clickedItrem(item: BaseEntity) {
             Application.ApplicationUIService.closeModalOnFunction(item);
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         const data: BaseEntity[] = [];
         for (let i = 1; i <= 50; i++) {
@@ -49,6 +54,7 @@ export default {
             data
         };
     }
+    // #endregion
 };
 </script>
 

@@ -49,8 +49,11 @@ import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
 
+// #region PROPERTIES
 const data: Ref<BaseEntity[]> = ref([]);
+// #endregion
 
+// #region METHODS
 async function loadData(): Promise<void> {
     const entityClass = Application.View.value.entityClass as
         | (typeof BaseEntity & (new (input: Record<string, unknown>) => BaseEntity))
@@ -99,10 +102,13 @@ watch(
         loadData();
     }
 );
+// #endregion
 
+// #region LIFECYCLE
 onMounted((): void => {
     loadData();
 });
+// #endregion
 </script>
 
 <style scoped>

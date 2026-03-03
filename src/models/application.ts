@@ -42,10 +42,8 @@ import type { Toast } from './Toast';
 class ApplicationClass implements ApplicationUIContext {
     private static instance: ApplicationClass | null = null;
 
-    /**
-     * @region PROPERTIES
-     * Reactive and non-reactive properties of the Application singleton
-     */
+    // #region PROPERTIES — Reactive and non-reactive properties of the Application singleton
+
     /**
      * Application configuration object containing environment variables and settings
      * Type: Ref<AppConfiguration>
@@ -124,9 +122,8 @@ class ApplicationClass implements ApplicationUIContext {
      * Initialized by initializeRouter() and used to synchronize view changes with URL routes
      */
     router: Router | null = null;
-    /**
-     * @endregion
-     */
+
+    // #endregion
 
     private constructor() {
         this.AppConfiguration = ref<AppConfiguration>({
@@ -307,10 +304,8 @@ class ApplicationClass implements ApplicationUIContext {
         );
     }
 
-    /**
-     * @region METHODS
-     * Public and private methods for managing application state and navigation
-     */
+    // #region METHODS — Public and private methods for managing application state and navigation
+
     /**
      * Changes the current application view to display a different entity and component
      * Checks for unsaved changes and prompts user confirmation if necessary
@@ -549,17 +544,10 @@ class ApplicationClass implements ApplicationUIContext {
         this.ModuleList.value.push(moduleClass);
         return true;
     }
-    /**
-     * @endregion
-     */
+    // #endregion
 
-    /**
-     * @region METHODS OVERRIDES
-     * Reserved for method overrides if ApplicationClass is extended (currently unused)
-     */
-    /**
-     * @endregion
-     */
+    // #region METHODS OVERRIDES — Reserved for method overrides if ApplicationClass is extended (currently unused)
+    // #endregion
 
     /**
      * Returns the singleton instance of ApplicationClass

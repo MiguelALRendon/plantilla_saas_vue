@@ -36,6 +36,7 @@ interface Props {
     modelValue?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -52,7 +53,9 @@ const containerClasses = computed<Record<string, boolean>>(() => ({
     disabled: metadata.disabled.value,
     nonvalidated: !isInputValidated.value
 }));
+// #endregion
 
+// #region METHODS
 function handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     emit('update:modelValue', target.value);
@@ -89,7 +92,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -97,6 +102,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

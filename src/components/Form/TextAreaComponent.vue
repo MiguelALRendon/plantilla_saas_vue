@@ -31,6 +31,7 @@ interface Props {
     modelValue?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -42,7 +43,9 @@ const emit = defineEmits<{
 const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
 const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
+// #endregion
 
+// #region METHODS
 function handleInput(event: Event): void {
     emit('update:modelValue', (event.target as HTMLTextAreaElement).value);
 }
@@ -67,7 +70,9 @@ function saveItem(): void {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', saveItem);
 });
@@ -75,6 +80,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', saveItem);
 });
+// #endregion
 </script>
 
 <style scoped>

@@ -37,3 +37,29 @@
 .table-length-full {
     flex: 1;
 }
+
+/* Text overflow triplet — prevents horizontal scroll in fixed-width table cells */
+.table-row {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   RESPONSIVE OVERRIDES
+   Note: CSS var() cannot be used in @media conditions.
+   768px → var(--breakpoint-mobile)  (see constants.css §6.7)
+   ============================================================ */
+
+/* Mobile (var(--breakpoint-mobile) = 768px) */
+@media (max-width: 768px) {
+    .table-length-short,
+    .table-length-xs,
+    .table-length-small,
+    .table-length-medium,
+    .table-length-large,
+    .table-length-xl {
+        min-width: unset;
+        width: auto;
+    }
+}

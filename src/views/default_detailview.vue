@@ -137,6 +137,8 @@ export default {
         TabControllerComponent,
         TabComponent
     },
+
+    // #region PROPERTIES
     data() {
         return {
             StringType,
@@ -144,6 +146,9 @@ export default {
             BaseEntity
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         if (!Application.View.value.entityObject) {
             Application.View.value.entityObject = Application.View.value.entityClass
@@ -151,6 +156,9 @@ export default {
                 : new EmptyEntity({});
         }
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         entity(): BaseEntity {
             return (Application.View.value.entityObject ?? new EmptyEntity({})) as BaseEntity;
@@ -253,6 +261,9 @@ export default {
             return groups;
         }
     },
+    // #endregion
+
+    // #region METHODS
     methods: {
         /**
          * FUTURE: async loadEntityFromAPI(oid: string) {
@@ -355,6 +366,7 @@ export default {
             return returnList;
         }
     }
+    // #endregion
 };
 </script>
 <style scoped>

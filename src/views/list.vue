@@ -8,11 +8,14 @@
 import Application from '@/models/application';
 export default {
     name: 'ListView',
+
+    // #region PROPERTIES
     data() {
         return {
             Application
         };
     }
+    // #endregion
 };
 </script>
 

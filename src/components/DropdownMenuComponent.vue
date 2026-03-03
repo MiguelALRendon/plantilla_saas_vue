@@ -15,6 +15,8 @@ import Application from '@/models/application';
 
 export default {
     name: 'DropdownMenuComponent',
+
+    // #region LIFECYCLE
     mounted() {
         document.addEventListener('click', this.handleClickOutside);
         window.addEventListener('keydown', this.handleKeydown);
@@ -23,6 +25,9 @@ export default {
         document.removeEventListener('click', this.handleClickOutside);
         window.removeEventListener('keydown', this.handleKeydown);
     },
+    // #endregion
+
+    // #region METHODS
     methods: {
         handleClickOutside(event: MouseEvent) {
             if (this.dropDownData.showing) {
@@ -40,11 +45,17 @@ export default {
             }
         },
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             Application,
         };
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         dropDownData() {
             return Application.dropdownMenu.value;
@@ -92,6 +103,7 @@ export default {
             return 'dropdown-width-xl';
         },
     },
+    // #endregion
 };
 </script>
 

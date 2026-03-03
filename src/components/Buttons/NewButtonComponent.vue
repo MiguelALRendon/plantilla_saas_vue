@@ -12,6 +12,8 @@ import Application from '@/models/application';
 
 export default {
     name: 'NewButtonComponent',
+
+    // #region METHODS
     methods: {
         openNewDetailView() {
             const entityClass = Application.View.value.entityClass as
@@ -23,6 +25,9 @@ export default {
             Application.changeViewToDetailView(entityClass.createNewInstance());
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             GGCLASS,
@@ -30,6 +35,7 @@ export default {
             Application
         };
     }
+    // #endregion
 };
 </script>
 

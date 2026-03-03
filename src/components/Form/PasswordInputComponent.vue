@@ -42,6 +42,7 @@ interface Props {
     modelValue?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -56,7 +57,9 @@ const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
 
 const visibilityIcon = computed<string>(() => (showPassword.value ? GGICONS.VISIBILITY_OFF : GGICONS.VISIBILITY));
+// #endregion
 
+// #region METHODS
 function togglePasswordVisibility(): void {
     showPassword.value = !showPassword.value;
 }
@@ -96,7 +99,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -104,6 +109,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

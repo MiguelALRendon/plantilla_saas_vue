@@ -13,23 +13,17 @@ import { ToastType } from '@/enums/toast_type';
  * § 06-CODE-STYLING-STANDARDS 6.2.1, 6.6.1
  */
 export class ApplicationUIService {
-    /**
-     * @region PROPERTIES
-     */
-    
+    // #region PROPERTIES
+
     /**
      * Referencia al singleton Application que contiene estado reactivo global.
      */
     private app: ApplicationUIContext;
 
-    /**
-     * @endregion
-     */
+    // #endregion
 
-    /**
-     * @region METHODS
-     */
-    
+    // #region METHODS
+
     /**
      * Constructor que inicializa servicio con referencia a Application.
      * @param app Instancia Application singleton con estado reactivo global.
@@ -256,8 +250,6 @@ export class ApplicationUIService {
     hideLoadingMenu = () => {
         this.app.eventBus.emit('hide-loading-menu');
     };
-    
-    /**
-     * @endregion
-     */
+
+    // #endregion
 }

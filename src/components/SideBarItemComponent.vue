@@ -20,6 +20,8 @@ export default {
             required: true
         }
     },
+
+    // #region COMPUTED
     computed: {
         moduleIcon(): string | undefined {
             return this.module?.getModuleIcon();
@@ -31,11 +33,15 @@ export default {
             return Application.View.value.entityClass?.getModuleName() === (this.module && this.module.getModuleName());
         }
     },
+    // #endregion
+
+    // #region METHODS
     methods: {
         setNewView() {
             Application.changeViewToDefaultView(this.module as typeof BaseEntity);
         }
     }
+    // #endregion
 };
 </script>
 

@@ -12,9 +12,12 @@ export default {
     components: {
         DetailViewTableComponent
     },
+
+    // #region LIFECYCLE
     mounted() {
         Application.View.value.viewType = ViewTypes.LISTVIEW;
     }
+    // #endregion
 };
 </script>
 

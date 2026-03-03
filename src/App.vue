@@ -22,9 +22,11 @@ import LoadingPopupComponent from './components/Modal/LoadingPopupComponent.vue'
 import Application from './models/application';
 import ToastContainerComponent from './components/Informative/ToastContainerComponent.vue';
 
+// #region PROPERTIES
 const containerClass = computed<string>(() => {
     return Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : '';
 });
+// #endregion
 </script>
 
 <style scoped>

@@ -44,6 +44,7 @@ interface Props {
     modelValue?: number;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: 0
 });
@@ -75,7 +76,9 @@ const displayValue = computed<string>(() => {
 
     return props.modelValue?.toString() || '0';
 });
+// #endregion
 
+// #region METHODS
 function handleKeyPress(event: KeyboardEvent): void {
     const char = event.key;
     const currentValue = (event.target as HTMLInputElement).value;
@@ -155,7 +158,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -163,6 +168,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

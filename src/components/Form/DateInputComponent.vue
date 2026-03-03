@@ -53,6 +53,7 @@ interface Props {
     modelValue?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -83,7 +84,9 @@ const formattedDate = computed<string>(() => {
 
     return `${day}/${month}/${year}`;
 });
+// #endregion
 
+// #region METHODS
 function updateDate(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     emit('update:modelValue', value);
@@ -124,7 +127,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -132,6 +137,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

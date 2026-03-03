@@ -58,6 +58,7 @@ interface Props {
     modelValue?: string | number;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -93,7 +94,9 @@ const actualOption = computed<string | number>(() => {
     const value = props.propertyEnumValues.getKeyValuePairs().find((pair) => pair.value === props.modelValue)?.key || '';
     return parseValue(value);
 });
+// #endregion
 
+// #region METHODS
 function openOptions(): void {
     const rect = document.getElementById(`id-4-click-on${metadata.propertyName}`)?.getBoundingClientRect();
     if (rect) {
@@ -149,7 +152,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
     Application.eventBus.on('validate-inputs', handleValidation);
@@ -159,6 +164,7 @@ onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutside);
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

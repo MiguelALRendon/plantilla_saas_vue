@@ -16,6 +16,8 @@ import ToastItemComponent from './ToastItemComponent.vue';
 export default {
     name: 'ToastContainerComponent',
     components: { ToastItemComponent },
+
+    // #region METHODS
     methods: {
         removeToast(toastId: string) {
             const index = this.Application.ToastList.findIndex((toast) => toast.id === toastId);
@@ -24,11 +26,15 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             Application: Application
         };
     }
+    // #endregion
 };
 </script>
 

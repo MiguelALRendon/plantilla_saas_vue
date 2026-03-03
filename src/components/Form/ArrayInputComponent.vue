@@ -87,6 +87,7 @@ interface Props {
     validatedMessage?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     required: false,
     requireddMessage: '',
@@ -121,7 +122,9 @@ const filteredData = computed<BaseEntity[]>(() => {
         return false;
     });
 });
+// #endregion
 
+// #region METHODS
 function getItemIcon(item: BaseEntity): string {
     return selectedItems.value.includes(item) ? GGICONS.REMOVE : GGICONS.ADD;
 }
@@ -202,7 +205,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -210,6 +215,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

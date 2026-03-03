@@ -19,9 +19,11 @@ interface Props {
     title: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     title: '',
 });
+// #endregion
 </script>
 
 <style scoped>

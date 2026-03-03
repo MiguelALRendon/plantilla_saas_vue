@@ -7,12 +7,17 @@ import { Application } from '@/models/application';
 
 export default {
     name: 'LoadingScreenComponent',
+
+    // #region PROPERTIES
     data() {
         return {
             Application,
             isActive: false
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('show-loading', () => {
             this.isActive = true;
@@ -25,6 +30,7 @@ export default {
         Application.eventBus.off('show-loading');
         Application.eventBus.off('hide-loading');
     }
+    // #endregion
 };
 </script>
 

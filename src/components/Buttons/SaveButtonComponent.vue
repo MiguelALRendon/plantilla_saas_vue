@@ -11,6 +11,8 @@ import Application from '@/models/application';
 
 export default {
     name: 'SaveButtonComponent',
+
+    // #region METHODS
     methods: {
         async saveItem() {
             const entity = Application.View.value.entityObject;
@@ -19,12 +21,16 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             GGCLASS,
             GGICONS
         };
     }
+    // #endregion
 };
 </script>
 
