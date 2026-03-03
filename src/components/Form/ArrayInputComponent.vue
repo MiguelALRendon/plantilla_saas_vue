@@ -40,31 +40,33 @@
             </div>
         </div>
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th class="selection" :class="[{ display: isSelection }]"></th>
-                    <th v-for="header in typeValue?.getProperties()">{{ header }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="item in filteredData" :class="[{ selected: selectedItems.includes(item) }]">
-                    <td class="selection" :class="[{ display: isSelection }]">
-                        <button
-                            class="select-btn"
-                            :class="[{ added: selectedItems.includes(item) }]"
-                            @click="toggleItemSelection(item)"
-                        >
-                            <span :class="GGCLASS">{{ getItemIcon(item) }}</span>
-                        </button>
-                    </td>
-                    <td v-for="property in item.getKeys()">
-                        {{ item[property] }}
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot></tfoot>
-        </table>
+        <div class="table-scroll-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="selection" :class="[{ display: isSelection }]"></th>
+                        <th v-for="header in typeValue?.getProperties()">{{ header }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in filteredData" :class="[{ selected: selectedItems.includes(item) }]">
+                        <td class="selection" :class="[{ display: isSelection }]">
+                            <button
+                                class="select-btn"
+                                :class="[{ added: selectedItems.includes(item) }]"
+                                @click="toggleItemSelection(item)"
+                            >
+                                <span :class="GGCLASS">{{ getItemIcon(item) }}</span>
+                            </button>
+                        </td>
+                        <td v-for="property in item.getKeys()">
+                            {{ item[property] }}
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
     </div>
 </template>
 <script setup lang="ts">
@@ -219,6 +221,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import '@/css/table.css';
+
 .left-side-space {
     display: flex;
     align-items: center;
@@ -233,8 +237,24 @@ onBeforeUnmount(() => {
 }
 .table-container {
     height: var(--array-input-height-large);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Single-scroll wrapper — mirrors DetailViewTableComponent pattern.
+   Only this element scrolls (both axes); thead is sticky inside it. */
+.table-scroll-wrapper {
+    flex: 1;
+    overflow: auto;
+    width: 100%;
+    min-width: 0;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
 }
 
 .table-container .table-header-row {
@@ -254,41 +274,67 @@ onBeforeUnmount(() => {
 .right-side-space {
     display: flex;
     align-items: center;
-    min-width: 50%;
-    display: flex;
+    flex: 1;
+    min-width: 0;
     justify-content: flex-end;
     flex-direction: row-reverse;
     gap: var(--spacing-lg);
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Search input: fills available space and shrinks last */
+.search-input-container {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Action buttons: never shrink — labels handled by .btn-label at ≤992px */
+.right-side-space .button {
+    flex-shrink: 0;
 }
 
 .table {
-    box-sizing: border-box;
     width: 100%;
-    height: 20rem;
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-light);
+    min-width: max-content; /* allows horizontal scroll inside .table-scroll-wrapper */
     display: flex;
     flex-direction: column;
     border-collapse: collapse;
 }
 
-.table thead,
-.table tbody,
-.table tfoot {
+.table thead {
+    display: block;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-base);
+    background-color: var(--white);
+    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
+}
+
+.table tbody {
     display: block;
     width: 100%;
 }
 
-.table tr {
-    display: flex;
+.table tfoot {
+    display: block;
     width: 100%;
+    border-top: var(--border-width-thin) solid var(--gray-lighter);
+}
+
+.table thead tr,
+.table tbody tr,
+.table tfoot tr {
+    display: flex;
+    min-width: 100%;
 }
 
 .table th,
 .table td {
     flex: 1;
+    flex-shrink: 0;
+    min-width: var(--table-width-small);
     padding: var(--spacing-sm);
     text-align: left;
     box-sizing: border-box;
@@ -297,34 +343,16 @@ onBeforeUnmount(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 30ch;
 }
 
 .table td {
     height: 4rem;
     border-bottom: var(--border-width-thin) solid var(--gray-lighter);
 }
+
 .table tbody tr:hover {
     background-color: var(--bg-gray);
     cursor: pointer;
-}
-
-.table thead {
-    height: 2.5rem;
-    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
-    flex-shrink: 0;
-}
-
-.table tbody {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.table tfoot {
-    height: 2.5rem;
-    border-top: var(--border-width-thin) solid var(--gray-lighter);
-    flex-shrink: 0;
 }
 
 .table tr.selected {
@@ -347,10 +375,6 @@ onBeforeUnmount(() => {
 .selection.display {
     display: flex;
     max-width: 3rem;
-}
-
-.search-input-container {
-    width: 100%;
 }
 
 .advice {

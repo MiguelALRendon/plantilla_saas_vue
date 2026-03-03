@@ -72,6 +72,13 @@ export default {
 </script>
 
 <style scoped>
+.tab-container {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
 .tab-container-row {
     display: flex;
     flex-direction: row;
