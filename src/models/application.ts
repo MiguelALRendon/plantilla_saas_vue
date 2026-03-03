@@ -5,14 +5,7 @@ import axios from 'axios';
 import type { AxiosError, AxiosInstance } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
-import {
-    NewButtonComponent,
-    RefreshButtonComponent,
-    SaveAndNewButtonComponent,
-    SaveButtonComponent,
-    SendToDeviceButtonComponent,
-    ValidateButtonComponent
-} from '@/components/Buttons';
+import { DefaultButtonLists } from '@/constants/default_button_lists';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ToastType } from '@/enums/toast_type';
@@ -31,7 +24,7 @@ import type { View } from './View';
 
 import type { ApplicationUIContext } from './application_ui_context';
 import type { Modal } from './modal';
-import type { Toast } from './Toast';
+import type { Toast } from './toast';
 
 /**
  * Main application singleton class that manages UI state, routing, and modals
@@ -463,32 +456,26 @@ class ApplicationClass implements ApplicationUIContext {
      */
     setButtonList() {
         const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
+        let buttonList: Component[];
 
         switch (this.View.value.viewType) {
             case ViewTypes.LISTVIEW:
-                this.ListButtons.value = [markRaw(NewButtonComponent), markRaw(RefreshButtonComponent)];
+                buttonList = DefaultButtonLists.ListView;
+                break;
+            case ViewTypes.DEFAULTVIEW:
+                buttonList = this.View.value.entityClass?.getDefaultViewButtonList() ?? DefaultButtonLists.ListView;
                 break;
             case ViewTypes.DETAILVIEW:
-                if (isPersistentEntity) {
-                    this.ListButtons.value = [
-                        markRaw(NewButtonComponent),
-                        markRaw(RefreshButtonComponent),
-                        markRaw(ValidateButtonComponent),
-                        markRaw(SaveButtonComponent),
-                        markRaw(SaveAndNewButtonComponent),
-                        markRaw(SendToDeviceButtonComponent)
-                    ];
-                } else {
-                    // Non-persistent entity: only validation is available
-                    this.ListButtons.value = [
-                        markRaw(ValidateButtonComponent)
-                    ];
-                }
+                buttonList = isPersistentEntity
+                    ? DefaultButtonLists.DetailView
+                    : DefaultButtonLists.DetailViewNonPersistent;
                 break;
             default:
-                this.ListButtons.value = [];
+                buttonList = [];
                 break;
         }
+
+        this.ListButtons.value = buttonList.map(markRaw);
     }
 
     /**

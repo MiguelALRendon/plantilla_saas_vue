@@ -14,6 +14,7 @@ import {
     HIDE_IN_LIST_VIEW_KEY,
     MODULE_CUSTOM_COMPONENTS_KEY,
     MODULE_DEFAULT_COMPONENT_KEY,
+    MODULE_DEFAULT_VIEW_BUTTON_LIST_KEY,
     MODULE_DETAIL_COMPONENT_KEY,
     MODULE_ICON_KEY,
     MODULE_LIST_COMPONENT_KEY,
@@ -1407,6 +1408,16 @@ export abstract class BaseEntity {
     public static getModuleDefaultComponent(): Component {
         const metadata = this.getStaticDecoratedConstructorMetadata();
         return (metadata[MODULE_DEFAULT_COMPONENT_KEY] as Component) || DefaultListview;
+    }
+
+    /**
+     * Retrieves the button list configured via @DefaultViewButtonList for this module.
+     * Used by Application.setButtonList() when the view type is DEFAULTVIEW.
+     * @returns Component array if decorator is present, null otherwise
+     */
+    public static getDefaultViewButtonList(): Component[] | null {
+        const metadata = this.getStaticDecoratedConstructorMetadata();
+        return (metadata[MODULE_DEFAULT_VIEW_BUTTON_LIST_KEY] as Component[]) ?? null;
     }
 
     /**

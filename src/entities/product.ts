@@ -6,6 +6,7 @@ import {
     AsyncValidation,
     CSSColumnClass,
     DefaultProperty,
+    DefaultViewButtonList,
     Disabled,
     DisplayFormat,
     HelpText,
@@ -24,6 +25,7 @@ import {
     Validation,
     ViewGroup,
 } from '@/decorations';
+import { DefaultButtonLists } from '@/constants/default_button_lists';
 import { StringType } from '@/enums/string_type.ts';
 import { /*AsyncValidators, */Validators } from '@/validators';
 
@@ -38,6 +40,7 @@ import { BaseEntity } from './base_entity.ts';
 @PrimaryProperty('id')
 @UniquePropertyKey('id')
 @ModuleName('Products')
+@DefaultViewButtonList(DefaultButtonLists.ListView)
 @ModuleIcon(ICONS.PRODUCTS)
 @ApiEndpoint('/api/products')
 @ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])
