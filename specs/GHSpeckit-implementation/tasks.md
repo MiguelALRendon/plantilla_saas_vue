@@ -164,7 +164,7 @@
 - [x] T096 Add request interceptor to `axiosInstance`: reads auth token from localStorage and sets `Authorization: Bearer ${token}` header in `src/models/application.ts`
 - [x] T097 Add response interceptor to `axiosInstance`: clears auth token on 401 responses in `src/models/application.ts`
 - [x] T098 Create `eventBus` using `mitt<Events>()` on `ApplicationClass` in `src/models/application.ts`
-- [x] T099 Implement `initializeApplication(router)`: stores router reference and calls `registerRouterListeners()` in `src/models/application.ts`
+- [x] T099 Implement `initializeApplication(router)`: stores router reference and calls `initializeRouter(router)` in `src/models/application.ts`
 - [x] T100 Implement `changeView(entityClass, entity, component, viewType, oid)` with dirty-state guard: call `entity?.getDirtyState()`, if true open confirmation dialog before proceeding in `src/models/application.ts`
 - [x] T101 Implement `changeViewToListView(moduleClass)`, `changeViewToDetailView(entity)`, `changeViewToDefaultView(moduleClass)` navigation convenience methods in `src/models/application.ts`
 - [x] T102 Implement `setButtonList()` — LISTVIEW: `[NewButtonComponent, RefreshButtonComponent]`; DETAILVIEW+persistent: full 6 buttons; DETAILVIEW+not persistent: `[ValidateButtonComponent]`; called 405ms after view change in `src/models/application.ts`
@@ -185,7 +185,7 @@
 
 ### 2I — CSS Design Token Foundation
 
-- [x] T110 [P] Create `src/css/constants.css` with all design tokens: z-index hierarchy (`--z-base`, `--z-dropdown`, `--z-sticky`, `--z-overlay`, `--z-modal`, `--z-toast`, `--z-tooltip`), breakpoints (`--breakpoint-mobile: 767px`, `--breakpoint-tablet: 1023px`, `--breakpoint-laptop: 1439px`), color tokens, spacing tokens, typography tokens
+- [x] T110 [P] Create `src/css/constants.css` with all design tokens: z-index hierarchy (`--z-base`, `--z-dropdown`, `--z-sticky`, `--z-overlay`, `--z-modal`, `--z-toast`, `--z-tooltip`), breakpoints (`--breakpoint-mobile: 768px`, `--breakpoint-tablet: 1024px`, `--breakpoint-laptop: 1440px`), color tokens, spacing tokens, typography tokens
 - [x] T111 [P] Create `src/css/main.css` with global foundation: `box-sizing: border-box` reset on `*, *::before, *::after`; base font; `dark-mode` data attribute override block; import constants.css
 - [x] T112 [P] Create `src/css/form.css` with form base styles and input state classes: `.nonvalidated`, `.disabled`, `.readonly`, `.focus`; all values via CSS tokens only
 - [x] T113 [P] Create `src/css/table.css` with table base styles; all values via CSS tokens only
@@ -353,7 +353,7 @@
 ### Remaining Complex Inputs (UC-003)
 
 - [x] T167 [P] [US3] Implement `ArrayInputComponent.vue` (activates for Array properties of BaseEntity subclasses): renders sub-table with Add/Edit/Delete per row; each row opened in modal via `showModal`; row rendered by `DefaultDetailView` in `src/components/Form/ArrayInputComponent.vue`
-- [x] T168 [P] [US3] Implement `ListInputComponent.vue` (activates for enum list selections): renders `<select>` with `EnumAdapter.getKeyValuePairs(enumRef)` for options; same validation contract in `src/components/Form/ListInputComponent.vue`
+- [x] T168 [P] [US3] Implement `EnumInputComponent.vue` (activates for enum list selections): renders `<select>` with `EnumAdapter.getKeyValuePairs(enumRef)` for options; same validation contract in `src/components/Form/EnumInputComponent.vue`
 
 ---
 
@@ -380,7 +380,7 @@
 - [x] T187 [P] Create `src/types/index.ts` barrel re-exporting all type modules: `decorator.types`, `entity.types`, `service.types`, `ui.types`, `events`
 - [x] T188 [P] Create `src/utils/deep_compare.ts` with `deepEqual(obj1, obj2): boolean` (recursive structural comparison) and `deepClone<T>(obj: T): T` (structured clone via `JSON.parse/stringify` fallback); used internally by `BaseEntity.getDirtyState()` and `BaseEntity` constructor snapshot
 - [x] T189 [P] Implement `GenericButtonComponent.vue` — base button stub providing shared button template and scoped style anchor; no props; used as baseline for button system in `src/components/Buttons/GenericButtonComponent.vue`
-- [x] T190 [US1] Implement `src/views/list.vue` — minimal home/debug view with dark mode toggle button (`Application.ApplicationUIService.toggleDarkMode()`); serves as initial landing route distinct from `default_listview.vue`
+- [x] T190 [US1] Implement `src/views/ConfigurationListComponent.vue` — minimal home/debug/configuration view with dark mode toggle button (`Application.ApplicationUIService.toggleDarkMode()`); serves as initial landing route distinct from `default_listview.vue`
 - [x] T173 [P] Add JSDoc `/** ... */` comments to all public methods in `src/entities/base_entity.ts` and `src/models/application.ts`
 - [x] T174 [P] Replace any remaining raw number literals in Vue components with CSS token references (`var(--z-modal)`, etc.) across `src/components/`
 - [x] T175 [P] Export `@Mask` decorator from `src/decorations/index.ts` and document status (currently listed as unexported in spec §FR-021); requires `MaskSides` enum also exported from `src/enums/`

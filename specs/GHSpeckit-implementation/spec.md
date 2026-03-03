@@ -55,7 +55,7 @@ And the developer applies at minimum:
     @UniquePropertyKey('id')
   to the class declaration
 And applies @PropertyName + @PropertyIndex + @CSSColumnClass + @Required + @HelpText to at least one property
-And registers the class: Application.ModuleList.value.push(Customer)
+And registers the class: Application.registerModule(Customer)
 When the developer runs npm run dev
 Then the sidebar shows a "Customer" entry with the user icon
 And clicking the sidebar item navigates to /customer
@@ -694,12 +694,17 @@ taxId?: string;
 **Enum**:
 ```typescript
 export enum StringType {
-    EMAIL,      // 0 — EmailInputComponent
-    PASSWORD,   // 1 — PasswordInputComponent
-    TEXT,       // 2 — TextInputComponent (default)
-    TELEPHONE,  // 3 — (not yet implemented)
-    URL,        // 4 — (not yet implemented)
-    TEXTAREA    // 5 — TextAreaComponent
+    EMAIL,         // 0  — EmailInputComponent
+    PASSWORD,      // 1  — PasswordInputComponent
+    TEXT,          // 2  — TextInputComponent (default)
+    TELEPHONE,     // 3  — TextInputComponent (mask: phone format)
+    URL,           // 4  — TextInputComponent (type="url")
+    TEXTAREA,      // 5  — TextAreaComponent
+    DATE,          // 6  — DateInputComponent
+    TIME,          // 7  — TimeInputComponent
+    DATETIME,      // 8  — DateTimeInputComponent
+    COLOR,         // 9  — ColorInputComponent
+    NUMBER,        // 10 — NumberInputComponent
 }
 ```
 
@@ -1030,9 +1035,13 @@ public afterDelete(): void {}
 public updateFailed(): void {}
 public deleteFailed(): void {}
 public onValidated(): void {}
+public afterRefresh(): void {}   // Called after refresh() completes successfully
+public refreshFailed(): void {}  // Called when refresh() fails (network or HTTP error)
 ```
 
 Throwing an Error inside beforeSave() or beforeDelete() cancels the entire operation.
+
+**`refresh(filter?: string): Promise<this[]>`** — Sends `GET ${endpoint}?${filter}`, maps each item with `mapFromPersistentKeys()`, and returns hydrated instances of the concrete class. Calls `afterRefresh()` on success and `refreshFailed()` on error. Used by RefreshButtonComponent to reload the list view data.
 
 ---
 
@@ -1550,7 +1559,7 @@ Application.eventBus.on('validate-inputs', () => {
 
 ---
 
-### 5.9.10 ListInputComponent
+### 5.9.10 EnumInputComponent
 
 **Activates for**: Enum list selections
 
@@ -1603,6 +1612,8 @@ Application.eventBus.on('validate-inputs', () => {
 **ValidateButtonComponent**: `await entity.validateInputs()` → shows result toast.
 
 **SendToDeviceButtonComponent**: Reserved for external device integration.
+
+> **⚠ TECHNICAL DEBT — `GenericButtonComponent`**: `src/components/Buttons/GenericButtonComponent.vue` exists as a stub (`<button class="button">Generic</button>`) and is not referenced anywhere in the framework. It has no handler, no icon, no label binding, and no defined purpose. It MUST either be given a concrete role (e.g. base class for custom module buttons) or removed. Tracked as L1 in the implementation backlog.
 
 ---
 
@@ -1829,8 +1840,8 @@ Create src/entities/customer.ts
       @ModuleIcon('user')
       @ModuleName('Customer')
   → Apply property decorators to each field
-  → Register in application.ts:
-      Application.ModuleList.value.push(Customer)
+  → Register in main.ts:
+      Application.registerModule(Customer)
   → SideBarComponent reactively re-renders new item
   → Router home redirect now considers Customer
 ```
@@ -2572,13 +2583,25 @@ Module with @ModulePermission('admin.write') must return false for users without
 ---
 
 ### SC-016 — Responsive Coverage Compliance
-All `<style scoped>` blocks in `.vue` files and all `.css` files MUST declare `@media` breakpoint overrides for every layout, sizing, and spacing property. No raw pixel values may appear in `@media` rules (must reference `var(--breakpoint-*)` tokens). All content containers MUST use relative units for sizing. Table cells MUST apply the overflow ellipsis CSS triplet.
+All `<style scoped>` blocks in `.vue` files and all `.css` files MUST declare `@media` breakpoint overrides for every layout, sizing, and spacing property. All content containers MUST use relative units for sizing. Table cells MUST apply the overflow ellipsis CSS triplet.
 
-**Test**: Regex audit of all `.vue` and `.css` files:
-1. No `@media (max-width: [0-9]+px)` literals — all must use `var(--breakpoint-*)` tokens.
-2. No `width: [0-9]+px` on content containers (shell exceptions: `68px`, `250px`, `50px`).
-3. All `<style scoped>` blocks containing `width|height|padding|margin|gap` MUST contain at least one `@media` block.
-4. All `.table-cell`-equivalent selectors MUST include `overflow: hidden`, `white-space: nowrap`, `text-overflow: ellipsis`.
+**Design token → raw value reference** (CSS custom properties cannot be used inside `@media` conditions per W3C CSS spec; raw values are mandatory here):
+
+| Token | Raw Value | Usage |
+|---|---|---|
+| `var(--breakpoint-mobile)` | `768px` | Mobile-first overrides |
+| `var(--breakpoint-tablet)` | `1024px` | Tablet overrides |
+| `var(--breakpoint-laptop)` | `1440px` | Laptop overrides |
+| `var(--breakpoint-md)` | `992px` | Mid-size overrides (button collapse) |
+
+**Compliance rule**: Every `@media (max-width: NNNpx)` rule MUST have an adjacent inline comment mapping the raw value to its design token, e.g. `/* var(--breakpoint-mobile) = 768px */`.
+
+**Test**: Audit of all `.vue` and `.css` files:
+1. Every `@media (max-width: NNNpx)` literal MUST be accompanied by a comment `/* var(--breakpoint-NAME) = NNNpx */`.
+2. No `@media (max-width: NNNpx)` where NNN does NOT match a defined design token value.
+3. No `width: [0-9]+px` on content containers (shell exceptions: `68px` sidebar-collapsed, `250px` sidebar-expanded, `50px` topbar-height).
+4. All `<style scoped>` blocks containing `width|height|padding|margin|gap` MUST contain at least one `@media` block.
+5. All `.table-cell`-equivalent selectors MUST include `overflow: hidden`, `white-space: nowrap`, `text-overflow: ellipsis`.
 
 ---
 

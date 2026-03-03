@@ -9,7 +9,7 @@
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 
 export default {
-    name: 'NewButtonComponent',
+    name: 'SendToDeviceButtonComponent',
 
     // #region METHODS
     methods: {},

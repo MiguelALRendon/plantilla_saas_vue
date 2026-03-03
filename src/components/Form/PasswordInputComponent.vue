@@ -7,7 +7,7 @@
         <input
             :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
-            :type="showPassword ? 'text' : 'password'"
+            :type="inputType"
             class="main-input"
             placeholder=" "
             :value="modelValue"
@@ -60,6 +60,7 @@ const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
 
 const visibilityIcon = computed<string>(() => (showPassword.value ? GGICONS.VISIBILITY_OFF : GGICONS.VISIBILITY));
+const inputType = computed<'text' | 'password'>(() => (showPassword.value ? 'text' : 'password'));
 // #endregion
 
 // #region METHODS

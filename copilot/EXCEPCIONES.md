@@ -4,8 +4,8 @@
 **Fecha de Creación:** 13 de Febrero, 2026  
 **Última Actualización:** 17 de Febrero, 2026
 
-**Total de Excepciones Activas:** 7  
-**Total de Excepciones Revocadas:** 0
+**Total de Excepciones Activas:** 5  
+**Total de Excepciones Revocadas:** 2
 
 ---
 
@@ -46,15 +46,14 @@ Este documento constituye el registro formal de excepciones autorizadas a las re
 
 - [EXC-001] - Acceso a metadatos por índice symbol en BaseEntity
 - [EXC-002] - API pública de metadatos con retorno `unknown`/typing de interoperabilidad
-- [EXC-003] - Uso temporal de `!important` en hoja de estilos legacy
 - [EXC-004] - Tipado explícito pendiente en bloque legacy
-- [EXC-005] - Lógica inline en templates Vue legacy
-- [EXC-006] - Regiones obligatorias pendientes en clases legacy
+- [EXC-005] - Lógica inline en templates Vue legacy (alcance reducido)
 - [EXC-007] - Animación `max-width` en SideBarComponent (layout-trigger estructural)
 
 **Excepciones Revocadas:**
 
-_Ninguna registrada actualmente._
+- [EXC-003] - Revocada: no existía ningún `!important` en producción
+- [EXC-006] - Revocada: regiones `#region` normalizadas en los 4 archivos afectados
 
 ---
 
@@ -150,7 +149,10 @@ El framework de formularios consume metadata heterogénea (constructors y valore
 
 **Fecha de Autorización:** 17 de Febrero, 2026  
 **Arquitecto Responsable:** Sistema de Normalización  
-**Estado:** ACTIVA
+**Estado:** REVOCADA  
+**Fecha de Revocación:** 17 de Febrero, 2026
+
+> **Revocación:** Tras una auditoría completa de los archivos CSS (`constants.css`, `form.css`, `main.css`), no se encontró ningún uso de `!important` en código de producción. La única ocurrencia era `/* --white: #1a1a1a !important; */` en `constants.css` que ya estaba comentada. La excepción era preventiva y no era necesaria; queda revocada sin impacto en el código base.
 
 ### Cláusula Afectada
 **Contrato:** [04-UI-DESIGN-SYSTEM-CONTRACT.md](04-UI-DESIGN-SYSTEM-CONTRACT.md)  
@@ -223,7 +225,7 @@ Se autoriza temporalmente mantener declaraciones sin tipo explícito en archivos
 
 **Fecha de Autorización:** 17 de Febrero, 2026  
 **Arquitecto Responsable:** Sistema de Normalización  
-**Estado:** ACTIVA
+**Estado:** ACTIVA (alcance reducido)
 
 ### Cláusula Afectada
 **Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
@@ -234,24 +236,26 @@ Se autoriza temporalmente mantener declaraciones sin tipo explícito en archivos
 Se permite temporalmente lógica inline en los templates legacy detectados por revisión, condicionada a refactor por componentes críticos.
 
 ### Alcance de la Excepción
-**Archivos Afectados:**
+**Archivos Aún Afectados** (parcialmente normalizado en oleada 1):
 - `src/components/TabControllerComponent.vue`
 - `src/components/Form/EmailInputComponent.vue`
 - `src/components/Form/ObjectInputComponent.vue`
-- `src/components/Form/PasswordInputComponent.vue`
 - `src/components/Form/TextAreaComponent.vue`
 - `src/components/Informative/DetailViewTableComponent.vue`
-- `src/components/Modal/ConfirmationDialogComponent.vue`
-- `src/views/default_lookup_listview.vue`
-- `src/views/list.vue`
+
+**Archivos Normalizados y Eliminados del Alcance:**
+- `src/components/Form/PasswordInputComponent.vue` — `inputType` extraido a `computed`
+- `src/components/Modal/ConfirmationDialogComponent.vue` — handlers `accept()` / `cancel()` extraidos
+- `src/views/default_lookup_listview.vue` — datos mock reemplazados por carga dinámica
+- `src/views/ConfigurationListComponent.vue` (ex-list.vue) — `toggleTheme()` extraido a método
 
 ### Fecha de Revisión Futura
 **Próxima Revisión:** 30 de Abril, 2026  
-**Condición:** Migrar handlers inline a funciones/computed dedicados.
+**Condición:** Migrar handlers inline restantes a funciones/computed dedicados.
 
 ### Decisión del Arquitecto
-**Decisión:** APROBADA  
-**Comentarios:** Excepción temporal por compatibilidad de UX actual.
+**Decisión:** APROBADA (renovada con alcance reducido)  
+**Comentarios:** Excepción temporal reducida a 5 componentes pendientes de oleada 2.
 
 ---
 
@@ -259,30 +263,16 @@ Se permite temporalmente lógica inline en los templates legacy detectados por r
 
 **Fecha de Autorización:** 17 de Febrero, 2026  
 **Arquitecto Responsable:** Sistema de Normalización  
-**Estado:** ACTIVA
+**Estado:** REVOCADA  
+**Fecha de Revocación:** 17 de Febrero, 2026
 
-### Cláusula Afectada
-**Contrato:** [06-CODE-STYLING-STANDARDS.md](06-CODE-STYLING-STANDARDS.md)  
-**Sección:** § 6.2.4 (estructura `#region`)  
-**Cláusula:** Clases deben incluir regiones obligatorias.
-
-### Descripción de la Excepción
-Se autoriza temporalmente ausencia de regiones completas en clases legacy priorizadas para refactor posterior.
-
-### Alcance de la Excepción
-**Archivos Afectados:**
-- `src/decorations/property_name_decorator.ts`
-- `src/models/application_ui_service.ts`
-- `src/models/enum_adapter.ts`
-- `src/models/Toast.ts`
-
-### Fecha de Revisión Futura
-**Próxima Revisión:** 30 de Abril, 2026  
-**Condición:** Normalizar estructura de regiones en la siguiente ola de estilo.
-
-### Decisión del Arquitecto
-**Decisión:** APROBADA  
-**Comentarios:** Excepción temporal acotada a 4 clases legacy.
+> **Revocación:** Los 4 archivos afectados han sido normalizados a la estructura `// #region` / `// #endregion`:
+> - `src/decorations/property_name_decorator.ts` — se añadieron regiones `CONSTANTS`, `TYPES`, `CLASSES`, `METHODS`
+> - `src/models/application_ui_service.ts` — ya contaba con regiones correctas (`PROPERTIES`, `METHODS`)
+> - `src/models/enum_adapter.ts` — se migraron de `/** @region */` JSDoc a `// #region`
+> - `src/models/Toast.ts` — se migraron de `/** @region */` JSDoc a `// #region`
+>
+> La excepción ya no es necesaria. Queda revocada.
 
 <!-- FORMATO OBLIGATORIO PARA NUEVAS EXCEPCIONES:
 
@@ -464,7 +454,44 @@ El sidebar usa el patrón `max-width: collapsed ↔ expanded` inherente al dise�
 
 ## 5. Excepciones Revocadas
 
-_No existen excepciones revocadas en este momento._
+## [EXC-003] - Uso temporal de `!important` en estilos globales legacy
+
+**Estado:** REVOCADA  
+**Fecha de Autorización Original:** 17 de Febrero, 2026  
+**Fecha de Revocación:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización
+
+### Razón de Revocación
+Auditoría completa de `constants.css`, `form.css`, `main.css` confirmó que no existe ningún `!important` en código de producción. La única ocurrencia estaba comentada (`/* --white: #1a1a1a !important; */`). La excepción fue registrada preventivamente y no tenía impacto real.
+
+### Solución Implementada
+No se requirió ninguna acción. Los archivos CSS ya eram conformes a contratos.
+
+### Archivos Actualizados
+- Ninguno (el código ya era conforme)
+
+---
+
+## [EXC-006] - Regiones obligatorias pendientes en clases legacy
+
+**Estado:** REVOCADA  
+**Fecha de Autorización Original:** 17 de Febrero, 2026  
+**Fecha de Revocación:** 17 de Febrero, 2026  
+**Arquitecto Responsable:** Sistema de Normalización
+
+### Razón de Revocación
+Los 4 archivos del alcance han sido normalizados a la estructura `// #region` / `// #endregion` exigida por § 6.2.4.
+
+### Solución Implementada
+Migración de formato y adición de secciones de región faltantes en cada archivo afectado.
+
+### Archivos Actualizados
+- `src/decorations/property_name_decorator.ts` — regiones `CONSTANTS`, `TYPES`, `CLASSES`, `METHODS` añadidas
+- `src/models/application_ui_service.ts` — ya conforme (regiones `PROPERTIES`, `METHODS` presentes)
+- `src/models/enum_adapter.ts` — migrado de `/** @region */` JSDoc a `// #region`
+- `src/models/Toast.ts` — migrado de `/** @region */` JSDoc a `// #region`
+
+---
 
 <!-- FORMATO OBLIGATORIO PARA EXCEPCIONES REVOCADAS:
 
@@ -521,9 +548,9 @@ Para registrar una nueva excepción, seguir obligatoriamente el proceso definido
 ## 8. Estadísticas
 
 **Total de Excepciones Históricas:** 7  
-**Excepciones Activas:** 7  
-**Excepciones Revocadas:** 0  
-**Tasa de Revocación:** 0%
+**Excepciones Activas:** 5  
+**Excepciones Revocadas:** 2  
+**Tasa de Revocación:** 28.6%
 
 **Última Revisión Periódica:** Pendiente
 

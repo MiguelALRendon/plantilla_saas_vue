@@ -27,7 +27,7 @@
 <script lang="ts">
 import ICONS from '@/constants/icons';
 import Application from '@/models/application';
-import listView from '@/views/list.vue';
+import configurationListComponent from '@/views/ConfigurationListComponent.vue';
 
 export default {
     name: 'TopBarComponent',
@@ -42,7 +42,7 @@ export default {
         },
         openDropdown() {
             var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
-            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
+            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', configurationListComponent);
         }
     },
     // #endregion

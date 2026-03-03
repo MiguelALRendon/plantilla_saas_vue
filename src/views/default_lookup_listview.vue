@@ -9,7 +9,6 @@
 
 <script lang="ts">
 import { BaseEntity } from '@/entities/base_entity';
-import { Product } from '@/entities/product';
 import LookupItemComponent from '@/components/Informative/LookupItemComponent.vue';
 import Application from '@/models/application';
 
@@ -23,35 +22,30 @@ export default {
     methods: {
         clickedItrem(item: BaseEntity) {
             Application.ApplicationUIService.closeModalOnFunction(item);
+        },
+        async loadData(): Promise<void> {
+            const modalView = Application.modal.value.modalView;
+            if (modalView) {
+                // Cast needed: modalView is typeof BaseEntity (abstract); getElementList
+                // uses `new this()` internally which TS rejects on abstract constructors.
+                // Runtime is always a concrete subclass — pattern mirrors router/index.ts.
+                const ConcreteClass = modalView as typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity);
+                this.data = await ConcreteClass.getElementList();
+            }
         }
+    },
+    // #endregion
+
+    // #region LIFECYCLE
+    async mounted() {
+        await this.loadData();
     },
     // #endregion
 
     // #region PROPERTIES
     data() {
-        const data: BaseEntity[] = [];
-        for (let i = 1; i <= 50; i++) {
-            data.push(
-                new Product({
-                    id: i,
-                    name: `Producto ${i}Sss`,
-                    description: `Descripción del producto asdf fasdfasdfasdf ta sdf sd fasdf   asdfasdfasdf asdfasfafsdf ${i}`,
-                    price: Math.floor(Math.random() * 100) + 1,
-                    stock: Math.floor(Math.random() * 50) + 1,
-                    product: new Product({
-                        id: i + 100,
-                        name: `Inner Producto ${i}`,
-                        description: `Inner Descripción del producto ${i}`,
-                        price: Math.floor(Math.random() * 100) + 1,
-                        stock: Math.floor(Math.random() * 50) + 1
-                    })
-                })
-            );
-        }
-
         return {
-            BaseEntity,
-            data
+            data: [] as BaseEntity[]
         };
     }
     // #endregion

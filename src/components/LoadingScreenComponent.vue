@@ -12,7 +12,8 @@ export default {
     data() {
         return {
             Application,
-            isActive: false
+            isActive: true,
+            manuallyShown: false
         };
     },
     // #endregion
@@ -20,10 +21,20 @@ export default {
     // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('show-loading', () => {
+            this.manuallyShown = true;
             this.isActive = true;
         });
         Application.eventBus.on('hide-loading', () => {
+            this.manuallyShown = false;
             this.isActive = false;
+        });
+
+        // Auto-hide once all fonts (including icon fonts) have loaded.
+        // This prevents a flash of unstyled icon glyphs on first paint.
+        document.fonts.ready.then(() => {
+            if (!this.manuallyShown) {
+                this.isActive = false;
+            }
         });
     },
     beforeUnmount() {

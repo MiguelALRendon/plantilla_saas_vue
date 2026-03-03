@@ -479,11 +479,9 @@ class ApplicationClass implements ApplicationUIContext {
                         markRaw(SendToDeviceButtonComponent)
                     ];
                 } else {
+                    // Non-persistent entity: only validation is available
                     this.ListButtons.value = [
-                        markRaw(NewButtonComponent),
-                        markRaw(RefreshButtonComponent),
-                        markRaw(ValidateButtonComponent),
-                        markRaw(SendToDeviceButtonComponent)
+                        markRaw(ValidateButtonComponent)
                     ];
                 }
                 break;

@@ -1,30 +1,24 @@
 /**
  * Adaptador para convertir enums TypeScript numéricos a pares key-value.
  * Filtra reverse mapping duplicado generado por enums numéricos.
- * Usado en ListInputComponent para generar opciones dropdown desde enums.
+ * Usado en EnumInputComponent para generar opciones dropdown desde enums.
  * § 06-CODE-STYLING-STANDARDS 6.2.1, 6.6.1
  */
 export class EnumAdapter {
-    /**
-     * @region PROPERTIES
-     */
+    // #region PROPERTIES
     
     /**
-     * Referencia al enum TypeScript pasado al constructor.
+     * Referência ao enum TypeScript passado ao construtor.
      */
     private enumRef: Record<string, string | number>;
 
-    /**
-     * @endregion
-     */
+    // #endregion
 
-    /**
-     * @region METHODS
-     */
+    // #region METHODS
     
     /**
-     * Constructor que inicializa adaptador con enum específico.
-     * @param enumRef Enum TypeScript a convertir (ej: ToastType, ViewTypes).
+     * Constructor que inicializa adaptador com enum específico.
+     * @param enumRef Enum TypeScript a converter (ej: ToastType, ViewTypes).
      */
     constructor(enumRef: Record<string, string | number>) {
         this.enumRef = enumRef;
@@ -45,7 +39,5 @@ export class EnumAdapter {
             }));
     }
     
-    /**
-     * @endregion
-     */
+    // #endregion
 }

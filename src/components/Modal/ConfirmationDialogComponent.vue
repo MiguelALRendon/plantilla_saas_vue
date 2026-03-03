@@ -33,12 +33,12 @@
                 <button
                     v-if="dialogInfo.confirmationAction"
                     class="button info fill"
-                    @click="Application.ApplicationUIService.acceptConfigurationMenu()"
+                    @click="accept()"
                 >
                         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
                     <span class="btn-label">{{ dialogInfo.acceptButtonText || 'Aceptar' }}</span>
                 </button>
-                <button class="button alert fill" @click="Application.ApplicationUIService.closeConfirmationMenu()">
+                <button class="button alert fill" @click="cancel()">
                         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                     <span class="btn-label">{{ dialogInfo.cancelButtonText || 'Cancelar' }}</span>
                 </button>
@@ -54,6 +54,17 @@ import Application from '@/models/application';
 
 export default {
     name: 'ConfirmationDialogComponent',
+
+    // #region METHODS
+    methods: {
+        accept(): void {
+            Application.ApplicationUIService.acceptConfigurationMenu();
+        },
+        cancel(): void {
+            Application.ApplicationUIService.closeConfirmationMenu();
+        }
+    },
+    // #endregion
 
     // #region COMPUTED
     computed: {

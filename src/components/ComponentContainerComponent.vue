@@ -72,6 +72,10 @@ export default {
                     await new Promise((resolve) => setTimeout(resolve, 400));
                     this.registerModuleCustomComponents();
                     this.currentComponent = markRaw(newVal);
+                    // Wait for all fonts (including icon fonts) to be ready before
+                    // hiding the loading screen so glyphs render correctly on reveal.
+                    await document.fonts.ready;
+                    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
                     Application.ApplicationUIService.hideLoadingScreen();
                 }
             }

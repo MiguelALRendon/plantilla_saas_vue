@@ -10,7 +10,7 @@
 
 - Framework project running (`npm run dev`)
 - `src/entities/` directory exists
-- `src/models/application.ts` with `Application.ModuleList.value.push(...)` block
+- `src/models/application.ts` with `Application.registerModule(...)` block
 
 ---
 
@@ -63,13 +63,13 @@ export class Product extends BaseEntity {
 
 ## Step 2 — Register the Module (1 min)
 
-In `src/models/application.ts`, add `Product` to the module list:
+In `src/main.ts`, register the `Product` module:
 
 ```typescript
 import { Product } from '@/entities/product'
 
-// Inside the module registration block:
-Application.ModuleList.value.push(Product)
+// After Application.initializeApplication(router):
+Application.registerModule(Product)
 ```
 
 ---
@@ -166,7 +166,7 @@ async afterSave(): Promise<void> {
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Module not in sidebar | Not pushed to `ModuleList` | `Application.ModuleList.value.push(Product)` |
+| Module not in sidebar | Not registered | `Application.registerModule(Product)` |
 | CRUD fails with config error | Missing `@Persistent()` | Add `@Persistent()` to class |
 | Properties not in form/table | Missing `@PropertyName` | Add `@PropertyName(label, type)` to each property |
 | Save sends to wrong URL | Wrong `@ApiEndpoint` value | Check URL string (no trailing slash) |
