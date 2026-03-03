@@ -202,43 +202,25 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--white);
 }
 
-/* Mobile (var(--breakpoint-mobile) = 768px — raw value required: var() unsupported in @media per CSS spec) */
+/* Mobile (var(--breakpoint-mobile) = 768px — raw value required: var() unsupported in @media per CSS spec)
+   IMPORTANT: flex-direction stays row for all input+button combos — buttons must remain beside inputs.
+   Only reduce spacing and font sizes so the row fits smaller viewports. */
 @media (max-width: 768px) {
     .TextInput.NumberInput,
     .TextInput.PasswordInput,
     .TextInput.DateInput,
     .TextInput.ObjectInput {
-        flex-direction: column;
-        align-items: stretch;
+        /* Keep flex-direction: row — buttons stay beside the input */
+        font-size: var(--font-size-sm);
     }
 
     .TextInput.NumberInput button,
     .TextInput.PasswordInput button,
     .TextInput.DateInput button,
     .TextInput.ObjectInput button {
-        width: 100%;
+        /* Keep intrinsic width — do not force width: 100% */
         min-height: var(--button-height);
-        border-radius: var(--border-radius);
-        border: var(--border-width-thin) solid var(--sky);
-    }
-
-    .TextInput.NumberInput button.left,
-    .TextInput.NumberInput button.right,
-    .TextInput.PasswordInput button.right,
-    .TextInput.DateInput button.right,
-    .TextInput.ObjectInput button.right {
-        border-radius: var(--border-radius);
-        border-left: var(--border-width-thin) solid var(--sky);
-        border-right: var(--border-width-thin) solid var(--sky);
-    }
-
-    .TextInput.PasswordInput input[type="text"],
-    .TextInput.DateInput input[type="text"],
-    .TextInput.ObjectInput input[type="text"],
-    input[type="number"],
-    input[type="password"] {
-        border-radius: var(--border-radius);
-        text-align: left;
+        padding-inline: var(--padding-small);
     }
 
     .TextInput.NumberInput .label-input {
