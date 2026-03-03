@@ -1,7 +1,7 @@
 <template>
     <button class="button warning" @click="saveItem">
         <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
-        Validate
+        <span class="btn-label">Validate</span>
     </button>
 </template>
 

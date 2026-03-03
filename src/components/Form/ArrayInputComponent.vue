@@ -23,7 +23,7 @@
                     @click="showDeleteModal"
                 >
                     <span :class="GGCLASS">{{ GGICONS.DELETE }}</span>
-                    Eliminar
+                    <span class="btn-label">Eliminar</span>
                 </button>
                 <button
                     class="button success fill"
@@ -31,11 +31,11 @@
                     :disabled="modelValue.length == 0 || disabled"
                 >
                     <span :class="GGCLASS">{{ selectionIcon }}</span>
-                    Seleccionar
+                    <span class="btn-label">Seleccionar</span>
                 </button>
                 <button class="button secondary fill" @click="openModal" :disabled="disabled">
                     <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-                    Agregar
+                    <span class="btn-label">Agregar</span>
                 </button>
             </div>
         </div>

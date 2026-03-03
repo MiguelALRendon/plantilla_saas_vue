@@ -62,7 +62,8 @@ export default {
 .ViewContainer {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    flex: 1;       /* absorb all remaining row space after the sidebar takes its share */
+    min-width: 0;  /* allow shrinking below intrinsic content width inside flex row */
     height: 100%;
     max-height: 100vh;
     position: relative;

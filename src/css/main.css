@@ -94,9 +94,24 @@ button:disabled span, .button[disabled] span {
    Note: CSS var() cannot be used in @media conditions.
    Raw breakpoint values correspond to design tokens:
      768px  → var(--breakpoint-mobile)
+     992px  → var(--breakpoint-md)
      1024px → var(--breakpoint-tablet)
    See: src/css/constants.css §6.7 Desktop-First breakpoints
    ============================================================ */
+
+/* .btn-label — text labels inside action buttons
+   Visible by default; hidden at ≤ 992px (--breakpoint-md)
+   so buttons collapse to icon-only, reducing ActionsComponent width. */
+.btn-label {
+    display: inline;
+}
+
+/* Laptop / tablet and below (var(--breakpoint-md) = 992px) */
+@media (max-width: 992px) {
+    .btn-label {
+        display: none;
+    }
+}
 
 /* Tablet and below (var(--breakpoint-tablet) = 1024px) */
 @media (max-width: 1024px) {

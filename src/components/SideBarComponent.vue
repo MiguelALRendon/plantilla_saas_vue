@@ -52,6 +52,7 @@ export default {
     width: 100%;
     height: 100%;
     max-height: 100vh;
+    flex-shrink: 0; /* never yield space to the content container — sidebar width is structural */
     transition: max-width var(--transition-slow) var(--timing-ease); /* EXC-007: max-width — layout-trigger justified for structural sidebar collapse */
     position: relative;
     z-index: var(--z-dropdown);
@@ -109,11 +110,20 @@ export default {
     opacity: 1;
 }
 
+/* Desktop standard (1201px–1400px): sidebar slightly reduced to free horizontal space.
+   1400px corresponds to --breakpoint-xl in the design system.
+   var() is unsupported in @media per CSS spec — raw value required. */
+@media (max-width: 1400px) {
+    .sidebar.toggled {
+        max-width: 200px; /* 250px → 200px — preserves full label visibility but gains 50px */
+    }
+}
+
 /* Floating sidebar — shown as fixed overlay below 1200px.
    Sidebar leaves flex flow so ComponentContainer always fills full width.
    Uses transform (not max-width) for smooth slide-in/out animation.
-   1200px raw value corresponds to --breakpoint-laptop threshold design intent;
-   var() is unsupported in @media per CSS spec. */
+   1200px corresponds to --breakpoint-lg in the design system;
+   var() is unsupported in @media per CSS spec — raw value required. */
 @media (max-width: 1200px) {
     .sidebar {
         position: fixed;

@@ -1,7 +1,7 @@
 <template>
     <button class="button secondary" @click="saveItem">
         <span :class="GGCLASS">{{ GGICONS.SAVE }}</span>
-        Save
+        <span class="btn-label">Save</span>
     </button>
 </template>
 

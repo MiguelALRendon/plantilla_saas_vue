@@ -1,7 +1,7 @@
 <template>
     <button class="button accent" @click="saveItem">
         <span :class="GGCLASS">{{ GGICONS.SAVE2 }}</span>
-        Save and New
+        <span class="btn-label">Save and New</span>
     </button>
 </template>
 

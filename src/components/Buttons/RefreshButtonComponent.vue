@@ -1,7 +1,7 @@
 <template>
     <button class="button success-green" @click="refreshList">
         <span :class="GGCLASS">{{ GGICONS.REFRESH }}</span>
-        Refresh
+        <span class="btn-label">Refresh</span>
     </button>
 </template>
 

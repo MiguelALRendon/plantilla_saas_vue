@@ -1,7 +1,7 @@
 <template>
     <button class="button info" @click="openNewDetailView">
         <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-        New
+        <span class="btn-label">New</span>
     </button>
 </template>
 
