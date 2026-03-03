@@ -698,7 +698,7 @@ Si success:
 - Contenido: Interface con type, title, message, confirmationAction
 - Uso: Diálogos de confirmación
 
-**Toast (@/models/Toast)**
+**Toast (@/models/toast)**
 - Contenido: Interface con id, message, type, duration, visible
 - Uso: Notificaciones temporales
 
