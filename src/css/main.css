@@ -3,6 +3,11 @@ body, html {
     padding: 0;
     font-family: 'Inter', sans-serif;
     color: var(--gray-medium);
+    /* Prevent html/body from generating a scrollbar.
+       The app manages scrolling internally (.ComponentContainer, .table-wrapper, etc.).
+       Without this, 100vw (used by position:fixed elements) includes the scrollbar
+       gutter (~8px on Windows), making overlays wider than the visible content area. */
+    overflow: hidden;
 }
 
 * {

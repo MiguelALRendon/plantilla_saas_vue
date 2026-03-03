@@ -78,6 +78,7 @@ onBeforeUnmount(() => {
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--transition-slow) var(--timing-ease);
+    box-sizing: border-box;
 }
 
 /* 1200px matches the sidebar floating breakpoint in SideBarComponent.vue */
