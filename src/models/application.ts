@@ -335,12 +335,14 @@ class ApplicationClass implements ApplicationUIContext {
      * @param viewType The type of view to display
      * @param entity Optional entity object for detail view
      */
-    private setViewChanges = (
+    private setViewChanges = async (
         entityClass: typeof BaseEntity,
         component: Component,
         viewType: ViewTypes,
         entity: BaseEntity | null = null
     ) => {
+        this.ApplicationUIService.showLoadingScreen();
+        await new Promise((resolve) => setTimeout(resolve, 400));
         this.View.value.entityClass = entityClass as unknown as EntityCtor;
         this.View.value.entityObject = entity;
         this.View.value.component = component;
@@ -410,6 +412,8 @@ class ApplicationClass implements ApplicationUIContext {
                     });
             }
         }
+
+        this.ApplicationUIService.hideLoadingScreen();
     };
 
     /**
