@@ -485,6 +485,7 @@ watch(
 .table {
     width: 100%;
     min-width: max-content; /* allows horizontal scroll inside .table-scroll-wrapper */
+    min-height: 100%; /* stretch to fill .table-scroll-wrapper so tbody can expand with flex: 1 */
     display: flex;
     flex-direction: column;
     border-collapse: collapse;
@@ -529,6 +530,7 @@ watch(
 .table tbody {
     display: block;
     width: 100%;
+    flex: 1; /* fill remaining space between thead and tfoot */
 }
 
 .table tfoot {

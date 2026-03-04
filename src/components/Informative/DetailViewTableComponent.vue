@@ -366,6 +366,7 @@ onBeforeUnmount((): void => {
 table {
     width: 100%;
     min-width: max-content; /* prevent table from squishing below its natural column-sum width */
+    min-height: 100%; /* stretch to fill .table-wrapper so tbody can expand with flex: 1 */
     display: flex;
     flex-direction: column;
 }
@@ -414,6 +415,7 @@ thead td:hover {
 tbody {
     display: block;
     width: 100%;
+    flex: 1; /* fill remaining space between thead and tfoot */
     /* No overflow here — .table-wrapper owns all scroll, ensuring header stays in sync */
 }
 
