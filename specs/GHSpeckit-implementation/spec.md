@@ -1672,6 +1672,41 @@ Application.eventBus.on('validate-inputs', () => {
 
 **Minimum column width**: pixel value equivalent of `var(--table-width-very-small)` resolved at mount time.
 
+**Double-click auto-fit**: Double-clicking a `<thead>` cell MUST trigger an auto-fit that sets `columnWidths[column]` to `Math.max(th.scrollWidth, max_cell_scrollWidth)` where `max_cell_scrollWidth` is the maximum `scrollWidth` found across all matching `tbody` cells for that column index. The header cell's own `scrollWidth` MUST be included in the maximum, so a column is **never** auto-fitted narrower than its header label. The minimum column width constraint (pixel value of `var(--table-width-very-small)`) still applies. This behavior MUST be identical in both `DetailViewTableComponent` and `ArrayInputComponent`.
+
+---
+
+### 5.17 FR-034 — Pagination Bar (DetailViewTableComponent + ArrayInputComponent)
+
+**Files**: `src/components/Informative/DetailViewTableComponent.vue`, `src/components/Form/ArrayInputComponent.vue`
+
+**Behavior**: Both `DetailViewTableComponent` and the sub-table in `ArrayInputComponent` MUST display a pagination bar that is always visible. The bar is rendered inside the sticky `<tfoot>` element.
+
+**Page-size selector**:
+- A `<select>` element MUST offer options `10`, `20`, `50`, `100`, and `ALL` (string `'ALL'`).
+- Default value: `10`.
+- On change, `currentPage` MUST reset to `1`.
+- When `ALL` is selected, navigation buttons are disabled and all rows are rendered.
+
+**Navigation buttons**:
+- A previous-page button (`‹`) and a next-page button (`›`) rendered as round buttons:
+  - `background-color: var(--green-main)` (green)
+  - `border-radius: 50%`
+  - `color: var(--white)`
+  - `:disabled` when at first or last page respectively.
+- Numeric page-pill buttons for the visible page range (current ± 2), rendered with the same round green style; the active page pill MUST have higher visual prominence (e.g. increased opacity or border).
+
+**Data source**:
+- Pagination is computed entirely in memory from the full dataset — no additional API calls are made.
+- `DetailViewTableComponent`: slices from `data` (the full loaded entity list).
+- `ArrayInputComponent`: slices from `filteredData` (post-search computed list); resets `currentPage` to `1` whenever the filtered list length changes.
+
+**Computed properties required**:
+- `pageSize: Ref<number | 'ALL'>` — defaults to `10`.
+- `currentPage: Ref<number>` — defaults to `1`.
+- `totalPages: ComputedRef<number>` — `Math.ceil(dataset.length / pageSize)` (returns `1` when `pageSize === 'ALL'`).
+- `paginatedRows` / `paginatedItems: ComputedRef<BaseEntity[]>` — sliced dataset; no slice when `pageSize === 'ALL'`.
+
 ---
 
 ## 6. Requirements — Layer 5: Advanced
@@ -2637,4 +2672,4 @@ For properties whose runtime type (via `getPropertyType()`) is recognized as an 
 
 ---
 
-*Specification complete. Covers 31 decorators, BaseEntity (all methods), Application singleton, 10+ input components, form layout components, view components, action buttons, toast/dialog/modal components, 7 enums, 8 models, router, types, and useInputMetadata composable. Total: framework layers 1–6 fully specified. FR-032 (column resize) and SC-017 (enum display) added 2026-03-04.*
+*Specification complete. Covers 31 decorators, BaseEntity (all methods), Application singleton, 10+ input components, form layout components, view components, action buttons, toast/dialog/modal components, 7 enums, 8 models, router, types, and useInputMetadata composable. Total: framework layers 1–6 fully specified. FR-032 (column resize) and SC-017 (enum display) added 2026-03-04. FR-032 dblclick autofit contract and FR-034 pagination added 2026-03-04.*

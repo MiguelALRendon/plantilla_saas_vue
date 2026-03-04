@@ -535,6 +535,44 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 
 ---
 
+## Phase 7: Pagination & Double-Click Autofit Fix (Analysis findings B1, C1, U1)
+
+**Purpose**: Resolve the two HIGH findings from `/speckit.analyze` (2026-03-04). Adds pagination UX (green round buttons, page-size selector) to both `DetailViewTableComponent` and `ArrayInputComponent`; fixes the `autoFitColumn()` bug where header text was not considered during double-click auto-fit.
+
+**⚠️ SPEC-FIRST GATE**: Tasks T210 and T212 MUST be marked complete before their respective code tasks (T211, T213, T214) may be merged.
+
+---
+
+### 7A — Spec Update: Double-Click Autofit Contract (SPEC-FIRST gate)
+
+- [X] T210 [SPEC] Extend FR-032 in `spec.md §5.11` to formally document double-click auto-fit behavior: *"Double-clicking a `<thead>` cell MUST trigger an auto-fit that sets `columnWidths[column]` to `Math.max(th.scrollWidth, max_tbody_cell_scrollWidth)`, ensuring the column is never narrower than its own header label. Minimum column width constraint (`var(--table-width-very-small)`) still applies. This behavior MUST be identical in both `DetailViewTableComponent` and `ArrayInputComponent`."* in `specs/GHSpeckit-implementation/spec.md`
+
+---
+
+### 7B — Fix Double-Click Autofit (both tables)
+
+- [X] T211 [P] [US1] Fix `autoFitColumn()` in `DetailViewTableComponent.vue` and `ArrayInputComponent.vue`: seed `let maxWidth = th.scrollWidth` (instead of `let maxWidth = 0`) before iterating `tbody` rows, so the header label width is always included in the maximum. This ensures double-click never clips a header that is wider than all data cells. Depends on T210 (spec gate). Files: `src/components/Informative/DetailViewTableComponent.vue`, `src/components/Form/ArrayInputComponent.vue`
+
+---
+
+### 7C — Spec Update: Pagination FR-034 (SPEC-FIRST gate)
+
+- [X] T212 [SPEC] Add FR-034 to `spec.md §5.11`: *"Both `DetailViewTableComponent` and the sub-table in `ArrayInputComponent` MUST include a pagination bar below the `<table>`. The bar contains: (a) a page-size selector `<select>` with options `10`, `20`, `50`, `100`, and `ALL`; (b) round navigation buttons (previous-page, page-number pills, next-page) styled with `background-color: var(--green-main)` (green) and `border-radius: 50%`; disabled state when at first/last page. Pagination is computed from the full dataset in memory — no additional API calls. `ALL` option disables navigation buttons and renders all rows."* in `specs/GHSpeckit-implementation/spec.md`
+
+---
+
+### 7D — Pagination in DetailViewTableComponent
+
+- [X] T213 [US1] Implement pagination in `DetailViewTableComponent.vue`: (1) add `pageSize: Ref<number | 'ALL'>` (default `10`) and `currentPage: Ref<number>` (default `1`); (2) add `paginatedRows` computed from `entityList` sliced by `[(currentPage-1)*pageSize, currentPage*pageSize]` (bypass slice when `pageSize === 'ALL'`); (3) replace `v-for` on `tbody tr` with `paginatedRows`; (4) add `totalPages` computed = `Math.ceil(entityList.length / pageSize)`; (5) render pagination bar in a `<div class="pagination-bar">` below the table: `<select>` with options `[10, 20, 50, 100, 'ALL']` bound to `pageSize` (reset `currentPage` to 1 on change); previous/next `<button>` components with `border-radius: 50%; background-color: var(--green-main); color: var(--white)` and `:disabled` when at boundary; numeric page-pill buttons for visible page range. Depends on T212 (spec gate). in `src/components/Informative/DetailViewTableComponent.vue`
+
+---
+
+### 7E — Pagination in ArrayInputComponent
+
+- [X] T214 [US3] Implement pagination in the sub-table of `ArrayInputComponent.vue` using the same pattern as T213: `pageSize` (default `10`), `currentPage`, `paginatedItems` computed from `modelValue`, page-size `<select>` with options `[10, 20, 50, 100, 'ALL']`, and round green navigation buttons in a `<div class="pagination-bar">` below the sub-table. Reset `currentPage` to `1` whenever `modelValue` changes length (watch). Depends on T212 (spec gate). in `src/components/Form/ArrayInputComponent.vue`
+
+---
+
 ## Task Count Summary
 
 | Phase | Tasks | Story | Parallelizable |
@@ -561,9 +599,14 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 6C: Sticky Footer (ArrayInput) | T206 | US3 | 1 of 1 |
 | Phase 6D: Enum Label Display | T207 | US1 | 0 |
 | Phase 6E: Column Resize | T204 | US1 | 0 |
-| **TOTAL** | **200 tasks** | | **~116 parallelizable** |
+| Phase 7A: Spec — dblclick autofit contract | T210 | — | 0 |
+| Phase 7B: Fix dblclick autofit (both tables) | T211 | US1+US3 | 1 of 1 |
+| Phase 7C: Spec — Pagination FR-034 | T212 | — | 0 |
+| Phase 7D: Pagination (DetailViewTable) | T213 | US1 | 0 |
+| Phase 7E: Pagination (ArrayInput) | T214 | US3 | 0 |
+| **TOTAL** | **205 tasks** | | **~117 parallelizable** |
 
 **Per user story**:
-- **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6 additions)
+- **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6 additions) + T211, T213 (phase 7 additions)
 - **US2**: 15 tasks (T141–T155)
-- **US3**: 16 tasks (T156–T171) + T206 (phase 6 addition)
+- **US3**: 16 tasks (T156–T171) + T206 (phase 6 addition) + T211, T214 (phase 7 additions)

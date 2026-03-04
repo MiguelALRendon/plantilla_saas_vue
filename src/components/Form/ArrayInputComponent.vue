@@ -57,7 +57,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in filteredData" :class="[{ selected: selectedItems.includes(item) }]">
+                    <tr v-for="item in paginatedItems" :class="[{ selected: selectedItems.includes(item) }]">
                         <td class="selection" :class="[{ display: isSelection }]">
                             <button
                                 class="select-btn"
@@ -73,7 +73,38 @@
                     </tr>
                 </tbody>
                 <tfoot>
-                    <tr></tr>
+                    <tr>
+                        <td class="pagination-td" :colspan="(typeValue ? Object.keys(typeValue.getProperties()).length : 0) + 1">
+                            <div class="pagination-bar">
+                                <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
+                                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                                </select>
+                                <div class="pagination-nav">
+                                    <button
+                                        class="page-btn"
+                                        :disabled="currentPage === 1 || pageSize === 'ALL'"
+                                        @click="prevPage"
+                                        title="Página anterior"
+                                    >&#8249;</button>
+                                    <button
+                                        v-for="page in visiblePages"
+                                        :key="page"
+                                        class="page-btn"
+                                        :class="{ active: page === currentPage }"
+                                        :disabled="pageSize === 'ALL'"
+                                        @click="goToPage(page)"
+                                    >{{ page }}</button>
+                                    <button
+                                        class="page-btn"
+                                        :disabled="currentPage === totalPages || pageSize === 'ALL'"
+                                        @click="nextPage"
+                                        title="Página siguiente"
+                                    >&#8250;</button>
+                                </div>
+                                <span class="pagination-info">{{ paginationInfo }}</span>
+                            </div>
+                        </td>
+                    </tr>
                 </tfoot>
             </table>
         </div>
@@ -86,7 +117,7 @@ import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 
 interface Props {
     modelValue: BaseEntity[];
@@ -125,6 +156,11 @@ let resizeColumn = '';
 let resizeStartX = 0;
 let resizeStartWidth = 0;
 
+// FR-034 — Pagination
+const pageSizeOptions: (number | 'ALL')[] = [10, 20, 50, 100, 'ALL'];
+const pageSize = ref<number | 'ALL'>(10);
+const currentPage = ref<number>(1);
+
 const moduleIcon = computed<string | undefined>(() => props.typeValue?.getModuleIcon());
 const moduleName = computed<string | undefined>(() => props.typeValue?.getModuleName());
 const selectionIcon = computed<string>(() => (isSelection.value ? GGICONS.SELECT_CHECKBOX : GGICONS.SELECT_VOID));
@@ -140,6 +176,38 @@ const filteredData = computed<BaseEntity[]>(() => {
         }
         return false;
     });
+});
+
+const paginatedItems = computed<BaseEntity[]>(() => {
+    if (pageSize.value === 'ALL') return filteredData.value;
+    const size = pageSize.value as number;
+    const start = (currentPage.value - 1) * size;
+    return filteredData.value.slice(start, start + size);
+});
+
+const totalPages = computed<number>(() => {
+    if (pageSize.value === 'ALL' || filteredData.value.length === 0) return 1;
+    return Math.ceil(filteredData.value.length / (pageSize.value as number));
+});
+
+const visiblePages = computed<number[]>(() => {
+    const total = totalPages.value;
+    const current = currentPage.value;
+    const delta = 2;
+    const pages: number[] = [];
+    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+        pages.push(i);
+    }
+    return pages;
+});
+
+const paginationInfo = computed<string>(() => {
+    if (pageSize.value === 'ALL') return `${filteredData.value.length} registros`;
+    const size = pageSize.value as number;
+    if (filteredData.value.length === 0) return '0 registros';
+    const start = (currentPage.value - 1) * size + 1;
+    const end = Math.min(currentPage.value * size, filteredData.value.length);
+    return `${start}–${end} de ${filteredData.value.length}`;
 });
 // #endregion
 
@@ -253,6 +321,27 @@ function onResizeUp(): void {
     document.removeEventListener('mouseup', onResizeUp);
 }
 
+// FR-032 — already defined above (autoFitColumn, startResize, onResizeMove, onResizeUp)
+
+// FR-034 — Pagination helpers
+function prevPage(): void {
+    if (currentPage.value > 1) currentPage.value--;
+}
+
+function nextPage(): void {
+    if (currentPage.value < totalPages.value) currentPage.value++;
+}
+
+function goToPage(page: number): void {
+    currentPage.value = page;
+}
+
+function onPageSizeChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    pageSize.value = value === 'ALL' ? 'ALL' : Number(value);
+    currentPage.value = 1;
+}
+
 function autoFitColumn(event: MouseEvent, column: string): void {
     const th = event.currentTarget as HTMLElement;
     const tableEl = th.closest('table');
@@ -261,14 +350,13 @@ function autoFitColumn(event: MouseEvent, column: string): void {
     const colIndex = headers.indexOf(th);
     if (colIndex === -1) return;
     const bodyRows = tableEl.querySelectorAll('tbody tr');
-    let maxWidth = 0;
+    // FR-032: seed with th.scrollWidth so the header label is always included in the max
+    let maxWidth = th.scrollWidth;
     bodyRows.forEach((row) => {
         const cell = row.children[colIndex] as HTMLElement | undefined;
         if (cell) maxWidth = Math.max(maxWidth, cell.scrollWidth);
     });
-    if (maxWidth > 0) {
-        columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
-    }
+    columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
 }
 
 async function isValidated(): Promise<boolean> {
@@ -309,6 +397,14 @@ onBeforeUnmount(() => {
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeUp);
 });
+
+// FR-034: reset to page 1 when the filtered list length changes (search or modelValue update)
+watch(
+    () => filteredData.value.length,
+    () => {
+        currentPage.value = 1;
+    }
+);
 // #endregion
 </script>
 
@@ -443,7 +539,7 @@ onBeforeUnmount(() => {
     background-color: var(--white);
     z-index: var(--z-base);
     border-top: var(--border-width-thin) solid var(--gray-lighter);
-    height: var(--table-row-min-height);
+    height: auto;
 }
 
 .tfoot-add-cell {
@@ -541,5 +637,77 @@ onBeforeUnmount(() => {
     font-size: var(--font-size-sm);
     color: var(--accent-red);
     margin-bottom: 0.2rem;
+}
+
+/* FR-034 — Pagination */
+.pagination-td {
+    flex: 1;
+    padding: 0;
+    min-width: 0;
+}
+
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-medium);
+    padding: var(--spacing-small) var(--spacing-medium);
+    flex: 1;
+    min-width: 0;
+}
+
+.page-size-select {
+    padding: var(--spacing-xs) var(--spacing-small);
+    border: var(--border-width-thin) solid var(--green-main);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    background-color: var(--white);
+    color: var(--green-main);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition-slow) var(--timing-ease);
+}
+.page-size-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--green-main);
+}
+
+.pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-small);
+    flex-shrink: 0;
+}
+
+.page-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: var(--border-width-thin) solid var(--green-main);
+    background-color: var(--white);
+    color: var(--green-main);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition-slow) var(--timing-ease);
+}
+
+.page-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.page-btn.active {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--green-main);
+}
+
+.pagination-info {
+    font-size: var(--font-size-sm);
+    color: var(--gray);
+    margin-left: auto;
+    white-space: nowrap;
 }
 </style>
