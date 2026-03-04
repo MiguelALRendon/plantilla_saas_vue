@@ -68,7 +68,7 @@
                             </button>
                         </td>
                         <td v-for="property in item.getKeys()" :key="property" :style="getColumnStyle(property)">
-                            {{ item[property] }}
+                            {{ getCellValue(item, property) }}
                         </td>
                     </tr>
                 </tbody>
@@ -81,6 +81,7 @@
 </template>
 <script setup lang="ts">
 import { BaseEntity } from '@/entities/base_entity';
+import { EnumAdapter } from '@/models/enum_adapter';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
@@ -195,6 +196,33 @@ function showDeleteModal(): void {
             isSelection.value = false;
         }
     );
+}
+
+function getCellValue(item: BaseEntity, column: string): string {
+    const value = item[column];
+
+    if (value instanceof BaseEntity) {
+        return String(value.getDefaultPropertyValue() ?? '');
+    }
+
+    // SC-017 — enum resolution: getPropertyType stores an EnumAdapter instance for enum columns.
+    if (item.isEnumProperty(column) && typeof value === 'number') {
+        const adapter = item.getPropertyType(column) as EnumAdapter;
+        const found = adapter.getKeyValuePairs().find((pair) => pair.value === value);
+        if (found) {
+            return parseEnumValue(found.key);
+        }
+    }
+
+    return item.getFormattedValue(column);
+}
+
+function parseEnumValue(key: string): string {
+    return key
+        .toLowerCase()
+        .split('_')
+        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+        .join(' ');
 }
 
 function getColumnStyle(column: string): Record<string, string> | undefined {

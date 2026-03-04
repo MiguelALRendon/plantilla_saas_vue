@@ -104,13 +104,10 @@ function getCellValue(item: BaseEntity, column: string): string {
         return String(value.getDefaultPropertyValue() ?? '');
     }
 
-    // SC-017 — enum resolution: detect non-primitive, non-BaseEntity types and resolve numeric value
-    const entityClass = Application.View.value.entityClass;
-    const type = entityClass?.getPropertyType(column) as unknown;
-    const primitiveConstructors: unknown[] = [String, Number, Boolean, Date, Array];
-
-    if (type && !primitiveConstructors.includes(type) && typeof value === 'number') {
-        const adapter = new EnumAdapter(type as Record<string, string | number>);
+    // SC-017 — enum resolution via BaseEntity.isEnumProperty().
+    // getPropertyType() stores an EnumAdapter instance for enum columns — use it directly.
+    if (item.isEnumProperty(column) && typeof value === 'number') {
+        const adapter = item.getPropertyType(column) as EnumAdapter;
         const found = adapter.getKeyValuePairs().find((pair) => pair.value === value);
         if (found) {
             return parseEnumValue(found.key);
