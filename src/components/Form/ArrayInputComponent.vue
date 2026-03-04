@@ -46,7 +46,7 @@
                     <tr>
                         <th class="selection" :class="[{ display: isSelection }]"></th>
                         <th
-                            v-for="(label, key) in typeValue?.getProperties()"
+                            v-for="(label, key) in visibleProperties"
                             :key="String(key)"
                             :style="getColumnStyle(String(key))"
                             @dblclick="autoFitColumn($event, String(key))"
@@ -67,14 +67,14 @@
                                 <span :class="[GGCLASS]">{{ getItemIcon(item) }}</span>
                             </button>
                         </td>
-                        <td v-for="property in item.getKeys()" :key="property" :style="getColumnStyle(property)">
+                        <td v-for="property in Object.keys(visibleProperties)" :key="property" :style="getColumnStyle(property)">
                             {{ getCellValue(item, property) }}
                         </td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td class="pagination-td" :colspan="(typeValue ? Object.keys(typeValue.getProperties()).length : 0) + 1">
+                        <td class="pagination-td" :colspan="Object.keys(visibleProperties).length + 1">
                             <div class="pagination-bar">
                                 <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
                                     <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
@@ -208,6 +208,18 @@ const paginationInfo = computed<string>(() => {
     const start = (currentPage.value - 1) * size + 1;
     const end = Math.min(currentPage.value * size, filteredData.value.length);
     return `${start}–${end} de ${filteredData.value.length}`;
+});
+
+const visibleProperties = computed<Record<string, string>>(() => {
+    if (!props.typeValue) return {};
+    const allProps = props.typeValue.getProperties();
+    const tempEntity = (props.typeValue as unknown as { createNewInstance(): BaseEntity }).createNewInstance();
+    return Object.fromEntries(
+        Object.entries(allProps).filter(([key]) => {
+            if (props.typeValue!.getPropertyType(key) === Array) return false;
+            return !tempEntity.isHideInListView(key);
+        })
+    );
 });
 // #endregion
 
@@ -652,7 +664,7 @@ watch(
     display: flex;
     align-items: center;
     gap: var(--spacing-medium);
-    padding: var(--spacing-small) var(--spacing-medium);
+    padding: var(--spacing-small);
     flex: 1;
     min-width: 0;
 }

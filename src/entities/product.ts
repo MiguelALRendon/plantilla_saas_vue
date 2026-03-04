@@ -59,7 +59,7 @@ export class Product extends BaseEntity {
     @PropertyName('ID', Number)
     @CSSColumnClass('table-length-small')
     @Required(true)
-    @HideInDetailView()
+    @HideInDetailView() @HideInListView()
     id!: number;
 
     /**
