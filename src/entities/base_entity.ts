@@ -85,6 +85,21 @@ function getErrorMessage(error: unknown): string {
     return GetLanguagedText('errors.unknown_error');
 }
 
+const I18N_KEY_PATTERN = /^(common|errors|validation|navigation|custom)\./;
+
+function resolveI18nText(text?: string): string | undefined {
+    if (!text) {
+        return text;
+    }
+
+    if (!I18N_KEY_PATTERN.test(text)) {
+        return text;
+    }
+
+    const translated = GetLanguagedText(text);
+    return translated === 'MissingNO' ? text : translated;
+}
+
 /**
  * Abstract base class for all entities in the meta-programming framework
  *
@@ -368,7 +383,10 @@ export abstract class BaseEntity {
      */
     public getViewGroups(): Record<string, string> {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        return (proto[VIEW_GROUP_KEY] as Record<string, string>) || {};
+        const groups = (proto[VIEW_GROUP_KEY] as Record<string, string>) || {};
+        return Object.fromEntries(
+            Object.entries(groups).map(([key, value]) => [key, resolveI18nText(value) ?? value])
+        );
     }
 
     /**
@@ -414,7 +432,7 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
         const metadata = requiredFields[propertyKey];
-        return metadata?.message;
+        return resolveI18nText(metadata?.message);
     }
 
     /**
@@ -443,7 +461,7 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
         const rule = validationRules[propertyKey];
-        return rule?.message;
+        return resolveI18nText(rule?.message);
     }
 
     /**
@@ -496,7 +514,7 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
         const rule = asyncValidationRules[propertyKey];
-        return rule?.message;
+        return resolveI18nText(rule?.message);
     }
 
     /**
@@ -541,7 +559,7 @@ export abstract class BaseEntity {
     public getHelpText(propertyKey: string): string | undefined {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const helpTexts = (proto[HELP_TEXT_KEY] as Record<string, string>) ?? {};
-        return helpTexts[propertyKey];
+        return resolveI18nText(helpTexts[propertyKey]);
     }
 
     /**
@@ -1224,7 +1242,10 @@ export abstract class BaseEntity {
      */
     public static getAllPropertiesNonFilter(): Record<string, string> {
         const proto = this.getStaticDecoratedPrototypeMetadata();
-        return (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
+        const properties = (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
+        return Object.fromEntries(
+            Object.entries(properties).map(([key, value]) => [key, resolveI18nText(value) ?? value])
+        );
     }
 
     /**
@@ -1240,7 +1261,7 @@ export abstract class BaseEntity {
 
         for (const key of Object.keys(properties)) {
             if (propertyTypes[key] !== Array) {
-                filtered[key] = properties[key];
+                filtered[key] = resolveI18nText(properties[key]) ?? properties[key];
             }
         }
 
@@ -1317,7 +1338,7 @@ export abstract class BaseEntity {
      */
     public static getPropertyNameByKey(propertyKey: string): string | undefined {
         const columns = this.getAllPropertiesNonFilter();
-        return columns[propertyKey];
+        return resolveI18nText(columns[propertyKey]);
     }
 
     /**
@@ -1335,7 +1356,7 @@ export abstract class BaseEntity {
      */
     public static getModuleName(): string | undefined {
         const metadata = this.getStaticDecoratedConstructorMetadata();
-        return metadata[MODULE_NAME_KEY] as string | undefined;
+        return resolveI18nText(metadata[MODULE_NAME_KEY] as string | undefined);
     }
 
     /**

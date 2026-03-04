@@ -1,13 +1,14 @@
 <template>
     <button class="button accent" @click="saveItem">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.SAVE2 }}</span>
-        <span class="btn-label">Save and New</span>
+        <span class="btn-label">{{ t('common.save_and_new') }}</span>
     </button>
 </template>
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 
 export default {
@@ -15,6 +16,9 @@ export default {
 
     // #region METHODS
     methods: {
+        t(path: string): string {
+            return GetLanguagedText(path);
+        },
         async saveItem() {
             const entity = Application.View.value.entityObject;
             if (entity && entity.isPersistent()) {

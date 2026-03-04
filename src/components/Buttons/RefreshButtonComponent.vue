@@ -1,12 +1,13 @@
 <template>
     <button class="button success-green" @click="refreshList">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.REFRESH }}</span>
-        <span class="btn-label">Refresh</span>
+        <span class="btn-label">{{ t('common.refresh') }}</span>
     </button>
 </template>
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 
 export default {
@@ -14,6 +15,9 @@ export default {
 
     // #region METHODS
     methods: {
+        t(path: string): string {
+            return GetLanguagedText(path);
+        },
         async refreshList() {
             const entity = Application.View.value.entityObject;
             if (entity && entity.isPersistent()) {

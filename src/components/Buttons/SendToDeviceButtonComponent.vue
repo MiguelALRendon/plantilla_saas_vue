@@ -1,18 +1,23 @@
 <template>
     <button class="button primary" @click="">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.DEVICES }}</span>
-        <span class="btn-label">Send to Device</span>
+        <span class="btn-label">{{ t('common.send_to_device') }}</span>
     </button>
 </template>
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 export default {
     name: 'SendToDeviceButtonComponent',
 
     // #region METHODS
-    methods: {},
+    methods: {
+        t(path: string): string {
+            return GetLanguagedText(path);
+        }
+    },
     // #endregion
 
     // #region PROPERTIES

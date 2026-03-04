@@ -1,20 +1,48 @@
 {
     "products": {
-        "id":          { "en": "ID",              "es": "ID",                "jp": "ID" },
-        "name":        { "en": "Name",            "es": "Nombre",            "jp": "名前" },
-        "grupo":       { "en": "Stringi",         "es": "Tipo de cadena",    "jp": "文字列タイプ" },
-        "description": { "en": "Description",     "es": "Descripción",       "jp": "説明" },
-        "stock":       { "en": "Stock",           "es": "Stock",             "jp": "在庫" },
-        "genericDate": { "en": "Generic Date",    "es": "Fecha genérica",    "jp": "汎用日付" },
-        "catedral":    { "en": "Catedral Product","es": "Producto catedral",  "jp": "カテドラル製品" },
-        "bolian":      { "en": "Is Bolian",       "es": "Es Boliano",        "jp": "ボリアン" },
-        "email":       { "en": "Email",           "es": "Correo electrónico","jp": "メール" },
-        "password":    { "en": "Password",        "es": "Contraseña",        "jp": "パスワード" },
-        "phone":       { "en": "Phone",           "es": "Teléfono",          "jp": "電話" },
-        "websiteUrl":  { "en": "Website URL",     "es": "URL del sitio web", "jp": "ウェブサイトURL" },
-        "imageUrl":    { "en": "Image URL",       "es": "URL de imagen",     "jp": "画像URL" },
-        "searchQuery": { "en": "Search Query",    "es": "Búsqueda",          "jp": "検索クエリ" },
-        "cardNumber":  { "en": "Card Number",     "es": "Número de tarjeta", "jp": "カード番号" },
-        "cardDate":    { "en": "Card Date",       "es": "Fecha de tarjeta",  "jp": "カード有効期限" }
+        "title": { "en": "Products", "es": "Productos", "jp": "製品" },
+        "groups": {
+            "group_1": { "en": "Group 1", "es": "Grupo 1", "jp": "グループ1" },
+            "group_2": { "en": "Group 2", "es": "Grupo 2", "jp": "グループ2" },
+            "group_3": { "en": "Group 3", "es": "Grupo 3", "jp": "グループ3" }
+        },
+        "fields": {
+            "id":          { "en": "ID",              "es": "ID",                "jp": "ID" },
+            "name":        { "en": "Name",            "es": "Nombre",            "jp": "名前" },
+            "grupo":       { "en": "Stringi",         "es": "Tipo de cadena",    "jp": "文字列タイプ" },
+            "description": { "en": "Description",     "es": "Descripción",       "jp": "説明" },
+            "stock":       { "en": "Stock",           "es": "Stock",             "jp": "在庫" },
+            "genericDate": { "en": "Generic Date",    "es": "Fecha genérica",    "jp": "汎用日付" },
+            "catedral":    { "en": "Catedral Product", "es": "Producto catedral", "jp": "カテドラル製品" },
+            "bolian":      { "en": "Is Bolian",       "es": "Es Boliano",        "jp": "ボリアン" },
+            "email":       { "en": "Email",           "es": "Correo electrónico", "jp": "メール" },
+            "password":    { "en": "Password",        "es": "Contraseña",        "jp": "パスワード" },
+            "phone":       { "en": "Phone",           "es": "Teléfono",          "jp": "電話" },
+            "websiteUrl":  { "en": "Website URL",     "es": "URL del sitio web", "jp": "ウェブサイトURL" },
+            "imageUrl":    { "en": "Image URL",       "es": "URL de imagen",     "jp": "画像URL" },
+            "searchQuery": { "en": "Search Query",    "es": "Búsqueda",          "jp": "検索クエリ" },
+            "cardNumber":  { "en": "Card Number",     "es": "Número de tarjeta", "jp": "カード番号" },
+            "cardDate":    { "en": "Card Date",       "es": "Fecha de tarjeta",  "jp": "カード有効期限" },
+            "cardCvv":     { "en": "Card CVV",        "es": "CVV de tarjeta",    "jp": "カードCVV" },
+            "list":        { "en": "List",            "es": "Lista",             "jp": "一覧" }
+        },
+        "help": {
+            "name":       { "en": "Product name shown to customers", "es": "Nombre del producto que se mostrará a los clientes", "jp": "顧客に表示される製品名" },
+            "description":{ "en": "Detailed product description", "es": "Descripción detallada del producto", "jp": "製品の詳細説明" },
+            "stock":      { "en": "Available quantity in inventory", "es": "Cantidad disponible en inventario", "jp": "在庫の利用可能数" },
+            "email":      { "en": "Supplier contact email", "es": "Email de contacto del proveedor", "jp": "仕入先の連絡先メール" },
+            "phone":      { "en": "Format: XXX XXX XXXX", "es": "Formato: XXX XXX XXXX", "jp": "形式: XXX XXX XXXX" },
+            "websiteUrl": { "en": "Must start with http:// or https://", "es": "Debe iniciar con http:// o https://", "jp": "http:// または https:// で開始してください" },
+            "imageUrl":   { "en": "Image URL for preview", "es": "URL de imagen para previsualización", "jp": "プレビュー用画像URL" },
+            "cardNumber": { "en": "Format: XXXX XXXX XXXX XXXX", "es": "Formato: XXXX XXXX XXXX XXXX", "jp": "形式: XXXX XXXX XXXX XXXX" },
+            "cardDate":   { "en": "Format: MM/YY", "es": "Formato: MM/YY", "jp": "形式: MM/YY" },
+            "cardCvv":    { "en": "Maximum 3 digits", "es": "Máximo 3 dígitos", "jp": "最大3桁" }
+        },
+        "validation": {
+            "stock_min": { "en": "Stock must be greater than or equal to 0", "es": "El stock debe ser mayor o igual a 0", "jp": "在庫は0以上である必要があります" },
+            "invalid_email": { "en": "Invalid email format", "es": "Formato de email inválido", "jp": "無効なメール形式" },
+            "email_test_domain": { "en": "Email cannot end with @test.com", "es": "El email no puede terminar en @test.com", "jp": "メールは @test.com で終われません" },
+            "min_list_items": { "en": "Minimum quantity must be greater than 3", "es": "La cantidad minima tiene que ser mayor a 3", "jp": "最小数量は3より大きい必要があります" }
+        }
     }
 }
