@@ -45,7 +45,15 @@
                 <thead>
                     <tr>
                         <th class="selection" :class="[{ display: isSelection }]"></th>
-                        <th v-for="header in typeValue?.getProperties()">{{ header }}</th>
+                        <th
+                            v-for="(label, key) in typeValue?.getProperties()"
+                            :key="String(key)"
+                            :style="getColumnStyle(String(key))"
+                            @dblclick="autoFitColumn($event, String(key))"
+                        >
+                            {{ label }}
+                            <span class="col-resize-handle" @mousedown.prevent="startResize($event, String(key))"></span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,7 +67,7 @@
                                 <span :class="[GGCLASS]">{{ getItemIcon(item) }}</span>
                             </button>
                         </td>
-                        <td v-for="property in item.getKeys()">
+                        <td v-for="property in item.getKeys()" :key="property" :style="getColumnStyle(property)">
                             {{ item[property] }}
                         </td>
                     </tr>
@@ -77,7 +85,7 @@ import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 
 interface Props {
     modelValue: BaseEntity[];
@@ -109,6 +117,12 @@ const isSelection = ref(false);
 const isInputValidated = ref(true);
 const selectedItems = ref<BaseEntity[]>([]);
 const validationMessages = ref<string[]>([]);
+
+const columnWidths: Ref<Record<string, number>> = ref({});
+const MIN_COL_WIDTH = 50; // px — equivalent of var(--table-width-very-small)
+let resizeColumn = '';
+let resizeStartX = 0;
+let resizeStartWidth = 0;
 
 const moduleIcon = computed<string | undefined>(() => props.typeValue?.getModuleIcon());
 const moduleName = computed<string | undefined>(() => props.typeValue?.getModuleName());
@@ -183,6 +197,52 @@ function showDeleteModal(): void {
     );
 }
 
+function getColumnStyle(column: string): Record<string, string> | undefined {
+    const width = columnWidths.value[column];
+    if (!width) return undefined;
+    return { width: `${width}px`, minWidth: `${width}px` };
+}
+
+function startResize(event: MouseEvent, column: string): void {
+    const td = (event.target as HTMLElement).parentElement;
+    if (!td) return;
+    resizeColumn = column;
+    resizeStartX = event.clientX;
+    resizeStartWidth = td.offsetWidth;
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeUp);
+}
+
+function onResizeMove(event: MouseEvent): void {
+    if (!resizeColumn) return;
+    const delta = event.clientX - resizeStartX;
+    columnWidths.value[resizeColumn] = Math.max(MIN_COL_WIDTH, resizeStartWidth + delta);
+}
+
+function onResizeUp(): void {
+    resizeColumn = '';
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeUp);
+}
+
+function autoFitColumn(event: MouseEvent, column: string): void {
+    const th = event.currentTarget as HTMLElement;
+    const tableEl = th.closest('table');
+    if (!tableEl) return;
+    const headers = Array.from(th.parentElement!.children) as HTMLElement[];
+    const colIndex = headers.indexOf(th);
+    if (colIndex === -1) return;
+    const bodyRows = tableEl.querySelectorAll('tbody tr');
+    let maxWidth = 0;
+    bodyRows.forEach((row) => {
+        const cell = row.children[colIndex] as HTMLElement | undefined;
+        if (cell) maxWidth = Math.max(maxWidth, cell.scrollWidth);
+    });
+    if (maxWidth > 0) {
+        columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
+    }
+}
+
 async function isValidated(): Promise<boolean> {
     validationMessages.value = [];
 
@@ -218,6 +278,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeUp);
 });
 // #endregion
 </script>
@@ -314,6 +376,32 @@ onBeforeUnmount(() => {
     border-bottom: var(--border-width-thin) solid var(--gray-lighter);
 }
 
+.table th {
+    position: relative; /* anchor for .col-resize-handle */
+}
+
+.table th:hover {
+    background-color: var(--bg-gray);
+    box-shadow: inset 0 0 0 var(--border-width-thin) var(--gray-lighter);
+}
+
+/* Column resize drag handle — right edge of each header cell */
+.col-resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    background: transparent;
+    transition: background-color var(--transition-fast) var(--timing-ease);
+}
+
+.col-resize-handle:hover {
+    background-color: var(--gray-lighter);
+}
+
 .table tbody {
     display: block;
     width: 100%;
@@ -377,7 +465,8 @@ onBeforeUnmount(() => {
     background-color: var(--beige);
 }
 
-.selection {
+.table th.selection,
+.table td.selection {
     display: none;
 }
 .select-btn span {
@@ -390,9 +479,10 @@ onBeforeUnmount(() => {
     transform: rotate(0deg);
     color: var(--accent-red);
 }
-.selection.display {
+.table th.selection.display,
+.table td.selection.display {
     display: flex;
-    max-width: 3rem;
+    max-width: 2rem;
 }
 
 .advice {

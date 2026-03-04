@@ -10,6 +10,7 @@
                         :key="column"
                         :class="Application.View.value.entityClass?.getCSSClasses()[column]"
                         :style="getColumnStyle(column)"
+                        @dblclick="autoFitColumn($event, column)"
                     >
                         {{ Application.View.value.entityClass?.getProperties()[column] }}
                         <span class="col-resize-handle" @mousedown.prevent="startResize($event, column)"></span>
@@ -170,6 +171,30 @@ function onResizeMove(event: MouseEvent): void {
 }
 
 /**
+ * Auto-fits a column width to the maximum scrollWidth found in tbody cells.
+ * Triggered by double-clicking a header cell.
+ * @param event The dblclick MouseEvent.
+ * @param column The property key of the clicked column.
+ */
+function autoFitColumn(event: MouseEvent, column: string): void {
+    const th = event.currentTarget as HTMLElement;
+    const tableEl = th.closest('table');
+    if (!tableEl) return;
+    const headers = Array.from(th.parentElement!.children) as HTMLElement[];
+    const colIndex = headers.indexOf(th);
+    if (colIndex === -1) return;
+    const bodyRows = tableEl.querySelectorAll('tbody tr');
+    let maxWidth = 0;
+    bodyRows.forEach((row) => {
+        const cell = row.children[colIndex] as HTMLElement | undefined;
+        if (cell) maxWidth = Math.max(maxWidth, cell.scrollWidth);
+    });
+    if (maxWidth > 0) {
+        columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
+    }
+}
+
+/**
  * Finalises column resize on mouseup.
  */
 function onResizeUp(): void {
@@ -276,6 +301,11 @@ thead tr {
 thead td {
     font-weight: bold;
     position: relative; /* required for .col-resize-handle absolute positioning */
+}
+
+thead td:hover {
+    background-color: var(--bg-gray);
+    box-shadow: inset 0 0 0 var(--border-width-thin) var(--gray-lighter);
 }
 
 /* Column resize drag handle — appears on the right edge of each header cell */
