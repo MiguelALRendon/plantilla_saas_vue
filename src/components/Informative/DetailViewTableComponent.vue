@@ -54,7 +54,7 @@
                                     class="page-btn"
                                     :disabled="currentPage === 1 || pageSize === 'ALL'"
                                     @click="prevPage"
-                                    title="Página anterior"
+                                    :title="t('common.previous_page')"
                                 >&#8249;</button>
                                 <button
                                     v-for="page in visiblePages"
@@ -68,7 +68,7 @@
                                     class="page-btn"
                                     :disabled="currentPage === totalPages || pageSize === 'ALL'"
                                     @click="nextPage"
-                                    title="Página siguiente"
+                                    :title="t('common.next_page')"
                                 >&#8250;</button>
                             </div>
                             <span class="pagination-info">{{ paginationInfo }}</span>
@@ -85,8 +85,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import { EnumAdapter } from '@/models/enum_adapter';
 import Application from '@/models/application';
+import type { ConcreteEntityClass } from '@/types/entity.types';
 
 // #region PROPERTIES
 const data: Ref<BaseEntity[]> = ref([]);
@@ -97,21 +99,22 @@ let resizeColumn = '';
 let resizeStartX = 0;
 let resizeStartWidth = 0;
 
-// FR-034 — Pagination
+// FR-034 — Pagination (T217: server-side pagination state)
 const pageSizeOptions: (number | 'ALL')[] = [10, 20, 50, 100, 'ALL'];
 const pageSize = ref<number | 'ALL'>(10);
 const currentPage = ref<number>(1);
+/** T217: total record count returned by the server (or full dataset if API returns flat array) */
+const totalFromServer = ref<number>(0);
 
-const paginatedRows = computed<BaseEntity[]>(() => {
-    if (pageSize.value === 'ALL') return data.value;
-    const size = pageSize.value as number;
-    const start = (currentPage.value - 1) * size;
-    return data.value.slice(start, start + size);
-});
+/**
+ * T217: paginatedRows === data.value because getElementListPaginated already returns
+ * the current page's slice from the server. No client-side slicing needed.
+ */
+const paginatedRows = computed<BaseEntity[]>(() => data.value);
 
 const totalPages = computed<number>(() => {
-    if (pageSize.value === 'ALL' || data.value.length === 0) return 1;
-    return Math.ceil(data.value.length / (pageSize.value as number));
+    if (pageSize.value === 'ALL' || totalFromServer.value === 0) return 1;
+    return Math.ceil(totalFromServer.value / (pageSize.value as number));
 });
 
 const visiblePages = computed<number[]>(() => {
@@ -126,33 +129,54 @@ const visiblePages = computed<number[]>(() => {
 });
 
 const paginationInfo = computed<string>(() => {
-    if (pageSize.value === 'ALL') return `${data.value.length} registros`;
+    if (pageSize.value === 'ALL') {
+        return t('common.records_count').split('{count}').join(String(totalFromServer.value));
+    }
     const size = pageSize.value as number;
-    if (data.value.length === 0) return '0 registros';
+    if (totalFromServer.value === 0) return t('common.zero_records');
     const start = (currentPage.value - 1) * size + 1;
-    const end = Math.min(currentPage.value * size, data.value.length);
-    return `${start}–${end} de ${data.value.length}`;
+    const end = Math.min(currentPage.value * size, totalFromServer.value);
+    return t('common.pagination_range')
+        .split('{start}').join(String(start))
+        .split('{end}').join(String(end))
+        .split('{total}').join(String(totalFromServer.value));
 });
+
+function t(path: string): string {
+    return GetLanguagedText(path);
+}
 // #endregion
 
 // #region METHODS
+/**
+ * T217: Loads entity data using server-side pagination via getElementListPaginated.
+ * Passes current page and pageSize so the API receives real pagination params.
+ * For 'ALL' option, sends a very high limit so the server returns everything.
+ */
 async function loadData(): Promise<void> {
-    const entityClass = Application.View.value.entityClass as
-        | (typeof BaseEntity & (new (input: Record<string, unknown>) => BaseEntity))
-        | null;
+    const entityClass = Application.View.value.entityClass as ConcreteEntityClass<BaseEntity> | null;
 
     if (!entityClass) {
         data.value = [];
+        totalFromServer.value = 0;
         currentPage.value = 1;
         return;
     }
 
+    const limit = pageSize.value === 'ALL' ? 999999 : (pageSize.value as number);
+
     try {
-        data.value = await entityClass.getElementList('');
-        currentPage.value = 1;
+        const result = await entityClass.getElementListPaginated({
+            page: currentPage.value,
+            limit,
+            filter: ''
+        });
+        data.value = result.data;
+        totalFromServer.value = result.total;
     } catch (error: unknown) {
         console.error('[DetailViewTableComponent] Failed to load entity list', error);
         data.value = [];
+        totalFromServer.value = 0;
         currentPage.value = 1;
     }
 }
@@ -270,23 +294,31 @@ function onResizeUp(): void {
     document.removeEventListener('mouseup', onResizeUp);
 }
 
-// FR-034 — Pagination helpers
+// FR-034 — Pagination helpers (T217: all page changes re-fetch from server)
 function prevPage(): void {
-    if (currentPage.value > 1) currentPage.value--;
+    if (currentPage.value > 1) {
+        currentPage.value--;
+        loadData();
+    }
 }
 
 function nextPage(): void {
-    if (currentPage.value < totalPages.value) currentPage.value++;
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+        loadData();
+    }
 }
 
 function goToPage(page: number): void {
     currentPage.value = page;
+    loadData();
 }
 
 function onPageSizeChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     pageSize.value = value === 'ALL' ? 'ALL' : Number(value);
     currentPage.value = 1;
+    loadData();
 }
 
 function getVisibleColumns(entity?: BaseEntity): string[] {
@@ -327,6 +359,8 @@ function openDetailView(entity: BaseEntity): void {
 watch(
     () => Application.View.value.entityClass,
     () => {
+        // T217: reset to page 1 when module changes so the API call uses correct offset
+        currentPage.value = 1;
         loadData();
     }
 );

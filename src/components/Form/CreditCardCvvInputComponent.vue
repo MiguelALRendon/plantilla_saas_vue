@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
 import { formatCreditCardCvv } from '@/utils/string_inputs';
@@ -73,7 +74,7 @@ async function isValidated(): Promise<boolean> {
 
     if (length > 0 && length < 3) {
         validated = false;
-        validationMessages.value.push('El CVV debe tener 3 dígitos.');
+        validationMessages.value.push(GetLanguagedText('validation.cvv_3_digits'));
     }
 
     if (!metadata.validated.value) {

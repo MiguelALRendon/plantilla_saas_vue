@@ -1,3 +1,5 @@
+import { Language } from '@/enums/language';
+
 export interface AppConfiguration {
     appName: string;
     appVersion: string;
@@ -12,4 +14,5 @@ export interface AppConfiguration {
     itemsPerPage: number;
     maxFileSize: number;
     isDarkMode: boolean;
+    selectedLanguage: Language;
 }

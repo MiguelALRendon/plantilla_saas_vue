@@ -39,6 +39,7 @@ import {
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
 import { ToastType } from '@/enums/toast_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import { deepClone, deepEqual } from '@/utils/deep_compare';
 import DefaultDetailView from '@/views/default_detailview.vue';
@@ -62,6 +63,7 @@ import type {
     TransformableEntityClass,
 } from '@/types/entity.types';
 import type { TransformationSchema } from '@/types/service.types';
+import type { ListQueryParams, PaginatedListResult } from '@/types/service.types';
 
 function getErrorMessage(error: unknown): string {
     if (error && typeof error === 'object') {
@@ -80,7 +82,7 @@ function getErrorMessage(error: unknown): string {
         }
     }
 
-    return 'Error desconocido';
+    return GetLanguagedText('errors.unknown_error');
 }
 
 /**
@@ -157,13 +159,7 @@ export abstract class BaseEntity {
         this._isLoading = false;
     }
 
-    /**
-     * Clears the entity loading state — spec §3.3 canonical name
-     * Alias for clearLoadingState() per spec requirements
-     */
-    public loaded(): void {
-        this._isLoading = false;
-    }
+    // NOTE: T224 — `loaded()` alias removed; canonical method is clearLoadingState()
 
     /**
      * Retrieves the current loading state of the entity
@@ -742,31 +738,31 @@ export abstract class BaseEntity {
         const entityClass = this.constructor as typeof BaseEntity;
 
         if (!entityClass.getModuleName()) {
-            errors.push('El módulo no tiene definido @ModuleName');
+            errors.push(GetLanguagedText('errors.module_missing_module_name'));
         }
 
         if (!entityClass.getModuleIcon()) {
-            errors.push('El módulo no tiene definido @ModuleIcon');
+            errors.push(GetLanguagedText('errors.module_missing_module_icon'));
         }
 
         const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
 
         if (!constructorMetadata[DEFAULT_PROPERTY_KEY]) {
-            errors.push('El módulo no tiene definido @DefaultProperty');
+            errors.push(GetLanguagedText('errors.module_missing_default_property'));
         }
 
         if (!this.getPrimaryPropertyKey()) {
-            errors.push('El módulo no tiene definido @PrimaryProperty');
+            errors.push(GetLanguagedText('errors.module_missing_primary_property'));
         }
 
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error de configuración del módulo',
+                GetLanguagedText('errors.module_configuration_error'),
                 errors.join('\n'),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return false;
         }
@@ -841,21 +837,21 @@ export abstract class BaseEntity {
         const errors: string[] = [];
 
         if (!this.getUniquePropertyKey()) {
-            errors.push('La entidad no tiene definido @UniquePropertyKey');
+            errors.push(GetLanguagedText('errors.entity_missing_unique_property'));
         }
 
         if (!this.getApiEndpoint()) {
-            errors.push('La entidad no tiene definido @ApiEndpoint');
+            errors.push(GetLanguagedText('errors.entity_missing_api_endpoint'));
         }
 
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error de configuración de persistencia',
+                GetLanguagedText('errors.persistence_configuration_error'),
                 errors.join('\\n'),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return false;
         }
@@ -872,11 +868,11 @@ export abstract class BaseEntity {
         if (!this.isApiMethodAllowed(method)) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Método no permitido',
-                `El método ${method} no está permitido en esta entidad`,
+                GetLanguagedText('errors.method_not_allowed_title'),
+                GetLanguagedText('errors.method_not_allowed_message').split('{method}').join(method),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return false;
         }
@@ -929,7 +925,7 @@ export abstract class BaseEntity {
             this._isSaving = false;
             this.afterSave();
             Application.ApplicationUIService.hideLoadingMenu();
-            Application.ApplicationUIService.showToast('Guardado con éxito.', ToastType.SUCCESS);
+            Application.ApplicationUIService.showToast(GetLanguagedText('common.saved_successfully'), ToastType.SUCCESS);
             return this;
         } catch (error: unknown) {
             this._isSaving = false;
@@ -937,11 +933,11 @@ export abstract class BaseEntity {
             this.saveFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al guardar',
+                GetLanguagedText('errors.save_error'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }
@@ -1304,7 +1300,8 @@ export abstract class BaseEntity {
         const proxy = new Proxy(
             {},
             {
-                get(prop) {
+                // Fix T226: correct Proxy get handler — (target, propName) not just (target)
+                get(_target, prop) {
                     return prop;
                 }
             }
@@ -1457,13 +1454,16 @@ export abstract class BaseEntity {
 
     /**
      * Checks if a specific HTTP method is allowed for this entity
+     * T225: when @ApiMethods is absent, defaults to ['GET'] only (safe read-only default).
+     * Entities that need write access MUST explicitly declare @ApiMethods.
      * @param method The HTTP method to check
      * @returns True if method is allowed, false otherwise
      */
     public static isApiMethodAllowed(method: HttpMethod): boolean {
         const allowedMethods = this.getApiMethods();
         if (!allowedMethods) {
-            return true; // If not specified, all methods are allowed
+            // Safe default: only GET is allowed when @ApiMethods is not declared
+            return method === 'GET';
         }
         return allowedMethods.includes(method);
     }
@@ -1656,7 +1656,7 @@ export abstract class BaseEntity {
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
-            throw new Error('ApiEndpoint no definido');
+            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
         }
 
         try {
@@ -1670,11 +1670,11 @@ export abstract class BaseEntity {
             tempInstance.getElementFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al obtener elemento',
+                GetLanguagedText('errors.error_obtaining_element'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }
@@ -1682,41 +1682,142 @@ export abstract class BaseEntity {
 
     /**
      * Retrieves a list of entities from the API
-     * Executes afterGetElementList lifecycle hook on first entity if present
-     * @param filter Optional filter string to apply to the query
+     * Executes afterGetElementList lifecycle hook on every returned instance
+     * T216: accepts ListQueryParams (page, limit, filter) or legacy string filter.
+     * Handles both flat-array and paginated-envelope API responses transparently.
+     * @param paramsOrFilter Pagination params object or legacy filter string
      * @returns Promise resolving to array of entity instances
      * @throws Error if ApiEndpoint not defined or API request fails
      */
     public static async getElementList<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
-        filter: string = ''
+        paramsOrFilter: ListQueryParams | string = ''
     ): Promise<T[]> {
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
-            throw new Error('ApiEndpoint no definido');
+            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
         }
 
+        // Normalise to params object so the API receives standard query keys
+        const params: Record<string, unknown> =
+            typeof paramsOrFilter === 'string'
+                ? { filter: paramsOrFilter }
+                : { ...paramsOrFilter };
+
         try {
-            const response = await Application.axiosInstance.get(endpoint, { params: { filter } });
-            const instances = (response.data as unknown[]).map((item: unknown) => {
+            const response = await Application.axiosInstance.get(endpoint, { params });
+            const responseData = response.data as unknown;
+
+            // Detect paginated envelope { data: [...], total, ... }
+            const rawItems: unknown[] =
+                responseData &&
+                typeof responseData === 'object' &&
+                !Array.isArray(responseData) &&
+                'data' in (responseData as object)
+                    ? (responseData as { data: unknown[] }).data
+                    : (responseData as unknown[]);
+
+            const instances = rawItems.map((item: unknown) => {
                 const mappedData = this.mapFromPersistentKeys(item as EntityData);
                 return new this(mappedData);
             });
-            if (instances.length > 0) {
-                instances[0].afterGetElementList();
-            }
+            // T223: afterGetElementList called on EVERY instance
+            instances.forEach((instance) => instance.afterGetElementList());
             return instances;
         } catch (error: unknown) {
             const tempInstance = new this({});
             tempInstance.getElementListFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al obtener lista',
+                GetLanguagedText('errors.error_obtaining_list'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
+            );
+            throw error;
+        }
+    }
+
+    /**
+     * Retrieves a paginated list of entities from the API with server-side pagination metadata.
+     * T216: companion to getElementList — returns full PaginatedListResult including total count.
+     * When the API returns a flat array, paginates in-memory and reports the full count as total.
+     * @param params Pagination parameters (page, limit, filter)
+     * @returns Promise resolving to PaginatedListResult with data array and pagination metadata
+     * @throws Error if ApiEndpoint not defined or API request fails
+     */
+    public static async getElementListPaginated<T extends BaseEntity>(
+        this: ConcreteEntityClass<T>,
+        params: ListQueryParams = {}
+    ): Promise<PaginatedListResult<T>> {
+        const endpoint = this.getApiEndpoint();
+
+        if (!endpoint) {
+            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
+        }
+
+        const { page = 1, limit = 20, filter = '' } = params;
+
+        try {
+            const response = await Application.axiosInstance.get(endpoint, {
+                params: { page, limit, filter }
+            });
+            const responseData = response.data as unknown;
+
+            // Detect paginated envelope { data: [...], total, page?, limit? }
+            if (
+                responseData &&
+                typeof responseData === 'object' &&
+                !Array.isArray(responseData) &&
+                'data' in (responseData as object) &&
+                'total' in (responseData as object)
+            ) {
+                const envelope = responseData as {
+                    data: unknown[];
+                    total: number;
+                    page?: number;
+                    limit?: number;
+                };
+                const instances = envelope.data.map((item: unknown) => {
+                    const mappedData = this.mapFromPersistentKeys(item as EntityData);
+                    return new this(mappedData);
+                });
+                instances.forEach((instance) => instance.afterGetElementList());
+                return {
+                    data: instances,
+                    total: envelope.total,
+                    page: envelope.page ?? page,
+                    limit: envelope.limit ?? limit
+                };
+            }
+
+            // Flat array response — paginate in-memory and report full length as total
+            const allItems = responseData as unknown[];
+            const allInstances = allItems.map((item: unknown) => {
+                const mappedData = this.mapFromPersistentKeys(item as EntityData);
+                return new this(mappedData);
+            });
+            allInstances.forEach((instance) => instance.afterGetElementList());
+            const start = (page - 1) * limit;
+            const pageData = allInstances.slice(start, start + limit);
+            return {
+                data: pageData,
+                total: allInstances.length,
+                page,
+                limit
+            };
+        } catch (error: unknown) {
+            const tempInstance = new this({});
+            tempInstance.getElementListFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                GetLanguagedText('errors.error_obtaining_list'),
+                getErrorMessage(error),
+                undefined,
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }

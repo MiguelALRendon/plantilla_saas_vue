@@ -1,9 +1,10 @@
 <template>
-    <div class="loading-screen" :class="{ active: isActive }">Loading...</div>
+    <div class="loading-screen" :class="{ active: isActive }">{{ loadingText }}</div>
 </template>
 
 <script lang="ts">
 import { Application } from '@/models/application';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 export default {
     name: 'LoadingScreenComponent',
@@ -15,6 +16,11 @@ export default {
             isActive: true,
             manuallyShown: false
         };
+    },
+    computed: {
+        loadingText(): string {
+            return GetLanguagedText('common.loading');
+        }
     },
     // #endregion
 
@@ -47,15 +53,17 @@ export default {
 
 <style scoped>
 .loading-screen {
-    position: absolute;
+    /* T232: position:fixed so the overlay covers the entire viewport regardless of scroll
+       or DOM nesting — body-level loading for global API fetches */
+    position: fixed;
+    inset: 0;
     display: flex;
     box-sizing: border-box;
     justify-content: center;
     align-items: center;
-    height: calc(100% - var(--topbar-height));
     width: 100%;
+    height: 100%;
     font-size: var(--font-size-large);
-    top: var(--topbar-height);
     z-index: var(--z-overlay);
     background-color: var(--white);
     color: var(--gray);

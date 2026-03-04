@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
 import { formatCreditCard } from '@/utils/string_inputs';
@@ -73,7 +74,7 @@ async function isValidated(): Promise<boolean> {
 
     if (digitsLength > 0 && digitsLength < 16) {
         validated = false;
-        validationMessages.value.push('La tarjeta debe tener 16 dígitos.');
+        validationMessages.value.push(GetLanguagedText('validation.card_16_digits'));
     }
 
     if (!metadata.validated.value) {

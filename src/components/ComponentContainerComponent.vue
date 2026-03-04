@@ -5,13 +5,11 @@
             <ActionsComponent />
             <component v-if="currentComponent" :is="currentComponent" />
         </div>
-        <LoadingScreenComponent />
     </div>
 </template>
 
 <script lang="ts">
 import { Component, markRaw, watch } from 'vue';
-import LoadingScreenComponent from './LoadingScreenComponent.vue';
 import TopBarComponent from './TopBarComponent.vue';
 import Application from '@/models/application';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
@@ -21,7 +19,6 @@ export default {
     name: 'ComponentContainerComponent',
     components: {
         TopBarComponent,
-        LoadingScreenComponent,
         ActionsComponent
     },
 

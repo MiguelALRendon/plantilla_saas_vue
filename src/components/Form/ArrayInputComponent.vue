@@ -14,7 +14,7 @@
 
             <div class="right-side-space">
                 <div class="TextInput search-input-container">
-                    <label class="label-input">Buscar {{ moduleName }}</label>
+                    <label class="label-input">{{ t('common.search') }} {{ moduleName }}</label>
                     <input type="text" class="main-input" placeholder=" " v-model="search" :disabled="disabled" />
                 </div>
                 <button
@@ -23,7 +23,7 @@
                     @click="showDeleteModal"
                 >
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.DELETE }}</span>
-                    <span class="btn-label">Eliminar</span>
+                    <span class="btn-label">{{ t('common.delete') }}</span>
                 </button>
                 <button
                     class="button success fill"
@@ -31,11 +31,11 @@
                     :disabled="modelValue.length == 0 || disabled"
                 >
                     <span :class="[GGCLASS, 'btn-icon']">{{ selectionIcon }}</span>
-                    <span class="btn-label">Seleccionar</span>
+                    <span class="btn-label">{{ t('common.select') }}</span>
                 </button>
                 <button class="button secondary fill" @click="openModal" :disabled="disabled">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.ADD }}</span>
-                    <span class="btn-label">Agregar</span>
+                    <span class="btn-label">{{ t('common.add') }}</span>
                 </button>
             </div>
         </div>
@@ -84,7 +84,7 @@
                                         class="page-btn"
                                         :disabled="currentPage === 1 || pageSize === 'ALL'"
                                         @click="prevPage"
-                                        title="Página anterior"
+                                        :title="t('common.previous_page')"
                                     >&#8249;</button>
                                     <button
                                         v-for="page in visiblePages"
@@ -98,7 +98,7 @@
                                         class="page-btn"
                                         :disabled="currentPage === totalPages || pageSize === 'ALL'"
                                         @click="nextPage"
-                                        title="Página siguiente"
+                                        :title="t('common.next_page')"
                                     >&#8250;</button>
                                 </div>
                                 <span class="pagination-info">{{ paginationInfo }}</span>
@@ -117,6 +117,7 @@ import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 
 interface Props {
@@ -202,12 +203,17 @@ const visiblePages = computed<number[]>(() => {
 });
 
 const paginationInfo = computed<string>(() => {
-    if (pageSize.value === 'ALL') return `${filteredData.value.length} registros`;
+    if (pageSize.value === 'ALL') {
+        return t('common.records_count').split('{count}').join(String(filteredData.value.length));
+    }
     const size = pageSize.value as number;
-    if (filteredData.value.length === 0) return '0 registros';
+    if (filteredData.value.length === 0) return t('common.zero_records');
     const start = (currentPage.value - 1) * size + 1;
     const end = Math.min(currentPage.value * size, filteredData.value.length);
-    return `${start}–${end} de ${filteredData.value.length}`;
+    return t('common.pagination_range')
+        .split('{start}').join(String(start))
+        .split('{end}').join(String(end))
+        .split('{total}').join(String(filteredData.value.length));
 });
 
 const visibleProperties = computed<Record<string, string>>(() => {
@@ -264,11 +270,15 @@ function toggleSelection(): void {
     }
 }
 
+function t(path: string): string {
+    return GetLanguagedText(path);
+}
+
 function showDeleteModal(): void {
     Application.ApplicationUIService.openConfirmationMenu(
         confMenuType.WARNING,
-        'Confirmar eliminación',
-        'El elemento que esta a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?',
+        t('common.confirm_delete'),
+        t('common.confirm_delete_message'),
         () => {
             const updatedArray = props.modelValue.filter((item) => !selectedItems.value.includes(item));
             emit('update:modelValue', updatedArray);

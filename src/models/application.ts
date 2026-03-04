@@ -8,8 +8,10 @@ import mitt, { Emitter } from 'mitt';
 import { DefaultButtonLists } from '@/constants/default_button_lists';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
+import { Language } from '@/enums/language';
 import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 import type { Events } from '@/types/events';
 import type { RetryableAxiosRequestConfig } from '@/types/service.types';
@@ -34,6 +36,7 @@ import type { Toast } from './toast';
  */
 class ApplicationClass implements ApplicationUIContext {
     private static instance: ApplicationClass | null = null;
+    private static readonly VIEW_TRANSITION_DELAY_MS = 400;
 
     // #region PROPERTIES — Reactive and non-reactive properties of the Application singleton
 
@@ -132,7 +135,9 @@ class ApplicationClass implements ApplicationUIContext {
             sessionTimeout: Number(import.meta.env.VITE_SESSION_TIMEOUT) || 3600000,
             itemsPerPage: Number(import.meta.env.VITE_ITEMS_PER_PAGE) || 20,
             maxFileSize: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880,
-            isDarkMode: false
+            isDarkMode: false,
+            // §8E T227 — language from env, default EN
+            selectedLanguage: (Number(import.meta.env.VITE_SELECTED_LANGUAGE) as Language) || Language.EN
         }) as Ref<AppConfiguration>;
         this.View = ref<View>({
             entityClass: null,
@@ -203,8 +208,25 @@ class ApplicationClass implements ApplicationUIContext {
                 }
 
                 if (status === undefined) {
+                    // T233: Retry with bounded exponential backoff for offline/transient connectivity errors
+                    if (
+                        requestConfig &&
+                        (requestConfig.__retryCount ?? 0) < this.AppConfiguration.value.apiRetryAttempts
+                    ) {
+                        requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
+                        const retryDelay = Math.pow(2, requestConfig.__retryCount) * 1000;
+                        this.ApplicationUIService.showToast(
+                            ApplicationClass.formatText('errors.connection_retrying', {
+                                current: requestConfig.__retryCount,
+                                max: this.AppConfiguration.value.apiRetryAttempts
+                            }),
+                            ToastType.WARNING
+                        );
+                        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+                        return this.axiosInstance.request(requestConfig);
+                    }
                     this.ApplicationUIService.showToast(
-                        'Error de conexión. Verifica tu conexión a internet.',
+                        GetLanguagedText('errors.connection_error'),
                         ToastType.ERROR
                     );
                     return Promise.reject(error);
@@ -214,7 +236,7 @@ class ApplicationClass implements ApplicationUIContext {
                     case 401:
                         localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
                         this.ApplicationUIService.showToast(
-                            'Sesión expirada. Por favor, inicia sesión nuevamente.',
+                            GetLanguagedText('errors.session_expired'),
                             ToastType.ERROR
                         );
 
@@ -225,14 +247,14 @@ class ApplicationClass implements ApplicationUIContext {
 
                     case 403:
                         this.ApplicationUIService.showToast(
-                            'No tienes permisos para realizar esta acción.',
+                            GetLanguagedText('errors.no_permissions'),
                             ToastType.ERROR
                         );
                         break;
 
                     case 404:
                         this.ApplicationUIService.showToast(
-                            'El recurso solicitado no fue encontrado.',
+                            GetLanguagedText('errors.resource_not_found'),
                             ToastType.WARNING
                         );
                         break;
@@ -248,12 +270,12 @@ class ApplicationClass implements ApplicationUIContext {
                                 .join(', ');
 
                             this.ApplicationUIService.showToast(
-                                `Errores de validación: ${messages}`,
+                                ApplicationClass.formatText('validation.validation_errors', { messages }),
                                 ToastType.ERROR
                             );
                         } else {
                             this.ApplicationUIService.showToast(
-                                'Error de validación en los datos enviados.',
+                                GetLanguagedText('validation.validation_data_error'),
                                 ToastType.ERROR
                             );
                         }
@@ -270,7 +292,10 @@ class ApplicationClass implements ApplicationUIContext {
                             requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
 
                             this.ApplicationUIService.showToast(
-                                `Error del servidor. Reintentando (${requestConfig.__retryCount}/${this.AppConfiguration.value.apiRetryAttempts})...`,
+                                ApplicationClass.formatText('errors.server_retrying', {
+                                    current: requestConfig.__retryCount,
+                                    max: this.AppConfiguration.value.apiRetryAttempts
+                                }),
                                 ToastType.WARNING
                             );
 
@@ -280,14 +305,14 @@ class ApplicationClass implements ApplicationUIContext {
                         }
 
                         this.ApplicationUIService.showToast(
-                            'Error del servidor. Por favor, intenta más tarde.',
+                            GetLanguagedText('errors.server_error'),
                             ToastType.ERROR
                         );
                         break;
 
                     default:
                         this.ApplicationUIService.showToast(
-                            `Error inesperado: ${status}`,
+                            ApplicationClass.formatText('errors.unexpected_error_with_status', { status }),
                             ToastType.ERROR
                         );
                 }
@@ -295,6 +320,18 @@ class ApplicationClass implements ApplicationUIContext {
                 return Promise.reject(error);
             }
         );
+    }
+
+    private static formatText(path: string, replacements: Record<string, string | number> = {}): string {
+        let text = GetLanguagedText(path);
+        for (const [key, value] of Object.entries(replacements)) {
+            text = text.split(`{${key}}`).join(String(value));
+        }
+        return text;
+    }
+
+    private static wait(ms: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     // #region METHODS — Public and private methods for managing application state and navigation
@@ -316,8 +353,8 @@ class ApplicationClass implements ApplicationUIContext {
         if (this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
             this.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
-                'Salir sin guardar',
-                'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?',
+                GetLanguagedText('common.exit_without_saving'),
+                GetLanguagedText('common.unsaved_changes_confirm'),
                 () => {
                     this.setViewChanges(entityClass, component, viewType, entity);
                 }
@@ -342,7 +379,7 @@ class ApplicationClass implements ApplicationUIContext {
         entity: BaseEntity | null = null
     ) => {
         this.ApplicationUIService.showLoadingScreen();
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await ApplicationClass.wait(ApplicationClass.VIEW_TRANSITION_DELAY_MS);
         this.View.value.entityClass = entityClass as unknown as EntityCtor;
         this.View.value.entityObject = entity;
         this.View.value.component = component;
@@ -359,7 +396,8 @@ class ApplicationClass implements ApplicationUIContext {
             this.View.value.entityOid = '';
         }
 
-        this.updateRouterFromView(entityClass, entity);
+        await this.updateRouterFromView(entityClass, entity);
+        this.ApplicationUIService.hideLoadingScreen();
     };
 
     /**
@@ -368,7 +406,10 @@ class ApplicationClass implements ApplicationUIContext {
      * @param entityClass The entity class being viewed
      * @param entity Optional entity object, determines if navigating to detail or list view
      */
-    private updateRouterFromView = (entityClass: typeof BaseEntity, entity: BaseEntity | null = null) => {
+    private updateRouterFromView = async (
+        entityClass: typeof BaseEntity,
+        entity: BaseEntity | null = null
+    ) => {
         if (!this.router) return;
 
         const moduleName = entityClass.getModuleName() || entityClass.name;
@@ -381,7 +422,7 @@ class ApplicationClass implements ApplicationUIContext {
             /** Navigate to detailview with entity ID or 'new' */
             const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
             if (currentRoute.path !== targetPath) {
-                this.router
+                await this.router
                     .push({
                         name: 'ModuleDetail',
                         params: {
@@ -400,7 +441,7 @@ class ApplicationClass implements ApplicationUIContext {
             /** Navigate to listview */
             const targetPath = `/${moduleNameLower}`;
             if (currentRoute.path !== targetPath) {
-                this.router
+                await this.router
                     .push({
                         name: 'ModuleList',
                         params: { module: moduleNameLower }
@@ -412,8 +453,6 @@ class ApplicationClass implements ApplicationUIContext {
                     });
             }
         }
-
-        this.ApplicationUIService.hideLoadingScreen();
     };
 
     /**

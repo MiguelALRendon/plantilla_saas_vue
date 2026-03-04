@@ -1,0 +1,45 @@
+{
+    "save": { "en": "Save", "es": "Guardar", "jp": "保存" },
+    "saved_successfully": { "en": "Saved successfully.", "es": "Guardado con éxito.", "jp": "正常に保存されました。" },
+    "cancel": { "en": "Cancel", "es": "Cancelar", "jp": "キャンセル" },
+    "accept": { "en": "Accept", "es": "Aceptar", "jp": "承認" },
+    "delete": { "en": "Delete", "es": "Eliminar", "jp": "削除" },
+    "close": { "en": "Close", "es": "Cerrar", "jp": "閉じる" },
+    "exit": { "en": "Exit", "es": "Salir", "jp": "終了" },
+    "new": { "en": "New", "es": "Nuevo", "jp": "新規" },
+    "refresh": { "en": "Refresh", "es": "Actualizar", "jp": "更新" },
+    "search": { "en": "Search", "es": "Buscar", "jp": "検索" },
+    "add": { "en": "Add", "es": "Agregar", "jp": "追加" },
+    "select": { "en": "Select", "es": "Seleccionar", "jp": "選択" },
+    "validate": { "en": "Validate", "es": "Validar", "jp": "検証" },
+    "previous_page": { "en": "Previous page", "es": "Página anterior", "jp": "前のページ" },
+    "next_page": { "en": "Next page", "es": "Página siguiente", "jp": "次のページ" },
+    "records_count": { "en": "{count} records", "es": "{count} registros", "jp": "{count} 件" },
+    "zero_records": { "en": "0 records", "es": "0 registros", "jp": "0 件" },
+    "pagination_range": { "en": "{start}–{end} of {total}", "es": "{start}–{end} de {total}", "jp": "{start}–{end} / {total}" },
+    "confirm_delete": { "en": "Confirm deletion", "es": "Confirmar eliminación", "jp": "削除を確認" },
+    "confirm_delete_message": {
+        "en": "The item about to be deleted cannot be recovered. Do you want to continue?",
+        "es": "El elemento que está a punto de eliminarse no podrá ser recuperado. ¿Desea continuar?",
+        "jp": "削除しようとしている要素は復元できません。続行しますか？"
+    },
+    "loading": { "en": "Loading...", "es": "Cargando...", "jp": "読み込み中..." },
+    "configuration": { "en": "Configuration", "es": "Configuración", "jp": "設定" },
+    "change_theme": { "en": "Change Theme", "es": "Cambiar Tema", "jp": "テーマを変更" },
+    "english": { "en": "English", "es": "Inglés", "jp": "英語" },
+    "spanish": { "en": "Spanish", "es": "Español", "jp": "スペイン語" },
+    "japanese": { "en": "Japanese", "es": "Japonés", "jp": "日本語" },
+    "profile": { "en": "Profile", "es": "Perfil", "jp": "プロフィール" },
+    "default": { "en": "Default", "es": "Predeterminado", "jp": "デフォルト" },
+    "exit_without_saving": { "en": "Exit without saving", "es": "Salir sin guardar", "jp": "保存せずに終了" },
+    "unsaved_changes_confirm": {
+        "en": "You have unsaved changes. Are you sure you want to exit without saving?",
+        "es": "Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?",
+        "jp": "未保存の変更があります。保存せずに終了してもよろしいですか？"
+    },
+    "unsaved_changes_confirm_short": {
+        "en": "Are you sure you want to exit without saving?",
+        "es": "¿Estás seguro de que quieres salir sin guardar?",
+        "jp": "保存せずに終了してもよろしいですか？"
+    }
+}

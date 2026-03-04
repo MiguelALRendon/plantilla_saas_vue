@@ -1,11 +1,12 @@
 <template>
     <div class="container">
-        <button class="button" @click="toggleTheme()">Cambiar Tema</button>
+        <button class="button" @click="toggleTheme()">{{ t('common.change_theme') }}</button>
     </div>
 </template>
 
 <script lang="ts">
 import Application from '@/models/application';
+import { GetLanguagedText } from '@/helpers/language_helper';
 export default {
     name: 'ConfigurationListComponent',
 
@@ -13,6 +14,9 @@ export default {
     methods: {
         toggleTheme(): void {
             Application.ApplicationUIService.toggleDarkMode();
+        },
+        t(path: string): string {
+            return GetLanguagedText(path);
         }
     },
     // #endregion

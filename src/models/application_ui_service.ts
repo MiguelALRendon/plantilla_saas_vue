@@ -3,8 +3,9 @@ import type { ApplicationUIContext } from './application_ui_context';
 import type { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { Toast } from './Toast';
+import { Toast } from './toast';
 import { ToastType } from '@/enums/toast_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 /**
  * Servicio centralizado para gestionar operaciones UI comunes.
@@ -178,8 +179,8 @@ export class ApplicationUIService {
         title: string,
         message: string,
         onAccept?: () => void,
-        acceptButtonText: string = 'Aceptar',
-        cancelButtonText: string = 'Cancelar'
+        acceptButtonText: string = GetLanguagedText('common.accept'),
+        cancelButtonText: string = GetLanguagedText('common.cancel')
     ) => {
         this.app.confirmationMenu.value = {
             type,

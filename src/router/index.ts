@@ -5,6 +5,7 @@ import Application from '@/models/application';
 import type { EntityCtor } from '@/models/View';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -56,14 +57,14 @@ router.beforeEach(async (to, _from, next) => {
     if (currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
         Application.ApplicationUIService.openConfirmationMenu(
             confMenuType.WARNING,
-            'Salir sin guardar',
-            '¿Estás seguro de que quieres salir sin guardar?',
+            GetLanguagedText('common.exit_without_saving'),
+            GetLanguagedText('common.unsaved_changes_confirm_short'),
             () => {
                 Application.View.value.entityObject = null;
                 router.push(to.fullPath).catch(() => {});
             },
-            'Salir',
-            'Cancelar'
+            GetLanguagedText('common.exit'),
+            GetLanguagedText('common.cancel')
         );
         next(false);
         return;

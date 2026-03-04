@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
 import { formatCreditCardDate, isValidCreditCardDate } from '@/utils/string_inputs';
@@ -71,7 +72,7 @@ async function isValidated(): Promise<boolean> {
 
     if (props.modelValue && !isValidCreditCardDate(props.modelValue)) {
         validated = false;
-        validationMessages.value.push('Formato inválido. Use MM/YY con mes 01-12 y año 01-99.');
+        validationMessages.value.push(GetLanguagedText('validation.card_date_invalid'));
     }
 
     if (!metadata.validated.value) {

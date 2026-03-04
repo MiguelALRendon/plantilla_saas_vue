@@ -1,5 +1,5 @@
 <template>
-    <div class="app-container" :class="containerClass">
+    <div class="app-container">
         <SideBarComponent />
         <!-- Sidebar backdrop overlay — only interactive at ≤1200px when sidebar is open.
              Clicking it closes the floating sidebar without triggering content below. -->
@@ -14,11 +14,13 @@
         <DropdownMenuComponent />
         <ConfirmationDialogComponent />
         <LoadingPopupComponent />
+        <!-- T232: LoadingScreenComponent at app-root level for full-viewport body coverage -->
+        <LoadingScreenComponent />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
 
 import ComponentContainerComponent from './components/ComponentContainerComponent.vue';
 import SideBarComponent from './components/SideBarComponent.vue';
@@ -26,12 +28,18 @@ import ModalComponent from './components/Modal/ModalComponent.vue';
 import DropdownMenuComponent from './components/DropdownMenuComponent.vue';
 import ConfirmationDialogComponent from './components/Modal/ConfirmationDialogComponent.vue';
 import LoadingPopupComponent from './components/Modal/LoadingPopupComponent.vue';
+import LoadingScreenComponent from './components/LoadingScreenComponent.vue';
 import Application from './models/application';
 import ToastContainerComponent from './components/Informative/ToastContainerComponent.vue';
 
 // #region PROPERTIES
-const containerClass = computed<string>(() => {
-    return Application.AppConfiguration.value.isDarkMode ? 'dark-mode' : '';
+// T231: dark mode applied to document.documentElement so CSS tokens cascade globally
+// (modals, toasts, dropdowns outside .app-container also inherit dark-mode tokens)
+watchEffect(() => {
+    document.documentElement.classList.toggle(
+        'dark-mode',
+        Application.AppConfiguration.value.isDarkMode
+    );
 });
 
 // Track sidebar open/closed state to control overlay visibility.

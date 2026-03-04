@@ -1,6 +1,7 @@
 import { AsyncValidation, Validation } from '@/decorations';
 import type { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 /**
  * Contractual validator catalog IDs for traceability with documentation.
@@ -24,11 +25,19 @@ export const VALIDATOR_CATALOG: Readonly<Record<string, string>> = {
  * Predefined synchronous validators.
  */
 export class Validators {
+    private static t(path: string, replacements: Record<string, string | number> = {}): string {
+        let text = GetLanguagedText(path);
+        for (const [key, value] of Object.entries(replacements)) {
+            text = text.split(`{${key}}`).join(String(value));
+        }
+        return text;
+    }
+
     /**
      * Validates e-mail format.
     * ID: VALCAT-01
      */
-    static email(message: string = 'Formato de email inválido'): PropertyDecorator {
+    static email(message: string = Validators.t('validation.invalid_email')): PropertyDecorator {
         return this.withStringValue((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), message);
     }
 
@@ -37,7 +46,10 @@ export class Validators {
         * ID: VALCAT-02
      */
     static minLength(min: number, message?: string): PropertyDecorator {
-        return this.withStringValue((value) => value.length >= min, message || `Debe tener al menos ${min} caracteres`);
+        return this.withStringValue(
+            (value) => value.length >= min,
+            message || Validators.t('validation.min_length', { min })
+        );
     }
 
     /**
@@ -45,7 +57,10 @@ export class Validators {
         * ID: VALCAT-03
      */
     static maxLength(max: number, message?: string): PropertyDecorator {
-        return this.withStringValue((value) => value.length <= max, message || `Debe tener máximo ${max} caracteres`);
+        return this.withStringValue(
+            (value) => value.length <= max,
+            message || Validators.t('validation.max_length', { max })
+        );
     }
 
     /**
@@ -53,7 +68,10 @@ export class Validators {
         * ID: VALCAT-04
      */
     static range(min: number, max: number, message?: string): PropertyDecorator {
-        return this.withNumberValue((value) => value >= min && value <= max, message || `Debe estar entre ${min} y ${max}`);
+        return this.withNumberValue(
+            (value) => value >= min && value <= max,
+            message || Validators.t('validation.range_between', { min, max })
+        );
     }
 
     /**
@@ -61,7 +79,10 @@ export class Validators {
         * ID: VALCAT-05
      */
     static min(minimum: number, message?: string): PropertyDecorator {
-        return this.withNumberValue((value) => value >= minimum, message || `Debe ser mayor o igual a ${minimum}`);
+        return this.withNumberValue(
+            (value) => value >= minimum,
+            message || Validators.t('validation.min_value', { min: minimum })
+        );
     }
 
     /**
@@ -69,14 +90,17 @@ export class Validators {
         * ID: VALCAT-06
      */
     static max(maximum: number, message?: string): PropertyDecorator {
-        return this.withNumberValue((value) => value <= maximum, message || `Debe ser menor o igual a ${maximum}`);
+        return this.withNumberValue(
+            (value) => value <= maximum,
+            message || Validators.t('validation.max_value', { max: maximum })
+        );
     }
 
     /**
      * Validates string against regular expression.
         * ID: VALCAT-07
      */
-    static pattern(regex: RegExp, message: string = 'Formato inválido'): PropertyDecorator {
+    static pattern(regex: RegExp, message: string = Validators.t('validation.invalid_pattern')): PropertyDecorator {
         return this.withStringValue((value) => regex.test(value), message);
     }
 
@@ -84,7 +108,7 @@ export class Validators {
      * Validates URL syntax.
         * ID: VALCAT-08
      */
-    static url(message: string = 'URL inválida'): PropertyDecorator {
+    static url(message: string = Validators.t('validation.invalid_url')): PropertyDecorator {
         return this.withStringValue((value) => {
             try {
                 new URL(value);
@@ -99,7 +123,7 @@ export class Validators {
      * Validates basic phone number format.
         * ID: VALCAT-09
      */
-    static phone(message: string = 'Número de teléfono inválido'): PropertyDecorator {
+    static phone(message: string = Validators.t('validation.invalid_phone')): PropertyDecorator {
         return this.withStringValue((value) => /^[\d\s\-\+\(\)]+$/.test(value) && value.replace(/\D/g, '').length >= 10, message);
     }
 
@@ -107,7 +131,7 @@ export class Validators {
      * Validates date is not in the future.
         * ID: VALCAT-10
      */
-    static notFuture(message: string = 'La fecha no puede ser futura'): PropertyDecorator {
+    static notFuture(message: string = Validators.t('validation.date_cannot_be_future')): PropertyDecorator {
         return this.withDateValue((value) => value <= new Date(), message);
     }
 
@@ -115,7 +139,7 @@ export class Validators {
      * Validates date is not in the past.
         * ID: VALCAT-11
      */
-    static notPast(message: string = 'La fecha no puede ser pasada'): PropertyDecorator {
+    static notPast(message: string = Validators.t('validation.date_cannot_be_past')): PropertyDecorator {
         return this.withDateValue((value) => value >= new Date(), message);
     }
 
@@ -172,7 +196,7 @@ export class AsyncValidators {
      * Validates uniqueness against backend endpoint.
     * ID: VALCAT-12
      */
-    static unique(endpoint: string, message: string = 'Este valor ya existe'): PropertyDecorator {
+    static unique(endpoint: string, message: string = GetLanguagedText('validation.value_already_exists')): PropertyDecorator {
         return (target: object, propertyKey: string | symbol) => {
             AsyncValidation(async (entity: BaseEntity) => {
                 const value = (entity as Record<string, unknown>)[propertyKey as string];

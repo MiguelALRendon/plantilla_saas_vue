@@ -1,0 +1,12 @@
+{
+    "products": {
+        "en": "Products",
+        "es": "Productos",
+        "jp": "製品"
+    },
+    "configuration": {
+        "en": "Configuration",
+        "es": "Configuración",
+        "jp": "設定"
+    }
+}

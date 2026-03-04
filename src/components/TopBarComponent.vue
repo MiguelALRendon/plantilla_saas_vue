@@ -26,6 +26,7 @@
 
 <script lang="ts">
 import ICONS from '@/constants/icons';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import configurationListComponent from '@/views/ConfigurationListComponent.vue';
 
@@ -42,7 +43,11 @@ export default {
         },
         openDropdown() {
             var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
-            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', configurationListComponent);
+            Application.ApplicationUIService.openDropdownMenu(
+                button,
+                GetLanguagedText('common.profile'),
+                configurationListComponent
+            );
         }
     },
     // #endregion
@@ -50,7 +55,7 @@ export default {
     // #region COMPUTED
     computed: {
         title() {
-            return Application.View.value.entityClass?.getModuleName() ?? 'Default';
+            return Application.View.value.entityClass?.getModuleName() ?? GetLanguagedText('common.default');
         },
         icon() {
             return Application.View.value.entityClass?.getModuleIcon() ?? '';

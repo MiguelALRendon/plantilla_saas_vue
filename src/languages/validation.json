@@ -1,0 +1,92 @@
+{
+    "validation_errors": {
+        "en": "Validation errors: {messages}",
+        "es": "Errores de validación: {messages}",
+        "jp": "検証エラー: {messages}"
+    },
+    "validation_data_error": {
+        "en": "Validation error in submitted data.",
+        "es": "Error de validación en los datos enviados.",
+        "jp": "送信データの検証エラーです。"
+    },
+    "range_between": {
+        "en": "Must be between {min} and {max}",
+        "es": "Debe estar entre {min} y {max}",
+        "jp": "{min} から {max} の範囲で入力してください"
+    },
+    "date_cannot_be_future": {
+        "en": "Date cannot be in the future",
+        "es": "La fecha no puede ser futura",
+        "jp": "日付は未来にできません"
+    },
+    "date_cannot_be_past": {
+        "en": "Date cannot be in the past",
+        "es": "La fecha no puede ser pasada",
+        "jp": "日付は過去にできません"
+    },
+    "value_already_exists": {
+        "en": "This value already exists",
+        "es": "Este valor ya existe",
+        "jp": "この値は既に存在します"
+    },
+    "card_16_digits": {
+        "en": "Card number must have 16 digits.",
+        "es": "La tarjeta debe tener 16 dígitos.",
+        "jp": "カード番号は16桁である必要があります。"
+    },
+    "card_date_invalid": {
+        "en": "Invalid format. Use MM/YY with month 01-12 and year 01-99.",
+        "es": "Formato inválido. Use MM/YY con mes 01-12 y año 01-99.",
+        "jp": "無効な形式です。MM/YY（月01-12、年01-99）を使用してください。"
+    },
+    "cvv_3_digits": {
+        "en": "CVV must have 3 digits.",
+        "es": "El CVV debe tener 3 dígitos.",
+        "jp": "CVVは3桁である必要があります。"
+    },
+    "field_required": {
+        "en": "This field is required",
+        "es": "Este campo es requerido",
+        "jp": "このフィールドは必須です"
+    },
+    "invalid_email": {
+        "en": "Invalid email format",
+        "es": "Formato de email inválido",
+        "jp": "無効なメール形式"
+    },
+    "min_length": {
+        "en": "Must be at least {min} characters",
+        "es": "Debe tener al menos {min} caracteres",
+        "jp": "最低{min}文字必要です"
+    },
+    "max_length": {
+        "en": "Must be at most {max} characters",
+        "es": "Debe tener máximo {max} caracteres",
+        "jp": "最大{max}文字まで入力可能です"
+    },
+    "min_value": {
+        "en": "Must be greater than or equal to {min}",
+        "es": "Debe ser mayor o igual a {min}",
+        "jp": "{min}以上の値を入力してください"
+    },
+    "max_value": {
+        "en": "Must be less than or equal to {max}",
+        "es": "Debe ser menor o igual a {max}",
+        "jp": "{max}以下の値を入力してください"
+    },
+    "invalid_url": {
+        "en": "Invalid URL format",
+        "es": "Formato de URL inválido",
+        "jp": "無効なURL形式"
+    },
+    "invalid_phone": {
+        "en": "Invalid phone format",
+        "es": "Formato de teléfono inválido",
+        "jp": "無効な電話番号形式"
+    },
+    "invalid_pattern": {
+        "en": "Invalid format",
+        "es": "Formato inválido",
+        "jp": "無効な形式"
+    }
+}

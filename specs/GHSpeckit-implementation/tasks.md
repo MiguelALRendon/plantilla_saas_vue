@@ -573,6 +573,63 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 
 ---
 
+## Phase 8: Analysis Remediation — Seguridad, i18n y robustez (2026-03-04)
+
+**Purpose**: Implementar los hallazgos solicitados por usuario sobre paginación real en API, estabilidad de tiempos, hooks de listas, normalización de estado de carga, i18n mínimo real, loading global en body y reconexión de red en Axios sin agregar features no requeridas.
+
+**⚠️ SCOPE RULE**: No inventar llaves de traducción ni textos. Los JSON de idioma deben contener únicamente información real existente del framework y de `src/entities/product.ts` para `custom.json`.
+
+---
+
+### 8A — Paginación real en API (`getElementList`)
+
+- [X] T215 Add paginated list contracts (`ListQueryParams`, `PaginatedListResult<T>`) in `src/types/service.types.ts` and wire exports in `src/types/index.ts`
+- [X] T216 Refactor `getElementList` to support real API pagination query params (`page`, `limit`, `filter`) and response mapping in `src/entities/base_entity.ts`
+- [X] T217 Update list consumption to use server-side pagination state (page/size/total) instead of in-memory full-dataset slicing in `src/components/Informative/DetailViewTableComponent.vue`
+
+---
+
+### 8B — Variables de entorno documentadas
+
+- [X] T218 Create/update environment template with all currently used runtime keys (`VITE_APP_NAME`, `VITE_APP_VERSION`, `VITE_API_BASE_URL`, `VITE_API_TIMEOUT`, `VITE_API_RETRY_ATTEMPTS`, `VITE_ENVIRONMENT`, `VITE_LOG_LEVEL`, `VITE_AUTH_TOKEN_KEY`, `VITE_AUTH_REFRESH_TOKEN_KEY`, `VITE_SESSION_TIMEOUT`, `VITE_ITEMS_PER_PAGE`, `VITE_MAX_FILE_SIZE`, `VITE_SELECTED_LANGUAGE`) in `.env.example`
+- [X] T219 Update `ImportMetaEnv` typing with `VITE_SELECTED_LANGUAGE` and existing app keys in `src/env.d.ts`
+- [X] T220 Document env variables, defaults, and allowed values in `README.md`
+
+---
+
+### 8C — Corrección general de `setTimeout` frágiles
+
+- [X] T221 Replace view-transition timing magic numbers (`400/405ms`) with reactive sync (`nextTick`/router-safe flow) in `src/models/application.ts`
+- [X] T222 Remove timeout-coupled component transition logic and align loading flow with emitted events in `src/components/ComponentContainerComponent.vue`
+
+---
+
+### 8D — Hooks y estado en BaseEntity (puntos 4, 9, 10, 11)
+
+- [X] T223 Fix `afterGetElementList` lifecycle execution so list post-load hook is applied consistently per loaded instance in `src/entities/base_entity.ts`
+- [X] T224 Normalize loading API: keep `clearLoadingState()` as canonical method, remove `loaded()` method, and update all internal callsites in `src/entities/base_entity.ts`
+- [X] T225 Solve duplicated/unsafe API-method behavior by enforcing explicit allowed methods when `@ApiMethods` is absent (`isApiMethodAllowed`) in `src/entities/base_entity.ts`
+- [X] T226 Fix `getPropertyName` selector proxy handler signature/behavior to resolve real property keys deterministically in `src/entities/base_entity.ts`
+
+---
+
+### 8E — Dark mode usage audit + i18n mínimo solicitado (puntos 13 y 14)
+
+- [X] T227 [P] Create language enum `Language { EN, ES, JP }`, add `SelectedLanguage` in App configuration and environment mapping in `src/enums/language.ts`, `src/models/app_configuration.ts`, `src/models/application.ts`, and `src/env.d.ts`
+- [X] T228 [P] Create language catalog folder with category files (`common.json`, `errors.json`, `validation.json`, `navigation.json`) plus `custom.json` at language root in `src/languages/`; populate only with real framework keys and Product entity values from `src/entities/product.ts`
+- [X] T229 Implement language helper `GetLanguagedText` with `MissingNO` fallback based on `Application.AppConfiguration.value.SelectedLanguage` in `src/helpers/language_helper.ts`
+- [X] T230 Update `ConfigurationListComponent.vue` to include a plain language `<select>` below dark-mode toggle (no added styles) and wire selected value to `SelectedLanguage` in `src/views/ConfigurationListComponent.vue`
+- [X] T231 Audit dark mode runtime usage and either bind active state to root/body attributes or remove dead config paths if unused in `src/models/application_ui_service.ts`, `src/App.vue`, and `src/css/main.css`
+
+---
+
+### 8F — Loading global en body + reconexión Axios (puntos 17 y 19)
+
+- [X] T232 Implement body-level loading overlay mount flow so loading view can cover app shell safely during global fetches in `src/App.vue` and `src/components/LoadingScreenComponent.vue`
+- [X] T233 Configure Axios network reconnection retry strategy for offline/transient connectivity errors (with bounded retries and backoff) in `src/models/application.ts`
+
+---
+
 ## Task Count Summary
 
 | Phase | Tasks | Story | Parallelizable |
@@ -604,7 +661,13 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 7C: Spec — Pagination FR-034 | T212 | — | 0 |
 | Phase 7D: Pagination (DetailViewTable) | T213 | US1 | 0 |
 | Phase 7E: Pagination (ArrayInput) | T214 | US3 | 0 |
-| **TOTAL** | **205 tasks** | | **~117 parallelizable** |
+| Phase 8A: API pagination | T215–T217 | — | 0 |
+| Phase 8B: Env docs | T218–T220 | — | 0 |
+| Phase 8C: setTimeout hardening | T221–T222 | — | 0 |
+| Phase 8D: BaseEntity fixes | T223–T226 | — | 0 |
+| Phase 8E: Language + dark mode audit | T227–T231 | — | 2 of 5 |
+| Phase 8F: Global loading + Axios reconnect | T232–T233 | — | 0 |
+| **TOTAL** | **224 tasks** | | **~119 parallelizable** |
 
 **Per user story**:
 - **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6 additions) + T211, T213 (phase 7 additions)
