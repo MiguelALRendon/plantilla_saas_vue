@@ -64,7 +64,9 @@
                         </td>
                     </tr>
                 </tbody>
-                <tfoot></tfoot>
+                <tfoot>
+                    <tr></tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -320,7 +322,23 @@ onBeforeUnmount(() => {
 .table tfoot {
     display: block;
     width: 100%;
+    position: sticky;
+    bottom: 0;
+    background-color: var(--white);
+    z-index: var(--z-base);
     border-top: var(--border-width-thin) solid var(--gray-lighter);
+    height: var(--table-row-min-height);
+}
+
+.tfoot-add-cell {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm);
+    flex: 1;
+}
+
+.tfoot-add-btn {
+    flex-shrink: 0;
 }
 
 .table thead tr,

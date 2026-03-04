@@ -9,8 +9,10 @@
                         v-for="column in getVisibleColumns()"
                         :key="column"
                         :class="Application.View.value.entityClass?.getCSSClasses()[column]"
+                        :style="getColumnStyle(column)"
                     >
                         {{ Application.View.value.entityClass?.getProperties()[column] }}
+                        <span class="col-resize-handle" @mousedown.prevent="startResize($event, column)"></span>
                     </td>
                 </tr>
             </thead>
@@ -20,6 +22,7 @@
                     <template v-for="column in getVisibleColumns(item)" :key="column">
                         <td
                             :class="item.getCSSClasses()[column]"
+                            :style="getColumnStyle(column)"
                             class="table-row"
                         >
                             <span v-if="Application.View.value.entityClass?.getPropertyType(column) !== Boolean">
@@ -46,14 +49,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch, type Ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
+import { EnumAdapter } from '@/models/enum_adapter';
 import Application from '@/models/application';
 
 // #region PROPERTIES
 const data: Ref<BaseEntity[]> = ref([]);
+const columnWidths: Ref<Record<string, number>> = ref({});
+
+const MIN_COL_WIDTH = 50; // px — equivalent of var(--table-width-very-small)
+let resizeColumn = '';
+let resizeStartX = 0;
+let resizeStartWidth = 0;
 // #endregion
 
 // #region METHODS
@@ -79,12 +89,93 @@ function getBooleanIcon(item: BaseEntity, column: string): string {
     return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
 }
 
+/**
+ * Formats a cell value for display.
+ * Resolves enum numeric values to their human-readable key name (SC-017).
+ * @param item The entity instance for the row.
+ * @param column The property key.
+ * @returns Formatted display string.
+ */
 function getCellValue(item: BaseEntity, column: string): string {
     const value = item[column];
 
-    return value instanceof BaseEntity
-        ? String(value.getDefaultPropertyValue() ?? '')
-        : item.getFormattedValue(column);
+    if (value instanceof BaseEntity) {
+        return String(value.getDefaultPropertyValue() ?? '');
+    }
+
+    // SC-017 — enum resolution: detect non-primitive, non-BaseEntity types and resolve numeric value
+    const entityClass = Application.View.value.entityClass;
+    const type = entityClass?.getPropertyType(column) as unknown;
+    const primitiveConstructors: unknown[] = [String, Number, Boolean, Date, Array];
+
+    if (type && !primitiveConstructors.includes(type) && typeof value === 'number') {
+        const adapter = new EnumAdapter(type as Record<string, string | number>);
+        const found = adapter.getKeyValuePairs().find((pair) => pair.value === value);
+        if (found) {
+            return parseEnumValue(found.key);
+        }
+    }
+
+    return item.getFormattedValue(column);
+}
+
+/**
+ * Converts an enum key string to human-readable format.
+ * e.g. STATUS_ACTIVE → Status Active
+ * @param key Enum key string.
+ * @returns Formatted display string.
+ */
+function parseEnumValue(key: string): string {
+    return key
+        .toLowerCase()
+        .split('_')
+        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+        .join(' ');
+}
+
+/**
+ * Returns inline style binding for a column's resize width.
+ * @param column The property key.
+ * @returns Style object if width is set, undefined otherwise.
+ */
+function getColumnStyle(column: string): Record<string, string> | undefined {
+    const width = columnWidths.value[column];
+    if (!width) return undefined;
+    return { width: `${width}px`, minWidth: `${width}px` };
+}
+
+/**
+ * Initiates column resize on mousedown of the resize handle.
+ * @param event The MouseEvent from the handle.
+ * @param column The property key of the column being resized.
+ */
+function startResize(event: MouseEvent, column: string): void {
+    const td = (event.target as HTMLElement).parentElement;
+    if (!td) return;
+    resizeColumn = column;
+    resizeStartX = event.clientX;
+    resizeStartWidth = td.offsetWidth;
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeUp);
+}
+
+/**
+ * Updates column width during drag.
+ * @param event The mousemove MouseEvent.
+ */
+function onResizeMove(event: MouseEvent): void {
+    if (!resizeColumn) return;
+    const delta = event.clientX - resizeStartX;
+    columnWidths.value[resizeColumn] = Math.max(MIN_COL_WIDTH, resizeStartWidth + delta);
+}
+
+/**
+ * Finalises column resize on mouseup.
+ */
+function onResizeUp(): void {
+    resizeColumn = '';
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeUp);
 }
 
 function getVisibleColumns(entity?: BaseEntity): string[] {
@@ -134,6 +225,11 @@ watch(
 onMounted((): void => {
     loadData();
 });
+
+onBeforeUnmount((): void => {
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeUp);
+});
 // #endregion
 </script>
 
@@ -179,6 +275,24 @@ thead tr {
 
 thead td {
     font-weight: bold;
+    position: relative; /* required for .col-resize-handle absolute positioning */
+}
+
+/* Column resize drag handle — appears on the right edge of each header cell */
+.col-resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    background: transparent;
+    transition: background-color var(--transition-fast) var(--timing-ease);
+}
+
+.col-resize-handle:hover {
+    background-color: var(--gray-lighter);
 }
 
 tbody {
@@ -195,6 +309,10 @@ tbody tr {
 tfoot {
     display: block;
     width: 100%;
+    position: sticky;
+    bottom: 0;
+    background-color: var(--white);
+    z-index: var(--z-base);
 }
 
 tfoot tr {

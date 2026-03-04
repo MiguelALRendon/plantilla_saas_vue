@@ -1557,6 +1557,8 @@ Application.eventBus.on('validate-inputs', () => {
 
 **Renders**: Sub-table with Add/Edit/Delete per row
 
+**Footer**: The sub-table MUST include a `<tfoot>` that is statically visible at all times. `tfoot` MUST use `position: sticky; bottom: 0; background-color: var(--white); z-index: var(--z-base)` so it remains anchored at the bottom of `.table-scroll-wrapper`'s visible scroll area. The tfoot row contains the "Add" action button.
+
 ---
 
 ### 5.9.10 EnumInputComponent
@@ -1594,8 +1596,10 @@ Application.eventBus.on('validate-inputs', () => {
 **DetailViewTableComponent**:
 - Headers: getProperties() filtered by !isHideInListView
 - Rows: getElementList()
-- Cell values: entity.getFormattedValue(key)
+- Cell values: `getCellValue(item, column)` — for enum properties (type is not String/Number/Boolean/Date/Array/BaseEntity) resolves the numeric value to its human-readable key name via `EnumAdapter`; for BaseEntity properties shows `getDefaultPropertyValue()`; otherwise calls `getFormattedValue(column)` (SC-017)
 - Row click: Application.changeViewToDetailView(entity)
+- `<tfoot>` MUST use `position: sticky; bottom: 0; background-color: var(--white); z-index: var(--z-base)` so it remains visually anchored at the bottom of `.table-wrapper`'s visible scroll area at all times. `tbody` rows scroll above it; the footer never scrolls out of view.
+- Column headers MUST expose a drag-handle (FR-032): see §5.16 for full specification.
 
 ---
 
@@ -1646,6 +1650,27 @@ Application.eventBus.on('validate-inputs', () => {
 **File**: `src/components/Informative/LookupItemComponent.vue`
 
 **On click**: `Application.ApplicationUIService.closeModalOnFunction(entity)` — passes selected entity back to ObjectInputComponent callback.
+
+---
+
+### 5.16 FR-032 — Interactive Column Resize (DetailViewTableComponent)
+
+**File**: `src/components/Informative/DetailViewTableComponent.vue`
+
+**Behavior**: Column headers in `DetailViewTableComponent` MUST expose a drag-handle on the right edge of each `<thead td>` that allows the user to resize that column's width via `mousedown`/`mousemove`/`mouseup`. Resize is runtime-only (not persisted between sessions).
+
+**Implementation rules**:
+- Column widths are stored in a local `Ref<Record<string, number>>` (`columnWidths`) keyed by column name.
+- On mount, `columnWidths` is initialized with each header cell's `offsetWidth`.
+- Each `<thead td>` MUST have `position: relative` and contain a `<span class="col-resize-handle">` as its last child.
+- The handle spans the full height of the header cell and is `6px` wide on its right edge.
+- On `mousedown` on the handle: record `startX = event.clientX` and `startWidth = columnWidths[column]`; attach `mousemove` and `mouseup` listeners on `document`.
+- On `mousemove`: `columnWidths[column] = Math.max(minColWidth, startWidth + (event.clientX - startX))` where `minColWidth` is the pixel value of `var(--table-width-very-small)`.
+- On `mouseup`: remove document-level listeners.
+- Both `<thead td>` and matching `<tbody td>` for each column MUST receive `:style="{ width: columnWidths[col] + 'px', minWidth: columnWidths[col] + 'px' }"` binding.
+- CSS: `.col-resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; user-select: none; background: transparent; }`
+
+**Minimum column width**: pixel value equivalent of `var(--table-width-very-small)` resolved at mount time.
 
 ---
 
@@ -2013,18 +2038,18 @@ src/css/table.css       → Table-specific styles
 }
 ```
 
-**@media usage** — ALWAYS reference token, NEVER use raw pixel values:
+**@media usage** — W3C CSS spec does NOT allow `var()` inside `@media` conditions. Raw pixel values are MANDATORY. Use the token-to-raw-value mapping from SC-016 and ALWAYS add an inline comment referencing the design token:
 ```css
-/* ✔ Correct */
-@media (max-width: var(--breakpoint-xl))  { }
-@media (max-width: var(--breakpoint-lg))  { }
-@media (max-width: var(--breakpoint-md))  { }
-@media (max-width: var(--breakpoint-sm))  { }
-@media (max-width: var(--breakpoint-xs))  { }
-@media (max-width: var(--breakpoint-xxs)) { }
+/* ✔ Correct — raw value with inline token reference comment */
+@media (max-width: 1400px) { }  /* var(--breakpoint-xl) = 1400px */
+@media (max-width: 1200px) { }  /* var(--breakpoint-lg) = 1200px */
+@media (max-width: 992px)  { }  /* var(--breakpoint-md) = 992px  */
+@media (max-width: 768px)  { }  /* var(--breakpoint-sm) = 768px  */
+@media (max-width: 576px)  { }  /* var(--breakpoint-xs) = 576px  */
+@media (max-width: 480px)  { }  /* var(--breakpoint-xxs) = 480px */
 
-/* ❌ Forbidden */
-@media (max-width: 1400px) { }   /* raw px — violates §9.1 */
+/* ❌ Forbidden — CSS custom properties are invalid in @media conditions */
+@media (max-width: var(--breakpoint-xl)) { }
 ```
 
 **Responsive strategy**: Desktop-first. The base ruleset targets the largest viewport (≥ 1401px). Each `@media` tier overrides progressively smaller viewports. All layout, sizing, and spacing declarations MUST include overrides for applicable breakpoints (see §9.7).
@@ -2605,4 +2630,11 @@ All `<style scoped>` blocks in `.vue` files and all `.css` files MUST declare `@
 
 ---
 
-*Specification complete. Covers 31 decorators, BaseEntity (all methods), Application singleton, 10+ input components, form layout components, view components, action buttons, toast/dialog/modal components, 7 enums, 8 models, router, types, and useInputMetadata composable. Total: framework layers 1–6 fully specified.*
+### SC-017 — Enum Property Display in ListView
+For properties whose runtime type (via `getPropertyType()`) is recognized as an enum — i.e., the stored value is a number and the type is not `String`, `Number`, `Boolean`, `Date`, `Array`, or a `BaseEntity` subclass — `DetailViewTableComponent.getCellValue()` MUST return the human-readable key name (via `EnumAdapter.getKeyValuePairs()`) rather than the raw numeric value. The key is formatted via the same `parseValue()` helper used by `EnumInputComponent` (e.g., `STATUS_ACTIVE` → `Status Active`). Falls back to `getFormattedValue(column)` if no matching key is found.
+
+**Test**: Entity with an enum property (e.g. `status: ViewTypes = ViewTypes.LISTVIEW`). Navigate to list view. Assert the table cell shows `'Listview'` (or equivalent human-readable string), NOT `'0'`.
+
+---
+
+*Specification complete. Covers 31 decorators, BaseEntity (all methods), Application singleton, 10+ input components, form layout components, view components, action buttons, toast/dialog/modal components, 7 enums, 8 models, router, types, and useInputMetadata composable. Total: framework layers 1–6 fully specified. FR-032 (column resize) and SC-017 (enum display) added 2026-03-04.*

@@ -493,6 +493,48 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 
 ---
 
+## Phase 6: Table & Display Fixes (Analysis findings C1, U1, U2, U3, I1)
+
+**Purpose**: Resolve all gaps and inconsistencies identified by `/speckit.analyze` (2026-03-04). Covers: sticky tfoot on both tables, interactive column resizing from header, enum label display in list view, and a spec self-consistency editorial fix. SPEC-FIRST obligation: spec.md must be updated (T201, T203, T205, T208) before the corresponding code tasks are merged.
+
+**⚠️ SPEC-FIRST GATE**: Tasks marked `[SPEC]` update documentation. Code tasks for the same feature MUST NOT be merged before the corresponding `[SPEC]` task is complete.
+
+---
+
+### 6A — Spec Updates (SPEC-FIRST gate tasks)
+
+- [X] T201 [SPEC] Add FR-032 to spec.md §5 — interactive column resize: *"Column headers in `DetailViewTableComponent` MUST expose a drag-handle on the right edge of each `<th>` (or `<td>` in `<thead>`) that allows the user to resize that column's width via `mousedown`/`mousemove`/`mouseup` (and touch equivalents). Minimum column width: `var(--table-width-very-small)`. Resize is runtime-only (not persisted). Column width is stored in a local `ref<Record<string, number>>` and applied as an inline `width` style on the header and body cells for that column."` in `specs/GHSpeckit-implementation/spec.md`
+- [X] T203 [SPEC] Update spec.md §5.11 `DetailViewTableComponent` clause to add: *"The `<tfoot>` element MUST use `position: sticky; bottom: 0; background-color: var(--white)` so it remains visually anchored at the bottom of the visible scroll area at all times."* in `specs/GHSpeckit-implementation/spec.md`
+- [X] T205 [SPEC] Add spec.md §5.11 clause for `ArrayInputComponent` sub-table: *"The sub-table rendered by `ArrayInputComponent` MUST include a `<tfoot>` that is statically visible (position: sticky; bottom: 0) at all times, following the same sticky pattern as `DetailViewTableComponent`."* in `specs/GHSpeckit-implementation/spec.md`
+- [X] T208 [SPEC] Resolve spec self-inconsistency I1: remove `var()` usage inside `@media` from code block in spec.md §9.2 (SC-016 is authoritative — raw pixel values are mandatory inside `@media` conditions per W3C CSS spec); replace with raw-value examples plus inline token comment per SC-016 pattern in `specs/GHSpeckit-implementation/spec.md`
+- [X] T209 [SPEC] Add SC-017 to spec.md §12: *"For properties whose runtime type (via `getPropertyType()`) is recognized as an enum (i.e., the value stored on the entity is a number and an `EnumAdapter` can resolve it), `DetailViewTableComponent.getCellValue()` MUST return the human-readable key name (via `EnumAdapter.getKeyValuePairs()`) rather than the raw numeric value."* in `specs/GHSpeckit-implementation/spec.md`
+
+---
+
+### 6B — Sticky Footer (U1 — DetailViewTableComponent)
+
+- [X] T202 [US1] Fix `<tfoot>` in `DetailViewTableComponent.vue` to be statically visible: add `position: sticky; bottom: 0; background-color: var(--white); z-index: var(--z-base)` to the `tfoot` CSS block inside `<style scoped>`. The `tfoot` must remain visually anchored at the bottom of `.table-wrapper`'s visible viewport while `tbody` rows scroll above it. Depends on T203 (spec gate). in `src/components/Informative/DetailViewTableComponent.vue`
+
+---
+
+### 6C — Sticky Footer (U3 — ArrayInputComponent)
+
+- [X] T206 [P] [US3] Add a `<tfoot>` section to the sub-table in `ArrayInputComponent.vue` (currently absent) with `position: sticky; bottom: 0; background-color: var(--white); z-index: var(--z-base)` so the footer row (e.g. Add-row action button) is always visible during vertical scroll of the sub-table. Depends on T205 (spec gate). in `src/components/Form/ArrayInputComponent.vue`
+
+---
+
+### 6D — Enum Label Display in ListView (U2 — AXIOM A3)
+
+- [X] T207 [US1] Fix `getCellValue()` in `DetailViewTableComponent.vue` to resolve enum numeric values to their human-readable key name: when `entityClass.getPropertyType(column)` is neither `String`, `Number`, `Boolean`, `Date`, `Array`, nor a `BaseEntity` subclass, treat it as an enum reference; call `new EnumAdapter(type as object).getKeyValuePairs()` to find the matching key for the stored numeric value and return the formatted string via `parseValue(key)` (same format as `EnumInputComponent`). Falls back to `getFormattedValue(column)` if no match. Implements SC-017. Depends on T209 (spec gate). in `src/components/Informative/DetailViewTableComponent.vue`
+
+---
+
+### 6E — Interactive Column Resize (C1 — New Feature FR-032)
+
+- [X] T204 [US1] Implement interactive column resizing in `DetailViewTableComponent.vue`: (1) add `columnWidths: Ref<Record<string, number>>` initialized from each column's current `offsetWidth` on mount; (2) add a `<span class="col-resize-handle">` as last child of each `<thead td>`; (3) on `mousedown` on the handle, record `startX` and `startWidth`; on `mousemove` (document-level), update `columnWidths[column]` = `Math.max(minWidth, startWidth + (e.clientX - startX))`; on `mouseup`, remove document listeners; (4) bind `:style="{ width: columnWidths[col] + 'px', minWidth: ... }"` on both `<thead td>` and matching `<tbody td>` for each column; (5) CSS: `.col-resize-handle { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; user-select: none; background: transparent; }` on `<thead td>` use `position: relative`. Minimum column width: `var(--table-width-very-small)`. Depends on T201 (spec gate). in `src/components/Informative/DetailViewTableComponent.vue`
+
+---
+
 ## Task Count Summary
 
 | Phase | Tasks | Story | Parallelizable |
@@ -514,9 +556,14 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 5: US3 | T156–T171 | US3 | 8 of 16 |
 | Polish | T172–T181 | — | 9 of 10 |
 | Polish (additions) | T182–T190 | T190=US1 | 8 of 9 |
-| **TOTAL** | **191 tasks** | | **~115 parallelizable** |
+| Phase 6A: Spec Updates | T201, T203, T205, T208, T209 | — | 4 of 5 |
+| Phase 6B: Sticky Footer (DetailViewTable) | T202 | US1 | 0 |
+| Phase 6C: Sticky Footer (ArrayInput) | T206 | US3 | 1 of 1 |
+| Phase 6D: Enum Label Display | T207 | US1 | 0 |
+| Phase 6E: Column Resize | T204 | US1 | 0 |
+| **TOTAL** | **200 tasks** | | **~116 parallelizable** |
 
 **Per user story**:
-- **US1**: 22 tasks (T119–T140)
+- **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6 additions)
 - **US2**: 15 tasks (T141–T155)
-- **US3**: 16 tasks (T156–T171)
+- **US3**: 16 tasks (T156–T171) + T206 (phase 6 addition)
