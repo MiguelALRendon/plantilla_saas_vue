@@ -26,11 +26,14 @@
 
 <script lang="ts">
 import ICONS from '@/constants/icons';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
-import listView from '@/views/list.vue';
+import configurationListComponent from '@/views/ConfigurationListComponent.vue';
 
 export default {
     name: 'TopBarComponent',
+
+    // #region METHODS
     methods: {
         toggleSidebar() {
             Application.ApplicationUIService.toggleSidebar();
@@ -40,17 +43,27 @@ export default {
         },
         openDropdown() {
             var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
-            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
+            Application.ApplicationUIService.openDropdownMenu(
+                button,
+                GetLanguagedText('common.profile'),
+                configurationListComponent
+            );
         }
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         title() {
-            return Application.View.value.entityClass?.getModuleName() ?? 'Default';
+            return Application.View.value.entityClass?.getModuleName() ?? GetLanguagedText('common.default');
         },
         icon() {
             return Application.View.value.entityClass?.getModuleIcon() ?? '';
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             ICONS,
@@ -58,6 +71,9 @@ export default {
             toggled_bar: true
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
             this.toggled_bar = state !== undefined ? state : !this.toggled_bar;
@@ -66,6 +82,7 @@ export default {
     beforeUnmount() {
         Application.eventBus.off('toggle-sidebar');
     }
+    // #endregion
 };
 </script>
 

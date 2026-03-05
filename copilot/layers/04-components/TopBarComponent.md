@@ -120,7 +120,7 @@ TopBarComponent utiliza Vue Options API con TypeScript:
 <script lang="ts">
 import ICONS from '@/constants/icons';
 import Application from '@/models/application';
-import listView from '@/views/list.vue';
+import configurationListComponent from '@/views/ConfigurationListComponent.vue';
 
 export default {
     name: 'TopBarComponent',
@@ -133,7 +133,7 @@ export default {
         },
         openDropdown() {
             var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
-            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
+            Application.ApplicationUIService.openDropdownMenu(button, 'Profile', configurationListComponent);
         }
     },
     computed: {
@@ -183,17 +183,17 @@ Ejecuta `toggleSidebar()` del ApplicationUIService sin parámetros, alternando e
 ```typescript
 openDropdown() {
     var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
-    Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
+    Application.ApplicationUIService.openDropdownMenu(button, 'Profile', configurationListComponent);
 }
 ```
 
 Abre dropdown menu de perfil mediante ApplicationUIService:
 
 1. Obtiene referencia al botón mediante `getElementById('dropdown-profile-button')`
-2. Ejecuta `openDropdownMenu(button, 'Profile', listView)` con:
+2. Ejecuta `openDropdownMenu(button, 'Profile', configurationListComponent)` con:
    - **button:** Elemento HTML para posicionar dropdown (usa `getBoundingClientRect()`)
    - **'Profile':** Título del dropdown menu
-   - **listView:** Componente Vue a renderizar dentro del dropdown
+   - **configurationListComponent:** Componente Vue a renderizar dentro del dropdown
 
 **Nota:** Uso de `@click.stop` en el template previene propagación del evento, evitando que se cierre inmediatamente el dropdown.
 
@@ -452,7 +452,7 @@ Limpia listener del evento `toggle-sidebar` antes de desmontar componente:
    var button = document.getElementById('dropdown-profile-button')
         ↓
 4. Ejecuta ApplicationUIService.openDropdownMenu():
-   ApplicationUIService.openDropdownMenu(button, 'Profile', listView)
+   ApplicationUIService.openDropdownMenu(button, 'Profile', configurationListComponent)
         ↓
 5. ApplicationUIService calcula posición del dropdown:
    - Ejecuta button.getBoundingClientRect()
@@ -462,14 +462,14 @@ Limpia listener del evento `toggle-sidebar` antes de desmontar componente:
    {
        visible: true,
        title: 'Profile',
-       component: listView,
+       component: configurationListComponent,
        position: { x, y },
        width: defaultWidth
    }
         ↓
 7. DropdownMenu component detecta cambio reactivo
         ↓
-8. DropdownMenu se posiciona y renderiza listView
+8. DropdownMenu se posiciona y renderiza configurationListComponent
         ↓
 9. Usuario ve dropdown menu de perfil desplegado
 ```
@@ -810,12 +810,12 @@ TopBarComponent depende de múltiples partes de Application:
 ### Dependencias de Componentes
 
 ```typescript
-import listView from '@/views/list.vue';
+import configurationListComponent from '@/views/ConfigurationListComponent.vue';
 ```
 
-**listView:** Componente Vue renderizado dentro del dropdown menu de perfil. Utilizado como tercer parámetro en `openDropdownMenu()`.
+**configurationListComponent:** Componente Vue renderizado dentro del dropdown menu de perfil. Utilizado como tercer parámetro en `openDropdownMenu()`.
 
-**Relación:** TopBarComponent importa pero no renderiza directamente listView. Lo pasa a ApplicationUIService que lo asigna a `Application.dropdownMenu.value.component` para que DropdownMenu lo renderice.
+**Relación:** TopBarComponent importa pero no renderiza directamente configurationListComponent. Lo pasa a ApplicationUIService que lo asigna a `Application.dropdownMenu.value.component` para que DropdownMenu lo renderice.
 
 ### Dependencias de Decoradores
 
@@ -1148,7 +1148,7 @@ Si se migra a Composition API (script setup):
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import ICONS from '@/constants/icons';
 import Application from '@/models/application';
-import listView from '@/views/list.vue';
+import configurationListComponent from '@/views/ConfigurationListComponent.vue';
 
 const toggled_profile = ref(false);
 const toggled_bar = ref(true);
@@ -1168,7 +1168,7 @@ const toggleSidebar = () => {
 const openDropdown = () => {
     const button = document.getElementById('dropdown-profile-button');
     if (button) {
-        Application.ApplicationUIService.openDropdownMenu(button, 'Profile', listView);
+        Application.ApplicationUIService.openDropdownMenu(button, 'Profile', configurationListComponent);
     }
 };
 
@@ -1260,7 +1260,7 @@ SVG icons ofrecen mejor escalabilidad y control de estilo.
 
 - **`src/components/DropdownMenuComponent.vue`:** Componente de dropdown renderizado cuando TopBar ejecuta `openDropdownMenu()`.
 
-- **`src/views/list.vue`:** Componente listView pasado como contenido del dropdown de perfil.
+- **`src/views/ConfigurationListComponent.vue`:** Componente configurationListComponent pasado como contenido del dropdown de perfil.
 
 ### Flujos de Integración
 

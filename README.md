@@ -91,6 +91,26 @@ Dependencias de proyecto:
 - Definidas en package.json
 - Instaladas mediante npm install
 
+## 10. Variables de Entorno
+
+Copia `.env.example` a `.env` y ajusta los valores para tu entorno.
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `VITE_APP_NAME` | `SaaS Vue Framework` | Nombre de la aplicación |
+| `VITE_APP_VERSION` | `0.0.0` | Versión de la aplicación |
+| `VITE_API_BASE_URL` | `http://localhost:3000/api` | URL base de la API |
+| `VITE_API_TIMEOUT` | `10000` | Tiempo máximo de espera (ms) |
+| `VITE_API_RETRY_ATTEMPTS` | `3` | Intentos de reintento ante error |
+| `VITE_ENVIRONMENT` | `development` | Entorno (`development`\|`staging`\|`production`) |
+| `VITE_LOG_LEVEL` | `debug` | Nivel de log (`debug`\|`info`\|`warn`\|`error`) |
+| `VITE_AUTH_TOKEN_KEY` | `auth_token` | Clave localStorage para token de autenticación |
+| `VITE_AUTH_REFRESH_TOKEN_KEY` | `refresh_token` | Clave localStorage para refresh token |
+| `VITE_SESSION_TIMEOUT` | `1800000` | Tiempo de sesión (ms, default 30 min) |
+| `VITE_ITEMS_PER_PAGE` | `20` | Registros por página en listas |
+| `VITE_MAX_FILE_SIZE` | `5242880` | Tamaño máximo de archivo (bytes, default 5 MB) |
+| `VITE_SELECTED_LANGUAGE` | `0` | Idioma: `0`=EN, `1`=ES, `2`=JP |
+
 ## 9. Relaciones
 
 Este documento se relaciona con:

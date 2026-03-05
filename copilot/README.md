@@ -37,6 +37,8 @@ Fecha de declaración operativa: 16 de Febrero, 2026.
 ### Jerarquía Contractual
 
 ```
+.specify/memory/constitution.md (CONSTITUTION)
+    ↓
 MI LÓGICA (4 Axiomas: A1-A4)
     ↓
 00-CONTRACT.md (CORE)
@@ -50,11 +52,42 @@ MI LÓGICA (4 Axiomas: A1-A4)
 03-QUICK-START.md (QS)
 ```
 
-**Prioridad Absoluta:** MI LÓGICA > 00-CONTRACT.md > Contratos Subordinados
+**Prioridad Absoluta:** Constitution > MI LÓGICA > 00-CONTRACT.md > Contratos Subordinados
+
+**Nueva Constitución (v1.0.0):** El framework ahora cuenta con una constitución formal en `.specify/memory/constitution.md` que consolida los 6 principios fundamentales no negociables. Consultar antes de cualquier cambio arquitectónico o propuesta de nueva funcionalidad.
 
 ---
 
-## Contratos Principales (7)
+## Contratos Principales (8)
+
+### 0. Constitución del Framework (.specify/memory/constitution.md)
+
+**ID:** CONST  
+**Líneas:** 420+  
+**Estado:** ACTIVO - Obligatorio  
+**Versión:** 1.0.0  
+**Ratificado:** 2026-02-10  
+**Última Enmienda:** 2026-02-26
+
+**Secciones Críticas:**
+- **Principio I:** MI LÓGICA - 4 Axiomas Inmutables (NON-NEGOTIABLE)
+- **Principio II:** SPEC-FIRST Design
+- **Principio III:** Documentation-Code Synchronization (NON-NEGOTIABLE)
+- **Principio IV:** Architectural Authorization
+- **Principio V:** Contract Hierarchy
+- **Principio VI:** Tech Stack Immutability
+
+**Governance:**
+- Amendment requirements with semantic versioning
+- Compliance verification gates
+- Breaking change policy
+- Exception registry requirements
+
+**Cuándo Consultar:** ANTES de cualquier cambio significativo, propuesta de nueva funcionalidad, modificación arquitectónica, o cuando surjan conflictos interpretativos entre contratos.
+
+**Ubicación:** `.specify/memory/constitution.md` (parte del sistema Spec Kit)
+
+---
 
 ### 1. Contrato de Desarrollo (00-CONTRACT.md)
 

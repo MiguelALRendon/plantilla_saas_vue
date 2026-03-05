@@ -26,6 +26,8 @@ export default {
             required: true
         }
     },
+
+    // #region METHODS
     methods: {
         setActiveTab(index: number) {
             this.selectedTab = index;
@@ -37,12 +39,16 @@ export default {
             });
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             selectedTab: 0,
             tabElements: null as NodeListOf<Element> | null
         };
     },
+    // #endregion
     setup() {
         const slots = useSlots();
 
@@ -55,14 +61,24 @@ export default {
 
         return { isValid };
     },
+
+    // #region LIFECYCLE
     mounted() {
         this.tabElements = document.querySelectorAll('.tab-component');
         this.setActiveTab(0);
     }
+    // #endregion
 };
 </script>
 
 <style scoped>
+.tab-container {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
 .tab-container-row {
     display: flex;
     flex-direction: row;

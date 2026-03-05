@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-Este documento describe las cuatro vistas principales del framework que renderizan automáticamente representaciones visuales de entidades utilizando metadatos. Las vistas incluyen: default_listview (lista tabular), default_detailview (formulario de detalle), default_lookup_listview (selección modal) y list.vue (vista de testing). Adicionalmente documenta el componente DetailViewTableComponent responsable de renderizar tablas dinámicas.
+Este documento describe las cuatro vistas principales del framework que renderizan automáticamente representaciones visuales de entidades utilizando metadatos. Las vistas incluyen: default_listview (lista tabular), default_detailview (formulario de detalle), default_lookup_listview (selección modal) y ConfigurationListComponent.vue (vista de configuración). Adicionalmente documenta el componente DetailViewTableComponent responsable de renderizar tablas dinámicas.
 
 Los componentes de vista son el punto de entrada principal para la interacción del usuario con las entidades, traduciendo metadatos de decoradores en interfaces funcionales y completas.
 
@@ -12,7 +12,7 @@ Los componentes de vista son el punto de entrada principal para la interacción 
 - Archivo default_listview.vue y su estructura
 - Archivo default_detailview.vue con generación automática de formularios
 - Archivo default_lookup_listview.vue para selección de entidades
-- Archivo list.vue para testing
+- Archivo ConfigurationListComponent.vue para configuración y testing
 - Componente DetailViewTableComponent para tablas dinámicas
 - Computed groupedProperties en default_detailview
 - Métodos getRowComponent y getArrayListsTabs
@@ -35,7 +35,7 @@ Los componentes de vista son el punto de entrada principal para la interacción 
 
 **default_lookup_listview.vue**: Vista modal que renderiza LookupItem components para selección de entidades relacionadas.
 
-**list.vue**: Vista de testing con funcionalidad básica de prueba (botón toggleDarkMode).
+**ConfigurationListComponent.vue**: Vista de configuración y toggle de tema (botón toggleDarkMode).
 
 **DetailViewTableComponent**: Componente de tabla dinámica que genera headers y filas desde getProperties() y renderiza valores según su tipo.
 
@@ -381,7 +381,7 @@ export default {
 - Usuario selecciona producto en lista
 - Modal cierra y retorna producto seleccionado a ObjectInputComponent
 
-### list.vue (Testing)
+### ConfigurationListComponent.vue (Configuration)
 
 **Estructura:**
 
@@ -541,7 +541,7 @@ export default {
 **Objetos relacionados:**
 - Si propiedad es BaseEntity, muestra getDefaultPropertyValue() de objeto relacionado
 
-**STYLES:** Todos los componentes de vista (default_listview.vue, default_detailview.vue, default_lookup_listview.vue, list.vue, DetailViewTableComponent.vue) DEBEN incluir bloque `<style scoped>` después del bloque `<script>`. Este bloque permite estilos component-specific que heredan de global constants. Estructura obligatoria:
+**STYLES:** Todos los componentes de vista (default_listview.vue, default_detailview.vue, default_lookup_listview.vue, ConfigurationListComponent.vue, DetailViewTableComponent.vue) DEBEN incluir bloque `<style scoped>` después del bloque `<script>`. Este bloque permite estilos component-specific que heredan de global constants. Estructura obligatoria:
 ```vue
 <style scoped>
 /* Component-specific styles inherit from global table.css and form.css */
@@ -637,7 +637,7 @@ Este requisito garantiza encapsulación CSS y cumple contrato arquitectural §04
 18. DetailViewTableComponent DEBE usar getUniquePropertyValue como key único
 19. openDetailView DEBE establecer entityOid antes de invocar changeViewToDetailView
 20. Todas las vistas DEBEN leer entityClass y entity desde Application.View.value
-21. SIEMPRE incluir bloque `<style scoped>` en todos los view components (default_listview, default_detailview, default_lookup_listview, list.vue, DetailViewTableComponent). Aunque el componente no requiera estilos custom inmediatos, el bloque vacío con comentario contractual es obligatorio para cumplir §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1. Permite extensibilidad futura sin modificar estructura de archivo.
+21. SIEMPRE incluir bloque `<style scoped>` en todos los view components (default_listview, default_detailview, default_lookup_listview, ConfigurationListComponent, DetailViewTableComponent). Aunque el componente no requiera estilos custom inmediatos, el bloque vacío con comentario contractual es obligatorio para cumplir §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1. Permite extensibilidad futura sin modificar estructura de archivo.
 
 ## 7. Prohibiciones
 
@@ -997,7 +997,7 @@ export default {
 - src/views/default_listview.vue
 - src/views/default_detailview.vue
 - src/views/default_lookup_listview.vue
-- src/views/list.vue
+- src/views/ConfigurationListComponent.vue
 - src/components/DetailViewTableComponent.vue
 
 ### Enums Relacionados

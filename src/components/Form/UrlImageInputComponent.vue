@@ -1,0 +1,163 @@
+<template>
+    <div class="TextInput" :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]">
+        <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
+
+        <a
+            v-if="metadata.disabled.value && normalizedUrl"
+            class="url-link"
+            :href="normalizedUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            {{ modelValue }}
+        </a>
+
+        <input
+            v-else
+            :id="`id-${metadata.propertyName}`"
+            :name="metadata.propertyName"
+            type="text"
+            class="main-input"
+            placeholder=" "
+            :value="modelValue"
+            :disabled="metadata.disabled.value"
+            :readonly="metadata.readonly.value"
+            @input="handleInput"
+        />
+    </div>
+
+    <div class="image-preview" v-if="normalizedUrl">
+        <img :src="normalizedUrl" alt="Preview" @error="onImageError" v-show="showImage" />
+    </div>
+
+    <div class="help-text" v-if="metadata.helpText.value">
+        <span>{{ metadata.helpText.value }}</span>
+    </div>
+
+    <div class="validation-messages">
+        <span v-for="message in validationMessages" :key="message">{{ message }}</span>
+    </div>
+</template>
+
+<script setup lang="ts">
+import Application from '@/models/application';
+import { useInputMetadata } from '@/composables/useInputMetadata';
+import type { BaseEntity } from '@/entities/base_entity';
+import { isValidHttpUrl } from '@/utils/string_inputs';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+interface Props {
+    entityClass: typeof BaseEntity;
+    entity: BaseEntity;
+    propertyKey: string;
+    modelValue?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    modelValue: ''
+});
+
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string): void;
+}>();
+
+const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
+const isInputValidated = ref(true);
+const validationMessages = ref<string[]>([]);
+const showImage = ref(true);
+
+const normalizedUrl = computed<string>(() => (isValidHttpUrl(props.modelValue) ? props.modelValue : ''));
+
+watch(
+    () => props.modelValue,
+    () => {
+        showImage.value = true;
+    }
+);
+
+function onImageError(): void {
+    showImage.value = false;
+}
+
+function handleInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    emit('update:modelValue', target.value.trim());
+}
+
+async function isValidated(): Promise<boolean> {
+    let validated = true;
+    validationMessages.value = [];
+
+    const hasValue = props.modelValue.length > 0;
+
+    if (metadata.required.value && !hasValue) {
+        validated = false;
+        validationMessages.value.push(metadata.requiredMessage.value || `${metadata.propertyName} is required.`);
+    }
+
+    if (hasValue && !isValidHttpUrl(props.modelValue)) {
+        validated = false;
+        validationMessages.value.push('La URL debe iniciar con http:// o https://');
+    }
+
+    if (!metadata.validated.value) {
+        validated = false;
+        validationMessages.value.push(metadata.validatedMessage.value || `${metadata.propertyName} is not valid.`);
+    }
+
+    if (validated) {
+        const isAsyncValid = await props.entity.isAsyncValidation(props.propertyKey);
+        if (!isAsyncValid) {
+            validated = false;
+            const asyncMessage = props.entity.asyncValidationMessage(props.propertyKey);
+            if (asyncMessage) {
+                validationMessages.value.push(asyncMessage);
+            }
+        }
+    }
+
+    return validated;
+}
+
+async function handleValidation(): Promise<void> {
+    isInputValidated.value = await isValidated();
+    if (!isInputValidated.value) {
+        Application.View.value.isValid = false;
+    }
+}
+
+onMounted(() => {
+    Application.eventBus.on('validate-inputs', handleValidation);
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('validate-inputs', handleValidation);
+});
+</script>
+
+<style scoped>
+.url-link {
+    color: var(--blue-1);
+    text-decoration: underline;
+    display: inline-block;
+    padding-top: var(--spacing-small);
+}
+
+.image-preview {
+    max-height: 15rem;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+    margin-top: var(--spacing-small);
+    background-color: var(--white);
+    border: var(--border-width-thin) solid var(--gray-light);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    max-height: 15rem;
+    object-fit: contain;
+    display: block;
+}
+</style>

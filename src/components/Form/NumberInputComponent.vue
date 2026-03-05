@@ -1,8 +1,8 @@
 <template>
     <div class="TextInput NumberInput" :class="containerClasses">
         <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
-        <button class="left" @click="decrementValue" :disabled="metadata.disabled.value">
-            <span :class="GGCLASS">{{ GGICONS.REMOVE }}</span>
+        <button class="left" @click="decrementValue" :disabled="metadata.disabled.value || metadata.readonly.value">
+            <span :class="[GGCLASS]">{{ GGICONS.REMOVE }}</span>
         </button>
 
         <input
@@ -10,14 +10,15 @@
             class="main-input"
             :value="displayValue"
             :disabled="metadata.disabled.value"
+            :readonly="metadata.readonly.value"
             @keypress="handleKeyPress"
             @input="handleInput"
             @focus="handleFocus"
             @blur="handleBlur"
         />
 
-        <button class="right" @click="incrementValue" :disabled="metadata.disabled.value">
-            <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
+        <button class="right" @click="incrementValue" :disabled="metadata.disabled.value || metadata.readonly.value">
+            <span :class="[GGCLASS]">{{ GGICONS.ADD }}</span>
         </button>
     </div>
 
@@ -44,6 +45,7 @@ interface Props {
     modelValue?: number;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: 0
 });
@@ -75,7 +77,9 @@ const displayValue = computed<string>(() => {
 
     return props.modelValue?.toString() || '0';
 });
+// #endregion
 
+// #region METHODS
 function handleKeyPress(event: KeyboardEvent): void {
     const char = event.key;
     const currentValue = (event.target as HTMLInputElement).value;
@@ -115,11 +119,19 @@ function handleBlur(): void {
 }
 
 function incrementValue(): void {
+    if (metadata.readonly.value) {
+        return;
+    }
+
     const newValue = (props.modelValue || 0) + 1;
     emit('update:modelValue', newValue);
 }
 
 function decrementValue(): void {
+    if (metadata.readonly.value) {
+        return;
+    }
+
     const newValue = (props.modelValue || 0) - 1;
     emit('update:modelValue', newValue);
 }
@@ -155,7 +167,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -163,6 +177,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

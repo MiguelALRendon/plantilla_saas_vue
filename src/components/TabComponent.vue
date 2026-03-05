@@ -13,6 +13,7 @@ export default {
 <style scoped>
 .tab-component {
     width: 100%;
+    min-width: 0;
     height: 100%;
     padding: var(--spacing-sm);
     border-radius: 0 0 var(--border-radius) var(--border-radius);
@@ -24,6 +25,8 @@ export default {
 }
 .tab-component.active {
     display: block;
+    width: 100%;
+    min-width: 0;
     overflow: hidden;
 }
 </style>

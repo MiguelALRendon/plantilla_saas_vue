@@ -1,18 +1,24 @@
 <template>
     <button class="button info" @click="openNewDetailView">
-        <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-        New
+        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.ADD }}</span>
+        <span class="btn-label">{{ t('common.new') }}</span>
     </button>
 </template>
 
 <script lang="ts">
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 
 export default {
     name: 'NewButtonComponent',
+
+    // #region METHODS
     methods: {
+        t(path: string): string {
+            return GetLanguagedText(path);
+        },
         openNewDetailView() {
             const entityClass = Application.View.value.entityClass as
                 | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
@@ -23,6 +29,9 @@ export default {
             Application.changeViewToDetailView(entityClass.createNewInstance());
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             GGCLASS,
@@ -30,11 +39,13 @@ export default {
             Application
         };
     }
+    // #endregion
 };
 </script>
 
 <style scoped>
-.button.info span {
+.button.info.btn-icon,
+.button.info .btn-icon {
     font-size: var(--font-size-lg);
 }
 </style>

@@ -10,6 +10,7 @@
             placeholder=" "
             :value="modelValue"
             :disabled="metadata.disabled.value"
+            :readonly="metadata.readonly.value"
             @input="handleInput"
         />
 
@@ -27,6 +28,8 @@
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
+import { MaskSides } from '@/enums/mask_sides';
+import { applyMask } from '@/utils/mask';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface Props {
@@ -36,6 +39,7 @@ interface Props {
     modelValue?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -52,10 +56,26 @@ const containerClasses = computed<Record<string, boolean>>(() => ({
     disabled: metadata.disabled.value,
     nonvalidated: !isInputValidated.value
 }));
+// #endregion
 
+// #region METHODS
 function handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
-    emit('update:modelValue', target.value);
+    const maskData = props.entity.getMask(props.propertyKey);
+
+    if (!maskData) {
+        emit('update:modelValue', target.value);
+        return;
+    }
+
+    const masked = applyMask(
+        target.value,
+        maskData.mask,
+        (maskData.side as MaskSides | undefined) ?? MaskSides.START
+    );
+
+    target.value = masked;
+    emit('update:modelValue', masked);
 }
 
 async function isValidated(): Promise<boolean> {
@@ -89,7 +109,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -97,6 +119,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

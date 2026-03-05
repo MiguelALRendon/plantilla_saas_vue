@@ -5,33 +5,28 @@ import axios from 'axios';
 import type { AxiosError, AxiosInstance } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
-import {
-    NewButtonComponent,
-    RefreshButtonComponent,
-    SaveAndNewButtonComponent,
-    SaveButtonComponent,
-    SendToDeviceButtonComponent,
-    ValidateButtonComponent
-} from '@/components/Buttons';
+import { DefaultButtonLists } from '@/constants/default_button_lists';
 import { BaseEntity } from '@/entities/base_entity';
-import { Product } from '@/entities/product.ts';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { ToastType } from '@/enums/ToastType';
+import { Language } from '@/enums/language';
+import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 import type { Events } from '@/types/events';
 import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
-import { AppConfiguration } from './AppConfiguration';
+import { AppConfiguration } from './app_configuration';
 import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
 import { confirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
-import { View } from './View';
+import type { EntityCtor } from './View';
+import type { View } from './View';
 
 import type { ApplicationUIContext } from './application_ui_context';
 import type { Modal } from './modal';
-import type { Toast } from './Toast';
+import type { Toast } from './toast';
 
 /**
  * Main application singleton class that manages UI state, routing, and modals
@@ -41,11 +36,10 @@ import type { Toast } from './Toast';
  */
 class ApplicationClass implements ApplicationUIContext {
     private static instance: ApplicationClass | null = null;
+    private static readonly VIEW_TRANSITION_DELAY_MS = 400;
 
-    /**
-     * @region PROPERTIES
-     * Reactive and non-reactive properties of the Application singleton
-     */
+    // #region PROPERTIES — Reactive and non-reactive properties of the Application singleton
+
     /**
      * Application configuration object containing environment variables and settings
      * Type: Ref<AppConfiguration>
@@ -124,9 +118,8 @@ class ApplicationClass implements ApplicationUIContext {
      * Initialized by initializeRouter() and used to synchronize view changes with URL routes
      */
     router: Router | null = null;
-    /**
-     * @endregion
-     */
+
+    // #endregion
 
     private constructor() {
         this.AppConfiguration = ref<AppConfiguration>({
@@ -142,7 +135,9 @@ class ApplicationClass implements ApplicationUIContext {
             sessionTimeout: Number(import.meta.env.VITE_SESSION_TIMEOUT) || 3600000,
             itemsPerPage: Number(import.meta.env.VITE_ITEMS_PER_PAGE) || 20,
             maxFileSize: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880,
-            isDarkMode: false
+            isDarkMode: false,
+            // §8E T227 — language from env, default EN
+            selectedLanguage: (Number(import.meta.env.VITE_SELECTED_LANGUAGE) as Language) || Language.EN
         }) as Ref<AppConfiguration>;
         this.View = ref<View>({
             entityClass: null,
@@ -180,6 +175,7 @@ class ApplicationClass implements ApplicationUIContext {
         this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
         this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;
         this.ApplicationDataService = new ApplicationDataService();
+        this.ApplicationUIService = new ApplicationUIService(this);
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
             timeout: this.AppConfiguration.value.apiTimeout,
@@ -212,8 +208,25 @@ class ApplicationClass implements ApplicationUIContext {
                 }
 
                 if (status === undefined) {
+                    // T233: Retry with bounded exponential backoff for offline/transient connectivity errors
+                    if (
+                        requestConfig &&
+                        (requestConfig.__retryCount ?? 0) < this.AppConfiguration.value.apiRetryAttempts
+                    ) {
+                        requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
+                        const retryDelay = Math.pow(2, requestConfig.__retryCount) * 1000;
+                        this.ApplicationUIService.showToast(
+                            ApplicationClass.formatText('errors.connection_retrying', {
+                                current: requestConfig.__retryCount,
+                                max: this.AppConfiguration.value.apiRetryAttempts
+                            }),
+                            ToastType.WARNING
+                        );
+                        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+                        return this.axiosInstance.request(requestConfig);
+                    }
                     this.ApplicationUIService.showToast(
-                        'Error de conexión. Verifica tu conexión a internet.',
+                        GetLanguagedText('errors.connection_error'),
                         ToastType.ERROR
                     );
                     return Promise.reject(error);
@@ -223,7 +236,7 @@ class ApplicationClass implements ApplicationUIContext {
                     case 401:
                         localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
                         this.ApplicationUIService.showToast(
-                            'Sesión expirada. Por favor, inicia sesión nuevamente.',
+                            GetLanguagedText('errors.session_expired'),
                             ToastType.ERROR
                         );
 
@@ -234,14 +247,14 @@ class ApplicationClass implements ApplicationUIContext {
 
                     case 403:
                         this.ApplicationUIService.showToast(
-                            'No tienes permisos para realizar esta acción.',
+                            GetLanguagedText('errors.no_permissions'),
                             ToastType.ERROR
                         );
                         break;
 
                     case 404:
                         this.ApplicationUIService.showToast(
-                            'El recurso solicitado no fue encontrado.',
+                            GetLanguagedText('errors.resource_not_found'),
                             ToastType.WARNING
                         );
                         break;
@@ -257,12 +270,12 @@ class ApplicationClass implements ApplicationUIContext {
                                 .join(', ');
 
                             this.ApplicationUIService.showToast(
-                                `Errores de validación: ${messages}`,
+                                ApplicationClass.formatText('validation.validation_errors', { messages }),
                                 ToastType.ERROR
                             );
                         } else {
                             this.ApplicationUIService.showToast(
-                                'Error de validación en los datos enviados.',
+                                GetLanguagedText('validation.validation_data_error'),
                                 ToastType.ERROR
                             );
                         }
@@ -279,7 +292,10 @@ class ApplicationClass implements ApplicationUIContext {
                             requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
 
                             this.ApplicationUIService.showToast(
-                                `Error del servidor. Reintentando (${requestConfig.__retryCount}/${this.AppConfiguration.value.apiRetryAttempts})...`,
+                                ApplicationClass.formatText('errors.server_retrying', {
+                                    current: requestConfig.__retryCount,
+                                    max: this.AppConfiguration.value.apiRetryAttempts
+                                }),
                                 ToastType.WARNING
                             );
 
@@ -289,14 +305,14 @@ class ApplicationClass implements ApplicationUIContext {
                         }
 
                         this.ApplicationUIService.showToast(
-                            'Error del servidor. Por favor, intenta más tarde.',
+                            GetLanguagedText('errors.server_error'),
                             ToastType.ERROR
                         );
                         break;
 
                     default:
                         this.ApplicationUIService.showToast(
-                            `Error inesperado: ${status}`,
+                            ApplicationClass.formatText('errors.unexpected_error_with_status', { status }),
                             ToastType.ERROR
                         );
                 }
@@ -304,14 +320,22 @@ class ApplicationClass implements ApplicationUIContext {
                 return Promise.reject(error);
             }
         );
-
-        this.ApplicationUIService = new ApplicationUIService(this);
     }
 
-    /**
-     * @region METHODS
-     * Public and private methods for managing application state and navigation
-     */
+    private static formatText(path: string, replacements: Record<string, string | number> = {}): string {
+        let text = GetLanguagedText(path);
+        for (const [key, value] of Object.entries(replacements)) {
+            text = text.split(`{${key}}`).join(String(value));
+        }
+        return text;
+    }
+
+    private static wait(ms: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    // #region METHODS — Public and private methods for managing application state and navigation
+
     /**
      * Changes the current application view to display a different entity and component
      * Checks for unsaved changes and prompts user confirmation if necessary
@@ -329,8 +353,8 @@ class ApplicationClass implements ApplicationUIContext {
         if (this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
             this.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
-                'Salir sin guardar',
-                'Tienes cambios sin guardar. Â¿EstÃ¡s seguro de que quieres salir sin guardar?',
+                GetLanguagedText('common.exit_without_saving'),
+                GetLanguagedText('common.unsaved_changes_confirm'),
                 () => {
                     this.setViewChanges(entityClass, component, viewType, entity);
                 }
@@ -348,20 +372,21 @@ class ApplicationClass implements ApplicationUIContext {
      * @param viewType The type of view to display
      * @param entity Optional entity object for detail view
      */
-    private setViewChanges = (
+    private setViewChanges = async (
         entityClass: typeof BaseEntity,
         component: Component,
         viewType: ViewTypes,
         entity: BaseEntity | null = null
     ) => {
-        this.View.value.entityClass = entityClass;
+        this.ApplicationUIService.showLoadingScreen();
+        await ApplicationClass.wait(ApplicationClass.VIEW_TRANSITION_DELAY_MS);
+        this.View.value.entityClass = entityClass as unknown as EntityCtor;
         this.View.value.entityObject = entity;
         this.View.value.component = component;
         this.View.value.viewType = viewType;
 
         if (entity) {
             const uniqueValue = entity.getUniquePropertyValue();
-            console.log('[Application] Unique value for entity:', uniqueValue);
             if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
                 this.View.value.entityOid = 'new';
             } else {
@@ -371,7 +396,8 @@ class ApplicationClass implements ApplicationUIContext {
             this.View.value.entityOid = '';
         }
 
-        this.updateRouterFromView(entityClass, entity);
+        await this.updateRouterFromView(entityClass, entity);
+        this.ApplicationUIService.hideLoadingScreen();
     };
 
     /**
@@ -380,7 +406,10 @@ class ApplicationClass implements ApplicationUIContext {
      * @param entityClass The entity class being viewed
      * @param entity Optional entity object, determines if navigating to detail or list view
      */
-    private updateRouterFromView = (entityClass: typeof BaseEntity, entity: BaseEntity | null = null) => {
+    private updateRouterFromView = async (
+        entityClass: typeof BaseEntity,
+        entity: BaseEntity | null = null
+    ) => {
         if (!this.router) return;
 
         const moduleName = entityClass.getModuleName() || entityClass.name;
@@ -393,7 +422,7 @@ class ApplicationClass implements ApplicationUIContext {
             /** Navigate to detailview with entity ID or 'new' */
             const targetPath = `/${moduleNameLower}/${this.View.value.entityOid}`;
             if (currentRoute.path !== targetPath) {
-                this.router
+                await this.router
                     .push({
                         name: 'ModuleDetail',
                         params: {
@@ -412,7 +441,7 @@ class ApplicationClass implements ApplicationUIContext {
             /** Navigate to listview */
             const targetPath = `/${moduleNameLower}`;
             if (currentRoute.path !== targetPath) {
-                this.router
+                await this.router
                     .push({
                         name: 'ModuleList',
                         params: { module: moduleNameLower }
@@ -470,34 +499,26 @@ class ApplicationClass implements ApplicationUIContext {
      */
     setButtonList() {
         const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
+        let buttonList: Component[];
 
         switch (this.View.value.viewType) {
             case ViewTypes.LISTVIEW:
-                this.ListButtons.value = [markRaw(NewButtonComponent), markRaw(RefreshButtonComponent)];
+                buttonList = DefaultButtonLists.ListView;
+                break;
+            case ViewTypes.DEFAULTVIEW:
+                buttonList = this.View.value.entityClass?.getDefaultViewButtonList() ?? DefaultButtonLists.ListView;
                 break;
             case ViewTypes.DETAILVIEW:
-                if (isPersistentEntity) {
-                    this.ListButtons.value = [
-                        markRaw(NewButtonComponent),
-                        markRaw(RefreshButtonComponent),
-                        markRaw(ValidateButtonComponent),
-                        markRaw(SaveButtonComponent),
-                        markRaw(SaveAndNewButtonComponent),
-                        markRaw(SendToDeviceButtonComponent)
-                    ];
-                } else {
-                    this.ListButtons.value = [
-                        markRaw(NewButtonComponent),
-                        markRaw(RefreshButtonComponent),
-                        markRaw(ValidateButtonComponent),
-                        markRaw(SendToDeviceButtonComponent)
-                    ];
-                }
+                buttonList = isPersistentEntity
+                    ? DefaultButtonLists.DetailView
+                    : DefaultButtonLists.DetailViewNonPersistent;
                 break;
             default:
-                this.ListButtons.value = [];
+                buttonList = [];
                 break;
         }
+
+        this.ListButtons.value = buttonList.map(markRaw);
     }
 
     /**
@@ -508,17 +529,53 @@ class ApplicationClass implements ApplicationUIContext {
     initializeRouter(router: Router) {
         this.router = router;
     }
-    /**
-     * @endregion
-     */
 
     /**
-     * @region METHODS OVERRIDES
-     * Reserved for method overrides if ApplicationClass is extended (currently unused)
+     * Initializes the application with the provided router instance
+     * Canonical bootstrap method name per spec §8.1 Flow
+     * @param router Vue Router instance to use for navigation
      */
+    initializeApplication(router: Router) {
+        this.initializeRouter(router);
+    }
+
     /**
-     * @endregion
+     * Registers an entity class as a module in the application.
+     *
+     * Performs a uniqueness check on `getModuleName()` before pushing to `ModuleList`
+     * to prevent route collisions (two modules with the same name would map to the
+     * same `:module` route parameter, making one unreachable).
+     *
+     * @param moduleClass - The entity class to register
+     * @returns `true` if the module was registered; `false` if a duplicate was detected (module skipped)
+     *
+     * @example
+     * ```typescript
+     * Application.registerModule(CustomerEntity);
+     * Application.registerModule(ProductEntity);
+     * ```
      */
+    registerModule(moduleClass: typeof BaseEntity): boolean {
+        const incomingName = moduleClass.getModuleName()?.toLowerCase() ?? moduleClass.name.toLowerCase();
+        const isDuplicate = this.ModuleList.value.some((existing) => {
+            const existingName = existing.getModuleName()?.toLowerCase() ?? existing.name.toLowerCase();
+            return existingName === incomingName;
+        });
+
+        if (isDuplicate) {
+            console.warn(
+                `[Application] Duplicate module name detected: "${incomingName}". The module "${moduleClass.name}" was NOT registered to prevent route collision. Ensure each entity has a unique @ModuleName value.`
+            );
+            return false;
+        }
+
+        this.ModuleList.value.push(moduleClass);
+        return true;
+    }
+    // #endregion
+
+    // #region METHODS OVERRIDES — Reserved for method overrides if ApplicationClass is extended (currently unused)
+    // #endregion
 
     /**
      * Returns the singleton instance of ApplicationClass
@@ -532,7 +589,5 @@ class ApplicationClass implements ApplicationUIContext {
 }
 
 const Application = ApplicationClass.getInstance();
-
-Application.ModuleList.value.push(Product);
 export default Application;
 export { Application };

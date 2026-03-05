@@ -1,6 +1,6 @@
 import type { BaseEntity } from '@/entities/base_entity';
 import type { HttpMethod } from '@/decorations';
-import type { TransformationSchema } from './service.types';
+import type { ListQueryParams, PaginatedListResult, TransformationSchema } from './service.types';
 
 /**
  * Generic entity payload used during mapping, persistence and construction.
@@ -25,7 +25,10 @@ export type ConcreteEntityClass<T extends BaseEntity = BaseEntity> = EntityConst
     mapFromPersistentKeys(data: EntityData): EntityData;
     getPersistentKeys(): Record<string, string>;
     getPropertyKeyByPersistentKey(persistentKey: string): string | undefined;
-    getElementList(filter?: string): Promise<T[]>;
+    /** T216: accepts ListQueryParams or legacy string filter */
+    getElementList(paramsOrFilter?: ListQueryParams | string): Promise<T[]>;
+    /** T216: paginated list with server-side metadata */
+    getElementListPaginated(params?: ListQueryParams): Promise<PaginatedListResult<T>>;
 };
 
 /**

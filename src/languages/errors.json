@@ -1,0 +1,117 @@
+{
+    "api_endpoint_not_defined": {
+        "en": "ApiEndpoint not defined",
+        "es": "ApiEndpoint no definido",
+        "jp": "APIエンドポイントが未定義です"
+    },
+    "error_obtaining_list": {
+        "en": "Error fetching list",
+        "es": "Error al obtener lista",
+        "jp": "リストの取得中にエラーが発生しました"
+    },
+    "error_obtaining_element": {
+        "en": "Error fetching item",
+        "es": "Error al obtener elemento",
+        "jp": "要素の取得中にエラーが発生しました"
+    },
+    "save_error": {
+        "en": "Error while saving",
+        "es": "Error al guardar",
+        "jp": "保存中にエラーが発生しました"
+    },
+    "module_missing_module_name": {
+        "en": "The module does not define @ModuleName",
+        "es": "El módulo no tiene definido @ModuleName",
+        "jp": "モジュールに @ModuleName が定義されていません"
+    },
+    "module_missing_module_icon": {
+        "en": "The module does not define @ModuleIcon",
+        "es": "El módulo no tiene definido @ModuleIcon",
+        "jp": "モジュールに @ModuleIcon が定義されていません"
+    },
+    "module_missing_default_property": {
+        "en": "The module does not define @DefaultProperty",
+        "es": "El módulo no tiene definido @DefaultProperty",
+        "jp": "モジュールに @DefaultProperty が定義されていません"
+    },
+    "module_missing_primary_property": {
+        "en": "The module does not define @PrimaryProperty",
+        "es": "El módulo no tiene definido @PrimaryProperty",
+        "jp": "モジュールに @PrimaryProperty が定義されていません"
+    },
+    "module_configuration_error": {
+        "en": "Module configuration error",
+        "es": "Error de configuración del módulo",
+        "jp": "モジュール設定エラー"
+    },
+    "entity_missing_unique_property": {
+        "en": "The entity does not define @UniquePropertyKey",
+        "es": "La entidad no tiene definido @UniquePropertyKey",
+        "jp": "エンティティに @UniquePropertyKey が定義されていません"
+    },
+    "entity_missing_api_endpoint": {
+        "en": "The entity does not define @ApiEndpoint",
+        "es": "La entidad no tiene definido @ApiEndpoint",
+        "jp": "エンティティに @ApiEndpoint が定義されていません"
+    },
+    "persistence_configuration_error": {
+        "en": "Persistence configuration error",
+        "es": "Error de configuración de persistencia",
+        "jp": "永続化設定エラー"
+    },
+    "method_not_allowed_title": {
+        "en": "Method not allowed",
+        "es": "Método no permitido",
+        "jp": "許可されていないメソッド"
+    },
+    "method_not_allowed_message": {
+        "en": "Method {method} is not allowed in this entity",
+        "es": "El método {method} no está permitido en esta entidad",
+        "jp": "このエンティティでは {method} メソッドは許可されていません"
+    },
+    "connection_error": {
+        "en": "Connection error. Please check your internet connection.",
+        "es": "Error de conexión. Verifica tu conexión a internet.",
+        "jp": "接続エラー。インターネット接続を確認してください。"
+    },
+    "connection_retrying": {
+        "en": "No connection. Retrying ({current}/{max})...",
+        "es": "Sin conexión. Reintentando ({current}/{max})...",
+        "jp": "接続なし。再試行中（{current}/{max}）..."
+    },
+    "session_expired": {
+        "en": "Session expired. Please log in again.",
+        "es": "Sesión expirada. Por favor, inicia sesión nuevamente.",
+        "jp": "セッションの有効期限が切れました。再度ログインしてください。"
+    },
+    "no_permissions": {
+        "en": "You do not have permission to perform this action.",
+        "es": "No tienes permisos para realizar esta acción.",
+        "jp": "この操作を実行する権限がありません。"
+    },
+    "resource_not_found": {
+        "en": "The requested resource was not found.",
+        "es": "El recurso solicitado no fue encontrado.",
+        "jp": "要求されたリソースが見つかりませんでした。"
+    },
+    "server_error": {
+        "en": "Server error. Please try again later.",
+        "es": "Error del servidor. Por favor, intenta más tarde.",
+        "jp": "サーバーエラー。後でもう一度お試しください。"
+    },
+    "server_retrying": {
+        "en": "Server error. Retrying ({current}/{max})...",
+        "es": "Error del servidor. Reintentando ({current}/{max})...",
+        "jp": "サーバーエラー。再試行中（{current}/{max}）..."
+    },
+    "unexpected_error_with_status": {
+        "en": "Unexpected error: {status}",
+        "es": "Error inesperado: {status}",
+        "jp": "予期しないエラー: {status}"
+    },
+    "unknown_error": {
+        "en": "Unknown error",
+        "es": "Error desconocido",
+        "jp": "不明なエラー"
+    }
+}

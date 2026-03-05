@@ -13,6 +13,7 @@ interface ImportMetaEnv {
     readonly VITE_SESSION_TIMEOUT: string;
     readonly VITE_ITEMS_PER_PAGE: string;
     readonly VITE_MAX_FILE_SIZE: string;
+    readonly VITE_SELECTED_LANGUAGE: string;
 }
 
 interface ImportMeta {

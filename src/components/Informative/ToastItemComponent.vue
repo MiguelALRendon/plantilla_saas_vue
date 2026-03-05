@@ -3,7 +3,7 @@
         <div class="toast" :class="setToastClass()" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
             <span>{{ toast.message }}</span>
             <button class="toast-close-button" @click="handleClose">
-                <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
             </button>
         </div>
     </div>
@@ -11,8 +11,8 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type { Toast } from '@/models/Toast';
-import { ToastType } from '@/enums/ToastType';
+import type { Toast } from '@/models/toast';
+import { ToastType } from '@/enums/toast_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 
 export default {
@@ -24,6 +24,8 @@ export default {
             required: true
         }
     },
+
+    // #region METHODS
     methods: {
         setToastClass(): string {
             switch (this.toast.type) {
@@ -88,6 +90,9 @@ export default {
             this.dismissToast();
         }
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         setTimeout(() => {
             this.showToast = true;
@@ -98,6 +103,9 @@ export default {
         this.clearDismissTimer();
         this.clearRemoveTimer();
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             GGICONS,
@@ -110,6 +118,7 @@ export default {
             isDismissing: false
         };
     }
+    // #endregion
 };
 </script>
 

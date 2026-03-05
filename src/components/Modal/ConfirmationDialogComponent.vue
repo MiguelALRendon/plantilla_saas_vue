@@ -33,14 +33,14 @@
                 <button
                     v-if="dialogInfo.confirmationAction"
                     class="button info fill"
-                    @click="Application.ApplicationUIService.acceptConfigurationMenu()"
+                    @click="accept()"
                 >
-                    <span :class="GGCLASS">{{ GGICONS.CHECK }}</span>
-                    {{ dialogInfo.acceptButtonText || 'Aceptar' }}
+                        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
+                    <span class="btn-label">{{ dialogInfo.acceptButtonText || 'Aceptar' }}</span>
                 </button>
-                <button class="button alert fill" @click="Application.ApplicationUIService.closeConfirmationMenu()">
-                    <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
-                    {{ dialogInfo.cancelButtonText || 'Cancelar' }}
+                <button class="button alert fill" @click="cancel()">
+                        <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
+                    <span class="btn-label">{{ dialogInfo.cancelButtonText || 'Cancelar' }}</span>
                 </button>
             </div>
         </div>
@@ -54,6 +54,19 @@ import Application from '@/models/application';
 
 export default {
     name: 'ConfirmationDialogComponent',
+
+    // #region METHODS
+    methods: {
+        accept(): void {
+            Application.ApplicationUIService.acceptConfigurationMenu();
+        },
+        cancel(): void {
+            Application.ApplicationUIService.closeConfirmationMenu();
+        }
+    },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         dialogInfo() {
             return Application.confirmationMenu.value;
@@ -73,6 +86,9 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             Application,
@@ -82,6 +98,9 @@ export default {
             isShowing: false
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('show-confirmation', () => {
             this.isShowing = true;
@@ -94,6 +113,7 @@ export default {
         Application.eventBus.off('show-confirmation');
         Application.eventBus.off('hide-confirmation');
     }
+    // #endregion
 };
 </script>
 

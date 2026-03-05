@@ -12,7 +12,7 @@
             placeholder=" "
             :value="formattedDate"
             :disabled="metadata.disabled.value"
-            readonly
+            :readonly="true"
         />
         <input
             ref="dateInput"
@@ -21,11 +21,11 @@
             type="date"
             class="date-input"
             :value="modelValue"
-            :disabled="metadata.disabled.value"
+            :disabled="metadata.disabled.value || metadata.readonly.value"
             @input="updateDate"
         />
-        <button class="right" @click="openCalendar" :disabled="metadata.disabled.value">
-            <span :class="GGCLASS">{{ GGICONS.CALENDAR }}</span>
+        <button class="right" @click="openCalendar" :disabled="metadata.disabled.value || metadata.readonly.value">
+            <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
         </button>
     </div>
 
@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
@@ -52,6 +53,7 @@ interface Props {
     modelValue?: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -68,7 +70,11 @@ const validationMessages = ref<string[]>([]);
 const formattedDate = computed<string>(() => {
     if (!props.modelValue) return '';
 
-    const date = new Date(`${props.modelValue}T00:00:00`);
+    // Prefer YYYY-MM-DD (from input[type=date]); fall back to parsing arbitrary date strings
+    let date = new Date(`${props.modelValue}${DATE_TIME_LOCAL_SUFFIX}`);
+    if (isNaN(date.getTime())) {
+        date = new Date(`${props.modelValue}${DATE_TIME_LOCAL_SUFFIX}`);
+    }
 
     if (isNaN(date.getTime())) return '';
 
@@ -78,13 +84,23 @@ const formattedDate = computed<string>(() => {
 
     return `${day}/${month}/${year}`;
 });
+// #endregion
 
+// #region METHODS
 function updateDate(event: Event): void {
+    if (metadata.readonly.value) {
+        return;
+    }
+
     const value = (event.target as HTMLInputElement).value;
     emit('update:modelValue', value);
 }
 
 function openCalendar(): void {
+    if (metadata.readonly.value) {
+        return;
+    }
+
     dateInput.value?.showPicker?.();
 }
 
@@ -119,7 +135,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -127,6 +145,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>

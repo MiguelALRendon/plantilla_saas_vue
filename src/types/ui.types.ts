@@ -5,11 +5,11 @@ import type { BaseEntity } from '@/entities/base_entity';
 import type { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import type { ViewTypes } from '@/enums/view_type';
 
-import type { AppConfiguration } from '@/models/AppConfiguration';
+import type { AppConfiguration } from '@/models/app_configuration';
 import type { DropdownMenu } from '@/models/dropdown_menu';
 import type { Events } from '@/types/events';
 import type { Modal } from '@/models/modal';
-import type { Toast } from '@/models/Toast';
+import type { Toast } from '@/models/toast';
 
 /**
  * Entity constructor alias used in UI state.

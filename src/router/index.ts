@@ -2,7 +2,10 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import type { Router } from 'vue-router';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
+import type { EntityCtor } from '@/models/View';
+import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -15,8 +18,14 @@ const routes: Array<RouteRecordRaw> = [
                 const moduleName = firstModule.getModuleName() || firstModule.name;
                 return `/${moduleName.toLowerCase()}`;
             }
-            return '/';
+            /** Fallback: avoid self-redirect loop when no modules are loaded yet */
+            return '/loading';
         }
+    },
+    {
+        path: '/loading',
+        name: 'Loading',
+        component: { template: '<loading-screen-component />' }
     },
     {
         path: '/:module',
@@ -43,6 +52,24 @@ const router: Router = createRouter({
  * Prevents infinite loops by comparing current state before updating
  */
 router.beforeEach(async (to, _from, next) => {
+    /** Dirty state guard — spec §8.7 Navigation with Dirty State Guard */
+    const currentEntity = Application.View.value.entityObject;
+    if (currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
+        Application.ApplicationUIService.openConfirmationMenu(
+            confMenuType.WARNING,
+            GetLanguagedText('common.exit_without_saving'),
+            GetLanguagedText('common.unsaved_changes_confirm_short'),
+            () => {
+                Application.View.value.entityObject = null;
+                router.push(to.fullPath).catch(() => {});
+            },
+            GetLanguagedText('common.exit'),
+            GetLanguagedText('common.cancel')
+        );
+        next(false);
+        return;
+    }
+
     const moduleName = to.params.module as string;
     const entityObjectId = to.params.oid as string;
 
@@ -71,7 +98,7 @@ router.beforeEach(async (to, _from, next) => {
                 /** Detail view - Handle entity creation or editing */
                 if (entityObjectId === 'new') {
                     const newEntity: BaseEntity = concreteModuleClass.createNewInstance();
-                    Application.View.value.entityClass = moduleClass;
+                    Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                     Application.View.value.entityObject = newEntity;
                     Application.View.value.component = moduleClass.getModuleDetailComponent();
                     Application.View.value.viewType = ViewTypes.DETAILVIEW;
@@ -80,7 +107,7 @@ router.beforeEach(async (to, _from, next) => {
                 } else {
                     try {
                         const loadedEntity: BaseEntity = await concreteModuleClass.getElement(entityObjectId);
-                        Application.View.value.entityClass = moduleClass;
+                        Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                         Application.View.value.entityObject = loadedEntity;
                         Application.View.value.component = moduleClass.getModuleDetailComponent();
                         Application.View.value.viewType = ViewTypes.DETAILVIEW;
@@ -94,7 +121,7 @@ router.beforeEach(async (to, _from, next) => {
                 }
             } else {
                 /** List view - Display table of entities */
-                Application.View.value.entityClass = moduleClass;
+                Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                 Application.View.value.entityObject = null;
                 Application.View.value.component = moduleClass.getModuleListComponent();
                 Application.View.value.viewType = ViewTypes.LISTVIEW;
@@ -115,8 +142,8 @@ router.beforeEach(async (to, _from, next) => {
  * After-navigation guard for logging successful navigations
  * Logs path and entityOid for debugging synchronization
  */
-router.afterEach((to) => {
-    console.log('[Router] Navigated to:', to.path, '| entityOid:', Application.View.value.entityOid);
+router.afterEach((_to) => {
+    /** Navigation hook reserved for analytics or logging (currently no-op) */
 });
 
 export default router;

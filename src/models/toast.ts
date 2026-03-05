@@ -1,4 +1,4 @@
-import { ToastType } from '@/enums/ToastType';
+import { ToastType } from '@/enums/toast_type';
 
 /**
  * Representa una notificación toast individual con ID autogenerado
@@ -6,9 +6,7 @@ import { ToastType } from '@/enums/ToastType';
  * § 06-CODE-STYLING-STANDARDS 6.2.1, 6.6.1
  */
 export class Toast {
-    /**
-     * @region PROPERTIES
-     */
+    // #region PROPERTIES
     
     /**
      * Unique toast identifier used as render key.
@@ -23,13 +21,9 @@ export class Toast {
      */
     type: ToastType;
 
-    /**
-     * @endregion
-     */
+    // #endregion
 
-    /**
-     * @region METHODS
-     */
+    // #region METHODS
     
     /**
      * Creates a toast model with auto-generated identifier.
@@ -42,7 +36,5 @@ export class Toast {
         this.type = type;
     }
     
-    /**
-     * @endregion
-     */
+    // #endregion
 }

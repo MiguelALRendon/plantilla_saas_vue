@@ -19,9 +19,11 @@ interface Props {
     title: string;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     title: '',
 });
+// #endregion
 </script>
 
 <style scoped>
@@ -30,6 +32,10 @@ const props = withDefaults(defineProps<Props>(), {
     border-radius: var(--border-radius);
     margin-block: var(--margin-medium);
     box-shadow: var(--shadow-light);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .form-group-header {
@@ -48,16 +54,23 @@ const props = withDefaults(defineProps<Props>(), {
 .form-group-body {
     padding-block: var(--padding-large);
     padding-inline: var(--padding-small);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .form-group-body-container {
     display: grid;
     grid-template-rows: 1fr;
     transition: grid-template-rows var(--transition-normal) var(--timing-ease);
+    width: 100%;
+    min-width: 0;
 }
 
 .form-group-body-content {
-    overflow: visible;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .colapse-group-btn {

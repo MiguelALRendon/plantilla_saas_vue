@@ -14,6 +14,8 @@ import Application from '@/models/application';
 
 export default {
     name: 'LoadingPopupComponent',
+
+    // #region PROPERTIES
     data() {
         return {
             GGCLASS,
@@ -22,6 +24,9 @@ export default {
             showing: false
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('show-loading-menu', () => {
             console.log('show-loading-menu event received');
@@ -35,6 +40,7 @@ export default {
         Application.eventBus.off('show-loading-menu');
         Application.eventBus.off('hide-loading-menu');
     }
+    // #endregion
 };
 </script>
 

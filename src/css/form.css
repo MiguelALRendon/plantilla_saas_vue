@@ -17,7 +17,7 @@ input[type="number"] {
     padding-top: var(--input-container-padding-top);
     overflow: visible;
 }
-.TextInput.NumberInput, .TextInput.PasswordInput, .TextInput.DateInput, .TextInput.ObjectInput {
+.TextInput.NumberInput, .TextInput.PasswordInput, .TextInput.DateInput, .TextInput.ObjectInput, .TextInput.SearchInput {
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -32,7 +32,10 @@ input[type="text"], input[type="email"], input[type="password"], input[type="num
     font-family: 'Inter', sans-serif;
     color: var(--gray-medium);
     width: 100%;
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: border-color var(--transition-slow) var(--timing-ease),
+                border-width var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease);
     box-sizing: border-box;
     font-size: var(--font-size-base);
     background-color: var(--bg-gray);
@@ -41,11 +44,11 @@ textarea {
     resize: none;
     min-height: var(--textarea-min-height);
 }
-input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"], .TextInput.NumberInput input[type="text"] {
+input[type="number"], input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"], .TextInput.NumberInput input[type="text"], .TextInput.SearchInput input[type="text"] {
     text-align: center;
     border-radius: 0;
 }
-input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"] {
+input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.DateInput input[type="text"], .TextInput.ObjectInput input[type="text"], .TextInput.SearchInput input[type="text"] {
     text-align: left;
     border-top-left-radius: var(--border-radius);
     border-bottom-left-radius: var(--border-radius);
@@ -60,7 +63,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     top: var(--label-initial-top);
     color: var(--blue-1);
     font-size: var(--font-size-base);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: color var(--transition-slow) var(--timing-ease),
+                font-size var(--transition-slow) var(--timing-ease),
+                top var(--transition-slow) var(--timing-ease),
+                left var(--transition-slow) var(--timing-ease),
+                padding var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                border-radius var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;
@@ -132,7 +141,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border: var(--border-width-medium) solid var(--lavender);
 }
 
-.TextInput.NumberInput button, .TextInput.PasswordInput button, .TextInput.DateInput button, .TextInput.ObjectInput button {
+.TextInput.NumberInput button, .TextInput.PasswordInput button, .TextInput.DateInput button, .TextInput.ObjectInput button, .TextInput.SearchInput button {
     width: var(--icon-button-width);
     border-top: var(--border-width-thin) solid var(--sky);
     border-bottom: var(--border-width-thin) solid var(--sky);
@@ -140,7 +149,9 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-normal) var(--timing-ease);
+    transition: background-color var(--transition-normal) var(--timing-ease),
+                border-color var(--transition-normal) var(--timing-ease),
+                color var(--transition-normal) var(--timing-ease);
     background-color: var(--bg-gray);
 }
 .TextInput button span {
@@ -148,7 +159,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 .TextInput.NumberInput button.left { border-radius: var(--border-radius) 0 0 var(--border-radius); border-left: var(--border-width-thin) solid var(--sky); }
 .TextInput.NumberInput button.right, 
-.TextInput.PasswordInput button.right, .TextInput.DateInput button.right, .TextInput.ObjectInput button.right
+.TextInput.PasswordInput button.right, .TextInput.DateInput button.right, .TextInput.ObjectInput button.right, .TextInput.SearchInput button.right
 { border-radius: 0 var(--border-radius) var(--border-radius) 0; border-right: var(--border-width-thin) solid var(--sky); }
 
 .TextInput.DateInput .date-input {
@@ -191,42 +202,27 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--white);
 }
 
-@media (max-width: var(--breakpoint-mobile)) {
+/* Mobile (var(--breakpoint-mobile) = 768px — raw value required: var() unsupported in @media per CSS spec)
+   IMPORTANT: flex-direction stays row for all input+button combos — buttons must remain beside inputs.
+   Only reduce spacing and font sizes so the row fits smaller viewports. */
+@media (max-width: 768px) {
     .TextInput.NumberInput,
     .TextInput.PasswordInput,
     .TextInput.DateInput,
-    .TextInput.ObjectInput {
-        flex-direction: column;
-        align-items: stretch;
+    .TextInput.ObjectInput,
+    .TextInput.SearchInput {
+        /* Keep flex-direction: row — buttons stay beside the input */
+        font-size: var(--font-size-sm);
     }
 
     .TextInput.NumberInput button,
     .TextInput.PasswordInput button,
     .TextInput.DateInput button,
-    .TextInput.ObjectInput button {
-        width: 100%;
+    .TextInput.ObjectInput button,
+    .TextInput.SearchInput button {
+        /* Keep intrinsic width — do not force width: 100% */
         min-height: var(--button-height);
-        border-radius: var(--border-radius);
-        border: var(--border-width-thin) solid var(--sky);
-    }
-
-    .TextInput.NumberInput button.left,
-    .TextInput.NumberInput button.right,
-    .TextInput.PasswordInput button.right,
-    .TextInput.DateInput button.right,
-    .TextInput.ObjectInput button.right {
-        border-radius: var(--border-radius);
-        border-left: var(--border-width-thin) solid var(--sky);
-        border-right: var(--border-width-thin) solid var(--sky);
-    }
-
-    .TextInput.PasswordInput input[type="text"],
-    .TextInput.DateInput input[type="text"],
-    .TextInput.ObjectInput input[type="text"],
-    input[type="number"],
-    input[type="password"] {
-        border-radius: var(--border-radius);
-        text-align: left;
+        padding-inline: var(--padding-small);
     }
 
     .TextInput.NumberInput .label-input {

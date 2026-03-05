@@ -9,7 +9,7 @@
             </label>
 
             <div :class="['input-button', { true: modelValue }]">
-                <span :class="GGCLASS" class="icon">{{ displayIcon }}</span>
+                <span :class="[GGCLASS]" class="icon">{{ displayIcon }}</span>
             </div>
         </button>
 
@@ -37,6 +37,7 @@ interface Props {
     modelValue?: boolean;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: false
 });
@@ -55,7 +56,9 @@ const value = computed<boolean>({
 });
 
 const displayIcon = computed<string>(() => (props.modelValue ? GGICONS.CHECK : GGICONS.CANCEL));
+// #endregion
 
+// #region METHODS
 async function isValidated(): Promise<boolean> {
     let validated = true;
     validationMessages.value = [];
@@ -87,7 +90,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
 });
@@ -95,6 +100,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>
@@ -138,7 +144,9 @@ onBeforeUnmount(() => {
 
 .BooleanInput .input-button .icon {
     transform: rotate(180deg);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: transform var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease);
     color: var(--accent-red);
     border-radius: 100%;
 }

@@ -275,6 +275,14 @@ Desarrollador define enum OrderStatus, crea adapter en vista, pasa a ListInputCo
 - Los estilos de estado (`selected`, `disabled`, `nonvalidated`, `focus`) deben implementarse sin `!important`.
 - El componente debe mantener estados visuales por clases CSS y selectores específicos, sin overrides forzados.
 
+### Correcciones de Label y Dropdown (2026-03-02)
+
+- Se introdujo el token `--enum-input-container-padding-top` en `constants.css` para controlar el padding-top del header del EnumInput de forma independiente a `--input-container-padding-top`, ya que su estructura visual requiere más espacio para el label flotante.
+- El label ahora tiene tres estados de color explícitos: sin valor (azul, `--blue-1`), con valor y cerrado (`active`, fondo `--sky`), y abierto/activo (`focused`, fondo `--lavender`), alineando el comportamiento con los demás inputs del sistema.
+- Se eliminó `position: relative` del `.list-input-container` para que el label flotante use `.EnumInput` como containing block, igual que `TextInput`.
+- `.list-input-body` ahora usa `width: 100%; left: 0` para alinearse exactamente con el input, sin padding lateral que generaba barras blancas a los costados.
+- En estado `disabled`, el dropdown se fuerza a `grid-template-rows: 0fr` para que nunca sea visible.
+
 **EJEMPLO ENUM Y ENTITY:**
 ```typescript
 enum OrderStatus {

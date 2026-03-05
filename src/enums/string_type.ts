@@ -4,5 +4,10 @@ export enum StringType {
     TEXT,
     TELEPHONE,
     URL,
-    TEXTAREA
+    URL_IMAGE,
+    TEXTAREA,
+    SEARCH,
+    CREDIT_CARD,
+    CREDIT_CARD_DATE,
+    CREDIT_CARD_CVV,
 }

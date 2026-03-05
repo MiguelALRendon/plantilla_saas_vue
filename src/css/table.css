@@ -37,3 +37,22 @@
 .table-length-full {
     flex: 1;
 }
+
+/* Text overflow triplet — prevents horizontal scroll in fixed-width table cells */
+.table-row {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   RESPONSIVE OVERRIDES
+   Note: CSS var() cannot be used in @media conditions.
+   768px → var(--breakpoint-mobile)  (see constants.css §6.7)
+   ============================================================ */
+
+/* Mobile: column width classes are intentionally preserved at all viewports.
+   The table scrolls horizontally inside .table-wrapper (see DetailViewTableComponent.vue)
+   so cells always have their defined minimum widths, even on small screens.
+   This prevents header/body misalignment by keeping both rows the same width.
+   Previous rule that set min-width:unset on mobile was REMOVED — it broke alignment. */

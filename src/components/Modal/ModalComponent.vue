@@ -10,7 +10,7 @@
                 </div>
 
                 <button class="close-button" @click="closeModal">
-                    <span :class="GGCLASS">{{ GGICONS.CLOSE }}</span>
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                 </button>
             </div>
 
@@ -19,8 +19,14 @@
             </div>
 
             <div class="modal-footer">
-                <button class="button info fill">Aceptar</button>
-                <button class="button alert fill" @click="closeModal">Cerrar</button>
+                <button class="button info fill">
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
+                    <span class="btn-label">Aceptar</span>
+                </button>
+                <button class="button alert fill" @click="closeModal">
+                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
+                    <span class="btn-label">Cerrar</span>
+                </button>
             </div>
         </div>
     </div>
@@ -38,6 +44,8 @@ import { Component } from 'vue';
 
 export default {
     name: 'ModalComponent',
+
+    // #region METHODS
     methods: {
         closeModal() {
             Application.ApplicationUIService.closeModal();
@@ -48,6 +56,9 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region PROPERTIES
     data() {
         return {
             ICONS,
@@ -58,6 +69,9 @@ export default {
             isShowing: false
         };
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
         modalModuleIcon(): string | undefined {
             return this.modalModule?.getModuleIcon();
@@ -88,6 +102,9 @@ export default {
             }
         }
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
         window.addEventListener('keydown', this.handleKeydown);
         Application.eventBus.on('show-modal', () => {
@@ -102,6 +119,7 @@ export default {
         Application.eventBus.off('show-modal');
         Application.eventBus.off('hide-modal');
     }
+    // #endregion
 };
 </script>
 

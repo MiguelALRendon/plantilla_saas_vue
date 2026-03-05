@@ -16,6 +16,8 @@ type AbstractEntityConstructor<T extends BaseEntity = BaseEntity> = abstract new
  * Service for data transformations between API payloads and entity values.
  */
 export class ApplicationDataService {
+    // #region PROPERTIES
+
     /**
      * Catalog of reusable transformers.
      */
@@ -121,6 +123,10 @@ export class ApplicationDataService {
         }),
     };
 
+    // #endregion
+
+    // #region METHODS
+
     /**
      * Applies transformations from API payload into entity format.
      */
@@ -154,4 +160,6 @@ export class ApplicationDataService {
 
         return result as T;
     }
+
+    // #endregion
 }

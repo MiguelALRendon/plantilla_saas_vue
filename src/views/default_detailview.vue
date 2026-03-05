@@ -33,8 +33,8 @@
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
+                            :model-value="getDateModel(prop)"
+                            @update:model-value="setDateModel(prop, $event)"
                         />
 
                         <BooleanInputComponent
@@ -46,8 +46,8 @@
                             @update:model-value="setBooleanModel(prop, $event)"
                         />
 
-                        <ListInputComponent
-                            v-if="propertyMetadata[prop].showListInput"
+                        <EnumInputComponent
+                            v-if="propertyMetadata[prop].showEnumInput"
                             :entity-class="entityClass"
                             :entity="entity"
                             :property-key="prop"
@@ -92,6 +92,69 @@
                             :model-value="getStringModel(prop)"
                             @update:model-value="setStringModel(prop, $event)"
                         />
+
+                        <TelephoneInputComponent
+                            v-if="propertyMetadata[prop].showTelephoneInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <UrlInputComponent
+                            v-if="propertyMetadata[prop].showUrlInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <UrlImageInputComponent
+                            v-if="propertyMetadata[prop].showUrlImageInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <SearchInputComponent
+                            v-if="propertyMetadata[prop].showSearchInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <CreditCardInputComponent
+                            v-if="propertyMetadata[prop].showCreditCardInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <CreditCardDateInputComponent
+                            v-if="propertyMetadata[prop].showCreditCardDateInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
+
+                        <CreditCardCvvInputComponent
+                            v-if="propertyMetadata[prop].showCreditCardCvvInput"
+                            :entity-class="entityClass"
+                            :entity="entity"
+                            :property-key="prop"
+                            :model-value="getStringModel(prop)"
+                            @update:model-value="setStringModel(prop, $event)"
+                        />
                         <!---------------------------------------------->
                     </div>
                 </component>
@@ -128,6 +191,7 @@ import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
 import { EnumAdapter } from '@/models/enum_adapter';
+import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
 
 export default {
     name: 'DefaultDetailView',
@@ -136,26 +200,35 @@ export default {
         TabControllerComponent,
         TabComponent
     },
+
+    // #region PROPERTIES
     data() {
         return {
             StringType,
             EnumAdapter,
-            BaseEntity,
-            entity: Application.View.value.entityObject as BaseEntity,
-            entityClass: Application.View.value.entityClass as typeof BaseEntity
+            BaseEntity
         };
     },
+    // #endregion
+
+    // #region LIFECYCLE
     mounted() {
-        /**
-         * FUTURE: Aquí se implementará la lógica para cargar la entidad desde la API
-         * usando Application.View.value.entityOid cuando entityObject sea null
-         * Ejemplo:
-         * if (!this.entity && Application.View.value.entityOid) {
-         *     this.loadEntityFromAPI(Application.View.value.entityOid);
-         * }
-         */
+        if (!Application.View.value.entityObject) {
+            Application.View.value.entityObject = Application.View.value.entityClass
+                ? Application.View.value.entityClass.createNewInstance()
+                : new EmptyEntity({});
+        }
     },
+    // #endregion
+
+    // #region COMPUTED
     computed: {
+        entity(): BaseEntity {
+            return (Application.View.value.entityObject ?? new EmptyEntity({})) as BaseEntity;
+        },
+        entityClass(): typeof BaseEntity {
+            return (Application.View.value.entityClass ?? BaseEntity) as typeof BaseEntity;
+        },
         defaultPropertyValue(): string {
             return String(this.entity.getDefaultPropertyValue() ?? '');
         },
@@ -166,11 +239,18 @@ export default {
                 showObjectInput: boolean;
                 showDateInput: boolean;
                 showBooleanInput: boolean;
-                showListInput: boolean;
+                showEnumInput: boolean;
                 showTextInput: boolean;
                 showTextAreaInput: boolean;
                 showEmailInput: boolean;
                 showPasswordInput: boolean;
+                showTelephoneInput: boolean;
+                showUrlInput: boolean;
+                showUrlImageInput: boolean;
+                showSearchInput: boolean;
+                showCreditCardInput: boolean;
+                showCreditCardDateInput: boolean;
+                showCreditCardCvvInput: boolean;
             }
         > {
             const metadata: Record<
@@ -180,11 +260,18 @@ export default {
                     showObjectInput: boolean;
                     showDateInput: boolean;
                     showBooleanInput: boolean;
-                    showListInput: boolean;
+                    showEnumInput: boolean;
                     showTextInput: boolean;
                     showTextAreaInput: boolean;
                     showEmailInput: boolean;
                     showPasswordInput: boolean;
+                    showTelephoneInput: boolean;
+                    showUrlInput: boolean;
+                    showUrlImageInput: boolean;
+                    showSearchInput: boolean;
+                    showCreditCardInput: boolean;
+                    showCreditCardDateInput: boolean;
+                    showCreditCardCvvInput: boolean;
                 }
             > = {};
             const keys = this.entity.getKeys();
@@ -198,11 +285,18 @@ export default {
                     showObjectInput: !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity,
                     showDateInput: propType === Date,
                     showBooleanInput: propType === Boolean,
-                    showListInput: propType instanceof EnumAdapter,
-                    showTextInput: propType === String && stringType == StringType.TEXT,
+                    showEnumInput: this.entity.isEnumProperty(prop),
+                    showTextInput: propType === String && stringType === StringType.TEXT,
                     showTextAreaInput: propType === String && stringType == StringType.TEXTAREA,
                     showEmailInput: propType === String && stringType == StringType.EMAIL,
-                    showPasswordInput: propType === String && stringType == StringType.PASSWORD
+                    showPasswordInput: propType === String && stringType == StringType.PASSWORD,
+                    showTelephoneInput: propType === String && stringType == StringType.TELEPHONE,
+                    showUrlInput: propType === String && stringType == StringType.URL,
+                    showUrlImageInput: propType === String && stringType == StringType.URL_IMAGE,
+                    showSearchInput: propType === String && stringType == StringType.SEARCH,
+                    showCreditCardInput: propType === String && stringType == StringType.CREDIT_CARD,
+                    showCreditCardDateInput: propType === String && stringType == StringType.CREDIT_CARD_DATE,
+                    showCreditCardCvvInput: propType === String && stringType == StringType.CREDIT_CARD_CVV
                 };
             }
             return metadata;
@@ -247,10 +341,12 @@ export default {
             return groups;
         }
     },
+    // #endregion
+
+    // #region METHODS
     methods: {
         /**
-         * FUTURE: Método para cargar entidad desde API
-         * async loadEntityFromAPI(oid: string) {
+         * FUTURE: async loadEntityFromAPI(oid: string) {
          *     try {
          *         const response = await Application.axiosInstance.get(
          *             `${this.entityClass.getApiEndpoint()}/${oid}`
@@ -285,6 +381,7 @@ export default {
             return this.entityClass.getPropertyType(prop) as typeof BaseEntity;
         },
         getEnumAdapter(prop: string): EnumAdapter {
+            // The decorator already stores the type as an EnumAdapter instance — return it directly.
             return this.entityClass.getPropertyType(prop) as EnumAdapter;
         },
         getNumberModel(prop: string): number {
@@ -296,8 +393,21 @@ export default {
         getStringModel(prop: string): string {
             return String(this.entity[prop] ?? '');
         },
+        getDateModel(prop: string): string {
+            const value = this.entity[prop];
+            if (!value) return '';
+            const date = value instanceof Date ? value : new Date(`${String(value)}${DATE_TIME_LOCAL_SUFFIX}`);
+            if (isNaN(date.getTime())) return '';
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
         setStringModel(prop: string, value: string): void {
             this.entity[prop] = value;
+        },
+        setDateModel(prop: string, value: string): void {
+            this.entity[prop] = value ? new Date(`${value}${DATE_TIME_LOCAL_SUFFIX}`) : null;
         },
         getBooleanModel(prop: string): boolean {
             return Boolean(this.entity[prop]);
@@ -327,8 +437,8 @@ export default {
             this.entity[prop] = value;
         },
         getArrayListsTabs(): Array<string> {
-            var returnList: Array<string> = [];
-            var listTypes = this.entity.getArrayKeysOrdered();
+            const returnList: Array<string> = [];
+            const listTypes = this.entity.getArrayKeysOrdered();
             for (let i = 0; i < listTypes.length; i++) {
                 returnList.push(this.entityClass.getPropertyNameByKey(listTypes[i])!);
             }
@@ -336,6 +446,7 @@ export default {
             return returnList;
         }
     }
+    // #endregion
 };
 </script>
 <style scoped>

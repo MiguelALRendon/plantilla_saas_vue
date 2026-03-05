@@ -1,7 +1,7 @@
 <template>
     <div
         ref="rootElement"
-        class="ListInput"
+        class="EnumInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
         <button
@@ -12,25 +12,32 @@
         >
             <div class="list-input-container">
                 <div class="label-and-value">
-                    <label class="label" :class="[{ active: actualOption != '' }]">{{ metadata.propertyName }}</label>
+                    <label class="label" :class="[{ active: actualOption != '' }, { focused: droped }]">{{ metadata.propertyName }}</label>
                     <label class="value" :class="[{ active: actualOption != '' }]">{{ actualOption }}</label>
                 </div>
                 <span class="arrow" :class="[GGCLASS, { active: droped }]">{{ GGICONS.ARROW_UP }}</span>
             </div>
         </button>
-        <div class="list-input-body" :class="[{ enabled: droped }, { 'from-bottom': fromBottom }]">
-            <div class="list-input-items-wrapper">
-                <div
-                    class="list-input-item"
-                    v-for="value in formattedEnumValues"
-                    :class="[{ selected: modelValue == value.value }]"
-                    :key="value.key"
-                    @click="selectOption(value.value)"
-                >
-                    <span>{{ value.displayKey }}</span>
+        <Teleport to="body">
+            <div
+                ref="portalElement"
+                class="list-input-body"
+                :class="[{ enabled: droped }, { 'from-bottom': fromBottom }]"
+                :style="portalStyle"
+            >
+                <div class="list-input-items-wrapper">
+                    <div
+                        class="list-input-item"
+                        v-for="value in formattedEnumValues"
+                        :class="[{ selected: modelValue == value.value }]"
+                        :key="value.key"
+                        @click="selectOption(value.value)"
+                    >
+                        <span>{{ value.displayKey }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Teleport>
 
         <div class="help-text" v-if="metadata.helpText.value">
             <span>{{ metadata.helpText.value }}</span>
@@ -58,6 +65,7 @@ interface Props {
     modelValue?: string | number;
 }
 
+// #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     modelValue: ''
 });
@@ -72,6 +80,8 @@ const fromBottom = ref(false);
 const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
 const rootElement = ref<HTMLElement | null>(null);
+const portalElement = ref<HTMLElement | null>(null);
+const portalStyle = ref<Record<string, string>>({});
 
 function parseValue(key: string): string {
     return key
@@ -93,11 +103,22 @@ const actualOption = computed<string | number>(() => {
     const value = props.propertyEnumValues.getKeyValuePairs().find((pair) => pair.value === props.modelValue)?.key || '';
     return parseValue(value);
 });
+// #endregion
 
+// #region METHODS
 function openOptions(): void {
-    const rect = document.getElementById(`id-4-click-on${metadata.propertyName}`)?.getBoundingClientRect();
+    const buttonEl = document.getElementById(`id-4-click-on${metadata.propertyName}`);
+    const rect = buttonEl?.getBoundingClientRect();
     if (rect) {
         fromBottom.value = window.innerHeight - rect.bottom < 300;
+        portalStyle.value = {
+            position: 'fixed',
+            top: `${fromBottom.value ? rect.top : rect.bottom}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            zIndex: 'var(--z-dropdown)',
+            transform: fromBottom.value ? 'translateY(-100%)' : 'none',
+        };
     }
     droped.value = !droped.value;
 }
@@ -110,9 +131,10 @@ function selectOption(value: string | number): void {
 function handleClickOutside(event: MouseEvent): void {
     if (droped.value) {
         const dropdown = rootElement.value;
+        const portal = portalElement.value;
         if (!dropdown) return;
 
-        if (!dropdown.contains(event.target as Node)) {
+        if (!dropdown.contains(event.target as Node) && !portal?.contains(event.target as Node)) {
             droped.value = false;
         }
     }
@@ -149,7 +171,9 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+// #endregion
 
+// #region LIFECYCLE
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
     Application.eventBus.on('validate-inputs', handleValidation);
@@ -159,10 +183,11 @@ onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutside);
     Application.eventBus.off('validate-inputs', handleValidation);
 });
+// #endregion
 </script>
 
 <style scoped>
-.ListInput {
+.EnumInput {
     width: 100%;
     position: relative;
 }
@@ -197,7 +222,6 @@ onBeforeUnmount(() => {
     box-sizing: border-box;
     border: var(--border-width-thin) solid var(--sky);
     border-radius: var(--border-radius);
-    position: relative;
 }
 
 .list-input-header label {
@@ -213,10 +237,17 @@ onBeforeUnmount(() => {
 .label-and-value .label {
     position: absolute;
     left: var(--padding-medium);
-    top: var(--input-container-padding-top);
+    top: var(--enum-input-container-padding-top);
     color: var(--blue-1);
     font-size: var(--font-size-base);
-    transition: all var(--transition-slow) var(--timing-ease);
+    transition: color var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease),
+                font-size var(--transition-slow) var(--timing-ease),
+                top var(--transition-slow) var(--timing-ease),
+                left var(--transition-slow) var(--timing-ease),
+                padding var(--transition-slow) var(--timing-ease),
+                border-top-left-radius var(--transition-slow) var(--timing-ease),
+                border-top-right-radius var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;
@@ -235,6 +266,17 @@ onBeforeUnmount(() => {
     border-top-right-radius: 0.5rem;
 }
 
+.label-and-value .label.focused {
+    color: var(--white);
+    background-color: var(--lavender);
+    font-size: var(--font-size-small);
+    top: var(--label-focused-top);
+    left: var(--label-focused-left);
+    padding: var(--label-focused-padding);
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
 .label-and-value .value.active {
     color: var(--gray-medium);
 }
@@ -244,16 +286,10 @@ onBeforeUnmount(() => {
     border-radius: var(--border-radius);
     display: grid;
     grid-template-rows: 0fr;
-    padding: var(--padding-medium);
-    max-height: var(--dropdown-max-height);
-    overflow-y: auto;
-    position: absolute;
+    overflow: hidden;
     background-color: var(--white);
-    z-index: var(--z-modal);
+    z-index: var(--z-dropdown);
     transition: grid-template-rows var(--transition-normal) var(--timing-ease);
-}
-.list-input-body.from-bottom {
-    bottom: 100%;
 }
 
 .list-input-body.enabled {
@@ -263,6 +299,7 @@ onBeforeUnmount(() => {
 .list-input-items-wrapper {
     min-height: 0;
     overflow-y: auto;
+    max-height: var(--dropdown-max-height);
 }
 
 .list-input-item {
@@ -287,30 +324,35 @@ button:disabled {
     background-color: transparent;
 }
 
-.ListInput.disabled {
+.EnumInput.disabled {
     pointer-events: none;
     cursor: not-allowed;
 }
-.ListInput.disabled .list-input-container,
-.ListInput.disabled .list-input-container .label,
-.ListInput.disabled .list-input-container span {
+.EnumInput.disabled .list-input-body {
+    grid-template-rows: 0fr !important;
+}
+.EnumInput.disabled .list-input-container,
+.EnumInput.disabled .list-input-container .label,
+.EnumInput.disabled .list-input-container span {
     border-color: var(--gray-light);
     color: var(--gray-light);
 }
-.ListInput.disabled .list-input-container .label.active {
+.EnumInput.disabled .list-input-container .label.active,
+.EnumInput.disabled .list-input-container .label.focused {
     background-color: var(--gray-lighter);
 }
 
-.ListInput.nonvalidated .list-input-container {
+.EnumInput.nonvalidated .list-input-container {
     border-color: var(--accent-red);
 }
-.ListInput.nonvalidated .list-input-container,
-.ListInput.nonvalidated .list-input-container .label,
-.ListInput.nonvalidated .list-input-container span {
+.EnumInput.nonvalidated .list-input-container,
+.EnumInput.nonvalidated .list-input-container .label,
+.EnumInput.nonvalidated .list-input-container span {
     border-color: var(--accent-red);
     color: var(--accent-rose);
 }
-.ListInput.nonvalidated .list-input-container .label.active {
+.EnumInput.nonvalidated .list-input-container .label.active,
+.EnumInput.nonvalidated .list-input-container .label.focused {
     background-color: var(--accent-red);
     color: var(--white);
 }

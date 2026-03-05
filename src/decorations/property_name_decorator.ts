@@ -1,6 +1,8 @@
 import type { BaseEntity } from '@/entities/base_entity';
 import { EnumAdapter } from '@/models/enum_adapter';
 
+// #region CONSTANTS
+
 /**
  * Symbol key used to store property display names on decorated properties.
  * @see {@link 01-FRAMEWORK-OVERVIEW.md | Framework Overview §3.1.2}
@@ -19,6 +21,10 @@ export const PROPERTY_TYPE_KEY = Symbol('property_type');
  */
 export const ARRAY_ELEMENT_TYPE_KEY = Symbol('array_element_type');
 
+// #endregion
+
+// #region TYPES
+
 export type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: Record<string, unknown>) => T;
 export type EnumLike = Record<string, string | number>;
 
@@ -34,12 +40,20 @@ export type PropertyType =
     | EnumLike
     | ArrayTypeWrapper;
 
+// #endregion
+
+// #region CLASSES
+
 /**
  * Internal wrapper class for array type definitions.
  */
 class ArrayTypeWrapper {
     constructor(public elementType: EntityConstructor) {}
 }
+
+// #endregion
+
+// #region METHODS
 
 /**
  * Helper function to define array property types with entity relationships.
@@ -135,3 +149,5 @@ export function PropertyName(name: string, type: PropertyType): PropertyDecorato
         }
     };
 }
+
+// #endregion

@@ -14,10 +14,12 @@ import {
     HIDE_IN_LIST_VIEW_KEY,
     MODULE_CUSTOM_COMPONENTS_KEY,
     MODULE_DEFAULT_COMPONENT_KEY,
+    MODULE_DEFAULT_VIEW_BUTTON_LIST_KEY,
     MODULE_DETAIL_COMPONENT_KEY,
     MODULE_ICON_KEY,
     MODULE_LIST_COMPONENT_KEY,
     MODULE_NAME_KEY,
+    MASK_KEY,
     MODULE_PERMISSION_KEY,
     PERSISTENT_KEY,
     PERSISTENT_KEY_KEY,
@@ -36,7 +38,8 @@ import {
 } from '@/decorations';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
-import { ToastType } from '@/enums/ToastType';
+import { ToastType } from '@/enums/toast_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import { deepClone, deepEqual } from '@/utils/deep_compare';
 import DefaultDetailView from '@/views/default_detailview.vue';
@@ -60,6 +63,7 @@ import type {
     TransformableEntityClass,
 } from '@/types/entity.types';
 import type { TransformationSchema } from '@/types/service.types';
+import type { ListQueryParams, PaginatedListResult } from '@/types/service.types';
 
 function getErrorMessage(error: unknown): string {
     if (error && typeof error === 'object') {
@@ -78,7 +82,22 @@ function getErrorMessage(error: unknown): string {
         }
     }
 
-    return 'Error desconocido';
+    return GetLanguagedText('errors.unknown_error');
+}
+
+const I18N_KEY_PATTERN = /^(common|errors|validation|navigation|custom)\./;
+
+function resolveI18nText(text?: string): string | undefined {
+    if (!text) {
+        return text;
+    }
+
+    if (!I18N_KEY_PATTERN.test(text)) {
+        return text;
+    }
+
+    const translated = GetLanguagedText(text);
+    return translated === 'MissingNO' ? text : translated;
 }
 
 /**
@@ -91,10 +110,8 @@ function getErrorMessage(error: unknown): string {
 export abstract class BaseEntity {
     [key: string]: unknown;
 
-    /**
-     * @region PROPERTIES
-     * Instance properties for entity state management
-     */
+    // #region PROPERTIES — Instance properties for entity state management
+
     /**
      * Indicates whether the entity is currently in a loading state
      * Used by UI components to show loading indicators
@@ -118,9 +135,8 @@ export abstract class BaseEntity {
      * Optional property used by the framework to track entity instances across views and operations
      */
     public entityObjectId?: string;
-    /**
-     * @endregion
-     */
+
+    // #endregion
 
     /**
      * Creates a new BaseEntity instance
@@ -140,10 +156,8 @@ export abstract class BaseEntity {
         return this.getStaticDecoratedConstructorMetadata<T>().prototype;
     }
 
-    /**
-     * @region METHODS
-     * Instance methods for entity operations and metadata access
-     */
+    // #region METHODS — Instance methods for entity operations and metadata access
+
     /**
      * Sets the entity to loading state
      * Used to indicate async operations in progress
@@ -159,6 +173,8 @@ export abstract class BaseEntity {
     public clearLoadingState(): void {
         this._isLoading = false;
     }
+
+    // NOTE: T224 — `loaded()` alias removed; canonical method is clearLoadingState()
 
     /**
      * Retrieves the current loading state of the entity
@@ -217,6 +233,15 @@ export abstract class BaseEntity {
             const indexB = propertyIndices[b] ?? Number.MAX_SAFE_INTEGER;
             return indexA - indexB;
         });
+    }
+
+    /**
+     * Retrieves ordered values for the entity
+     * Values are returned in the same order as getKeys() — spec §3.11
+     * @returns Array of property values in display order
+     */
+    public getValues(): unknown[] {
+        return this.getKeys().map((key) => this[key]);
     }
 
     /**
@@ -358,7 +383,10 @@ export abstract class BaseEntity {
      */
     public getViewGroups(): Record<string, string> {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        return (proto[VIEW_GROUP_KEY] as Record<string, string>) || {};
+        const groups = (proto[VIEW_GROUP_KEY] as Record<string, string>) || {};
+        return Object.fromEntries(
+            Object.entries(groups).map(([key, value]) => [key, resolveI18nText(value) ?? value])
+        );
     }
 
     /**
@@ -404,7 +432,7 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
         const metadata = requiredFields[propertyKey];
-        return metadata?.message;
+        return resolveI18nText(metadata?.message);
     }
 
     /**
@@ -433,7 +461,7 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
         const rule = validationRules[propertyKey];
-        return rule?.message;
+        return resolveI18nText(rule?.message);
     }
 
     /**
@@ -486,7 +514,7 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
         const rule = asyncValidationRules[propertyKey];
-        return rule?.message;
+        return resolveI18nText(rule?.message);
     }
 
     /**
@@ -531,7 +559,34 @@ export abstract class BaseEntity {
     public getHelpText(propertyKey: string): string | undefined {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const helpTexts = (proto[HELP_TEXT_KEY] as Record<string, string>) ?? {};
-        return helpTexts[propertyKey];
+        return resolveI18nText(helpTexts[propertyKey]);
+    }
+
+    /**
+     * Retrieves the mask configuration for a property
+     * Defined by \@Mask decorator, used for structured input formatting
+     * @param propertyKey The property key to query
+     * @returns Mask configuration (mask template and side) or undefined
+     */
+    public getMask(propertyKey: string): { mask: string; side: unknown } | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const masks = (proto[MASK_KEY] as Record<string, { mask: string; side: unknown }>) ?? {};
+        return masks[propertyKey];
+    }
+
+    /**
+     * Determines if a property type is an enum (for EnumInput rendering)
+     * The decorator stores enum types as EnumAdapter instances — detected via duck-typing.
+     * @param propertyKey The property key to check
+     * @returns True if the stored type is an EnumAdapter instance
+     */
+    public isEnumProperty(propertyKey: string): boolean {
+        const propType = (this.constructor as typeof BaseEntity).getPropertyType(propertyKey);
+        return (
+            !!propType &&
+            typeof propType === 'object' &&
+            typeof (propType as Record<string, unknown>)['getKeyValuePairs'] === 'function'
+        );
     }
 
     /**
@@ -675,6 +730,23 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Builds API payload from persistent properties excluding disabled fields.
+     * Read-only properties remain included to satisfy server-side contract.
+     * @returns API-ready payload mapped to persistent keys
+     */
+    public buildRequestPayload(): EntityData {
+        const payload = this.toPersistentObject();
+
+        for (const key of Object.keys(payload)) {
+            if (this.isDisabled(key)) {
+                delete payload[key];
+            }
+        }
+
+        return this.mapToPersistentKeys(payload);
+    }
+
+    /**
      * Validates that the module has all required decorator configurations
      * Checks for ModuleName, ModuleIcon, DefaultProperty, and PrimaryProperty
      * @returns True if configuration is valid, false otherwise (shows error dialog)
@@ -684,31 +756,31 @@ export abstract class BaseEntity {
         const entityClass = this.constructor as typeof BaseEntity;
 
         if (!entityClass.getModuleName()) {
-            errors.push('El módulo no tiene definido @ModuleName');
+            errors.push(GetLanguagedText('errors.module_missing_module_name'));
         }
 
         if (!entityClass.getModuleIcon()) {
-            errors.push('El módulo no tiene definido @ModuleIcon');
+            errors.push(GetLanguagedText('errors.module_missing_module_icon'));
         }
 
         const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
 
         if (!constructorMetadata[DEFAULT_PROPERTY_KEY]) {
-            errors.push('El módulo no tiene definido @DefaultProperty');
+            errors.push(GetLanguagedText('errors.module_missing_default_property'));
         }
 
         if (!this.getPrimaryPropertyKey()) {
-            errors.push('El módulo no tiene definido @PrimaryProperty');
+            errors.push(GetLanguagedText('errors.module_missing_primary_property'));
         }
 
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error de configuración del módulo',
+                GetLanguagedText('errors.module_configuration_error'),
                 errors.join('\n'),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return false;
         }
@@ -783,25 +855,21 @@ export abstract class BaseEntity {
         const errors: string[] = [];
 
         if (!this.getUniquePropertyKey()) {
-            errors.push('La entidad no tiene definido @UniquePropertyKey');
+            errors.push(GetLanguagedText('errors.entity_missing_unique_property'));
         }
 
         if (!this.getApiEndpoint()) {
-            errors.push('La entidad no tiene definido @ApiEndpoint');
-        }
-
-        if (!this.getApiMethods()) {
-            errors.push('La entidad no tiene definido @ApiMethods');
+            errors.push(GetLanguagedText('errors.entity_missing_api_endpoint'));
         }
 
         if (errors.length > 0) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error de configuración de persistencia',
+                GetLanguagedText('errors.persistence_configuration_error'),
                 errors.join('\\n'),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return false;
         }
@@ -818,11 +886,11 @@ export abstract class BaseEntity {
         if (!this.isApiMethodAllowed(method)) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Método no permitido',
-                `El método ${method} no está permitido en esta entidad`,
+                GetLanguagedText('errors.method_not_allowed_title'),
+                GetLanguagedText('errors.method_not_allowed_message').split('{method}').join(method),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return false;
         }
@@ -837,6 +905,9 @@ export abstract class BaseEntity {
      * @throws Error if persistence configuration invalid, validation fails, or API request fails
      */
     public async save(): Promise<this> {
+        // Step 1: beforeSave() hook — spec §3.6 step 1, SC-012 requires this before validateInputs
+        this.beforeSave();
+
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
@@ -850,14 +921,13 @@ export abstract class BaseEntity {
         }
 
         this._isSaving = true;
-        this.beforeSave();
         Application.ApplicationUIService.showLoadingMenu();
         await new Promise((resolve) => setTimeout(resolve, 400));
 
         try {
             this.onSaving();
             const endpoint = this.getApiEndpoint();
-            const dataToSend = this.mapToPersistentKeys(this.toObject());
+            const dataToSend = this.buildRequestPayload();
 
             let response;
             if (this.isNew()) {
@@ -873,7 +943,7 @@ export abstract class BaseEntity {
             this._isSaving = false;
             this.afterSave();
             Application.ApplicationUIService.hideLoadingMenu();
-            Application.ApplicationUIService.showToast('Guardado con éxito.', ToastType.SUCCESS);
+            Application.ApplicationUIService.showToast(GetLanguagedText('common.saved_successfully'), ToastType.SUCCESS);
             return this;
         } catch (error: unknown) {
             this._isSaving = false;
@@ -881,11 +951,11 @@ export abstract class BaseEntity {
             this.saveFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al guardar',
+                GetLanguagedText('errors.save_error'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }
@@ -926,7 +996,7 @@ export abstract class BaseEntity {
             this.onUpdating();
             const endpoint = this.getApiEndpoint();
             const uniqueKey = this.getUniquePropertyValue();
-            const dataToSend = this.mapToPersistentKeys(this.toObject());
+            const dataToSend = this.buildRequestPayload();
 
             const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
             const mappedData = this.mapFromPersistentKeys(response.data);
@@ -1172,7 +1242,10 @@ export abstract class BaseEntity {
      */
     public static getAllPropertiesNonFilter(): Record<string, string> {
         const proto = this.getStaticDecoratedPrototypeMetadata();
-        return (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
+        const properties = (proto[PROPERTY_NAME_KEY] as Record<string, string>) || {};
+        return Object.fromEntries(
+            Object.entries(properties).map(([key, value]) => [key, resolveI18nText(value) ?? value])
+        );
     }
 
     /**
@@ -1188,7 +1261,7 @@ export abstract class BaseEntity {
 
         for (const key of Object.keys(properties)) {
             if (propertyTypes[key] !== Array) {
-                filtered[key] = properties[key];
+                filtered[key] = resolveI18nText(properties[key]) ?? properties[key];
             }
         }
 
@@ -1248,7 +1321,8 @@ export abstract class BaseEntity {
         const proxy = new Proxy(
             {},
             {
-                get(prop) {
+                // Fix T226: correct Proxy get handler — (target, propName) not just (target)
+                get(_target, prop) {
                     return prop;
                 }
             }
@@ -1264,7 +1338,7 @@ export abstract class BaseEntity {
      */
     public static getPropertyNameByKey(propertyKey: string): string | undefined {
         const columns = this.getAllPropertiesNonFilter();
-        return columns[propertyKey];
+        return resolveI18nText(columns[propertyKey]);
     }
 
     /**
@@ -1282,7 +1356,7 @@ export abstract class BaseEntity {
      */
     public static getModuleName(): string | undefined {
         const metadata = this.getStaticDecoratedConstructorMetadata();
-        return metadata[MODULE_NAME_KEY] as string | undefined;
+        return resolveI18nText(metadata[MODULE_NAME_KEY] as string | undefined);
     }
 
     /**
@@ -1292,6 +1366,29 @@ export abstract class BaseEntity {
     public static getModulePermission(): string | undefined {
         const metadata = this.getStaticDecoratedConstructorMetadata();
         return metadata[MODULE_PERMISSION_KEY] as string | undefined;
+    }
+
+    /**
+     * Checks whether a user has permission to access this module.
+     *
+     * If the module has no `@ModulePermission` decorator the module is accessible
+     * to all users and this method returns `true`.  Otherwise the supplied
+     * `userPermissions` array must contain the required permission string.
+     *
+     * @param {string[]} userPermissions - The list of permission identifiers held by the current user
+     * @returns {boolean} True when the user is allowed to access the module; false otherwise
+     *
+     * @example
+     * ```typescript
+     * if (ProductoEntity.hasPermission(currentUser.permissions)) {
+     *   // Show productos module in sidebar
+     * }
+     * ```
+     */
+    public static hasPermission(userPermissions: string[]): boolean {
+        const required = this.getModulePermission();
+        if (required === undefined) return true;
+        return userPermissions.includes(required);
     }
 
     /**
@@ -1332,6 +1429,16 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Retrieves the button list configured via @DefaultViewButtonList for this module.
+     * Used by Application.setButtonList() when the view type is DEFAULTVIEW.
+     * @returns Component array if decorator is present, null otherwise
+     */
+    public static getDefaultViewButtonList(): Component[] | null {
+        const metadata = this.getStaticDecoratedConstructorMetadata();
+        return (metadata[MODULE_DEFAULT_VIEW_BUTTON_LIST_KEY] as Component[]) ?? null;
+    }
+
+    /**
      * Retrieves the map of custom components for this module
      * @returns Map of component names to Vue components, or null if none defined
      */
@@ -1368,13 +1475,16 @@ export abstract class BaseEntity {
 
     /**
      * Checks if a specific HTTP method is allowed for this entity
+     * T225: when @ApiMethods is absent, defaults to ['GET'] only (safe read-only default).
+     * Entities that need write access MUST explicitly declare @ApiMethods.
      * @param method The HTTP method to check
      * @returns True if method is allowed, false otherwise
      */
     public static isApiMethodAllowed(method: HttpMethod): boolean {
         const allowedMethods = this.getApiMethods();
         if (!allowedMethods) {
-            return true; // If not specified, all methods are allowed
+            // Safe default: only GET is allowed when @ApiMethods is not declared
+            return method === 'GET';
         }
         return allowedMethods.includes(method);
     }
@@ -1535,10 +1645,11 @@ export abstract class BaseEntity {
 
     /**
      * Determines whether a property type metadata value represents an enum object.
+     * Made public to allow view components to detect enum properties — used by isEnumProperty() instance method.
      * @param propertyType Property type metadata value.
      * @returns True when metadata is enum-like.
      */
-    private static isEnumPropertyType(propertyType: unknown): propertyType is Record<string, string | number> {
+    public static isEnumPropertyType(propertyType: unknown): propertyType is Record<string, string | number> {
         if (!propertyType || typeof propertyType !== 'object' || Array.isArray(propertyType)) {
             return false;
         }
@@ -1566,7 +1677,7 @@ export abstract class BaseEntity {
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
-            throw new Error('ApiEndpoint no definido');
+            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
         }
 
         try {
@@ -1580,11 +1691,11 @@ export abstract class BaseEntity {
             tempInstance.getElementFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al obtener elemento',
+                GetLanguagedText('errors.error_obtaining_element'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }
@@ -1592,41 +1703,142 @@ export abstract class BaseEntity {
 
     /**
      * Retrieves a list of entities from the API
-     * Executes afterGetElementList lifecycle hook on first entity if present
-     * @param filter Optional filter string to apply to the query
+     * Executes afterGetElementList lifecycle hook on every returned instance
+     * T216: accepts ListQueryParams (page, limit, filter) or legacy string filter.
+     * Handles both flat-array and paginated-envelope API responses transparently.
+     * @param paramsOrFilter Pagination params object or legacy filter string
      * @returns Promise resolving to array of entity instances
      * @throws Error if ApiEndpoint not defined or API request fails
      */
     public static async getElementList<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
-        filter: string = ''
+        paramsOrFilter: ListQueryParams | string = ''
     ): Promise<T[]> {
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
-            throw new Error('ApiEndpoint no definido');
+            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
         }
 
+        // Normalise to params object so the API receives standard query keys
+        const params: Record<string, unknown> =
+            typeof paramsOrFilter === 'string'
+                ? { filter: paramsOrFilter }
+                : { ...paramsOrFilter };
+
         try {
-            const response = await Application.axiosInstance.get(endpoint, { params: { filter } });
-            const instances = (response.data as unknown[]).map((item: unknown) => {
+            const response = await Application.axiosInstance.get(endpoint, { params });
+            const responseData = response.data as unknown;
+
+            // Detect paginated envelope { data: [...], total, ... }
+            const rawItems: unknown[] =
+                responseData &&
+                typeof responseData === 'object' &&
+                !Array.isArray(responseData) &&
+                'data' in (responseData as object)
+                    ? (responseData as { data: unknown[] }).data
+                    : (responseData as unknown[]);
+
+            const instances = rawItems.map((item: unknown) => {
                 const mappedData = this.mapFromPersistentKeys(item as EntityData);
                 return new this(mappedData);
             });
-            if (instances.length > 0) {
-                instances[0].afterGetElementList();
-            }
+            // T223: afterGetElementList called on EVERY instance
+            instances.forEach((instance) => instance.afterGetElementList());
             return instances;
         } catch (error: unknown) {
             const tempInstance = new this({});
             tempInstance.getElementListFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al obtener lista',
+                GetLanguagedText('errors.error_obtaining_list'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
+            );
+            throw error;
+        }
+    }
+
+    /**
+     * Retrieves a paginated list of entities from the API with server-side pagination metadata.
+     * T216: companion to getElementList — returns full PaginatedListResult including total count.
+     * When the API returns a flat array, paginates in-memory and reports the full count as total.
+     * @param params Pagination parameters (page, limit, filter)
+     * @returns Promise resolving to PaginatedListResult with data array and pagination metadata
+     * @throws Error if ApiEndpoint not defined or API request fails
+     */
+    public static async getElementListPaginated<T extends BaseEntity>(
+        this: ConcreteEntityClass<T>,
+        params: ListQueryParams = {}
+    ): Promise<PaginatedListResult<T>> {
+        const endpoint = this.getApiEndpoint();
+
+        if (!endpoint) {
+            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
+        }
+
+        const { page = 1, limit = 20, filter = '' } = params;
+
+        try {
+            const response = await Application.axiosInstance.get(endpoint, {
+                params: { page, limit, filter }
+            });
+            const responseData = response.data as unknown;
+
+            // Detect paginated envelope { data: [...], total, page?, limit? }
+            if (
+                responseData &&
+                typeof responseData === 'object' &&
+                !Array.isArray(responseData) &&
+                'data' in (responseData as object) &&
+                'total' in (responseData as object)
+            ) {
+                const envelope = responseData as {
+                    data: unknown[];
+                    total: number;
+                    page?: number;
+                    limit?: number;
+                };
+                const instances = envelope.data.map((item: unknown) => {
+                    const mappedData = this.mapFromPersistentKeys(item as EntityData);
+                    return new this(mappedData);
+                });
+                instances.forEach((instance) => instance.afterGetElementList());
+                return {
+                    data: instances,
+                    total: envelope.total,
+                    page: envelope.page ?? page,
+                    limit: envelope.limit ?? limit
+                };
+            }
+
+            // Flat array response — paginate in-memory and report full length as total
+            const allItems = responseData as unknown[];
+            const allInstances = allItems.map((item: unknown) => {
+                const mappedData = this.mapFromPersistentKeys(item as EntityData);
+                return new this(mappedData);
+            });
+            allInstances.forEach((instance) => instance.afterGetElementList());
+            const start = (page - 1) * limit;
+            const pageData = allInstances.slice(start, start + limit);
+            return {
+                data: pageData,
+                total: allInstances.length,
+                page,
+                limit
+            };
+        } catch (error: unknown) {
+            const tempInstance = new this({});
+            tempInstance.getElementListFailed();
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                GetLanguagedText('errors.error_obtaining_list'),
+                getErrorMessage(error),
+                undefined,
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }

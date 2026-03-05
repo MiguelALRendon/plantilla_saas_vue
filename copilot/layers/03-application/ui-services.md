@@ -711,7 +711,7 @@ Todo el UI re-renderiza con colores dark
 - Propiedades: modalView, modalOnCloseFunction, viewType, customViewId
 - Uso: this.app.modal.value actualizado por showModal()
 
-**Toast (@/models/Toast)**
+**Toast (@/models/toast)**
 - Constructor: `new Toast(message: string, type: ToastType)`
 - Propiedades: message, type, id, timestamp, duration
 - Uso: Agregado a ToastList.value

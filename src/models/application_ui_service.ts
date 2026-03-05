@@ -3,8 +3,9 @@ import type { ApplicationUIContext } from './application_ui_context';
 import type { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
-import { Toast } from './Toast';
-import { ToastType } from '@/enums/ToastType';
+import { Toast } from './toast';
+import { ToastType } from '@/enums/toast_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 /**
  * Servicio centralizado para gestionar operaciones UI comunes.
@@ -13,23 +14,17 @@ import { ToastType } from '@/enums/ToastType';
  * § 06-CODE-STYLING-STANDARDS 6.2.1, 6.6.1
  */
 export class ApplicationUIService {
-    /**
-     * @region PROPERTIES
-     */
-    
+    // #region PROPERTIES
+
     /**
      * Referencia al singleton Application que contiene estado reactivo global.
      */
     private app: ApplicationUIContext;
 
-    /**
-     * @endregion
-     */
+    // #endregion
 
-    /**
-     * @region METHODS
-     */
-    
+    // #region METHODS
+
     /**
      * Constructor que inicializa servicio con referencia a Application.
      * @param app Instancia Application singleton con estado reactivo global.
@@ -142,15 +137,19 @@ export class ApplicationUIService {
      * @param title Título mostrado en header del dropdown.
      * @param component Componente Vue a renderizar dentro dropdown.
      * @param width Ancho custom del dropdown (opcional, default desde CSS).
+     * @param componentProps Props pasadas al componente renderizado (opcional).
      */
-    openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string) => {
+    openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string, componentProps?: Record<string, unknown>) => {
         const rect = position.getBoundingClientRect();
         this.app.dropdownMenu.value.position_x = `${rect.left}px`;
         this.app.dropdownMenu.value.position_y = `${rect.bottom}px`;
         this.app.dropdownMenu.value.activeElementWidth = `${rect.width}px`;
         this.app.dropdownMenu.value.activeElementHeight = `${rect.height}px`;
+        this.app.dropdownMenu.value.canvasWidth = `${window.innerWidth}px`;
+        this.app.dropdownMenu.value.canvasHeight = `${window.innerHeight}px`;
         this.app.dropdownMenu.value.title = title;
         this.app.dropdownMenu.value.component = markRaw(component);
+        this.app.dropdownMenu.value.props = componentProps ?? {};
         if (width) {
             this.app.dropdownMenu.value.width = width;
         }
@@ -184,8 +183,8 @@ export class ApplicationUIService {
         title: string,
         message: string,
         onAccept?: () => void,
-        acceptButtonText: string = 'Aceptar',
-        cancelButtonText: string = 'Cancelar'
+        acceptButtonText: string = GetLanguagedText('common.accept'),
+        cancelButtonText: string = GetLanguagedText('common.cancel')
     ) => {
         this.app.confirmationMenu.value = {
             type,
@@ -256,8 +255,6 @@ export class ApplicationUIService {
     hideLoadingMenu = () => {
         this.app.eventBus.emit('hide-loading-menu');
     };
-    
-    /**
-     * @endregion
-     */
+
+    // #endregion
 }

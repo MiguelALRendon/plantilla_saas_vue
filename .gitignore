@@ -10,14 +10,23 @@ lerna-debug.log*
 node_modules
 .DS_Store
 dist
+build
 dist-ssr
 coverage
 *.local
+
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+.env.production
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+Thumbs.db
+*.tmp
 *.suo
 *.ntvs*
 *.njsproj
@@ -27,6 +36,12 @@ coverage
 *.tsbuildinfo
 
 .eslintcache
+
+# Python virtual environments
+.venv/
+venv/
+__pycache__/
+*.pyc
 
 # Cypress
 /cypress/videos/
