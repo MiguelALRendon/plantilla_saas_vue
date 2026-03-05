@@ -1432,7 +1432,12 @@ transformers: {
 
 **State source**: Application.dropdownMenu.value
 
-**Smart positioning**: CSS classes (not inline styles) — dropdown-pos-left|center|right, dropdown-pos-top|bottom based on viewport.
+**Smart positioning**: Inline `left`/`top` styles computed from `position_x`/`position_y` (set by `openDropdownMenu` via `getBoundingClientRect()`). Algorithm:
+
+- **Horizontal**: center on trigger (`posX - dropdownWidth / 2`); if right-overflow (`centeredLeft + dropdownWidth > canvasWidth`) align right edge to trigger right (`posX - dropdownWidth`); if left-underflow (`result < 0`) pin to `posX`.
+- **Vertical**: appear below trigger (`top = posY`) when trigger is in upper half of viewport (`posY < canvasHeight / 2`); appear above trigger (`top = posY - elementHeight`) otherwise.
+- **Width**: NO `max-width` on `.dropdown-menu`. Width is determined solely by the `width` param of `openDropdownMenu` or by rendered content.
+- `openDropdownMenu` MUST set `canvasWidth = window.innerWidth + 'px'` and `canvasHeight = window.innerHeight + 'px'` on every call.
 
 **Closes on**: click outside, Escape key press.
 

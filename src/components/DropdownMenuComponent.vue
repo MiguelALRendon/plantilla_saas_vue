@@ -2,7 +2,8 @@
     <div :class="['dropdown-menu-container', { hidden: !dropDownData.showing }]">
         <div
             id="dropdown-element-in-general"
-            :class="['dropdown-menu', dropdownHorizontalClass, dropdownVerticalClass, dropdownWidthClass]"
+            class="dropdown-menu"
+            :style="dropdownPositionStyle"
         >
             <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
             <component v-if="dropDownData.component" :is="dropDownData.component" v-bind="dropDownData.props ?? {}"></component>
@@ -60,47 +61,48 @@ export default {
         dropDownData() {
             return Application.dropdownMenu.value;
         },
-        dropdownHorizontalClass(): string {
+        dropdownPositionStyle(): Record<string, string> {
             const data = this.dropDownData;
             const posX = parseFloat(data.position_x);
-            const dropdownWidth = parseFloat(data.width);
-            const canvasWidth = parseFloat(data.canvasWidth);
-
-            const centeredLeft = posX - dropdownWidth / 2;
-
-            if (centeredLeft + dropdownWidth > canvasWidth) {
-                return 'dropdown-pos-right';
-            }
-
-            if (centeredLeft < 0) {
-                return 'dropdown-pos-left';
-            }
-
-            return 'dropdown-pos-center';
-        },
-        dropdownVerticalClass(): string {
-            const data = this.dropDownData;
             const posY = parseFloat(data.position_y);
+            const canvasWidth = parseFloat(data.canvasWidth);
             const canvasHeight = parseFloat(data.canvasHeight);
+            const elementHeight = parseFloat(data.activeElementHeight);
+            const rawWidth = data.width ?? '250px';
 
-            return posY > canvasHeight / 2 ? 'dropdown-pos-top' : 'dropdown-pos-bottom';
-        },
-        dropdownWidthClass(): string {
-            const width = parseFloat(this.dropDownData.width);
+            // Resolve width to pixels by temporarily mounting a div
+            const probe = document.createElement('div');
+            probe.style.cssText = `position:absolute;visibility:hidden;width:${rawWidth}`;
+            document.body.appendChild(probe);
+            const dropdownWidth = probe.getBoundingClientRect().width || parseFloat(rawWidth) || 250;
+            document.body.removeChild(probe);
 
-            if (width <= 200) {
-                return 'dropdown-width-sm';
+            // Horizontal: center on trigger, clamp right, clamp left
+            let leftPosition = posX - dropdownWidth / 2;
+            if (leftPosition + dropdownWidth > canvasWidth) {
+                leftPosition = posX - dropdownWidth;
+            }
+            if (leftPosition < 0) {
+                leftPosition = posX;
             }
 
-            if (width <= 280) {
-                return 'dropdown-width-md';
+            // Vertical: below if trigger in top half, above if in bottom half.
+            // posY = rect.bottom. For "above", pin the dropdown's bottom edge to rect.top
+            // using `bottom` (distance from viewport bottom) so dropdown height is irrelevant.
+            const isInBottomHalf = posY > canvasHeight / 2;
+            const style: Record<string, string> = {
+                left: `${leftPosition}px`,
+                width: rawWidth,
+            };
+            if (isInBottomHalf) {
+                // rect.top = posY - elementHeight; bottom from viewport bottom = canvasHeight - rect.top
+                style.bottom = `${canvasHeight - (posY - elementHeight)}px`;
+                style.top = 'auto';
+            } else {
+                style.top = `${posY}px`;
+                style.bottom = 'auto';
             }
-
-            if (width <= 360) {
-                return 'dropdown-width-lg';
-            }
-
-            return 'dropdown-width-xl';
+            return style;
         },
     },
     // #endregion
@@ -126,49 +128,10 @@ export default {
     background-color: var(--white);
     border-radius: var(--border-radius);
     padding-block-end: var(--spacing-medium);
-    width: 100%;
-    max-width: var(--dropdown-default-width);
     height: fit-content;
     pointer-events: all;
     position: absolute;
     box-shadow: var(--shadow-dark);
-}
-
-.dropdown-menu.dropdown-pos-left {
-    left: var(--spacing-small);
-}
-
-.dropdown-menu.dropdown-pos-center {
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.dropdown-menu.dropdown-pos-right {
-    right: var(--spacing-small);
-}
-
-.dropdown-menu.dropdown-pos-top {
-    top: var(--spacing-small);
-}
-
-.dropdown-menu.dropdown-pos-bottom {
-    bottom: var(--spacing-small);
-}
-
-.dropdown-menu.dropdown-width-sm {
-    max-width: var(--table-width-medium);
-}
-
-.dropdown-menu.dropdown-width-md {
-    max-width: var(--dropdown-default-width);
-}
-
-.dropdown-menu.dropdown-width-lg {
-    max-width: var(--table-width-large);
-}
-
-.dropdown-menu.dropdown-width-xl {
-    max-width: var(--table-width-extra-large);
 }
 
 .dropdown-menu-container.hidden .dropdown-menu {

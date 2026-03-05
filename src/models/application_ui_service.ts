@@ -145,6 +145,8 @@ export class ApplicationUIService {
         this.app.dropdownMenu.value.position_y = `${rect.bottom}px`;
         this.app.dropdownMenu.value.activeElementWidth = `${rect.width}px`;
         this.app.dropdownMenu.value.activeElementHeight = `${rect.height}px`;
+        this.app.dropdownMenu.value.canvasWidth = `${window.innerWidth}px`;
+        this.app.dropdownMenu.value.canvasHeight = `${window.innerHeight}px`;
         this.app.dropdownMenu.value.title = title;
         this.app.dropdownMenu.value.component = markRaw(component);
         this.app.dropdownMenu.value.props = componentProps ?? {};

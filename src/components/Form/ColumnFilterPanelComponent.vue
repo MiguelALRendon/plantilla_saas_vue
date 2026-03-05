@@ -84,7 +84,6 @@ function clearFilter(): void {
     flex-direction: column;
     gap: 0.5rem;
     padding: 0.5rem;
-    min-width: 12rem;
 }
 
 .column-filter-label {

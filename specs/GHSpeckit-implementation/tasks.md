@@ -680,6 +680,15 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 
 ---
 
+### 9G — DropdownMenu Positioning Fix (B2)
+
+- [X] T246 [SPEC] Amend `DropdownMenuComponent` spec entry in `specs/GHSpeckit-implementation/spec.md` §5: replace "CSS-class-only positioning" contract with: *"DropdownMenuComponent MUST anchor to the trigger element using inline `left`/`top` styles computed from `position_x`/`position_y`. Horizontal algorithm: center on trigger (`posX - dropdownWidth / 2`); if right-overflow (`centeredLeft + dropdownWidth > canvasWidth`) align right edge to trigger right (`posX - dropdownWidth`); if left-underflow (`result < 0`) pin to `posX`. Vertical algorithm: appear below trigger (`top = posY`) if `posY < canvasHeight / 2`, appear above (`top = posY - elementHeight`) otherwise. `.dropdown-menu` MUST NOT declare `max-width`. Width is determined solely by the `width` param of `openDropdownMenu` or by rendered content."*
+- [X] T247 Fix `openDropdownMenu` in `src/models/application_ui_service.ts`: add `this.app.dropdownMenu.value.canvasWidth = window.innerWidth + 'px'` and `this.app.dropdownMenu.value.canvasHeight = window.innerHeight + 'px'` immediately after the `activeElementHeight` assignment so that positioning computeds in `DropdownMenuComponent` receive valid numeric values instead of `NaN`. Depends on T246.
+- [X] T248 [P] Refactor `src/components/DropdownMenuComponent.vue` positioning: (1) Replace `dropdownHorizontalClass` + `dropdownVerticalClass` computeds with a single `dropdownPositionStyle` computed returning `{ left: '${X}px', top: '${Y}px' }` using the center-clamp algorithm from T246. (2) Bind as `:style="dropdownPositionStyle"` on `.dropdown-menu`. (3) Remove `dropdown-pos-left`, `dropdown-pos-center`, `dropdown-pos-right`, `dropdown-pos-top`, `dropdown-pos-bottom` CSS rules and their class bindings. (4) Remove `max-width: var(--dropdown-default-width)` from `.dropdown-menu` base CSS rule, all `dropdown-width-*` scoped rules, and the `dropdownWidthClass` computed + its template binding. Depends on T247.
+- [X] T249 [P] Remove width constraint from `src/components/Form/ColumnFilterPanelComponent.vue`: delete `min-width: 12rem` from `.column-filter-panel` CSS rule; panel width is now dictated by the `width` param supplied to `openDropdownMenu` at each call site. Verify that call sites in `DetailViewTableComponent.vue` and `ArrayInputComponent.vue` pass an explicit `width` (e.g., `'220px'`) to prevent a collapsed panel. Depends on T246.
+
+---
+
 ## Task Count Summary
 
 | Phase | Tasks | Story | Parallelizable |
@@ -723,7 +732,8 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 9D: Enum dropdown overflow | T241 | US3 | 1 of 1 |
 | Phase 9E: Column filter (new component + integration) | T242–T244 | US1+US3 | 2 of 3 |
 | Phase 9F: Column drag reorder | T245 | US3 | 0 |
-| **TOTAL** | **236 tasks** | | **~126 parallelizable** |
+| Phase 9G: DropdownMenu positioning fix | T246–T249 | — | 2 of 4 |
+| **TOTAL** | **240 tasks** | | **~128 parallelizable** |
 
 **Per user story**:
 - **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6) + T211, T213 (phase 7) + T239, T243 (phase 9)
