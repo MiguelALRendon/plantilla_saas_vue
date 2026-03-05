@@ -21,8 +21,8 @@ import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
 import { confirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
-import type { EntityCtor } from './View';
-import type { View } from './View';
+import type { EntityCtor } from './view';
+import type { View } from './view';
 
 import type { ApplicationUIContext } from './application_ui_context';
 import type { Modal } from './modal';
