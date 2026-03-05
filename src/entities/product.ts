@@ -71,7 +71,6 @@ export class Product extends BaseEntity {
     @CSSColumnClass('table-length-short')
     @Required(true)
     @HelpText('custom.products.help.name')
-    @HideInListView()
     name!: string;
 
     /**

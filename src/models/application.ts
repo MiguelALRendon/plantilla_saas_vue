@@ -1,4 +1,4 @@
-﻿import { Component, markRaw, ref, Ref } from 'vue';
+﻿import { Component, defineComponent, h, markRaw, ref, Ref } from 'vue';
 import type { Router } from 'vue-router';
 
 import axios from 'axios';
@@ -6,6 +6,7 @@ import type { AxiosError, AxiosInstance } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
 import { DefaultButtonLists } from '@/constants/default_button_lists';
+import GenericButtonComponent from '@/components/Buttons/GenericButtonComponent.vue';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { Language } from '@/enums/language';
@@ -14,6 +15,7 @@ import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
 
 import type { Events } from '@/types/events';
+import type { ExtraFunctions } from '@/types/extra_functions';
 import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
 import { AppConfiguration } from './app_configuration';
@@ -37,6 +39,7 @@ import type { Toast } from './toast';
 class ApplicationClass implements ApplicationUIContext {
     private static instance: ApplicationClass | null = null;
     private static readonly VIEW_TRANSITION_DELAY_MS = 400;
+    private static readonly CONFIG_STORAGE_KEY = 'app_configuration';
 
     // #region PROPERTIES — Reactive and non-reactive properties of the Application singleton
 
@@ -412,6 +415,13 @@ class ApplicationClass implements ApplicationUIContext {
     ) => {
         if (!this.router) return;
 
+        const isRegisteredModule = this.ModuleList.value.includes(entityClass);
+        if (!isRegisteredModule) {
+            // Keep internal view state for transient/non-registered entities (e.g., Configuration editor)
+            // without forcing URL routes that router guards resolve from ModuleList.
+            return;
+        }
+
         const moduleName = entityClass.getModuleName() || entityClass.name;
         const moduleNameLower = moduleName.toLowerCase();
 
@@ -499,14 +509,17 @@ class ApplicationClass implements ApplicationUIContext {
      */
     setButtonList() {
         const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
+        const isPersistentModule = this.View.value.entityClass?.createNewInstance().isPersistent() ?? false;
         let buttonList: Component[];
 
         switch (this.View.value.viewType) {
             case ViewTypes.LISTVIEW:
-                buttonList = DefaultButtonLists.ListView;
+                buttonList = isPersistentModule ? DefaultButtonLists.ListView : [];
                 break;
             case ViewTypes.DEFAULTVIEW:
-                buttonList = this.View.value.entityClass?.getDefaultViewButtonList() ?? DefaultButtonLists.ListView;
+                buttonList = isPersistentModule
+                    ? (this.View.value.entityClass?.getDefaultViewButtonList() ?? DefaultButtonLists.ListView)
+                    : [];
                 break;
             case ViewTypes.DETAILVIEW:
                 buttonList = isPersistentEntity
@@ -518,7 +531,40 @@ class ApplicationClass implements ApplicationUIContext {
                 break;
         }
 
+        const customButtons = this.getCustomViewButtons(
+            this.View.value.entityObject,
+            this.View.value.viewType
+        );
+        buttonList = [...buttonList, ...customButtons];
+
         this.ListButtons.value = buttonList.map(markRaw);
+    }
+
+    /**
+     * Builds GenericButton components for custom entity methods decorated with @OnViewFunction.
+     */
+    private getCustomViewButtons(entity: BaseEntity | null, viewType: ViewTypes): Component[] {
+        if (!entity) {
+            return [];
+        }
+
+        const customFunctions: ExtraFunctions[] = entity.getCustomFunctions().filter((item) =>
+            item.viewTypes.includes(viewType)
+        );
+
+        return customFunctions.map((item) =>
+            defineComponent({
+                name: `CustomActionButton_${String(item.text).replace(/\s+/g, '_')}`,
+                setup() {
+                    return () =>
+                        h(GenericButtonComponent, {
+                            icon: item.icon,
+                            text: item.text,
+                            onClick: item.fn,
+                        });
+                },
+            })
+        );
     }
 
     /**
@@ -537,6 +583,75 @@ class ApplicationClass implements ApplicationUIContext {
      */
     initializeApplication(router: Router) {
         this.initializeRouter(router);
+        this.loadConfigurationFromStorage();
+        this.validateModuleRuntimeState();
+    }
+
+    /**
+     * Returns a cloned configuration snapshot suitable for entity mapping/edit flows.
+     */
+    getConfigurationSnapshot(): AppConfiguration {
+        return {
+            ...this.AppConfiguration.value,
+        };
+    }
+
+    /**
+     * Applies and persists configuration updates.
+     */
+    applyConfigurationSnapshot(config: AppConfiguration): void {
+        this.AppConfiguration.value = {
+            ...config,
+        };
+
+        this.axiosInstance.defaults.baseURL = this.AppConfiguration.value.apiBaseUrl;
+
+        localStorage.setItem(
+            ApplicationClass.CONFIG_STORAGE_KEY,
+            JSON.stringify(this.AppConfiguration.value)
+        );
+    }
+
+    /**
+     * Loads persisted configuration and applies it if shape is valid.
+     */
+    loadConfigurationFromStorage(): void {
+        const rawConfig = localStorage.getItem(ApplicationClass.CONFIG_STORAGE_KEY);
+
+        if (rawConfig === null) {
+            localStorage.setItem(
+                ApplicationClass.CONFIG_STORAGE_KEY,
+                JSON.stringify(this.AppConfiguration.value)
+            );
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(rawConfig) as Partial<AppConfiguration>;
+
+            this.applyConfigurationSnapshot({
+                ...this.AppConfiguration.value,
+                ...parsed,
+                selectedLanguage: Number(parsed.selectedLanguage ?? this.AppConfiguration.value.selectedLanguage) as Language,
+                isDarkMode: Boolean(parsed.isDarkMode ?? this.AppConfiguration.value.isDarkMode),
+            });
+        } catch (error) {
+            console.warn('[Application] Invalid stored configuration payload. Falling back to defaults.', error);
+        }
+    }
+
+    /**
+     * Validates registration/runtime assumptions used by router and action bars.
+     */
+    validateModuleRuntimeState(): void {
+        const hasDuplicateNames = this.ModuleList.value.some((module, index, list) => {
+            const moduleName = module.getModuleName()?.toLowerCase() ?? module.name.toLowerCase();
+            return list.findIndex((m) => (m.getModuleName()?.toLowerCase() ?? m.name.toLowerCase()) === moduleName) !== index;
+        });
+
+        if (hasDuplicateNames) {
+            console.warn('[Application] Duplicate module names detected. Route resolution may be unstable.');
+        }
     }
 
     /**
@@ -551,7 +666,7 @@ class ApplicationClass implements ApplicationUIContext {
      *
      * @example
      * ```typescript
-     * Application.registerModule(CustomerEntity);
+    * Application.registerModule(HomeEntity);
      * Application.registerModule(ProductEntity);
      * ```
      */
@@ -570,6 +685,7 @@ class ApplicationClass implements ApplicationUIContext {
         }
 
         this.ModuleList.value.push(moduleClass);
+        this.validateModuleRuntimeState();
         return true;
     }
     // #endregion

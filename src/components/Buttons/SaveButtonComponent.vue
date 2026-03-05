@@ -10,6 +10,10 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 
+type GuardableEntity = {
+    guardar: () => Promise<void> | void;
+};
+
 export default {
     name: 'SaveButtonComponent',
 
@@ -20,6 +24,13 @@ export default {
         },
         async saveItem() {
             const entity = Application.View.value.entityObject;
+            const guardableEntity = entity as unknown as GuardableEntity | null;
+
+            if (guardableEntity && typeof guardableEntity.guardar === 'function') {
+                await guardableEntity.guardar();
+                return;
+            }
+
             if (entity && entity.isPersistent()) {
                 await entity.save();
             }

@@ -81,3 +81,19 @@ then startup, routing, API integration, and error handling work without contract
 - All clarifications in research are resolved.
 - Constitution checks pass pre-design and post-design.
 - Data model and contracts reflect the core stabilization scope.
+
+## 9. Phase Additions (Implementation Kickoff)
+
+1. Add method-level decorator `@OnViewFunction(icon, text, viewTypes[])` for metadata-driven extra action buttons.
+2. Add class-level decorator `@NotRequiresLogin()` as metadata-only capability (technical debt until login phase).
+3. Introduce `Configuration` entity to centralize system configuration editing and persistence flow.
+4. Introduce extendable `Home` entity as startup module baseline.
+5. Remove legacy `Customer` module from default starter flow.
+
+## 10. Task Traceability Notes
+
+1. OnViewFunction capability: covered by `T017-T024`, `T030-T032`.
+2. Configuration entity and persistence flow: covered by `T035-T046`.
+3. Home module and cleanup: covered by `T025-T029`, `T051`.
+4. NotRequiresLogin and technical debt: covered by `T049-T053`.
+5. Production and smoke closure: covered by `T047-T048`, `T055`, `T058-T060`.

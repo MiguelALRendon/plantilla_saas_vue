@@ -139,3 +139,15 @@ Confirm the minimum stable capability set is complete, reproducible, and documen
 ## Complexity Tracking
 
 No constitution violations identified; no complexity exception entry required.
+
+## Technical Debt Register
+
+1. `@NotRequiresLogin()` is currently metadata-only.
+2. Authentication/authorization guards must consume `isNotRequiresLogin()` in the dedicated login phase.
+
+## Implementation Constitution Confirmation
+
+1. A1 preserved: no additional architecture layer introduced.
+2. A2 preserved: entity metadata flows through Application to UI actions.
+3. A3 preserved: custom buttons originate from decorator metadata on methods.
+4. A4 preserved: stack unchanged (TypeScript + Vue 3 + Decorators).

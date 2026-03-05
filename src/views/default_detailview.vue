@@ -190,6 +190,7 @@ import Application from '@/models/application';
 import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
 import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
+import { ViewTypes } from '@/enums/view_type';
 import { EnumAdapter } from '@/models/enum_adapter';
 import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
 
@@ -218,6 +219,9 @@ export default {
                 ? Application.View.value.entityClass.createNewInstance()
                 : new EmptyEntity({});
         }
+
+        Application.View.value.viewType = Application.View.value.entityObject ? ViewTypes.DETAILVIEW : ViewTypes.DEFAULTVIEW;
+        Application.setButtonList();
     },
     // #endregion
 

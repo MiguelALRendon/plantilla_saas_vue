@@ -184,6 +184,14 @@ async function loadData(): Promise<void> {
         return;
     }
 
+    const probeEntity = new entityClass({});
+    if (!probeEntity.isPersistent()) {
+        data.value = [];
+        totalFromServer.value = 0;
+        currentPage.value = 1;
+        return;
+    }
+
     const limit = pageSize.value === 'ALL' ? 999999 : (pageSize.value as number);
 
     try {

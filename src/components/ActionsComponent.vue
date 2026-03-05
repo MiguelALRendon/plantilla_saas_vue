@@ -1,6 +1,10 @@
 <template>
     <div class="floating-actions" :class="{ 'at-top': isAtTop }">
-        <component v-for="component in Application.ListButtons.value" :is="component" :key="String(component)" />
+        <component
+            v-for="(component, index) in Application.ListButtons.value"
+            :is="component"
+            :key="`${String(component)}-${index}`"
+        />
     </div>
 </template>
 

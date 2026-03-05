@@ -44,3 +44,6 @@ export { TAB_ORDER_KEY, TabOrder } from './tab_order_decorator';
 export { PERSISTENT_KEY, Persistent } from './persistent_decorator';
 export { MASK_KEY, Mask } from './mask_decorator';
 export { MODULE_DEFAULT_VIEW_BUTTON_LIST_KEY, DefaultViewButtonList } from './default_view_button_list_decorator';
+export { ON_VIEW_FUNCTION_KEY, OnViewFunction } from './on_view_function_decorator';
+export type { OnViewFunctionMetadata } from './on_view_function_decorator';
+export { NOT_REQUIRES_LOGIN_KEY, NotRequiresLogin } from './not_requires_login_decorator';

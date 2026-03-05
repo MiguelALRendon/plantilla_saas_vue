@@ -6,6 +6,20 @@
 
 ## 1. Stabilization Domain Entities
 
+### 1.0 ExtraFunctions
+
+Represents one custom method action surfaced in action bars.
+
+Fields:
+- `icon: GGIconKey`
+- `text: string`
+- `viewTypes: ViewTypes[]`
+- `fn: () => unknown`
+
+Validation rules:
+- `fn` must be bound to the current entity instance before UI execution.
+- `viewTypes` drives visibility; button appears only when current view matches.
+
 ### 1.1 ModuleStabilityProfile
 
 Represents stability expectations for a registered module.
@@ -53,6 +67,18 @@ Fields:
 
 Validation rules:
 - `releaseCandidate` can be true only when all other fields are true.
+
+### 1.4 Configuration
+
+Represents editable application-level configuration as a `BaseEntity` implementation.
+
+Fields:
+- Mirrors current `AppConfiguration` contract fields.
+- Includes `isDarkMode` and `selectedLanguage` as persisted settings.
+
+Validation rules:
+- Configuration save flow must persist to localStorage via entity method.
+- Configuration entity is operational but not registered in `ModuleList`.
 
 ## 2. Existing Framework Entities in Scope
 

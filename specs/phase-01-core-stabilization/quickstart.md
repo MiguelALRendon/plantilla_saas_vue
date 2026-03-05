@@ -78,3 +78,74 @@ Release candidate is accepted when all checks pass:
 
 4. Dirty-state not respected:
 - Verify transition path uses Application orchestration flow.
+
+## 6. Dynamic Action Buttons Smoke Checklist
+
+Validate `@OnViewFunction` behavior for each view:
+
+1. Decorate one entity method with `@OnViewFunction('ADD', 'Custom Action', [ViewTypes.DEFAULTVIEW])`.
+2. Open module default view and verify button text/icon is rendered.
+3. Confirm same button does not render in LISTVIEW or DETAILVIEW.
+4. Repeat with LISTVIEW and DETAILVIEW mappings.
+5. Click each rendered button and confirm the bound entity instance method executes.
+
+Decorator misuse no-op validation:
+
+1. Attempt to apply `@OnViewFunction` to class or property.
+2. Confirm application does not crash and no action button is generated from invalid placement.
+
+## 7. Configuration Detail Smoke Checklist
+
+1. Open `ConfigurationListComponent` and click the settings button.
+2. Verify `Configuration` detail is loaded with all `AppConfiguration` fields.
+3. Confirm theme (`isDarkMode`) and language (`selectedLanguage`) fields are visible.
+4. Update at least one text setting and one numeric setting.
+5. Execute `Guardar` and verify success toast is shown.
+
+Persistence and reload checks:
+
+1. Reload the browser tab.
+2. Verify dark mode and selected language are restored from localStorage.
+3. Confirm API base URL and timeout settings are loaded into `Application.AppConfiguration`.
+
+## 8. Login Exemption and Production Acceptance
+
+Login-exemption metadata checks:
+
+1. Confirm `Home` entity is decorated with `@NotRequiresLogin()`.
+2. Verify `homeEntity.isNotRequiresLogin()` returns true.
+3. Verify non-decorated entities return false.
+
+Production build and preview acceptance checklist:
+
+1. Run `npm run build` successfully.
+2. Run `npm run preview` and validate route loading for Home and Product modules.
+3. Validate dynamic action buttons render only in matching view types.
+4. Validate configuration save and reload path in preview mode.
+5. Confirm no blocking console/runtime errors in core navigation flows.
+
+## 9. End-to-End Smoke Completion Log
+
+- US1: Passed action-bar view filtering and instance-bound custom actions.
+- US2: Passed configuration detail edit/persist/reload flow.
+- US3: Passed login-exemption metadata resolution and production acceptance checklist.
+
+## 10. Non-Persistent Regression Checklist (US4)
+
+1. Open `Home` module and verify there is no `ApiEndpoint no definido` runtime error.
+2. Confirm list fetch is skipped for non-persistent entities (`@Persistent` not present).
+3. Confirm persistence-driven actions (save/update/delete/list reload) are not shown for non-persistent modules.
+4. Confirm `Configuration` action from dropdown closes the dropdown before detail navigation.
+5. Confirm app still loads persistent modules normally with list/data API flow.
+
+## 11. Framework i18n Verification Checklist (US4)
+
+1. Open `Configuration` detail and verify framework labels are translation-key based (not hardcoded strings).
+2. Verify save action text resolves from `common.save`.
+3. Trigger a guarded persistence path in a non-persistent entity and verify user-facing messages resolve from `errors.json` keys.
+4. Switch language and verify framework settings labels/messages change accordingly.
+5. Confirm no newly introduced hardcoded framework-level labels or error titles remain in touched flows.
+
+## 12. Extended Smoke Completion Log
+
+- US4: Passed non-persistent safety guards, dropdown close behavior, and framework i18n hardening checks.

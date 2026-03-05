@@ -68,7 +68,31 @@ Rationale: Stabilization must increase reliability without changing architectura
 Alternatives considered:
 - Introducing a mid-layer abstraction for flexibility: rejected as A1 violation risk.
 
+## 6. Assumptions for Decorator Additions
+
+1. `@OnViewFunction` metadata is attached to methods only and consumed by action-bar composition.
+2. Invalid placement of `@OnViewFunction` (class/property) is ignored with no runtime failure.
+3. `@NotRequiresLogin()` is metadata-only in this phase and does not alter routing/guard behavior yet.
+
+## 7. Technical Debt: Login Integration
+
+`@NotRequiresLogin()` is introduced now as a contract marker only. Login/authorization guards must consume this metadata in a dedicated authentication phase.
+
+Login-phase TODO references:
+
+1. Add route guard integration that checks `entity.isNotRequiresLogin()` before auth enforcement.
+2. Add module-level auth policy documentation with precedence over per-entity exemptions.
+3. Add automated tests covering mixed protected/open modules.
+
 ## Summary
 
 All prior unknowns are resolved for planning scope. No constitutional blocker was identified.
 Phase 1 design can proceed directly to data model, contracts, and quickstart artifacts.
+
+## Implementation Handoff Summary
+
+1. Foundational metadata and decorators for custom actions and login exemption are implemented.
+2. Action-bar rendering now supports method-driven, view-filtered custom buttons.
+3. Configuration management moved into `Configuration` entity with local persistence path.
+4. Startup modules include `Home` and no longer include legacy `Customer`.
+5. Remaining work should focus on dedicated login phase behavior and automation depth.

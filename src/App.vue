@@ -40,6 +40,15 @@ watchEffect(() => {
         'dark-mode',
         Application.AppConfiguration.value.isDarkMode
     );
+
+    const languageMap: Record<number, string> = {
+        0: 'en',
+        1: 'es',
+        2: 'ja',
+    };
+
+    document.documentElement.lang =
+        languageMap[Number(Application.AppConfiguration.value.selectedLanguage)] ?? 'en';
 });
 
 // Track sidebar open/closed state to control overlay visibility.

@@ -19,6 +19,26 @@
         "es": "Error al guardar",
         "jp": "保存中にエラーが発生しました"
     },
+    "update_error": {
+        "en": "Error while updating",
+        "es": "Error al actualizar",
+        "jp": "更新中にエラーが発生しました"
+    },
+    "update_requires_saved_entity": {
+        "en": "Cannot update an entity that has not been saved yet.",
+        "es": "No se puede actualizar una entidad que aún no ha sido guardada.",
+        "jp": "まだ保存されていないエンティティは更新できません。"
+    },
+    "delete_error": {
+        "en": "Error while deleting",
+        "es": "Error al eliminar",
+        "jp": "削除中にエラーが発生しました"
+    },
+    "delete_requires_saved_entity": {
+        "en": "Cannot delete an entity that has not been saved yet.",
+        "es": "No se puede eliminar una entidad que aún no ha sido guardada.",
+        "jp": "まだ保存されていないエンティティは削除できません。"
+    },
     "module_missing_module_name": {
         "en": "The module does not define @ModuleName",
         "es": "El módulo no tiene definido @ModuleName",
@@ -53,6 +73,11 @@
         "en": "The entity does not define @ApiEndpoint",
         "es": "La entidad no tiene definido @ApiEndpoint",
         "jp": "エンティティに @ApiEndpoint が定義されていません"
+    },
+    "entity_not_persistent": {
+        "en": "This entity is not marked with @Persistent and cannot execute persistence operations.",
+        "es": "Esta entidad no está marcada con @Persistent y no puede ejecutar operaciones de persistencia.",
+        "jp": "このエンティティは @Persistent が未設定のため永続化操作を実行できません。"
     },
     "persistence_configuration_error": {
         "en": "Persistence configuration error",

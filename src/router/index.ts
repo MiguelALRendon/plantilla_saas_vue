@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import type { Router } from 'vue-router';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
-import type { EntityCtor } from '@/models/View';
+import type { EntityCtor } from '@/models/view';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';

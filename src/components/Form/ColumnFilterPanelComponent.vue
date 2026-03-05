@@ -14,8 +14,14 @@
             </button>
         </div>
         <div class="column-filter-actions">
-            <button class="button success fill" @click="applyFilter">{{ t('common.accept') }}</button>
-            <button class="button secondary fill" @click="clearFilter">{{ t('common.clear') }}</button>
+            <button class="button success fill" @click="applyFilter">
+                <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
+                <span>{{ t('common.accept') }}</span>
+            </button>
+            <button class="button secondary fill" @click="clearFilter">
+                <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLEAR_ALL }}</span>
+                <span>{{ t('common.clear') }}</span>
+            </button>
         </div>
     </div>
 </template>
@@ -145,5 +151,14 @@ function clearFilter(): void {
 }
 .column-filter-actions .button {
     flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-icon {
+    font-size: var(--font-size-lg);
+    line-height: 1;
 }
 </style>

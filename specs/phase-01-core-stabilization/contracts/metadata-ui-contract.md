@@ -22,3 +22,10 @@ Ensure list/detail UI behavior remains a deterministic function of decorators me
 1. Hardcoded business rules in generated UI components.
 2. Bypassing metadata interpretation with ad-hoc per-view rules.
 3. Introducing alternate configuration sources that replace decorators.
+
+## Finalized Behavior Notes
+
+1. Custom action buttons are generated from method decorators (`@OnViewFunction`) and filtered by active `ViewType`.
+2. Invalid `@OnViewFunction` placement (class/property) is ignored as no-op.
+3. Action callbacks execute bound to the active entity instance.
+4. Login exemption is represented as metadata (`@NotRequiresLogin`) and resolved through `isNotRequiresLogin()`.

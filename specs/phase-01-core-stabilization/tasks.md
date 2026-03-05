@@ -13,6 +13,7 @@
 - **[US1]**: Stable extensible module actions and module cleanup (P1)
 - **[US2]**: Configuration entity and configuration detail flow (P2)
 - **[US3]**: Login-exemption metadata and production closure checks (P3)
+- **[US4]**: Non-persistent safety guards and framework i18n hardening (P1)
 
 ---
 
@@ -20,10 +21,10 @@
 
 **Purpose**: Confirm feature boundaries and planning assets before code tasks.
 
-- [ ] T001 Validate feature artifacts are complete in `specs/phase-01-core-stabilization/plan.md`
-- [ ] T002 [P] Document requested scope additions for decorators/entities in `specs/phase-01-core-stabilization/spec.md`
-- [ ] T003 [P] Add tasking assumptions and risks for new decorators in `specs/phase-01-core-stabilization/research.md`
-- [ ] T004 [P] Add model notes for `ExtraFunctions` and `Configuration` in `specs/phase-01-core-stabilization/data-model.md`
+- [X] T001 Validate feature artifacts are complete in `specs/phase-01-core-stabilization/plan.md`
+- [X] T002 [P] Document requested scope additions for decorators/entities in `specs/phase-01-core-stabilization/spec.md`
+- [X] T003 [P] Add tasking assumptions and risks for new decorators in `specs/phase-01-core-stabilization/research.md`
+- [X] T004 [P] Add model notes for `ExtraFunctions` and `Configuration` in `specs/phase-01-core-stabilization/data-model.md`
 
 ---
 
@@ -33,16 +34,18 @@
 
 **⚠️ CRITICAL**: No user story implementation starts until this phase is complete.
 
-- [ ] T005 Create `ExtraFunctions` interface in `src/types/extra_functions.ts`
-- [ ] T006 [P] Export `ExtraFunctions` in `src/types/index.ts`
-- [ ] T007 [P] Add `ViewType[]` compatibility imports in `src/types/extra_functions.ts`
-- [ ] T008 Implement symbol key and metadata helpers for view functions in `src/decorations/on_view_function_decorator.ts`
-- [ ] T009 [P] Export `OnViewFunction` in `src/decorations/index.ts`
-- [ ] T010 Implement symbol key and decorator function for login exemption in `src/decorations/not_requires_login_decorator.ts`
-- [ ] T011 [P] Export `NotRequiresLogin` in `src/decorations/index.ts`
-- [ ] T012 Add `getCustomFunctions(): ExtraFunctions[]` base contract in `src/entities/base_entity.ts`
-- [ ] T013 Add `isNotRequiresLogin(): boolean` in `src/entities/base_entity.ts`
-- [ ] T014 Add technical debt note for login-phase implementation in `specs/phase-01-core-stabilization/research.md`
+- [X] T005 Create `ExtraFunctions` interface in `src/types/extra_functions.ts`
+- [X] T006 [P] Export `ExtraFunctions` in `src/types/index.ts`
+- [X] T007 [P] Add `ViewType[]` compatibility imports in `src/types/extra_functions.ts`
+- [X] T008 Implement symbol key and metadata helpers for view functions in `src/decorations/on_view_function_decorator.ts`
+- [X] T009 [P] Export `OnViewFunction` in `src/decorations/index.ts`
+- [X] T010 Implement symbol key and decorator function for login exemption in `src/decorations/not_requires_login_decorator.ts`
+- [X] T011 [P] Export `NotRequiresLogin` in `src/decorations/index.ts`
+- [X] T012 Add `getCustomFunctions(): ExtraFunctions[]` base contract in `src/entities/base_entity.ts`
+- [X] T013 Add `isNotRequiresLogin(): boolean` in `src/entities/base_entity.ts`
+- [X] T014 Add technical debt note for login-phase implementation in `specs/phase-01-core-stabilization/research.md`
+- [X] T061 [P] Update `GenericButtonComponent` visual palette using framework CSS tokens in `src/components/Buttons/GenericButtonComponent.vue`
+- [X] T062 Add startup localStorage bootstrap contract (set if missing, load if present) in `src/models/application.ts`
 
 **Checkpoint**: Metadata foundation ready for story implementation.
 
@@ -56,27 +59,27 @@
 
 ### Tests and Smoke Checks for User Story 1
 
-- [ ] T015 [P] [US1] Add manual smoke checklist for `OnViewFunction` per view type in `specs/phase-01-core-stabilization/quickstart.md`
-- [ ] T016 [P] [US1] Add method-decorator misuse validation case (class/property no-op) in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T015 [P] [US1] Add manual smoke checklist for `OnViewFunction` per view type in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T016 [P] [US1] Add method-decorator misuse validation case (class/property no-op) in `specs/phase-01-core-stabilization/quickstart.md`
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Implement `@OnViewFunction(icon, text, viewTypes[])` as method-only metadata decorator in `src/decorations/on_view_function_decorator.ts`
-- [ ] T018 [US1] Implement no-op behavior for non-method usage inside `src/decorations/on_view_function_decorator.ts`
-- [ ] T019 [US1] Extend metadata extraction to return bound functions in `src/entities/base_entity.ts`
-- [ ] T020 [US1] Create reusable button prop contract for extra actions in `src/components/Buttons/GenericButtonComponent.vue`
-- [ ] T021 [US1] Render icon/text from `ExtraFunctions` metadata in `src/components/Buttons/GenericButtonComponent.vue`
-- [ ] T022 [US1] Ensure extra action executes bound instance method in `src/components/Buttons/GenericButtonComponent.vue`
-- [ ] T023 [US1] Inject filtered custom buttons by current view in `src/models/application.ts`
-- [ ] T024 [US1] Merge extra buttons with existing action list in `src/components/ActionsComponent.vue`
-- [ ] T025 [P] [US1] Create `Home` entity scaffold extendable by inheritance in `src/entities/home.ts`
-- [ ] T026 [US1] Register `Home` module in startup flow in `src/main.ts`
-- [ ] T027 [P] [US1] Remove `Customer` entity registration and imports from `src/main.ts`
-- [ ] T028 [P] [US1] Remove `Customer` entity file and references in `src/entities/customer.ts`
-- [ ] T029 [US1] Remove stale customer references from docs/examples in `specs/phase-01-core-stabilization/quickstart.md`
-- [ ] T030 [US1] Validate action bar behavior for DEFAULTVIEW in `src/views/default_detailview.vue`
-- [ ] T031 [US1] Validate action bar behavior for LISTVIEW in `src/views/default_listview.vue`
-- [ ] T032 [US1] Validate action bar behavior for DETAILVIEW in `src/views/default_detailview.vue`
+- [X] T017 [US1] Implement `@OnViewFunction(icon, text, viewTypes[])` as method-only metadata decorator in `src/decorations/on_view_function_decorator.ts`
+- [X] T018 [US1] Implement no-op behavior for non-method usage inside `src/decorations/on_view_function_decorator.ts`
+- [X] T019 [US1] Extend metadata extraction to return bound functions in `src/entities/base_entity.ts`
+- [X] T020 [US1] Create reusable button prop contract for extra actions in `src/components/Buttons/GenericButtonComponent.vue`
+- [X] T021 [US1] Render icon/text from `ExtraFunctions` metadata in `src/components/Buttons/GenericButtonComponent.vue`
+- [X] T022 [US1] Ensure extra action executes bound instance method in `src/components/Buttons/GenericButtonComponent.vue`
+- [X] T023 [US1] Inject filtered custom buttons by current view in `src/models/application.ts`
+- [X] T024 [US1] Merge extra buttons with existing action list in `src/components/ActionsComponent.vue`
+- [X] T025 [P] [US1] Create `Home` entity scaffold extendable by inheritance in `src/entities/home.ts`
+- [X] T026 [US1] Register `Home` module in startup flow in `src/main.ts`
+- [X] T027 [P] [US1] Remove `Customer` entity registration and imports from `src/main.ts`
+- [X] T028 [P] [US1] Remove `Customer` entity file and references in `src/entities/customer.ts`
+- [X] T029 [US1] Remove stale customer references from docs/examples in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T030 [US1] Validate action bar behavior for DEFAULTVIEW in `src/views/default_detailview.vue`
+- [X] T031 [US1] Validate action bar behavior for LISTVIEW in `src/views/default_listview.vue`
+- [X] T032 [US1] Validate action bar behavior for DETAILVIEW in `src/views/default_detailview.vue`
 
 **Checkpoint**: US1 complete with dynamic decorator-based actions and module cleanup.
 
@@ -90,23 +93,23 @@
 
 ### Tests and Smoke Checks for User Story 2
 
-- [ ] T033 [P] [US2] Add configuration detail smoke steps and expected behavior in `specs/phase-01-core-stabilization/quickstart.md`
-- [ ] T034 [P] [US2] Add persistence verification steps for `guardar` + reload in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T033 [P] [US2] Add configuration detail smoke steps and expected behavior in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T034 [P] [US2] Add persistence verification steps for `guardar` + reload in `specs/phase-01-core-stabilization/quickstart.md`
 
 ### Implementation for User Story 2
 
-- [ ] T035 [US2] Create `Configuration` entity extending `BaseEntity` in `src/entities/configuration.ts`
-- [ ] T036 [US2] Move `AppConfiguration` structure into `Configuration` entity properties in `src/entities/configuration.ts`
-- [ ] T037 [US2] Implement `guardar()` localStorage persistence method in `src/entities/configuration.ts`
-- [ ] T038 [US2] Add mapper/helpers between `Application.AppConfiguration` and `Configuration` in `src/models/application.ts`
-- [ ] T039 [US2] Add navigation button to open configuration detail in `src/views/ConfigurationListComponent.vue`
-- [ ] T040 [US2] Load current app configuration object into configuration detail flow in `src/views/ConfigurationListComponent.vue`
-- [ ] T041 [US2] Render full configuration fields in detail view components in `src/views/default_detailview.vue`
-- [ ] T042 [US2] Include theme and language fields in `Configuration` detail rendering in `src/entities/configuration.ts`
-- [ ] T043 [US2] Remove theme/language controls from `ConfigurationListComponent` in `src/views/ConfigurationListComponent.vue`
-- [ ] T044 [US2] Ensure `Configuration` is NOT registered in module list in `src/main.ts`
-- [ ] T045 [US2] Add save action wiring to call `guardar()` for configuration entity in `src/components/Buttons/SaveButtonComponent.vue`
-- [ ] T046 [US2] Validate configuration reload applies dark mode and language state in `src/App.vue`
+- [X] T035 [US2] Create `Configuration` entity extending `BaseEntity` in `src/entities/configuration.ts`
+- [X] T036 [US2] Move `AppConfiguration` structure into `Configuration` entity properties in `src/entities/configuration.ts`
+- [X] T037 [US2] Implement `guardar()` localStorage persistence method in `src/entities/configuration.ts`
+- [X] T038 [US2] Add mapper/helpers between `Application.AppConfiguration` and `Configuration` in `src/models/application.ts`
+- [X] T039 [US2] Add navigation button to open configuration detail in `src/views/ConfigurationListComponent.vue`
+- [X] T040 [US2] Load current app configuration object into configuration detail flow in `src/views/ConfigurationListComponent.vue`
+- [X] T041 [US2] Render full configuration fields in detail view components in `src/views/default_detailview.vue`
+- [X] T042 [US2] Include theme and language fields in `Configuration` detail rendering in `src/entities/configuration.ts`
+- [X] T043 [US2] Remove theme/language controls from `ConfigurationListComponent` in `src/views/ConfigurationListComponent.vue`
+- [X] T044 [US2] Ensure `Configuration` is NOT registered in module list in `src/main.ts`
+- [X] T045 [US2] Add save action wiring to call `guardar()` for configuration entity in `src/components/Buttons/SaveButtonComponent.vue`
+- [X] T046 [US2] Validate configuration reload applies dark mode and language state in `src/App.vue`
 
 **Checkpoint**: US2 complete with dedicated configuration entity/detail flow and persistence.
 
@@ -120,18 +123,18 @@
 
 ### Tests and Smoke Checks for User Story 3
 
-- [ ] T047 [P] [US3] Add smoke checks for login-exemption metadata behavior in `specs/phase-01-core-stabilization/quickstart.md`
-- [ ] T048 [P] [US3] Add production build and preview acceptance checklist in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T047 [P] [US3] Add smoke checks for login-exemption metadata behavior in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T048 [P] [US3] Add production build and preview acceptance checklist in `specs/phase-01-core-stabilization/quickstart.md`
 
 ### Implementation for User Story 3
 
-- [ ] T049 [US3] Implement `@NotRequiresLogin()` decorator metadata storage in `src/decorations/not_requires_login_decorator.ts`
-- [ ] T050 [US3] Implement boolean resolver for login exemption in `src/entities/base_entity.ts`
-- [ ] T051 [US3] Add example usage on `Home` entity in `src/entities/home.ts`
-- [ ] T052 [US3] Mark login enforcement integration as technical debt in `specs/phase-01-core-stabilization/plan.md`
-- [ ] T053 [US3] Document login-phase TODO references in `specs/phase-01-core-stabilization/research.md`
-- [ ] T054 [US3] Validate no runtime regressions in module registration and view transitions in `src/models/application.ts`
-- [ ] T055 [US3] Validate production-oriented smoke flow completion in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T049 [US3] Implement `@NotRequiresLogin()` decorator metadata storage in `src/decorations/not_requires_login_decorator.ts`
+- [X] T050 [US3] Implement boolean resolver for login exemption in `src/entities/base_entity.ts`
+- [X] T051 [US3] Add example usage on `Home` entity in `src/entities/home.ts`
+- [X] T052 [US3] Mark login enforcement integration as technical debt in `specs/phase-01-core-stabilization/plan.md`
+- [X] T053 [US3] Document login-phase TODO references in `specs/phase-01-core-stabilization/research.md`
+- [X] T054 [US3] Validate no runtime regressions in module registration and view transitions in `src/models/application.ts`
+- [X] T055 [US3] Validate production-oriented smoke flow completion in `specs/phase-01-core-stabilization/quickstart.md`
 
 **Checkpoint**: US3 complete with metadata support and release closure criteria.
 
@@ -141,11 +144,45 @@
 
 **Purpose**: Final consistency, documentation, and readiness validation across stories.
 
-- [ ] T056 [P] Update task traceability notes in `specs/phase-01-core-stabilization/spec.md`
-- [ ] T057 [P] Update contracts with finalized behavior notes in `specs/phase-01-core-stabilization/contracts/metadata-ui-contract.md`
-- [ ] T058 Perform end-to-end smoke pass for US1-US3 in `specs/phase-01-core-stabilization/quickstart.md`
-- [ ] T059 Confirm no constitutional violations introduced in `specs/phase-01-core-stabilization/plan.md`
-- [ ] T060 Prepare implementation handoff summary in `specs/phase-01-core-stabilization/research.md`
+- [X] T056 [P] Update task traceability notes in `specs/phase-01-core-stabilization/spec.md`
+- [X] T057 [P] Update contracts with finalized behavior notes in `specs/phase-01-core-stabilization/contracts/metadata-ui-contract.md`
+- [X] T058 Perform end-to-end smoke pass for US1-US3 in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T059 Confirm no constitutional violations introduced in `specs/phase-01-core-stabilization/plan.md`
+- [X] T060 Prepare implementation handoff summary in `specs/phase-01-core-stabilization/research.md`
+
+---
+
+## Phase 7: User Story 4 - Persistence Guardrails and Framework Strings (Priority: P1)
+
+**Goal**: Prevent non-`@Persistent` entities from accessing persistence operations, remove misleading runtime errors (like Home list fetch), close dropdown on configuration action, and replace framework hardcoded strings with i18n keys.
+
+**Independent Test**: Enter Home module without API errors, confirm no persistence/list fetch buttons for non-persistent entities, open configuration detail closes dropdown, and all new framework labels/messages resolve via `src/languages/*.json`.
+
+### Tests and Smoke Checks for User Story 4
+
+- [X] T063 [P] [US4] Add regression checklist for non-persistent entities in `specs/phase-01-core-stabilization/quickstart.md`
+- [X] T064 [P] [US4] Add i18n verification checklist for framework strings in `specs/phase-01-core-stabilization/quickstart.md`
+
+### Implementation for User Story 4
+
+- [X] T065 [US4] Add explicit `@Persistent` guard to `validatePersistenceConfiguration()` in `src/entities/base_entity.ts`
+- [X] T066 [US4] Add persistence guard in `refresh()` to block list fetch for non-persistent entities in `src/entities/base_entity.ts`
+- [X] T067 [US4] Add persistence guard in static `getElement()` in `src/entities/base_entity.ts`
+- [X] T068 [US4] Add persistence guard in static `getElementList()` in `src/entities/base_entity.ts`
+- [X] T069 [US4] Add persistence guard in static `getElementListPaginated()` in `src/entities/base_entity.ts`
+- [X] T070 [US4] Add persistence guard/no-op contract for `buildRequestPayload()` in `src/entities/base_entity.ts`
+- [X] T071 [US4] Add persistence guard/no-op contract for static `mapToPersistentKeys()` and `mapFromPersistentKeys()` in `src/entities/base_entity.ts`
+- [X] T072 [US4] Restrict persistence-driven action buttons for non-persistent modules in `setButtonList()` at `src/models/application.ts`
+- [X] T073 [US4] Block list API loading for non-persistent module classes in `loadData()` at `src/components/Informative/DetailViewTableComponent.vue`
+- [X] T074 [US4] Close dropdown before opening Configuration detail in `src/views/ConfigurationListComponent.vue`
+- [X] T075 [US4] Replace hardcoded framework labels in `src/entities/configuration.ts` with translation keys
+- [X] T076 [US4] Replace hardcoded framework action text (`Guardar`) with translation key usage in `src/entities/configuration.ts`
+- [X] T077 [US4] Add framework i18n keys (en/es/jp parity) in `src/languages/common.json`
+- [X] T078 [US4] Add framework i18n error keys for persistence guard messages in `src/languages/errors.json`
+- [X] T079 [US4] Replace remaining hardcoded framework-level error/title texts in `src/entities/base_entity.ts` with `GetLanguagedText(...)`
+- [X] T080 [US4] Validate Home/default module opens without `ApiEndpoint no definido` runtime errors in `src/components/Informative/DetailViewTableComponent.vue`
+
+**Checkpoint**: US4 complete with non-persistent safety and framework-level localization alignment.
 
 ---
 
@@ -159,12 +196,14 @@
 - **Phase 4 (US2)**: Depends on Phase 2; can proceed after US1 or in parallel when foundation is complete.
 - **Phase 5 (US3)**: Depends on Phase 2 and partially on US1 (`Home` usage example).
 - **Phase 6 (Polish)**: Depends on completion of selected user stories.
+- **Phase 7 (US4)**: Depends on Phase 2; should run before final release validation when non-persistent modules exist.
 
 ### User Story Dependencies
 
 - **US1 (P1)**: No dependency on other stories after foundational completion.
 - **US2 (P2)**: Uses existing detail flow; independent of US3.
 - **US3 (P3)**: Depends on `Home` availability from US1 for a concrete decorator usage example.
+- **US4 (P1)**: Depends on foundational decorators/BaseEntity and validates behavior introduced in US1-US3.
 
 ### Within Each User Story
 
@@ -184,6 +223,8 @@
 - US2 smoke tasks `T033-T034` can run in parallel.
 - US3 smoke tasks `T047-T048` can run in parallel.
 - Polish docs tasks `T056-T057` can run in parallel.
+- US4 smoke tasks `T063-T064` can run in parallel.
+- US4 i18n tasks `T077-T078` can run in parallel.
 
 ---
 
@@ -243,3 +284,8 @@ T053 [US3] research technical debt references
 ### Suggested MVP Scope
 
 MVP scope is **US1 only** once foundational tasks are complete.
+
+### Hotfix Scope (Post-MVP)
+
+1. Complete foundational extensions `T061-T062`.
+2. Complete US4 `T063-T080` before release candidate sign-off when Home/non-persistent modules are enabled.

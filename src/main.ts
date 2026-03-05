@@ -6,12 +6,12 @@ import './css/table.css';
 import App from './App.vue';
 import Application from '@/models/application';
 import router from '@/router';
+import { Home } from '@/entities/home';
 import { Product } from '@/entities/product';
-import { Customer } from '@/entities/customer';
 
 Application.initializeApplication(router);
+Application.registerModule(Home);
 Application.registerModule(Product);
-Application.registerModule(Customer);
 
 const app: VueApp = createApp(App);
 app.use(router);
