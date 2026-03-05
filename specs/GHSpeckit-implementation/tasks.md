@@ -630,6 +630,56 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 
 ---
 
+## Phase 9: Bug Fixes & New Features (Analysis 2026-03-04 — findings I1, A1, U1, U2, U3)
+
+**Purpose**: Resolve the critical spec-implementation divergence in `SaveAndNewButtonComponent` (I1), fix the `EnumInputComponent` dropdown clipping bug (A1), expand icon coverage to ≥150 verified icons (U1), add column-filter (funnel) capability to both tables (U2), and implement drag-to-reorder columns in `ArrayInputComponent` (U3).
+
+**⚠️ SPEC-FIRST GATE**: Tasks marked `[SPEC]` update documentation. Their corresponding code tasks MUST NOT be merged before the `[SPEC]` task is complete.
+
+---
+
+### 9A — Spec Updates (SPEC-FIRST gate tasks)
+
+- [X] T234 [SPEC] Add FR-035 to spec.md §5.11 — `EnumInputComponent` overflow contract: *"The `.list-input-body` dropdown panel in `EnumInputComponent` MUST NOT be clipped by ancestor `overflow: hidden` containers. When rendered inside a scrollable container with `overflow: hidden`, the panel MUST be teleported to `<body>` via Vue `<Teleport>`. The portal MUST use `position: fixed; z-index: var(--z-dropdown)` with coordinates from `getBoundingClientRect()`."* in `specs/GHSpeckit-implementation/spec.md`
+- [X] T235 [SPEC] Add FR-036 to spec.md §10 — GGICONS source-of-truth clause: *"All icon names in `src/constants/ggicons.ts` MUST be valid ligature names from the Material Symbols Rounded font (Google Fonts). The constant set MUST contain at minimum 150 entries covering the categories: navigation, actions, communication, content, editor, files, hardware, image, maps, social, and status. No fabricated or unverifiable icon name is permitted."* in `specs/GHSpeckit-implementation/spec.md`
+- [X] T236 [SPEC] Add FR-037 to spec.md §5.11 — column filter (funnel) contract: *"Both `DetailViewTableComponent` and `ArrayInputComponent` MUST render a funnel icon button (`GGICONS.FILTER_LIST` or equivalent) at the right edge of each column `<th>`, adjacent to the resize handle. Clicking the funnel MUST open a `DropdownMenuComponent` (via `Application.ApplicationUIService.openDropdownMenu`) whose content is a new `ColumnFilterPanelComponent`. The panel lists all distinct values for that column derived from the full in-memory dataset (not the current page). Each entry uses the same `select-btn` / `SELECT_CHECKBOX` / `SELECT_VOID` pattern from `ArrayInputComponent`. Multiple values may be selected simultaneously. An Accept button applies the filter (narrows `paginatedRows` / `paginatedItems`); a Clear button removes all active filters for that column. Filtered state is stored in a local `ref<Record<string, unknown[]>>` (`columnFilters`). The funnel icon MUST change to a highlighted style when a filter is active on that column."* in `specs/GHSpeckit-implementation/spec.md`
+- [X] T237 [SPEC] Add FR-038 to spec.md §5.11 — `ArrayInputComponent` column drag-reorder contract: *"Column headers in `ArrayInputComponent` MUST support drag-to-reorder via native HTML5 drag-and-drop (`draggable='true'` on `<th>`). The column order is stored in a local `ref<string[]>` (`columnOrder`) initialized from `Object.keys(visibleProperties)` on mount. `dragstart` stores the source column key; `dragover` prevents default and highlights the target `<th>` with class `drag-over`; `drop` swaps the two keys in `columnOrder`. Reordering is runtime-only and is NOT persisted. Resize handles and filter buttons MUST continue to function after reordering."* in `specs/GHSpeckit-implementation/spec.md`
+- [X] T238 [SPEC] Update spec.md §5 `SaveAndNewButtonComponent` clause (T136) to make the success guard explicit: *"After `await entity.save()`, the component MUST check that the save completed without error before calling `changeViewToDetailView`. If `save()` throws or returns with a failure state, the view MUST remain on the current form. Concretely: wrap `saveItem()` body in `try { await entity.save(); Application.changeViewToDetailView(...) } catch { return; }`."* in `specs/GHSpeckit-implementation/spec.md`
+
+---
+
+### 9B — SaveAndNew Guard Fix (I1 — CRITICAL)
+
+- [X] T239 [US1] Fix `SaveAndNewButtonComponent.vue`: wrap `changeViewToDetailView` call in `try/catch` so that if `save()` throws (API error, validation failure, persistence config error) the navigation is aborted and the user stays on the current form. Pattern: `try { await entity.save(); Application.changeViewToDetailView(entityClass.createNewInstance()); } catch { return; }`. Depends on T238 (spec gate). in `src/components/Buttons/SaveAndNewButtonComponent.vue`
+
+---
+
+### 9C — GGIcons Expansion (U1)
+
+- [X] T240 [P] Expand `src/constants/ggicons.ts` with verified Material Symbols Rounded ligature names to reach ≥150 entries. All names MUST be cross-checked against the official Google Material Symbols codepoints at `https://fonts.google.com/metadata/icons` or the `material-design-icons` GitHub codepoints file. Add entries across all missing categories: navigation (`home`, `menu`, `arrow_back`, `arrow_forward`, `chevron_left`, `chevron_right`, `expand_more`, `expand_less`, `open_in_new`, `fullscreen`, …), actions (`share`, `download`, `upload`, `print`, `edit`, `content_copy`, `link`, `settings`, `tune`, `filter_list`, `sort`, …), communication (`chat`, `message`, `notifications`, `notifications_off`, `call`, `videocam`, …), content (`inbox`, `archive`, `report`, `flag`, `bookmark`, `label`, …), status (`done`, `done_all`, `error_outline`, `help_outline`, `lock`, `lock_open`, `verified`, …). Depends on T235 (spec gate). in `src/constants/ggicons.ts`
+
+---
+
+### 9D — EnumInputComponent Dropdown Overflow Fix (A1)
+
+- [X] T241 [P] [US3] Fix `EnumInputComponent.vue` dropdown clipping by wrapping the `.list-input-body` panel in a `<Teleport to="body">`. On open, compute the trigger button's `getBoundingClientRect()` and apply `position: fixed; top: <rect.bottom>px; left: <rect.left>px; width: <rect.width>px` as inline style on a `.enum-dropdown-portal` wrapper. Apply `z-index: var(--z-dropdown)` on the portal. Add and clean up a `document` click-outside listener in `onMounted`/`onBeforeUnmount` (identical to existing `openOptions` close logic). No changes to parent containers required. Depends on T234 (spec gate). in `src/components/Form/EnumInputComponent.vue`
+
+---
+
+### 9E — Column Filter / Funnel per Header (U2)
+
+- [X] T242 [P] Create `ColumnFilterPanelComponent.vue` in `src/components/Form/`. Props: `distinctValues: unknown[]`, `activeFilters: unknown[]`, `columnLabel: string`. Emits: `apply(selected: unknown[])`, `clear()`. Template: scrollable list of distinct values where each row is a `<button class="select-btn">` toggling between `GGICONS.SELECT_CHECKBOX` (added) and `GGICONS.SELECT_VOID` with `class="{ added: isSelected(v) }"` — same icon colors and background-color behavior as `ArrayInputComponent` select-btn. Below the list: `<button class="button success fill">` emitting `apply`, `<button class="button secondary fill">` emitting `clear`. All CSS uses existing tokens from `ArrayInputComponent`. Depends on T236 (spec gate). in `src/components/Form/ColumnFilterPanelComponent.vue`
+- [X] T243 [US3] Integrate column filter into `DetailViewTableComponent.vue`: (1) Add `columnFilters: Ref<Record<string, unknown[]>>` initialized `{}`. (2) Add `filteredRows` computed from `data.value` (current server page) — for each active `columnFilters` entry keep only rows where `getCellValue(item, col)` matches a selected value (AND logic across columns). `paginatedRows` derives from `filteredRows`. (3) Add `getDistinctValues(column): unknown[]` mapping `data.value` through `getCellValue`, deduplicated. ⚠ Per I3: distinct values are limited to the current page because T217 implements server-side pagination — no full dataset is available client-side. (4) Add `openColumnFilter(event, column)` calling `openDropdownMenu` with `ColumnFilterPanelComponent` and props `{ distinctValues, activeFilters: columnFilters[column] ?? [] }`. (5) Add `<button class="col-filter-btn">` in each `<th>` with `GGICONS.FILTER_LIST`; highlight when `columnFilters[col]?.length > 0`. (6) Wire `apply`/`clear` events. Depends on T236, T242, and T240. in `src/components/Informative/DetailViewTableComponent.vue`
+- [X] T244 [US3] Integrate column filter into `ArrayInputComponent.vue` following the identical pattern as T243: `columnFilters` ref, `filteredItems` computed from full `modelValue`, `getDistinctValues`, funnel button per `<th>`, `openColumnFilter` via `openDropdownMenu`, `paginatedItems` derives from `filteredItems`. Wire `apply`/`clear` from `ColumnFilterPanelComponent`. Depends on T236, T242, and T240. in `src/components/Form/ArrayInputComponent.vue`
+
+---
+
+### 9F — ArrayInputComponent Column Drag Reorder (U3)
+
+- [X] T245 [US3] Implement column drag-reorder in `ArrayInputComponent.vue`: (1) Add `columnOrder: Ref<string[]>` initialized from `Object.keys(visibleProperties)` in `onMounted`; watch `visibleProperties` to reset. (2) Add `dragSourceKey: Ref<string | null> = ref(null)`. (3) On each `<th>`: `draggable="true"`, `@dragstart` sets `dragSourceKey`, `@dragover.prevent` adds class `drag-over`, `@dragleave` removes it, `@drop` swaps keys in `columnOrder` and clears `dragSourceKey`. (4) Replace `v-for` iteration in `<thead>` and `<tbody>` from `Object.keys(visibleProperties)` to `columnOrder` (filtered to keys present in `visibleProperties`). (5) Bind same `:style="getColumnStyle(key)"`, resize handle, and filter button on each reordered `<th>`. (6) CSS: `th[draggable] { cursor: grab; }` and `th.drag-over { border-left: 2px solid var(--primary-main); }`. Depends on T237 and T244. in `src/components/Form/ArrayInputComponent.vue`
+
+---
+
 ## Task Count Summary
 
 | Phase | Tasks | Story | Parallelizable |
@@ -667,9 +717,15 @@ Layer Phase 5 (T156–T171) on top. Custom component overrides and lookup modals
 | Phase 8D: BaseEntity fixes | T223–T226 | — | 0 |
 | Phase 8E: Language + dark mode audit | T227–T231 | — | 2 of 5 |
 | Phase 8F: Global loading + Axios reconnect | T232–T233 | — | 0 |
-| **TOTAL** | **224 tasks** | | **~119 parallelizable** |
+| Phase 9A: Spec gates | T234–T238 | — | 5 of 5 |
+| Phase 9B: SaveAndNew guard fix | T239 | US1 | 0 |
+| Phase 9C: GGIcons expansion | T240 | — | 1 of 1 |
+| Phase 9D: Enum dropdown overflow | T241 | US3 | 1 of 1 |
+| Phase 9E: Column filter (new component + integration) | T242–T244 | US1+US3 | 2 of 3 |
+| Phase 9F: Column drag reorder | T245 | US3 | 0 |
+| **TOTAL** | **236 tasks** | | **~126 parallelizable** |
 
 **Per user story**:
-- **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6 additions) + T211, T213 (phase 7 additions)
+- **US1**: 22 tasks (T119–T140) + T202, T204, T207 (phase 6) + T211, T213 (phase 7) + T239, T243 (phase 9)
 - **US2**: 15 tasks (T141–T155)
-- **US3**: 16 tasks (T156–T171) + T206 (phase 6 addition) + T211, T214 (phase 7 additions)
+- **US3**: 16 tasks (T156–T171) + T206 (phase 6) + T211, T214 (phase 7) + T241, T244, T245 (phase 9)

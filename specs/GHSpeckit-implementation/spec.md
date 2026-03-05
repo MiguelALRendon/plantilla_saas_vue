@@ -1611,7 +1611,7 @@ Application.eventBus.on('validate-inputs', () => {
 
 **SaveButtonComponent**: `await entity.save()`. Disabled when !Application.View.value.isValid.
 
-**SaveAndNewButtonComponent**: `await entity.save()` → on success, navigate to new entity.
+**SaveAndNewButtonComponent**: `await entity.save()` → on success, navigate to new entity. MUST wrap the entire body in `try { await entity.save(); Application.changeViewToDetailView(…) } catch { return; }`; if `save()` throws or rejects, the view MUST remain on the current form (FR-035 / T238 / T239).
 
 **ValidateButtonComponent**: `await entity.validateInputs()` → shows result toast.
 
@@ -1697,15 +1697,64 @@ Application.eventBus.on('validate-inputs', () => {
 - Numeric page-pill buttons for the visible page range (current ± 2), rendered with the same round green style; the active page pill MUST have higher visual prominence (e.g. increased opacity or border).
 
 **Data source**:
-- Pagination is computed entirely in memory from the full dataset — no additional API calls are made.
-- `DetailViewTableComponent`: slices from `data` (the full loaded entity list).
-- `ArrayInputComponent`: slices from `filteredData` (post-search computed list); resets `currentPage` to `1` whenever the filtered list length changes.
+- `ArrayInputComponent` pagination is computed entirely in-memory from the full `modelValue` array. The `filteredData` computed (post-search) is the source; `currentPage` resets to `1` whenever its length changes — no additional API calls are made.
+- `DetailViewTableComponent` pagination is **server-side** (added T217): `getElementListPaginated(page, pageSize)` is called on every page change; `data` contains only the current page slice. No full client-side dataset is held in memory.
 
 **Computed properties required**:
 - `pageSize: Ref<number | 'ALL'>` — defaults to `10`.
 - `currentPage: Ref<number>` — defaults to `1`.
 - `totalPages: ComputedRef<number>` — `Math.ceil(dataset.length / pageSize)` (returns `1` when `pageSize === 'ALL'`).
 - `paginatedRows` / `paginatedItems: ComputedRef<BaseEntity[]>` — sliced dataset; no slice when `pageSize === 'ALL'`.
+
+---
+
+### 5.18 FR-035 — EnumInputComponent Dropdown Overflow Rule
+
+The `.list-input-body` dropdown panel in `EnumInputComponent` MUST NOT be clipped by ancestor `overflow: hidden` containers.
+
+**Implementation requirements**:
+- When rendered inside a scrollable container with `overflow: hidden`, the panel MUST be teleported to `<body>` via Vue `<Teleport to="body">`.
+- The portal wrapper MUST use `position: fixed; z-index: var(--z-dropdown)`.
+- Coordinates (top, left, width) MUST be computed from `getBoundingClientRect()` of the trigger button at open time.
+- A document-level click-outside listener MUST close the panel when a click is detected outside both the trigger element and the teleported portal.
+- No changes to parent containers are required; the fix is entirely inside `EnumInputComponent.vue`.
+
+---
+
+### 5.19 FR-037 — Column Filter (Funnel) per Header
+
+Both `DetailViewTableComponent` and `ArrayInputComponent` MUST render a funnel icon button at the right edge of each column `<th>`, adjacent to the resize handle.
+
+**Behaviour**:
+- Clicking the funnel MUST open a `DropdownMenuComponent` (via `Application.ApplicationUIService.openDropdownMenu`) whose content is `ColumnFilterPanelComponent`.
+- The panel lists all distinct values for that column derived from the available in-memory dataset (`data.value` for `DetailViewTableComponent`; full `modelValue` for `ArrayInputComponent`). For `DetailViewTableComponent`, distinct values are limited to the current page (server-side pagination constraint from T217).
+- Each value entry uses the `select-btn` / `SELECT_CHECKBOX` / `SELECT_VOID` pattern from `ArrayInputComponent`.
+- Multiple values may be selected simultaneously (OR logic within a column; AND logic across columns).
+- An **Accept** button applies the filter; a **Clear** button removes all active filters for that column.
+- Filtered state is stored in a local `ref<Record<string, unknown[]>>` (`columnFilters`).
+- The funnel icon MUST apply a `has-filter` CSS class when a filter is active on that column.
+
+**`ColumnFilterPanelComponent`** (`src/components/Form/ColumnFilterPanelComponent.vue`):
+- Props: `distinctValues: unknown[]`, `activeFilters: unknown[]`, `columnLabel: string`.
+- Emits: `apply(selected: unknown[])`, `clear()`.
+- All CSS uses existing design tokens.
+
+---
+
+### 5.20 FR-038 — ArrayInputComponent Column Drag-Reorder
+
+Column headers in `ArrayInputComponent` MUST support drag-to-reorder via native HTML5 drag-and-drop.
+
+**Requirements**:
+- `draggable="true"` on each `<th>`.
+- Column order stored in `ref<string[]>` (`columnOrder`) initialized from `Object.keys(visibleProperties)` on mount; reset when `visibleProperties` changes.
+- `dragstart`: store the source column key in `dragSourceKey: Ref<string | null>`.
+- `dragover`: prevent default and add class `drag-over` to the target `<th>`.
+- `dragleave`: remove the `drag-over` class.
+- `drop`: swap the two keys in `columnOrder` and clear drag state.
+- Reordering is **runtime-only** — not persisted between sessions or page reloads.
+- Resize handles and column filter buttons MUST continue to function after reordering.
+- CSS: `th[draggable] { cursor: grab; }` and `th.drag-over { border-left: 2px solid var(--primary-main); }`.
 
 ---
 
@@ -2383,6 +2432,17 @@ docs(spec): add architecture flows for detail view generation
 
 ---
 
+### 10.10 FR-036 — GGICONS Source-of-Truth
+
+All icon names in `src/constants/ggicons.ts` MUST be valid ligature names from the **Material Symbols Rounded** font (Google Fonts).
+
+**Requirements**:
+- The constant set MUST contain a minimum of **150 entries** covering the categories: navigation, actions, communication, content, editor, files, hardware, image, maps, social, and status.
+- No fabricated or unverifiable icon name is permitted. Every entry MUST be verifiable against the official codepoints file at `https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.codepoints`.
+- The entry `FILTER_LIST: 'filter_list'` (required by FR-037 column filter feature) MUST be present.
+
+---
+
 ## 11. Key Entities & Data Models
 
 ### 11.1 Minimum Required Entity Template
@@ -2672,4 +2732,4 @@ For properties whose runtime type (via `getPropertyType()`) is recognized as an 
 
 ---
 
-*Specification complete. Covers 31 decorators, BaseEntity (all methods), Application singleton, 10+ input components, form layout components, view components, action buttons, toast/dialog/modal components, 7 enums, 8 models, router, types, and useInputMetadata composable. Total: framework layers 1–6 fully specified. FR-032 (column resize) and SC-017 (enum display) added 2026-03-04. FR-032 dblclick autofit contract and FR-034 pagination added 2026-03-04.*
+*Specification complete. Covers 31 decorators, BaseEntity (all methods), Application singleton, 10+ input components, form layout components, view components, action buttons, toast/dialog/modal components, 7 enums, 8 models, router, types, and useInputMetadata composable. Total: framework layers 1–6 fully specified. FR-032 (column resize) and SC-017 (enum display) added 2026-03-04. FR-032 dblclick autofit contract and FR-034 pagination added 2026-03-04. FR-035 (EnumInputComponent Teleport overflow fix), FR-036 (GGICONS source-of-truth ≥150 entries), FR-037 (column filter/funnel with ColumnFilterPanelComponent), FR-038 (ArrayInputComponent column drag-reorder) added 2026-03-04.*

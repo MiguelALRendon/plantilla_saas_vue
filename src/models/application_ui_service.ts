@@ -137,8 +137,9 @@ export class ApplicationUIService {
      * @param title Título mostrado en header del dropdown.
      * @param component Componente Vue a renderizar dentro dropdown.
      * @param width Ancho custom del dropdown (opcional, default desde CSS).
+     * @param componentProps Props pasadas al componente renderizado (opcional).
      */
-    openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string) => {
+    openDropdownMenu = (position: HTMLElement, title: string, component: Component, width?: string, componentProps?: Record<string, unknown>) => {
         const rect = position.getBoundingClientRect();
         this.app.dropdownMenu.value.position_x = `${rect.left}px`;
         this.app.dropdownMenu.value.position_y = `${rect.bottom}px`;
@@ -146,6 +147,7 @@ export class ApplicationUIService {
         this.app.dropdownMenu.value.activeElementHeight = `${rect.height}px`;
         this.app.dropdownMenu.value.title = title;
         this.app.dropdownMenu.value.component = markRaw(component);
+        this.app.dropdownMenu.value.props = componentProps ?? {};
         if (width) {
             this.app.dropdownMenu.value.width = width;
         }

@@ -18,19 +18,26 @@
                 <span class="arrow" :class="[GGCLASS, { active: droped }]">{{ GGICONS.ARROW_UP }}</span>
             </div>
         </button>
-        <div class="list-input-body" :class="[{ enabled: droped }, { 'from-bottom': fromBottom }]">
-            <div class="list-input-items-wrapper">
-                <div
-                    class="list-input-item"
-                    v-for="value in formattedEnumValues"
-                    :class="[{ selected: modelValue == value.value }]"
-                    :key="value.key"
-                    @click="selectOption(value.value)"
-                >
-                    <span>{{ value.displayKey }}</span>
+        <Teleport to="body">
+            <div
+                ref="portalElement"
+                class="list-input-body"
+                :class="[{ enabled: droped }, { 'from-bottom': fromBottom }]"
+                :style="portalStyle"
+            >
+                <div class="list-input-items-wrapper">
+                    <div
+                        class="list-input-item"
+                        v-for="value in formattedEnumValues"
+                        :class="[{ selected: modelValue == value.value }]"
+                        :key="value.key"
+                        @click="selectOption(value.value)"
+                    >
+                        <span>{{ value.displayKey }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Teleport>
 
         <div class="help-text" v-if="metadata.helpText.value">
             <span>{{ metadata.helpText.value }}</span>
@@ -73,6 +80,8 @@ const fromBottom = ref(false);
 const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
 const rootElement = ref<HTMLElement | null>(null);
+const portalElement = ref<HTMLElement | null>(null);
+const portalStyle = ref<Record<string, string>>({});
 
 function parseValue(key: string): string {
     return key
@@ -98,9 +107,18 @@ const actualOption = computed<string | number>(() => {
 
 // #region METHODS
 function openOptions(): void {
-    const rect = document.getElementById(`id-4-click-on${metadata.propertyName}`)?.getBoundingClientRect();
+    const buttonEl = document.getElementById(`id-4-click-on${metadata.propertyName}`);
+    const rect = buttonEl?.getBoundingClientRect();
     if (rect) {
         fromBottom.value = window.innerHeight - rect.bottom < 300;
+        portalStyle.value = {
+            position: 'fixed',
+            top: `${fromBottom.value ? rect.top : rect.bottom}px`,
+            left: `${rect.left}px`,
+            width: `${rect.width}px`,
+            zIndex: 'var(--z-dropdown)',
+            transform: fromBottom.value ? 'translateY(-100%)' : 'none',
+        };
     }
     droped.value = !droped.value;
 }
@@ -113,9 +131,10 @@ function selectOption(value: string | number): void {
 function handleClickOutside(event: MouseEvent): void {
     if (droped.value) {
         const dropdown = rootElement.value;
+        const portal = portalElement.value;
         if (!dropdown) return;
 
-        if (!dropdown.contains(event.target as Node)) {
+        if (!dropdown.contains(event.target as Node) && !portal?.contains(event.target as Node)) {
             droped.value = false;
         }
     }
@@ -268,15 +287,9 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-rows: 0fr;
     overflow: hidden;
-    position: absolute;
-    width: 100%;
-    left: 0;
     background-color: var(--white);
-    z-index: var(--z-modal);
+    z-index: var(--z-dropdown);
     transition: grid-template-rows var(--transition-normal) var(--timing-ease);
-}
-.list-input-body.from-bottom {
-    bottom: 100%;
 }
 
 .list-input-body.enabled {

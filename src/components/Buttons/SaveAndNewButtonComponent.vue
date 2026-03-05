@@ -22,14 +22,18 @@ export default {
         async saveItem() {
             const entity = Application.View.value.entityObject;
             if (entity && entity.isPersistent()) {
-                await entity.save();
-                const entityClass = Application.View.value.entityClass as
-                    | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
-                    | null;
+                try {
+                    await entity.save();
+                    const entityClass = Application.View.value.entityClass as
+                        | (typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
+                        | null;
 
-                if (!entityClass) return;
+                    if (!entityClass) return;
 
-                Application.changeViewToDetailView(entityClass.createNewInstance());
+                    Application.changeViewToDetailView(entityClass.createNewInstance());
+                } catch {
+                    return;
+                }
             }
         }
     },

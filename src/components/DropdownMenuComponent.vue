@@ -5,7 +5,7 @@
             :class="['dropdown-menu', dropdownHorizontalClass, dropdownVerticalClass, dropdownWidthClass]"
         >
             <span class="dropdown-menu-title">{{ dropDownData.title }}</span>
-            <component v-if="dropDownData.component" :is="dropDownData.component"></component>
+            <component v-if="dropDownData.component" :is="dropDownData.component" v-bind="dropDownData.props ?? {}"></component>
         </div>
     </div>
 </template>

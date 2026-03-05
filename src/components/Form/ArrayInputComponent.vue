@@ -46,13 +46,26 @@
                     <tr>
                         <th class="selection" :class="[{ display: isSelection }]"></th>
                         <th
-                            v-for="(label, key) in visibleProperties"
-                            :key="String(key)"
-                            :style="getColumnStyle(String(key))"
-                            @dblclick="autoFitColumn($event, String(key))"
+                            v-for="colKey in columnOrder"
+                            :key="colKey"
+                            :style="getColumnStyle(colKey)"
+                            @dblclick="autoFitColumn($event, colKey)"
+                            draggable="true"
+                            @dragstart="onDragStart(colKey)"
+                            @dragover.prevent="onDragOver(colKey)"
+                            @dragleave="onDragLeave(colKey)"
+                            @drop.prevent="onDrop(colKey)"
+                            :class="{ 'drag-over': dragOverKey === colKey }"
                         >
-                            {{ label }}
-                            <span class="col-resize-handle" @mousedown.prevent="startResize($event, String(key))"></span>
+                            {{ visibleProperties[colKey] }}
+                            <button
+                                class="col-filter-btn"
+                                :class="{ 'has-filter': (columnFilters[colKey]?.length ?? 0) > 0 }"
+                                @click.stop="openColumnFilter($event, colKey)"
+                            >
+                                <span :class="[GGCLASS]">{{ GGICONS.FILTER_LIST }}</span>
+                            </button>
+                            <span class="col-resize-handle" @mousedown.prevent="startResize($event, colKey)"></span>
                         </th>
                     </tr>
                 </thead>
@@ -67,14 +80,14 @@
                                 <span :class="[GGCLASS]">{{ getItemIcon(item) }}</span>
                             </button>
                         </td>
-                        <td v-for="property in Object.keys(visibleProperties)" :key="property" :style="getColumnStyle(property)">
-                            {{ getCellValue(item, property) }}
+                        <td v-for="colKey in columnOrder" :key="colKey" :style="getColumnStyle(colKey)">
+                            {{ getCellValue(item, colKey) }}
                         </td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td class="pagination-td" :colspan="Object.keys(visibleProperties).length + 1">
+                        <td class="pagination-td" :colspan="columnOrder.length + 1">
                             <div class="pagination-bar">
                                 <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
                                     <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
@@ -118,6 +131,7 @@ import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
+import ColumnFilterPanelComponent from '@/components/Form/ColumnFilterPanelComponent.vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 
 interface Props {
@@ -157,6 +171,14 @@ let resizeColumn = '';
 let resizeStartX = 0;
 let resizeStartWidth = 0;
 
+// T244 — Column filter state
+const columnFilters: Ref<Record<string, unknown[]>> = ref({});
+
+// T245 — Column drag-reorder state
+const columnOrder = ref<string[]>([]);
+const dragSourceKey = ref<string | null>(null);
+const dragOverKey = ref<string | null>(null);
+
 // FR-034 — Pagination
 const pageSizeOptions: (number | 'ALL')[] = [10, 20, 50, 100, 'ALL'];
 const pageSize = ref<number | 'ALL'>(10);
@@ -179,16 +201,26 @@ const filteredData = computed<BaseEntity[]>(() => {
     });
 });
 
+// T244 — filteredItems = filteredData further filtered by active columnFilters (AND across columns)
+const filteredItems = computed<BaseEntity[]>(() => {
+    const activeFilters = columnFilters.value;
+    const filterKeys = Object.keys(activeFilters).filter(k => activeFilters[k].length > 0);
+    if (filterKeys.length === 0) return filteredData.value;
+    return filteredData.value.filter(item =>
+        filterKeys.every(col => activeFilters[col].includes(getCellValue(item, col)))
+    );
+});
+
 const paginatedItems = computed<BaseEntity[]>(() => {
-    if (pageSize.value === 'ALL') return filteredData.value;
+    if (pageSize.value === 'ALL') return filteredItems.value;
     const size = pageSize.value as number;
     const start = (currentPage.value - 1) * size;
-    return filteredData.value.slice(start, start + size);
+    return filteredItems.value.slice(start, start + size);
 });
 
 const totalPages = computed<number>(() => {
-    if (pageSize.value === 'ALL' || filteredData.value.length === 0) return 1;
-    return Math.ceil(filteredData.value.length / (pageSize.value as number));
+    if (pageSize.value === 'ALL' || filteredItems.value.length === 0) return 1;
+    return Math.ceil(filteredItems.value.length / (pageSize.value as number));
 });
 
 const visiblePages = computed<number[]>(() => {
@@ -204,16 +236,16 @@ const visiblePages = computed<number[]>(() => {
 
 const paginationInfo = computed<string>(() => {
     if (pageSize.value === 'ALL') {
-        return t('common.records_count').split('{count}').join(String(filteredData.value.length));
+        return t('common.records_count').split('{count}').join(String(filteredItems.value.length));
     }
     const size = pageSize.value as number;
-    if (filteredData.value.length === 0) return t('common.zero_records');
+    if (filteredItems.value.length === 0) return t('common.zero_records');
     const start = (currentPage.value - 1) * size + 1;
-    const end = Math.min(currentPage.value * size, filteredData.value.length);
+    const end = Math.min(currentPage.value * size, filteredItems.value.length);
     return t('common.pagination_range')
         .split('{start}').join(String(start))
         .split('{end}').join(String(end))
-        .split('{total}').join(String(filteredData.value.length));
+        .split('{total}').join(String(filteredItems.value.length));
 });
 
 const visibleProperties = computed<Record<string, string>>(() => {
@@ -315,6 +347,79 @@ function parseEnumValue(key: string): string {
         .join(' ');
 }
 
+// T244 — Column filter helpers
+function getDistinctValues(column: string): unknown[] {
+    const seen = new Set<unknown>();
+    for (const item of props.modelValue) {
+        seen.add(getCellValue(item, column));
+    }
+    return Array.from(seen);
+}
+
+function openColumnFilter(event: MouseEvent, column: string): void {
+    const buttonEl = event.currentTarget as HTMLElement;
+    Application.ApplicationUIService.openDropdownMenu(
+        buttonEl,
+        visibleProperties.value[column] ?? column,
+        ColumnFilterPanelComponent,
+        '18rem',
+        {
+            distinctValues: getDistinctValues(column),
+            activeFilters: columnFilters.value[column] ?? [],
+            columnLabel: visibleProperties.value[column] ?? column,
+            onApply: (selected: unknown[]) => {
+                if (selected.length === 0) {
+                    const updated = { ...columnFilters.value };
+                    delete updated[column];
+                    columnFilters.value = updated;
+                } else {
+                    columnFilters.value = { ...columnFilters.value, [column]: selected };
+                }
+                Application.ApplicationUIService.closeDropdownMenu();
+            },
+            onClear: () => {
+                const updated = { ...columnFilters.value };
+                delete updated[column];
+                columnFilters.value = updated;
+                Application.ApplicationUIService.closeDropdownMenu();
+            },
+        }
+    );
+}
+
+// T245 — Column drag-reorder handlers
+function onDragStart(colKey: string): void {
+    dragSourceKey.value = colKey;
+}
+
+function onDragOver(colKey: string): void {
+    dragOverKey.value = colKey;
+}
+
+function onDragLeave(colKey: string): void {
+    if (dragOverKey.value === colKey) {
+        dragOverKey.value = null;
+    }
+}
+
+function onDrop(colKey: string): void {
+    const source = dragSourceKey.value;
+    if (!source || source === colKey) {
+        dragSourceKey.value = null;
+        dragOverKey.value = null;
+        return;
+    }
+    const order = [...columnOrder.value];
+    const fromIdx = order.indexOf(source);
+    const toIdx = order.indexOf(colKey);
+    if (fromIdx === -1 || toIdx === -1) return;
+    order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, source);
+    columnOrder.value = order;
+    dragSourceKey.value = null;
+    dragOverKey.value = null;
+}
+
 function getColumnStyle(column: string): Record<string, string> | undefined {
     const width = columnWidths.value[column];
     if (!width) return undefined;
@@ -412,6 +517,7 @@ async function handleValidation(): Promise<void> {
 // #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
+    columnOrder.value = Object.keys(visibleProperties.value);
 });
 
 onBeforeUnmount(() => {
@@ -420,11 +526,19 @@ onBeforeUnmount(() => {
     document.removeEventListener('mouseup', onResizeUp);
 });
 
-// FR-034: reset to page 1 when the filtered list length changes (search or modelValue update)
+// FR-034: reset to page 1 when the filtered list length changes (search, column filters, or modelValue update)
 watch(
-    () => filteredData.value.length,
+    () => filteredItems.value.length,
     () => {
         currentPage.value = 1;
+    }
+);
+
+// T245: reset columnOrder when visible properties change (e.g. entity class swap)
+watch(
+    () => visibleProperties.value,
+    (newProps) => {
+        columnOrder.value = Object.keys(newProps);
     }
 );
 // #endregion
@@ -547,6 +661,44 @@ watch(
 
 .col-resize-handle:hover {
     background-color: var(--gray-lighter);
+}
+
+/* T244 — Column filter funnel button */
+.col-filter-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.35;
+    transition: opacity var(--transition-fast) var(--timing-ease),
+                color var(--transition-fast) var(--timing-ease);
+}
+.col-filter-btn span {
+    font-size: var(--font-size-base);
+    color: var(--blue-1);
+}
+.table th:hover .col-filter-btn,
+.col-filter-btn.has-filter {
+    opacity: 1;
+}
+.col-filter-btn.has-filter span {
+    color: var(--lavender);
+}
+
+/* T245 — Column drag-reorder */
+.table th[draggable] {
+    cursor: grab;
+}
+.table th[draggable]:active {
+    cursor: grabbing;
+}
+.table th.drag-over {
+    border-left: 2px solid var(--primary-main);
 }
 
 .table tbody {

@@ -13,6 +13,13 @@
                         @dblclick="autoFitColumn($event, column)"
                     >
                         {{ Application.View.value.entityClass?.getProperties()[column] }}
+                        <button
+                            class="col-filter-btn"
+                            :class="{ 'has-filter': (columnFilters[column]?.length ?? 0) > 0 }"
+                            @click.stop="openColumnFilter($event, column)"
+                        >
+                            <span :class="[GGCLASS]">{{ GGICONS.FILTER_LIST }}</span>
+                        </button>
                         <span class="col-resize-handle" @mousedown.prevent="startResize($event, column)"></span>
                     </td>
                 </tr>
@@ -88,11 +95,15 @@ import { BaseEntity } from '@/entities/base_entity';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import { EnumAdapter } from '@/models/enum_adapter';
 import Application from '@/models/application';
+import ColumnFilterPanelComponent from '@/components/Form/ColumnFilterPanelComponent.vue';
 import type { ConcreteEntityClass } from '@/types/entity.types';
 
 // #region PROPERTIES
 const data: Ref<BaseEntity[]> = ref([]);
 const columnWidths: Ref<Record<string, number>> = ref({});
+
+// T243 — Column filter state (distinct values scoped to current page per I3)
+const columnFilters: Ref<Record<string, unknown[]>> = ref({});
 
 const MIN_COL_WIDTH = 50; // px — equivalent of var(--table-width-very-small)
 let resizeColumn = '';
@@ -109,8 +120,18 @@ const totalFromServer = ref<number>(0);
 /**
  * T217: paginatedRows === data.value because getElementListPaginated already returns
  * the current page's slice from the server. No client-side slicing needed.
+ * T243: further filtered by active columnFilters (current-page values only — I3).
  */
-const paginatedRows = computed<BaseEntity[]>(() => data.value);
+const filteredRows = computed<BaseEntity[]>(() => {
+    const activeFilters = columnFilters.value;
+    const filterKeys = Object.keys(activeFilters).filter(k => activeFilters[k].length > 0);
+    if (filterKeys.length === 0) return data.value;
+    return data.value.filter(item =>
+        filterKeys.every(col => activeFilters[col].includes(getCellValue(item, col)))
+    );
+});
+
+const paginatedRows = computed<BaseEntity[]>(() => filteredRows.value);
 
 const totalPages = computed<number>(() => {
     if (pageSize.value === 'ALL' || totalFromServer.value === 0) return 1;
@@ -224,6 +245,53 @@ function parseEnumValue(key: string): string {
         .split('_')
         .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
         .join(' ');
+}
+
+/**
+ * T243 — Returns distinct display values for a given column from the current page.
+ * ⚠ I3: limited to current page because DetailViewTableComponent uses server-side pagination (T217).
+ */
+function getDistinctValues(column: string): unknown[] {
+    const seen = new Set<unknown>();
+    for (const item of data.value) {
+        seen.add(getCellValue(item, column));
+    }
+    return Array.from(seen);
+}
+
+/**
+ * T243 — Opens the ColumnFilterPanel dropdown for a given column header.
+ */
+function openColumnFilter(event: MouseEvent, column: string): void {
+    const buttonEl = event.currentTarget as HTMLElement;
+    const columnLabel = Application.View.value.entityClass?.getProperties()[column] ?? column;
+    Application.ApplicationUIService.openDropdownMenu(
+        buttonEl,
+        columnLabel,
+        ColumnFilterPanelComponent,
+        '18rem',
+        {
+            distinctValues: getDistinctValues(column),
+            activeFilters: columnFilters.value[column] ?? [],
+            columnLabel,
+            onApply: (selected: unknown[]) => {
+                if (selected.length === 0) {
+                    const updated = { ...columnFilters.value };
+                    delete updated[column];
+                    columnFilters.value = updated;
+                } else {
+                    columnFilters.value = { ...columnFilters.value, [column]: selected };
+                }
+                Application.ApplicationUIService.closeDropdownMenu();
+            },
+            onClear: () => {
+                const updated = { ...columnFilters.value };
+                delete updated[column];
+                columnFilters.value = updated;
+                Application.ApplicationUIService.closeDropdownMenu();
+            },
+        }
+    );
 }
 
 /**
@@ -444,6 +512,33 @@ thead td:hover {
 
 .col-resize-handle:hover {
     background-color: var(--gray-lighter);
+}
+
+/* T243 — Column filter funnel button */
+.col-filter-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.35;
+    transition: opacity var(--transition-fast) var(--timing-ease),
+                color var(--transition-fast) var(--timing-ease);
+}
+.col-filter-btn span {
+    font-size: var(--font-size-base);
+    color: var(--blue-1);
+}
+thead td:hover .col-filter-btn,
+.col-filter-btn.has-filter {
+    opacity: 1;
+}
+.col-filter-btn.has-filter span {
+    color: var(--lavender);
 }
 
 tbody {

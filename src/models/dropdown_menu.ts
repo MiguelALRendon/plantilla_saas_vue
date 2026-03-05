@@ -11,4 +11,5 @@ export interface DropdownMenu {
     activeElementHeight: string;
     canvasWidth: string;
     canvasHeight: string;
+    props?: Record<string, unknown>;
 }
