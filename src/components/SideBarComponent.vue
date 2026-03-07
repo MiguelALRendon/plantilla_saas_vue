@@ -1,15 +1,20 @@
 <template>
     <div :class="['sidebar', { toggled }]">
         <div class="header">
-            <img :src="ICONS.SYSTEM_NAME" class="header-logo" alt="Logo" />
-            <span class="header-name">{{ appName }}</span>
+            <img :src="headerLogo" class="header-logo" :class="{ squared: !toggled }" alt="Logo" />
         </div>
 
         <div class="body">
-            <SideBarItemComponent v-for="module in Application.ModuleList.values()" :module="module" />
+            <SideBarItemComponent
+                v-for="module in Application.ModuleList.values()"
+                :module="module"
+                :collapsed="!toggled"
+                :on-select-module="onSelectModule"
+            />
         </div>
 
         <div class="footer">
+            <span class="app-title">{{ appName }}</span>
             <span class="copyright">&copy; galurensoft</span>
             <span class="version">v{{ appVersion }}</span>
         </div>
@@ -20,6 +25,7 @@
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import Application from '@/models/application';
 import ICONS from '@/constants/icons';
+import { BaseEntity } from '@/entities/base_entity';
 
 export default {
     name: 'SideBarComponent',
@@ -44,6 +50,16 @@ export default {
         },
         appVersion(): string {
             return Application.AppConfiguration.value.appVersion;
+        },
+        headerLogo(): string {
+            return this.toggled
+                ? ICONS.SYSTEM_NAME
+                : (Application.AppConfiguration.value.squared_app_logo_image || ICONS.SQUARED_APP_LOGO);
+        }
+    },
+    methods: {
+        onSelectModule(moduleClass: typeof BaseEntity): void {
+            Application.changeViewToDefaultView(moduleClass);
         }
     },
     // #endregion
@@ -92,9 +108,9 @@ export default {
 
 .sidebar .header {
     height: var(--topbar-height);
-    opacity: 0;
+    opacity: 1;
     max-height: var(--sidebar-header-max-height);
-    padding: 0;
+    padding: var(--spacing-small);
     overflow: hidden;
     border-bottom: var(--border-width-thin) solid var(--border-gray);
     transition: opacity var(--transition-slow) var(--timing-ease),
@@ -110,21 +126,24 @@ export default {
 .sidebar .header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-small);
+    justify-content: center;
+    gap: 0;
 }
 
 .sidebar .header .header-logo {
-    height: calc(var(--topbar-height) * 0.55);
-    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
 }
 
-.sidebar .header .header-name {
-    font-size: var(--font-size-base);
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.sidebar .header .header-logo.squared {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: var(--border-radius);
 }
 
 .sidebar .body {
@@ -161,6 +180,13 @@ export default {
     font-size: var(--font-size-xs);
     color: var(--gray);
     white-space: nowrap;
+}
+
+.sidebar .footer .app-title {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--gray-medium);
+    margin-bottom: var(--spacing-xxs);
 }
 
 /* Desktop standard (1201px–1400px): sidebar slightly reduced to free horizontal space.

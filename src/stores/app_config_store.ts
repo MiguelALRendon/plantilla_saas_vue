@@ -3,6 +3,7 @@ import { ref } from 'vue';
 
 import { Language } from '@/enums/language';
 import type { AppConfiguration } from '@/models/app_configuration';
+import ICONS from '@/constants/icons';
 
 /**
  * Pinia store backing Application.AppConfiguration.
@@ -12,6 +13,7 @@ export const useAppConfigStore = defineStore('appConfig', () => {
     const config = ref<AppConfiguration & { asyncValidationDebounce: number }>({
         appName: (import.meta.env.VITE_APP_NAME as string) || 'My SaaS Application',
         appVersion: (import.meta.env.VITE_APP_VERSION as string) || '1.0.0',
+        squared_app_logo_image: (import.meta.env.VITE_SQUARED_APP_LOGO_IMAGE as string) || ICONS.SQUARED_APP_LOGO,
         apiBaseUrl: (import.meta.env.VITE_API_BASE_URL as string) || 'https://api.my-saas-app.com',
         apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
         apiRetryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,

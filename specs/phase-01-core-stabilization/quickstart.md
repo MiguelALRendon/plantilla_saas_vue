@@ -168,3 +168,33 @@ Production build and preview acceptance checklist:
 5. Open a modal dialog; verify the accept button reads the `common.accept` translation key (e.g. "Aceptar" in Spanish).
 6. Open a modal dialog; verify the close button reads the `common.close` translation key (e.g. "Cerrar" in Spanish).
 7. Switch language to English; verify modal buttons update to "Accept" and "Close" without page reload.
+
+## 15. Table Footer Anchoring Checklist (US12 — T141)
+
+1. Open a module list with enough columns to force horizontal overflow.
+2. Verify table header/body scroll horizontally while pagination/footer remains aligned to container width.
+3. Resize viewport to tablet/mobile widths and confirm footer controls remain inside container bounds.
+4. Verify footer controls do not split to opposite extremes of content width in any breakpoint.
+5. Confirm previous/next/page-size interactions still work after layout refactor.
+
+## 16. Dirty-Guard Cross-Entrypoint Timing Checklist (US13 — T146)
+
+1. Modify a persistent entity in detail view to produce dirty state.
+2. Navigate using sidebar module item and accept dirty confirmation; verify view change and action buttons update consistently.
+3. Repeat from profile menu -> Configuration action and accept dirty confirmation; verify same timing/order as sidebar flow.
+4. Repeat from configuration action fallback path and verify no delayed button refresh compared to sidebar flow.
+5. Confirm no entrypoint bypasses dirty confirmation when unsaved changes exist.
+
+## 17. Sidebar Branding Checklist (US14 — T153)
+
+1. With expanded sidebar, verify header displays only logo image (no title text).
+2. Verify footer displays app title first, then `© galurensoft`, then version.
+3. Collapse sidebar and verify module labels are hidden (icon-only entries).
+4. In collapsed mode, verify each module item has compact padding and rounded borders.
+5. Verify collapsed header uses `squared_app_logo_image` and renders with 1:1 ratio.
+
+## 18. Clarification Set Smoke Completion Log (US12-US14)
+
+- US12: Footer anchoring implementation completed; pagination/footer now outside scroll region in both array and detail tables.
+- US13: Navigation orchestration centralized through dirty-guard pipeline and shared transition timing.
+- US14: Sidebar expanded/collapsed branding behavior implemented with icon-only collapsed mode and square-logo switching.

@@ -55,6 +55,7 @@
             "fields": {
                 "app_name": { "en": "App Name", "es": "Nombre de la aplicación", "jp": "アプリ名" },
                 "app_version": { "en": "App Version", "es": "Versión de la aplicación", "jp": "アプリバージョン" },
+                "squared_app_logo_image": { "en": "Squared App Logo Image", "es": "Imagen de logo cuadrado", "jp": "正方形アプリロゴ画像" },
                 "api_base_url": { "en": "API Base URL", "es": "URL base del API", "jp": "APIベースURL" },
                 "api_timeout": { "en": "API Timeout", "es": "Tiempo de espera del API", "jp": "APIタイムアウト" },
                 "api_retry_attempts": { "en": "API Retry Attempts", "es": "Reintentos del API", "jp": "API再試行回数" },

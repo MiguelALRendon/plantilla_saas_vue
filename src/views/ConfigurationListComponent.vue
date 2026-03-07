@@ -9,11 +9,21 @@ import Application from '@/models/application';
 import { Configuration } from '@/entities/configuration';
 import { GetLanguagedText } from '@/helpers/language_helper';
 
+interface Props {
+    onOpenConfiguration?: () => void;
+}
+
+const props = defineProps<Props>();
+
 function t(path: string): string {
     return GetLanguagedText(path);
 }
 
 function openConfigurationDetail(): void {
+    if (props.onOpenConfiguration) {
+        props.onOpenConfiguration();
+        return;
+    }
     Application.ApplicationUIService.closeDropdownMenu();
     const configuration = Configuration.fromAppConfiguration(Application.getConfigurationSnapshot());
     Application.changeViewToDetailView(configuration);

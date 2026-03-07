@@ -14,6 +14,9 @@ import rolpermissionsIcon from '@/assets/icons/rolpermissions.png';
 import chevronIcon from '@/assets/icons/chevron.png';
 import systemNameIcon from '@/assets/icons/system_name.png';
 
+// Fallback until a dedicated squared asset is provided in src/assets/icons.
+const squaredAppLogoIcon = systemNameIcon;
+
 export const ICONS = {
     HOME: homeIcon,
     INVENTORY: inventoryIcon,
@@ -29,7 +32,8 @@ export const ICONS = {
     PROVIDER: providerIcon,
     ROLPERMISSIONS: rolpermissionsIcon,
     CHEVRON: chevronIcon,
-    SYSTEM_NAME: systemNameIcon
+    SYSTEM_NAME: systemNameIcon,
+    SQUARED_APP_LOGO: squaredAppLogoIcon
 };
 
 export default ICONS;

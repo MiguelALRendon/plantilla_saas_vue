@@ -103,41 +103,38 @@
                         </td>
                     </tr>
                 </tbody>
-                <tfoot>
-                    <tr>
-                        <td class="pagination-td" :colspan="columnOrder.length + 1">
-                            <div class="pagination-bar">
-                                <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
-                                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-                                </select>
-                                <div class="pagination-nav">
-                                    <button
-                                        class="page-btn"
-                                        :disabled="currentPage === 1 || pageSize === 'ALL'"
-                                        @click="prevPage"
-                                        :title="t('common.previous_page')"
-                                    >&#8249;</button>
-                                    <button
-                                        v-for="page in visiblePages"
-                                        :key="page"
-                                        class="page-btn"
-                                        :class="{ active: page === currentPage }"
-                                        :disabled="pageSize === 'ALL'"
-                                        @click="goToPage(page)"
-                                    >{{ page }}</button>
-                                    <button
-                                        class="page-btn"
-                                        :disabled="currentPage === totalPages || pageSize === 'ALL'"
-                                        @click="nextPage"
-                                        :title="t('common.next_page')"
-                                    >&#8250;</button>
-                                </div>
-                                <span class="pagination-info">{{ paginationInfo }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
+        </div>
+
+        <div class="table-footer">
+            <div class="pagination-bar">
+                <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
+                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                </select>
+                <div class="pagination-nav">
+                    <button
+                        class="page-btn"
+                        :disabled="currentPage === 1 || pageSize === 'ALL'"
+                        @click="prevPage"
+                        :title="t('common.previous_page')"
+                    >&#8249;</button>
+                    <button
+                        v-for="page in visiblePages"
+                        :key="page"
+                        class="page-btn"
+                        :class="{ active: page === currentPage }"
+                        :disabled="pageSize === 'ALL'"
+                        @click="goToPage(page)"
+                    >{{ page }}</button>
+                    <button
+                        class="page-btn"
+                        :disabled="currentPage === totalPages || pageSize === 'ALL'"
+                        @click="nextPage"
+                        :title="t('common.next_page')"
+                    >&#8250;</button>
+                </div>
+                <span class="pagination-info">{{ paginationInfo }}</span>
+            </div>
         </div>
     </div>
 </template>
@@ -658,8 +655,18 @@ watch(
     width: 100%;
     min-width: 0;
     background-color: var(--white);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
     box-shadow: var(--shadow-light);
+    overscroll-behavior: contain;
+}
+
+.table-footer {
+    width: 100%;
+    background-color: var(--white);
+    border-top: var(--border-width-thin) solid var(--gray-lighter);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
 }
 
 .table-container .table-header-row {
@@ -823,31 +830,8 @@ watch(
     flex: 1; /* fill remaining space between thead and tfoot */
 }
 
-.table tfoot {
-    display: block;
-    width: 100%;
-    position: sticky;
-    bottom: 0;
-    background-color: var(--white);
-    z-index: var(--z-base);
-    border-top: var(--border-width-thin) solid var(--gray-lighter);
-    height: auto;
-}
-
-.tfoot-add-cell {
-    display: flex;
-    align-items: center;
-    padding: var(--spacing-sm);
-    flex: 1;
-}
-
-.tfoot-add-btn {
-    flex-shrink: 0;
-}
-
 .table thead tr,
-.table tbody tr,
-.table tfoot tr {
+.table tbody tr {
     display: flex;
     min-width: 100%;
 }

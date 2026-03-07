@@ -10,6 +10,15 @@ Stabilize the framework core to deliver a production-ready first functional vers
 
 This phase prioritizes predictability and operational robustness over adding new features.
 
+## Clarifications
+
+### Session 2026-03-07
+
+- Q: Should all navigation entry points share one dirty-guard transition pipeline? → A: Yes. All navigations must use a single centralized dirty-guard navigation method.
+- Q: How should table pagination/footer behave in wide/long tables? → A: Footer/pagination stays pinned to the visible container; only table header/body scroll.
+- Q: How should sidebar expanded layout be structured? → A: Header logo-only, modules in body, and footer with app title above @galurensoft + version.
+- Q: How should collapsed sidebar behave for text and logo? → A: No visible text, icon-only items with mini-padding and rounded borders, and use squared app logo in 1:1 ratio.
+
 ## 2. Scope
 
 In scope:
@@ -54,6 +63,10 @@ then startup, routing, API integration, and error handling work without contract
 5. Validation flow MUST run required and sync validations before async validation.
 6. Core module registration MUST produce deterministic sidebar and routing behavior.
 7. Production configuration MUST support environment-based API base URL.
+8. All navigation entry points (sidebar, profile menu, configuration actions, and programmatic redirects) MUST use a single centralized dirty-guard transition pipeline with identical state and timing behavior.
+9. Table pagination/footer MUST remain anchored to the visible table container and MUST NOT expand to full table content width; only table header/body regions may scroll.
+10. Sidebar expanded layout MUST use three regions: header (logo-only), body (module navigation), and footer (application title above copyright and app version).
+11. Sidebar collapsed layout MUST hide all module text labels, render module entries as icon-only controls with reduced padding and rounded borders, and switch header branding to a dedicated `squared_app_logo_image` system variable rendered at a constant 1:1 ratio.
 
 ## 5. Non-Functional Requirements
 
@@ -97,6 +110,10 @@ then startup, routing, API integration, and error handling work without contract
 3. Home module and cleanup: covered by `T025-T029`, `T051`.
 4. NotRequiresLogin and technical debt: covered by `T049-T053`.
 5. Production and smoke closure: covered by `T047-T048`, `T055`, `T058-T060`.
+6. Clarification FR8 (unified dirty-guard navigation): covered by `T146-T152`.
+7. Clarification FR9 (container-anchored table footer): covered by `T141-T145`.
+8. Clarification FR10-FR11 (sidebar expanded/collapsed branding): covered by `T153-T160`.
+9. Clarification-set polish and contract sync: covered by `T161-T164`.
 
 ## 11. Architectural Decisions (Phase 2 Additions)
 

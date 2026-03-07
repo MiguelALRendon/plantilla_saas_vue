@@ -26,50 +26,54 @@ export class Configuration extends BaseEntity {
     appVersion!: string;
 
     @PropertyIndex(3)
+    @PropertyName('common.framework.configuration.fields.squared_app_logo_image', String)
+    squared_app_logo_image!: string;
+
+    @PropertyIndex(4)
     @PropertyName('common.framework.configuration.fields.api_base_url', String)
     apiBaseUrl!: string;
 
-    @PropertyIndex(4)
+    @PropertyIndex(5)
     @PropertyName('common.framework.configuration.fields.api_timeout', Number)
     apiTimeout!: number;
 
-    @PropertyIndex(5)
+    @PropertyIndex(6)
     @PropertyName('common.framework.configuration.fields.api_retry_attempts', Number)
     apiRetryAttempts!: number;
 
-    @PropertyIndex(6)
+    @PropertyIndex(7)
     @PropertyName('common.framework.configuration.fields.environment', String)
     environment!: string;
 
-    @PropertyIndex(7)
+    @PropertyIndex(8)
     @PropertyName('common.framework.configuration.fields.log_level', String)
     logLevel!: string;
 
-    @PropertyIndex(8)
+    @PropertyIndex(9)
     @PropertyName('common.framework.configuration.fields.auth_token_key', String)
     authTokenKey!: string;
 
-    @PropertyIndex(9)
+    @PropertyIndex(10)
     @PropertyName('common.framework.configuration.fields.auth_refresh_token_key', String)
     authRefreshTokenKey!: string;
 
-    @PropertyIndex(10)
+    @PropertyIndex(11)
     @PropertyName('common.framework.configuration.fields.session_timeout', Number)
     sessionTimeout!: number;
 
-    @PropertyIndex(11)
+    @PropertyIndex(12)
     @PropertyName('common.framework.configuration.fields.items_per_page', Number)
     itemsPerPage!: number;
 
-    @PropertyIndex(12)
+    @PropertyIndex(13)
     @PropertyName('common.framework.configuration.fields.max_file_size', Number)
     maxFileSize!: number;
 
-    @PropertyIndex(13)
+    @PropertyIndex(14)
     @PropertyName('common.framework.configuration.fields.dark_mode', Boolean)
     isDarkMode!: boolean;
 
-    @PropertyIndex(14)
+    @PropertyIndex(15)
     @PropertyName('common.framework.configuration.fields.selected_language', Language)
     selectedLanguage!: Language;
 
@@ -85,6 +89,7 @@ export class Configuration extends BaseEntity {
         return {
             appName: String(this.appName ?? ''),
             appVersion: String(this.appVersion ?? ''),
+            squared_app_logo_image: String(this.squared_app_logo_image ?? ''),
             apiBaseUrl: String(this.apiBaseUrl ?? ''),
             apiTimeout: Number(this.apiTimeout ?? 0),
             apiRetryAttempts: Number(this.apiRetryAttempts ?? 0),

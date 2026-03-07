@@ -30,6 +30,7 @@ import ICONS from '@/constants/icons';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import configurationListComponent from '@/views/ConfigurationListComponent.vue';
+import { Configuration } from '@/entities/configuration';
 
 export default {
     name: 'TopBarComponent',
@@ -50,8 +51,17 @@ export default {
             Application.ApplicationUIService.openDropdownMenu(
                 button,
                 GetLanguagedText('common.profile'),
-                configurationListComponent
+                configurationListComponent,
+                undefined,
+                {
+                    onOpenConfiguration: this.openConfigurationDetailFromProfile
+                }
             );
+        },
+        openConfigurationDetailFromProfile(): void {
+            Application.ApplicationUIService.closeDropdownMenu();
+            const configuration = Configuration.fromAppConfiguration(Application.getConfigurationSnapshot());
+            Application.changeViewToDetailView(configuration);
         }
     },
     // #endregion

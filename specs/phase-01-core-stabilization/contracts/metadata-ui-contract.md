@@ -16,6 +16,8 @@ Ensure list/detail UI behavior remains a deterministic function of decorators me
 1. Properties without display metadata are excluded from generated UI.
 2. Grouping and ordering logic must follow metadata ordering contracts.
 3. Conditional disabled/readonly behavior must evaluate from decorator contracts only.
+4. Table pagination/footer controls must remain anchored to the visible container width, while only header/body regions may scroll.
+5. Sidebar expanded layout must preserve header/body/footer region semantics; collapsed layout must hide labels and remain icon-only.
 
 ## Anti-Patterns (Prohibited)
 
@@ -29,3 +31,4 @@ Ensure list/detail UI behavior remains a deterministic function of decorators me
 2. Invalid `@OnViewFunction` placement (class/property) is ignored as no-op.
 3. Action callbacks execute bound to the active entity instance.
 4. Login exemption is represented as metadata (`@NotRequiresLogin`) and resolved through `isNotRequiresLogin()`.
+5. Collapsed sidebar header branding uses a dedicated `squared_app_logo_image` configuration value rendered with fixed 1:1 ratio.

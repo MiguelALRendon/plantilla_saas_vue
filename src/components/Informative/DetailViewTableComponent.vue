@@ -2,8 +2,9 @@
     <!-- .table-wrapper is the SINGLE scroll container for both header and body.
          This ensures the sticky header always aligns with the scrolling body columns. -->
     <div class="table-wrapper">
-        <table>
-            <thead>
+        <div class="table-scroll-area">
+            <table>
+                <thead>
                 <tr>
                     <td
                         v-for="column in getVisibleColumns()"
@@ -30,9 +31,9 @@
                         <span class="col-resize-handle" @mousedown.prevent="startResize($event, column)"></span>
                     </td>
                 </tr>
-            </thead>
+                </thead>
 
-            <tbody>
+                <tbody>
                 <tr v-for="item in paginatedRows" :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')" @click="openDetailView(item)">
                     <template v-for="column in getVisibleColumns(item)" :key="column">
                         <td
@@ -54,43 +55,40 @@
                         </td>
                     </template>
                 </tr>
-            </tbody>
+                </tbody>
+            </table>
+        </div>
 
-            <tfoot>
-                <tr>
-                    <td class="pagination-td">
-                        <div class="pagination-bar">
-                            <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
-                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-                            </select>
-                            <div class="pagination-nav">
-                                <button
-                                    class="page-btn"
-                                    :disabled="currentPage === 1 || pageSize === 'ALL'"
-                                    @click="prevPage"
-                                    :title="t('common.previous_page')"
-                                >&#8249;</button>
-                                <button
-                                    v-for="page in visiblePages"
-                                    :key="page"
-                                    class="page-btn"
-                                    :class="{ active: page === currentPage }"
-                                    :disabled="pageSize === 'ALL'"
-                                    @click="goToPage(page)"
-                                >{{ page }}</button>
-                                <button
-                                    class="page-btn"
-                                    :disabled="currentPage === totalPages || pageSize === 'ALL'"
-                                    @click="nextPage"
-                                    :title="t('common.next_page')"
-                                >&#8250;</button>
-                            </div>
-                            <span class="pagination-info">{{ paginationInfo }}</span>
-                        </div>
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
+        <div class="table-footer">
+            <div class="pagination-bar">
+                <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
+                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                </select>
+                <div class="pagination-nav">
+                    <button
+                        class="page-btn"
+                        :disabled="currentPage === 1 || pageSize === 'ALL'"
+                        @click="prevPage"
+                        :title="t('common.previous_page')"
+                    >&#8249;</button>
+                    <button
+                        v-for="page in visiblePages"
+                        :key="page"
+                        class="page-btn"
+                        :class="{ active: page === currentPage }"
+                        :disabled="pageSize === 'ALL'"
+                        @click="goToPage(page)"
+                    >{{ page }}</button>
+                    <button
+                        class="page-btn"
+                        :disabled="currentPage === totalPages || pageSize === 'ALL'"
+                        @click="nextPage"
+                        :title="t('common.next_page')"
+                    >&#8250;</button>
+                </div>
+                <span class="pagination-info">{{ paginationInfo }}</span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -532,7 +530,17 @@ onBeforeUnmount((): void => {
     background-color: var(--white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
-    overflow: auto; /* single scroll context — both axes */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-scroll-area {
+    flex: 1;
+    overflow: auto;
+    width: 100%;
+    min-width: 0;
+    overscroll-behavior: contain;
 }
 
 table {
@@ -660,23 +668,10 @@ tbody tr {
     min-width: 100%; /* at least fills wrapper width; cells' min-widths can push it wider */
 }
 
-tfoot {
-    display: block;
+.table-footer {
     width: 100%;
-    position: sticky;
-    bottom: 0;
+    border-top: var(--border-width-thin) solid var(--gray-lighter);
     background-color: var(--white);
-    z-index: var(--z-base);
-}
-
-tfoot tr {
-    display: flex;
-    min-width: 100%;
-}
-
-.pagination-td {
-    flex: 1;
-    padding: 0;
 }
 
 .pagination-bar {

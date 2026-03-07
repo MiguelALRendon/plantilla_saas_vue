@@ -8,6 +8,7 @@ import mitt, { Emitter } from 'mitt';
 
 import { useAppConfigStore, useUiStore, useViewStore } from '@/stores';
 import { DefaultButtonLists } from '@/constants/default_button_lists';
+import ICONS from '@/constants/icons';
 import GenericButtonComponent from '@/components/Buttons/GenericButtonComponent.vue';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
@@ -134,6 +135,7 @@ class ApplicationClass implements ApplicationUIContext {
         this.AppConfiguration = ref<AppConfiguration>({
             appName: (import.meta.env.VITE_APP_NAME as string) || 'My SaaS Application',
             appVersion: (import.meta.env.VITE_APP_VERSION as string) || '1.0.0',
+            squared_app_logo_image: (import.meta.env.VITE_SQUARED_APP_LOGO_IMAGE as string) || ICONS.SQUARED_APP_LOGO,
             apiBaseUrl: (import.meta.env.VITE_API_BASE_URL as string) || 'https://api.my-saas-app.com',
             apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
             apiRetryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
@@ -360,20 +362,58 @@ class ApplicationClass implements ApplicationUIContext {
         viewType: ViewTypes,
         entity: BaseEntity | null = null
     ) => {
-        if (this.View.value.entityObject?.isPersistent() && this.View.value.entityObject.getDirtyState()) {
+        this.navigateWithDirtyGuard(entityClass, component, viewType, entity);
+    };
+
+    /**
+     * True when current detail entity is persistent and has unsaved changes.
+     */
+    private hasDirtyPersistentEntity(): boolean {
+        return Boolean(this.View.value.entityObject?.isPersistent() && this.View.value.entityObject.getDirtyState());
+    }
+
+    /**
+     * Canonical transition sequence for all view navigations.
+     * Keeps timer/state ordering consistent across every entrypoint.
+     */
+    private executeViewTransition = async (
+        entityClass: typeof BaseEntity,
+        component: Component,
+        viewType: ViewTypes,
+        entity: BaseEntity | null = null
+    ): Promise<void> => {
+        // Keep legacy button-delay value but start waiting immediately so
+        // dirty-confirmed navigations do not accumulate transition + button delays.
+        const buttonRefreshDelay = ApplicationClass.wait(ApplicationClass.BUTTON_UPDATE_DELAY_MS);
+        await this.setViewChanges(entityClass, component, viewType, entity);
+        await buttonRefreshDelay;
+        this.setButtonList();
+    };
+
+    /**
+     * Centralized dirty-guarded navigation entrypoint.
+     */
+    navigateWithDirtyGuard = (
+        entityClass: typeof BaseEntity,
+        component: Component,
+        viewType: ViewTypes,
+        entity: BaseEntity | null = null
+    ): void => {
+        const continueNavigation = (): void => {
+            void this.executeViewTransition(entityClass, component, viewType, entity);
+        };
+
+        if (this.hasDirtyPersistentEntity()) {
             this.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
                 GetLanguagedText('common.exit_without_saving'),
                 GetLanguagedText('common.unsaved_changes_confirm'),
-                () => {
-                    this.setViewChanges(entityClass, component, viewType, entity).then(() => {
-                        setTimeout(() => this.setButtonList(), ApplicationClass.BUTTON_UPDATE_DELAY_MS);
-                    });
-                }
+                continueNavigation
             );
             return;
         }
-        this.setViewChanges(entityClass, component, viewType, entity);
+
+        continueNavigation();
     };
 
     /**
@@ -480,10 +520,7 @@ class ApplicationClass implements ApplicationUIContext {
      * @param entityClass The entity class whose default view to display
      */
     changeViewToDefaultView = (entityClass: typeof BaseEntity) => {
-        this.changeView(entityClass, entityClass.getModuleDefaultComponent(), ViewTypes.DEFAULTVIEW);
-        setTimeout(() => {
-            this.setButtonList();
-        }, ApplicationClass.BUTTON_UPDATE_DELAY_MS);
+        this.navigateWithDirtyGuard(entityClass, entityClass.getModuleDefaultComponent(), ViewTypes.DEFAULTVIEW);
     };
 
     /**
@@ -492,10 +529,7 @@ class ApplicationClass implements ApplicationUIContext {
      * @param entityClass The entity class whose list view to display
      */
     changeViewToListView = (entityClass: typeof BaseEntity) => {
-        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW, null);
-        setTimeout(() => {
-            this.setButtonList();
-        }, ApplicationClass.BUTTON_UPDATE_DELAY_MS);
+        this.navigateWithDirtyGuard(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW, null);
     };
 
     /**
@@ -505,10 +539,7 @@ class ApplicationClass implements ApplicationUIContext {
      */
     changeViewToDetailView = <T extends BaseEntity>(entity: T): void => {
         const entityClass: typeof BaseEntity = entity.constructor as typeof BaseEntity;
-        this.changeView(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
-        setTimeout((): void => {
-            this.setButtonList();
-        }, ApplicationClass.BUTTON_UPDATE_DELAY_MS);
+        this.navigateWithDirtyGuard(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
     };
 
     /**
@@ -673,6 +704,7 @@ class ApplicationClass implements ApplicationUIContext {
             this.applyConfigurationSnapshot({
                 ...this.AppConfiguration.value,
                 ...parsed,
+                squared_app_logo_image: String(parsed.squared_app_logo_image ?? this.AppConfiguration.value.squared_app_logo_image),
                 selectedLanguage: Number(parsed.selectedLanguage ?? this.AppConfiguration.value.selectedLanguage) as Language,
                 isDarkMode: Boolean(parsed.isDarkMode ?? this.AppConfiguration.value.isDarkMode),
             });

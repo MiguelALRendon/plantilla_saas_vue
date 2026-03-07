@@ -587,3 +587,109 @@ T106 delete mixins/
 ## Phase 2 MVP Scope
 
 Suggested Phase 2 MVP: **US5 (Pinia) + US6 (Component Fixes)**. These deliver the highest value with lowest risk and unblock further testing infrastructure.
+
+---
+
+## Phase 20: User Story 12 - Container-Anchored Table Footer and Pagination (Priority: P1)
+
+**Goal**: Keep table pagination/footer anchored to the visible container while allowing horizontal/vertical scroll only in header/body regions for long and wide datasets.
+
+**Independent Test**: With a wide table and horizontal overflow, footer controls remain inside container bounds and do not split to table extremes; scrolling affects only header/body content.
+
+### Tests and Smoke Checks for User Story 12
+
+- [X] T141 [P] [US12] Add regression smoke steps for footer/pagination container anchoring on wide and long tables in `specs/phase-01-core-stabilization/quickstart.md`
+
+### Implementation for User Story 12
+
+- [X] T142 [US12] Refactor table layout into fixed footer region plus scrollable header/body wrapper in `src/components/Form/ArrayInputComponent.vue`
+- [X] T143 [US12] Update table CSS so pagination/footer width follows container width instead of total table content width in `src/components/Form/ArrayInputComponent.vue`
+- [X] T144 [P] [US12] Add sticky/overflow guards so horizontal scroll applies only to data region and not footer controls in `src/components/Form/ArrayInputComponent.vue`
+- [X] T145 [US12] Align pagination container behavior with list table implementation and prevent footer clipping on resize in `src/components/Informative/DetailViewTableComponent.vue`
+
+**Checkpoint**: US12 complete with stable container-pinned table footer behavior.
+
+---
+
+## Phase 21: User Story 13 - Unified Dirty-Guard Navigation Pipeline (Priority: P1)
+
+**Goal**: Enforce a single centralized dirty-guard navigation pipeline for all entry points (sidebar, profile menu, configuration actions, and programmatic redirects) with identical timing/state transitions.
+
+**Independent Test**: Trigger dirty confirmation and accept navigation from sidebar, profile menu, and configuration action; all paths change view and button states with identical timing and no lag divergence.
+
+### Tests and Smoke Checks for User Story 13
+
+- [X] T146 [P] [US13] Add cross-entrypoint dirty-guard timing regression checklist (sidebar/profile/config) in `specs/phase-01-core-stabilization/quickstart.md`
+
+### Implementation for User Story 13
+
+- [X] T147 [US13] Implement centralized `navigateWithDirtyGuard(...)` orchestration method in `src/models/application.ts`
+- [X] T148 [US13] Route sidebar navigation calls through centralized dirty-guard orchestration in `src/components/SideBarComponent.vue`
+- [X] T149 [US13] Route profile-menu navigation actions through centralized dirty-guard orchestration in `src/components/TopBarComponent.vue`
+- [X] T150 [US13] Route configuration entry navigation through centralized dirty-guard orchestration in `src/views/ConfigurationListComponent.vue`
+- [X] T151 [US13] Normalize post-confirmation state/timer order in one place using existing constants in `src/models/application.ts`
+- [X] T152 [US13] Remove duplicated per-component dirty-check branches after centralization in `src/components/SideBarComponent.vue`
+
+**Checkpoint**: US13 complete with deterministic dirty-guard navigation behavior regardless of source entrypoint.
+
+---
+
+## Phase 22: User Story 14 - Sidebar Branding Layout and Collapsed Icon-Only Mode (Priority: P2)
+
+**Goal**: Enforce sidebar regions (header logo-only, body modules, footer title + brand/version) and collapsed icon-only behavior using a dedicated `squared_app_logo_image` system variable rendered at 1:1 ratio.
+
+**Independent Test**: Expanded sidebar shows logo-only header, module list in body, and footer with app title above `@galurensoft` + version; collapsed sidebar hides text, shows rounded compact icon-only items, and switches to square logo at fixed 1:1 ratio.
+
+### Tests and Smoke Checks for User Story 14
+
+- [X] T153 [P] [US14] Add expanded/collapsed sidebar branding checklist with visual acceptance criteria in `specs/phase-01-core-stabilization/quickstart.md`
+
+### Implementation for User Story 14
+
+- [X] T154 [US14] Add `squared_app_logo_image` to app configuration model contract and defaults in `src/models/app_configuration.ts`
+- [X] T155 [US14] Initialize and persist `squared_app_logo_image` in configuration bootstrap/load flow in `src/models/application.ts`
+- [X] T156 [P] [US14] Add squared app logo asset constant and exports for sidebar usage in `src/constants/icons.ts`
+- [X] T157 [US14] Refactor sidebar layout into explicit header/body/footer regions per clarified structure in `src/components/SideBarComponent.vue`
+- [X] T158 [US14] Implement collapsed-header logo switch to squared image with enforced `aspect-ratio: 1 / 1` in `src/components/SideBarComponent.vue`
+- [X] T159 [US14] Hide module labels and render compact rounded icon-only state when sidebar is collapsed in `src/components/SideBarItemComponent.vue`
+- [X] T160 [US14] Add responsive/sidebar style safeguards for collapsed spacing and clipping prevention in `src/css/main.css`
+
+**Checkpoint**: US14 complete with deterministic expanded/collapsed sidebar branding and layout behavior.
+
+---
+
+## Phase 23: Polish and Cross-Cutting Concerns (Clarification Set 2026-03-07)
+
+- [X] T161 [P] Update traceability notes for FR8-FR11 clarifications in `specs/phase-01-core-stabilization/spec.md`
+- [X] T162 [P] Update orchestration contract with centralized dirty-guard pipeline invariants in `specs/phase-01-core-stabilization/contracts/application-orchestration-contract.md`
+- [X] T163 [P] Add table-footer anchoring and sidebar branding guarantees to UI contract in `specs/phase-01-core-stabilization/contracts/metadata-ui-contract.md`
+- [X] T164 Execute end-to-end smoke pass for US12-US14 and record outcomes in `specs/phase-01-core-stabilization/quickstart.md`
+
+---
+
+## Clarification Set Dependencies (US12-US14)
+
+- **Phase 20 (US12)**: Independent from prior phase features except table/list components and shared CSS tokens.
+- **Phase 21 (US13)**: Depends on existing `Application` orchestration and must precede final smoke validation.
+- **Phase 22 (US14)**: Depends on sidebar component baseline (`US6`) and configuration bootstrap (`US2`, `US5`).
+- **Phase 23 (Polish)**: Depends on Phases 20-22 completion.
+
+## Clarification Set Parallel Opportunities
+
+```bash
+# US12
+T141 quickstart smoke checklist
+T144 overflow guard styles
+
+# US13
+T146 dirty-guard timing smoke checklist
+T149 profile-menu navigation routing
+
+# US14
+T153 sidebar branding checklist
+T156 squared logo constants
+```
+
+## Clarification Set MVP Scope
+
+Suggested MVP for this clarification set: **US13 first**, then **US12**, then **US14**.

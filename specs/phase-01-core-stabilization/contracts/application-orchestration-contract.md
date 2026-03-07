@@ -16,6 +16,8 @@ Define stable orchestration behavior for module registration, view transitions, 
 1. Registered module -> list/default/detail views remain reachable by canonical routes.
 2. View changes must update `Application.View` before rendering dependent components.
 3. When dirty-state protection triggers, confirmation flow must resolve before route/view switch.
+4. All navigation entrypoints (sidebar, profile dropdown actions, configuration actions, and programmatic view redirects) must delegate to a single dirty-guard orchestration path.
+5. Post-confirmation transition ordering is canonical: loading start -> view transition -> router sync -> loading end -> button-list refresh.
 
 ## Error Handling
 
