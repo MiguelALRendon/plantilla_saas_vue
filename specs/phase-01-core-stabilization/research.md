@@ -96,3 +96,101 @@ Phase 1 design can proceed directly to data model, contracts, and quickstart art
 3. Configuration management moved into `Configuration` entity with local persistence path.
 4. Startup modules include `Home` and no longer include legacy `Customer`.
 5. Remaining work should focus on dedicated login phase behavior and automation depth.
+
+---
+
+## Phase 2 Post-Analysis Technical Debts
+
+Added after Phase 01 post-mortem analysis (2026-03-06). All items are formally tracked as open debts.
+
+### TD-01: Platform Clarification — CSR-First Architecture
+
+**Status**: RESOLVED (clarification only)
+
+This framework is a **CSR-first (Client-Side Rendering)** SaaS template. Although some utilities may be compatible with SSR environments, the architecture is not designed for SSR and the majority of its patterns (singleton, `window` access, `localStorage`, reactive refs) assume a browser context. No SSR support is planned. Any future SSR work would require a dedicated phase.
+
+### TD-02: Authentication Flow
+
+**Status**: OPEN — Technical Debt
+
+The current authentication implementation has the following known issues:
+1. JWT access token stored in `localStorage` — vulnerable to XSS (OWASP A07).
+2. No refresh token rotation on 401 — token revocation requires manual logout.
+3. `logout()` in `TopBarComponent` was a stub (`console.log`), addressed in Phase 2 (T099).
+4. When 401 is received, refresh token (`authRefreshTokenKey`) is not cleared alongside the access token.
+
+**Remediation scope**: Dedicated auth phase. Options include: HttpOnly cookie strategy (requires backend coordination), in-memory token with refresh cycle, or short-lived JWT with sliding refresh.
+
+Cross-references: T099 (logout fix in Phase 2), T052 (login guard tech debt from Phase 1).
+
+### TD-03: Automated Testing — Zero Coverage Baseline
+
+**Status**: OPEN — Technical Debt
+
+The project has a zero automated-test baseline. No unit, integration, or E2E tests exist. This means:
+1. Decorator metadata extraction regressions are undetected.
+2. Validator logic is not verified for edge cases.
+3. Application state machine transitions have no regression harness.
+4. Form rendering correctness depends entirely on manual smoke checks.
+
+**Remediation scope**: Adopt Vitest (native Vite integration). Priority coverage: `BaseEntity` static methods, `common_validators.ts`, Pinia stores (after US5), `useInputMetadata.ts`.
+
+### TD-04: @NotRequiresLogin Router Guard Integration
+
+**Status**: OPEN — Technical Debt
+
+`@NotRequiresLogin()` decorator is implemented as metadata-only (T049–T053). The `router/index.ts` guard does NOT consume `isNotRequiresLogin()` for auth enforcement. Until this is wired, the decorator has no runtime effect on routing.
+
+**Remediation scope**: Dedicated login/auth phase. The guard implementation requires a concrete auth session service to check against.
+
+Cross-references: T052, T053 (Phase 1 debt markers), T109 (Phase 2 debt marker).
+
+### TD-05: Field-Level and Action-Level Permission System
+
+**Status**: OPEN — Technical Debt
+
+`@ModulePermission` decorator exists and is stored in metadata, but no runtime permission enforcement is implemented in:
+- Column rendering (should hide/disable columns based on user role)
+- Action buttons (should suppress buttons not permitted for current user)
+- Detail form fields (should disable fields the user cannot edit)
+
+**Remediation scope**: Depends on auth phase being complete (requires a user session with role information). Design should use `Application.ApplicationUIService` to inject permission context.
+
+### TD-06: Breadcrumb Navigation — Explicitly Not Required
+
+**Status**: CLOSED — Architectural Decision
+
+Breadcrumb navigation was evaluated and **explicitly decided to not be required** for this system. The current `TopBarComponent` showing module name + icon is sufficient for navigation context. This decision is final for the current scope and should be re-evaluated only if multi-level entity hierarchies are introduced.
+
+---
+
+### TD-07: Async Validation Debounce — Evaluation Deferred
+
+**Status**: OPEN — Technical Debt
+
+The debounce wrapper in `useInputMetadata.ts` (T131) is implemented: `isAsyncValidation(propertyKey)` calls are delayed by `Application.AppConfiguration.value.asyncValidationDebounce` ms (default 300 ms, configurable via `VITE_ASYNC_VALIDATION_DEBOUNCE`). However, correctness verification requires at least one entity property carrying a real `@AsyncValidation` decorator wired to an external or mock endpoint.
+
+Until such a scenario is available in the project, the feature is functionally untestable against observable behaviour. The current `product.ts` has the commented-out `AsyncValidators` import but no active `@AsyncValidation` usage.
+
+**Remediation scope**: Add a local mock async validator to `product.ts` (e.g. on the `email` field simulating a duplicate-check) and document the debounce smoke-test steps in `quickstart.md`.
+
+Cross-references: T129–T131 (debounce implementation in Phase 15), T023 / T081 (decorator + BaseEntity accessor).
+
+---
+
+## Phase 2 Implementation Summary (T081–T133)
+
+**Completed**: All 53 tasks across Phases 8–16 implemented.
+
+### Key decisions made during implementation
+
+| Area | Decision |
+|------|----------|
+| Pinia bootstrap timing | `setActivePinia(createPinia())` called before `Application.initializeApplication()` in `main.ts` so stores are usable before the Vue app mounts. |
+| ApplicationClass public API | `Application.AppConfiguration`, `Application.View`, `Application.ModuleList`, etc. remain `Ref<T>` properties; now backed by Pinia `storeToRefs()` instead of bare `ref()`. No breaking change for callers. |
+| InputRegistry | Module-level singleton (`inputRegistry`) with `register()`/`resolve()`. 16 input types registered via dedicated `OBJECT_TYPE_SENTINEL` and `ENUM_TYPE_SENTINEL` symbols to avoid type-constructor collisions. |
+| useFormRenderer composable | Wraps `inputRegistry.resolve()` + model value helpers (get/set). Used by `default_detailview.vue` to replace the 16-branch v-if cascade. |
+| Module composite decorator | `@Module(config)` chains `@ModuleName`, `@ModuleIcon`, `@ApiEndpoint`, `@ApiMethods`, `@Persistent` in a single call. Individual decorators remain available. |
+| Async validation debounce | `useInputMetadata` now debounces `entity.isValidation()` calls using `Application.AppConfiguration.value.asyncValidationDebounce` (env: `VITE_ASYNC_VALIDATION_DEBOUNCE`, default 300 ms). |
+| BaseEntity index type | Narrowed from `unknown` to `string \| number \| boolean \| Date \| BaseEntity \| BaseEntity[] \| object \| null \| undefined` to reduce type-casting noise. |
+| system_name.png | Placeholder asset; replace with actual brand logo before production deployment. |

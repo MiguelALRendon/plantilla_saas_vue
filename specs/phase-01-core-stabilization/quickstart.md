@@ -149,3 +149,22 @@ Production build and preview acceptance checklist:
 ## 12. Extended Smoke Completion Log
 
 - US4: Passed non-persistent safety guards, dropdown close behavior, and framework i18n hardening checks.
+
+## 13. Pinia State Backing Smoke Checklist (US5 — T085/T086)
+
+1. After navigation, verify `Application.View.value.entityClass` returns the correct entity for that module.
+2. Verify `Application.AppConfiguration.value.appName` matches the `VITE_APP_NAME` value from `.env`.
+3. Open Vue DevTools → Pinia tab; confirm three stores are visible: `appConfig`, `view`, `ui`.
+4. Trigger a toast notification and verify `Application.ToastList.value` array updates in the Pinia `ui` store.
+5. Open a modal (e.g. confirm delete) and verify `Application.modal.value.show` becomes `true` in the Pinia `ui` store.
+6. Reload the page; confirm the app boots without `[Vue warn]` errors related to Pinia.
+
+## 14. Component Fixes Smoke Checklist (US6 — T096/T097)
+
+1. Click the profile icon in the top bar; verify the dropdown opens without console errors (no `getElementById` warnings).
+2. Click **Cerrar sesión** (logout); verify `authTokenKey` and `authRefreshTokenKey` are removed from `localStorage` and the browser navigates to `/login`.
+3. With the sidebar expanded, verify the header shows the system logo image and the app name text.
+4. With the sidebar expanded, verify the footer shows `© galurensoft` and a version number (e.g. `v0.0.1`).
+5. Open a modal dialog; verify the accept button reads the `common.accept` translation key (e.g. "Aceptar" in Spanish).
+6. Open a modal dialog; verify the close button reads the `common.close` translation key (e.g. "Cerrar" in Spanish).
+7. Switch language to English; verify modal buttons update to "Accept" and "Close" without page reload.

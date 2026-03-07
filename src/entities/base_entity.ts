@@ -112,7 +112,9 @@ function resolveI18nText(text?: string): string | undefined {
  * in the framework must extend this class to inherit framework capabilities.
  */
 export abstract class BaseEntity {
-    [key: string]: unknown;
+    // T122 — Tightened index type: replaces `unknown` with a concrete union of
+    // all value types used by entity properties (primitives, dates, relations, arrays).
+    [key: string]: string | number | boolean | Date | BaseEntity | BaseEntity[] | object | null | undefined;
 
     // #region PROPERTIES — Instance properties for entity state management
 

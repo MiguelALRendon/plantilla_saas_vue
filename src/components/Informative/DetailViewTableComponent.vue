@@ -12,7 +12,14 @@
                         :style="getColumnStyle(column)"
                         @dblclick="autoFitColumn($event, column)"
                     >
-                        {{ Application.View.value.entityClass?.getProperties()[column] }}
+                        <button
+                            class="col-sort-btn"
+                            :class="{ 'is-sorted': sortColumn === column }"
+                            @click.stop="toggleSort(column)"
+                        >
+                            <span :class="[GGCLASS]">{{ getSortIcon(column) }}</span>
+                        </button>
+                        <span class="col-label">{{ Application.View.value.entityClass?.getProperties()[column] }}</span>
                         <button
                             class="col-filter-btn"
                             :class="{ 'has-filter': (columnFilters[column]?.length ?? 0) > 0 }"
@@ -105,6 +112,10 @@ const columnWidths: Ref<Record<string, number>> = ref({});
 // T243 — Column filter state (distinct values scoped to current page per I3)
 const columnFilters: Ref<Record<string, unknown[]>> = ref({});
 
+// T113 — Sort state for server-side column sort
+const sortColumn = ref<string | null>(null);
+const sortDirection = ref<'asc' | 'desc' | null>(null);
+
 const MIN_COL_WIDTH = 50; // px — equivalent of var(--table-width-very-small)
 let resizeColumn = '';
 let resizeStartX = 0;
@@ -131,7 +142,31 @@ const filteredRows = computed<BaseEntity[]>(() => {
     );
 });
 
-const paginatedRows = computed<BaseEntity[]>(() => filteredRows.value);
+/**
+ * T135 — In-memory sort applied after column filters.
+ * Uses numeric comparison when both getCellValue results parse as numbers,
+ * falls back to localeCompare for strings.
+ */
+const sortedRows = computed<BaseEntity[]>(() => {
+    if (!sortColumn.value || !sortDirection.value) return filteredRows.value;
+    const col = sortColumn.value;
+    const dir = sortDirection.value;
+    return [...filteredRows.value].sort((a, b) => {
+        const aVal = getCellValue(a, col);
+        const bVal = getCellValue(b, col);
+        const aNum = Number(aVal);
+        const bNum = Number(bVal);
+        let cmp: number;
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            cmp = aNum - bNum;
+        } else {
+            cmp = String(aVal).localeCompare(String(bVal));
+        }
+        return dir === 'asc' ? cmp : -cmp;
+    });
+});
+
+const paginatedRows = computed<BaseEntity[]>(() => sortedRows.value);
 
 const totalPages = computed<number>(() => {
     if (pageSize.value === 'ALL' || totalFromServer.value === 0) return 1;
@@ -198,7 +233,9 @@ async function loadData(): Promise<void> {
         const result = await entityClass.getElementListPaginated({
             page: currentPage.value,
             limit,
-            filter: ''
+            filter: '',
+            sortBy: sortColumn.value ?? undefined,
+            sortDir: sortDirection.value ?? undefined
         });
         data.value = result.data;
         totalFromServer.value = result.total;
@@ -253,6 +290,31 @@ function parseEnumValue(key: string): string {
         .split('_')
         .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
         .join(' ');
+}
+
+/**
+ * T115/T136 — Cycles sort state for a column: null → 'asc' → 'desc' → null.
+ * Sort is in-memory (sortedRows computed); no API reload triggered.
+ */
+function toggleSort(column: string): void {
+    if (sortColumn.value !== column) {
+        sortColumn.value = column;
+        sortDirection.value = 'asc';
+    } else if (sortDirection.value === 'asc') {
+        sortDirection.value = 'desc';
+    } else {
+        sortColumn.value = null;
+        sortDirection.value = null;
+    }
+}
+
+/**
+ * T114 — Returns the sort icon string for a given column header.
+ * Uses ARROW_UPWARD for asc, ARROW_DOWNWARD for desc, and SORT for neutral/inactive.
+ */
+function getSortIcon(column: string): string {
+    if (sortColumn.value !== column || sortDirection.value === null) return GGICONS.SORT;
+    return sortDirection.value === 'asc' ? GGICONS.ARROW_UPWARD : GGICONS.ARROW_DOWNWARD;
 }
 
 /**
@@ -496,13 +558,27 @@ thead tr {
 }
 
 thead td {
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 8px; /* keeps filter-btn clear of the resize handle */
     position: relative; /* required for .col-resize-handle absolute positioning */
+    min-width: max(min-content, 5rem);
 }
 
 thead td:hover {
     background-color: var(--bg-gray);
     box-shadow: inset 0 0 0 var(--border-width-thin) var(--gray-lighter);
+}
+
+/* T138 — Column label text flex child */
+.col-label {
+    flex: 1 1 auto;
+    min-width: 0; /* prevents label text-width from inflating the cell's min-content */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
 }
 
 /* Column resize drag handle — appears on the right edge of each header cell */
@@ -524,10 +600,7 @@ thead td:hover {
 
 /* T243 — Column filter funnel button */
 .col-filter-btn {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    flex-shrink: 0;
     background: transparent;
     border: none;
     padding: 0 2px;
@@ -547,6 +620,32 @@ thead td:hover .col-filter-btn,
 }
 .col-filter-btn.has-filter span {
     color: var(--lavender);
+}
+
+/* T114 — Column sort button (left of column label) */
+.col-sort-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    line-height: 1;
+    vertical-align: middle;
+    color: var(--gray-light);
+    transition: color var(--transition-fast) var(--timing-ease),
+                filter var(--transition-fast) var(--timing-ease);
+}
+.col-sort-btn span {
+    font-size: var(--font-size-sm);
+}
+.col-sort-btn:hover {
+    color: var(--gray-medium);
+    filter: brightness(0.85);
+}
+.col-sort-btn.is-sorted {
+    color: var(--gray-medium);
 }
 
 tbody {

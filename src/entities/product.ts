@@ -1,7 +1,5 @@
 import ICONS from '@/constants/icons.ts';
 import {
-    ApiEndpoint,
-    ApiMethods,
     ArrayOf,
     AsyncValidation,
     CSSColumnClass,
@@ -12,9 +10,8 @@ import {
     HelpText,
     HideInDetailView,
     HideInListView,
-    ModuleIcon,
-    ModuleName,
-    Persistent,
+    Module,
+    OnViewFunction,
     PrimaryProperty,
     PropertyIndex,
     PropertyName,
@@ -27,6 +24,8 @@ import {
 } from '@/decorations';
 import { DefaultButtonLists } from '@/constants/default_button_lists';
 import { StringType } from '@/enums/string_type.ts';
+import { ToastType } from '@/enums/toast_type';
+import { ViewTypes } from '@/enums/view_type';
 import { /*AsyncValidators, */Validators } from '@/validators';
 
 import { BaseEntity } from './base_entity.ts';
@@ -39,12 +38,8 @@ import { BaseEntity } from './base_entity.ts';
 @DefaultProperty('name')
 @PrimaryProperty('id')
 @UniquePropertyKey('id')
-@ModuleName('custom.products.title')
+@Module({ name: 'custom.products.title', icon: ICONS.PRODUCTS, apiEndpoint: '/api/products', apiMethods: ['GET', 'POST', 'PUT', 'DELETE'] })
 @DefaultViewButtonList(DefaultButtonLists.ListView)
-@ModuleIcon(ICONS.PRODUCTS)
-@ApiEndpoint('/api/products')
-@ApiMethods(['GET', 'POST', 'PUT', 'DELETE'])
-@Persistent()
 export class Product extends BaseEntity {
     /**
      * @region PROPERTIES
@@ -220,6 +215,25 @@ export class Product extends BaseEntity {
      * @region METHODS
      * Custom business logic methods for Product entity
      */
+    @OnViewFunction('NOTIFICATIONS', 'custom.products.actions.random_toast', [ViewTypes.LISTVIEW, ViewTypes.DEFAULTVIEW, ViewTypes.DETAILVIEW])
+    randomToast(): void {
+        const messages = [
+            '🎲 El dado ha hablado.',
+            '🌮 Los tacos del martes son obligatorios.',
+            '🚀 Houston, tenemos un producto.',
+            '🦄 Este campo es mágico.',
+            '🌊 Surfing on data waves.',
+            '🐉 Aquí hay dragones (y productos).',
+            '☕ El café es una dependencia crítica.',
+            '🎸 Rock & Roll con cada registro.',
+        ];
+        const types = [ToastType.SUCCESS, ToastType.ERROR, ToastType.INFO, ToastType.WARNING];
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        import('@/models/application').then(({ default: Application }) => {
+            Application.ApplicationUIService.showToast(randomMsg, randomType);
+        });
+    }
     /**
      * @endregion
      */

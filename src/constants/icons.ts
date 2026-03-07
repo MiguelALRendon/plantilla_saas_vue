@@ -12,6 +12,7 @@ import inventorymovementsIcon from '@/assets/icons/inventorymovements.png';
 import providerIcon from '@/assets/icons/provider.png';
 import rolpermissionsIcon from '@/assets/icons/rolpermissions.png';
 import chevronIcon from '@/assets/icons/chevron.png';
+import systemNameIcon from '@/assets/icons/system_name.png';
 
 export const ICONS = {
     HOME: homeIcon,
@@ -27,7 +28,8 @@ export const ICONS = {
     INVENTORYMOVEMENTS: inventorymovementsIcon,
     PROVIDER: providerIcon,
     ROLPERMISSIONS: rolpermissionsIcon,
-    CHEVRON: chevronIcon
+    CHEVRON: chevronIcon,
+    SYSTEM_NAME: systemNameIcon
 };
 
 export default ICONS;

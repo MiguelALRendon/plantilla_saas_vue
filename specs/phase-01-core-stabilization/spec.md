@@ -97,3 +97,44 @@ then startup, routing, API integration, and error handling work without contract
 3. Home module and cleanup: covered by `T025-T029`, `T051`.
 4. NotRequiresLogin and technical debt: covered by `T049-T053`.
 5. Production and smoke closure: covered by `T047-T048`, `T055`, `T058-T060`.
+
+## 11. Architectural Decisions (Phase 2 Additions)
+
+1. **No breadcrumb navigation**: Breadcrumb is explicitly NOT required for this system. The TopBar showing module name + icon is the canonical navigation context. Re-evaluate only if multi-level entity hierarchies are introduced.
+2. **CSR-first platform**: Framework is designed exclusively for Client-Side Rendering. SSR support is out of scope and not planned.
+
+## 12. Task Traceability Notes – Phase 2 Extension
+
+1. Pinia state integration: covered by `T082-T095` (US5).
+2. Component correctness & i18n: covered by `T096-T106` (US6).
+3. Technical debt documentation: covered by `T107-T111` (US7).
+4. Table column sort: covered by `T112-T117` (US8).
+5. ArrayInput select-all: covered by `T118-T121` (US9).
+6. BaseEntity type + form registry: covered by `T122-T126` (US10).
+7. @Module decorator + debounce: covered by `T127-T131` (US11).
+
+## 13.5. Phase 2.5 Correction Notes
+
+### US8 — Table Column Sort
+
+Column sort is **client-side (in-memory)** against the current page returned by `getElementListPaginated`. No additional API call is made on sort toggle. The processing pipeline is strictly ordered:
+
+```
+data (server page) → filteredRows (column filters applied) → sortedRows (sort applied) → paginatedRows (rendered)
+```
+
+The `sortBy` / `sortDir` fields on `ListQueryParams` remain for future server-side sort delegation but are not used for in-memory sort behaviour.
+
+---
+
+## 13. Phase 2 Implementation Completion Status
+
+| User Story | Tasks | Status | Key Deliverables |
+|------------|-------|--------|-----------------|
+| US5 – Pinia State Backing | T082–T095 | ✅ Done | 3 Pinia stores, ApplicationClass refactored, main.ts updated |
+| US6 – Component Correctness | T096–T106 | ✅ Done | TopBar ref fix + logout, Sidebar branding, Modal i18n, mixins/ deleted |
+| US7 – Tech Debt Docs | T107–T111 | ✅ Done | TD-01 through TD-06 in research.md |
+| US8 – Table Column Sort | T112–T117 | ✅ Done | sortBy/sortDir in ListQueryParams, sort button, toggleSort, CSS |
+| US9 – ArrayInput Select-All | T118–T121 | ✅ Done | isAllSelected computed, toggleSelectAll, i18n keys |
+| US10 – Form Registry | T122–T126 | ✅ Done | InputRegistry, useFormRenderer, default_detailview refactor |
+| US11 – @Module + Debounce | T127–T131 | ✅ Done | module_decorator.ts, barrel export, asyncValidationDebounce |

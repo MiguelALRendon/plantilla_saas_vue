@@ -1,18 +1,25 @@
 <template>
     <div :class="['sidebar', { toggled }]">
-        <div class="header">Header</div>
+        <div class="header">
+            <img :src="ICONS.SYSTEM_NAME" class="header-logo" alt="Logo" />
+            <span class="header-name">{{ appName }}</span>
+        </div>
 
         <div class="body">
             <SideBarItemComponent v-for="module in Application.ModuleList.values()" :module="module" />
         </div>
 
-        <div class="footer">footer</div>
+        <div class="footer">
+            <span class="copyright">&copy; galurensoft</span>
+            <span class="version">v{{ appVersion }}</span>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import Application from '@/models/application';
+import ICONS from '@/constants/icons';
 
 export default {
     name: 'SideBarComponent',
@@ -24,8 +31,20 @@ export default {
     data() {
         return {
             Application,
+            ICONS,
             toggled: typeof window !== 'undefined' ? window.innerWidth > 1200 : true
         };
+    },
+    // #endregion
+
+    // #region COMPUTED
+    computed: {
+        appName(): string {
+            return Application.AppConfiguration.value.appName;
+        },
+        appVersion(): string {
+            return Application.AppConfiguration.value.appVersion;
+        }
     },
     // #endregion
 
@@ -88,6 +107,26 @@ export default {
     padding: var(--spacing-lg);
 }
 
+.sidebar .header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-small);
+}
+
+.sidebar .header .header-logo {
+    height: calc(var(--topbar-height) * 0.55);
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.sidebar .header .header-name {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .sidebar .body {
     flex-grow: 1;
     max-height: calc(100vh - var(--sidebar-body-offset));
@@ -108,6 +147,20 @@ export default {
 .sidebar.toggled .footer {
     height: 100%;
     opacity: 1;
+}
+
+.sidebar .footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.sidebar .footer .copyright,
+.sidebar .footer .version {
+    font-size: var(--font-size-xs);
+    color: var(--gray);
+    white-space: nowrap;
 }
 
 /* Desktop standard (1201px–1400px): sidebar slightly reduced to free horizontal space.

@@ -1,4 +1,5 @@
 import { createApp, App as VueApp } from 'vue';
+import { createPinia, setActivePinia } from 'pinia';
 import './css/main.css';
 import './css/constants.css';
 import './css/form.css';
@@ -9,11 +10,17 @@ import router from '@/router';
 import { Home } from '@/entities/home';
 import { Product } from '@/entities/product';
 
+// T084: Create and activate Pinia before the Application singleton is instantiated
+// so stores are available when ApplicationClass constructor is called.
+const pinia = createPinia();
+setActivePinia(pinia);
+
 Application.initializeApplication(router);
 Application.registerModule(Home);
 Application.registerModule(Product);
 
 const app: VueApp = createApp(App);
+app.use(pinia);
 app.use(router);
 app.mount('#app');
 

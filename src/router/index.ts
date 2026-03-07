@@ -54,7 +54,7 @@ const router: Router = createRouter({
 router.beforeEach(async (to, _from, next) => {
     /** Dirty state guard — spec §8.7 Navigation with Dirty State Guard */
     const currentEntity = Application.View.value.entityObject;
-    if (currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
+    if (currentEntity?.isPersistent() && currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
         Application.ApplicationUIService.openConfirmationMenu(
             confMenuType.WARNING,
             GetLanguagedText('common.exit_without_saving'),

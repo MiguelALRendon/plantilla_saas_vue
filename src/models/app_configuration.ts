@@ -15,4 +15,5 @@ export interface AppConfiguration {
     maxFileSize: number;
     isDarkMode: boolean;
     selectedLanguage: Language;
+    asyncValidationDebounce: number;
 }

@@ -11,6 +11,7 @@
         </div>
         <div class="top-right-side">
             <button
+                ref="profileBtnRef"
                 @click.stop="openDropdown"
                 :class="['profile_button', { toggled: toggled_profile }]"
                 id="dropdown-profile-button"
@@ -39,10 +40,13 @@ export default {
             Application.ApplicationUIService.toggleSidebar();
         },
         logout() {
-            console.log('Logout clicked');
+            const { authTokenKey, authRefreshTokenKey } = Application.AppConfiguration.value;
+            localStorage.removeItem(authTokenKey);
+            localStorage.removeItem(authRefreshTokenKey);
+            Application.router?.push('/login').catch(() => {});
         },
         openDropdown() {
-            var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
+            const button = this.$refs.profileBtnRef as HTMLElement;
             Application.ApplicationUIService.openDropdownMenu(
                 button,
                 GetLanguagedText('common.profile'),

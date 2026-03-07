@@ -1,6 +1,6 @@
 import {
     DefaultProperty,
-    ModuleName,
+    Module,
     OnViewFunction,
     PropertyIndex,
     PropertyName,
@@ -15,7 +15,7 @@ import type { AppConfiguration } from '@/models/app_configuration';
 import { BaseEntity } from './base_entity';
 
 @DefaultProperty('appName')
-@ModuleName('common.configuration')
+@Module({ name: 'common.configuration', persistent: false })
 export class Configuration extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('common.framework.configuration.fields.app_name', String)
@@ -97,6 +97,7 @@ export class Configuration extends BaseEntity {
             maxFileSize: Number(this.maxFileSize ?? 0),
             isDarkMode: Boolean(this.isDarkMode),
             selectedLanguage: Number(this.selectedLanguage ?? Language.EN) as Language,
+            asyncValidationDebounce: Number(import.meta.env.VITE_ASYNC_VALIDATION_DEBOUNCE) || 300,
         };
     }
 
