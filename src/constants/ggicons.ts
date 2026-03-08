@@ -226,6 +226,18 @@ export const GGICONS = {
     PERCENT:            'percent',
     POINT_OF_SALE:      'point_of_sale',
     LOYALTY:            'loyalty',
+
+    // ── Date & Time ───────────────────────────────────────────────────────────
+    SCHEDULE:           'schedule',
+    ACCESS_TIME:        'access_time',
+
+    // ── Color ─────────────────────────────────────────────────────────────────
+    COLOR_LENS:         'color_lens',
+    INVERT_COLORS:      'invert_colors',
+
+    // ── Tags ──────────────────────────────────────────────────────────────────
+    LOCAL_OFFER:        'local_offer',
+    SELL:               'sell',
 } as const;
 
 export type GGIconKey = keyof typeof GGICONS;

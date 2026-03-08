@@ -47,3 +47,8 @@ export type { OnViewFunctionMetadata } from './on_view_function_decorator';
 export { NOT_REQUIRES_LOGIN_KEY, NotRequiresLogin } from './not_requires_login_decorator';
 export { Module } from './module_decorator';
 export type { ModuleConfig } from './module_decorator';
+export { SUPPORTED_FILES_KEY, SupportedFiles } from './supported_files_decorator';
+export { MAX_SIZE_FILES_KEY, MaxSizeFiles } from './max_size_files_decorator';
+export { MAX_TAGS_KEY, MaxTags } from './max_tags_decorator';
+export { MAX_TAG_SIZE_KEY, MaxTagSize } from './max_tag_size_decorator';
+export { MAX_STRING_SIZE_KEY, MaxStringSize } from './max_string_size_decorator';

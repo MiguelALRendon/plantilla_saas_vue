@@ -1,5 +1,5 @@
 <template>
-    <div class="floating-actions" :class="{ 'at-top': isAtTop }">
+    <div v-if="Application.ListButtons.value.length > 0" class="floating-actions" :class="{ 'at-top': isAtTop }">
         <component
             v-for="(component, index) in Application.ListButtons.value"
             :is="component"

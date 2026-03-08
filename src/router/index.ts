@@ -120,12 +120,18 @@ router.beforeEach(async (to, _from, next) => {
                     }
                 }
             } else {
-                /** List view - Display table of entities */
+                /** Default view takes priority over list view when module has @ModuleDefaultComponent */
+                const defaultComponent = moduleClass.getModuleDefaultComponent();
                 Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                 Application.View.value.entityObject = null;
-                Application.View.value.component = moduleClass.getModuleListComponent();
-                Application.View.value.viewType = ViewTypes.LISTVIEW;
                 Application.View.value.entityOid = '';
+                if (defaultComponent) {
+                    Application.View.value.component = defaultComponent;
+                    Application.View.value.viewType = ViewTypes.DEFAULTVIEW;
+                } else {
+                    Application.View.value.component = moduleClass.getModuleListComponent();
+                    Application.View.value.viewType = ViewTypes.LISTVIEW;
+                }
                 Application.setButtonList();
             }
         }

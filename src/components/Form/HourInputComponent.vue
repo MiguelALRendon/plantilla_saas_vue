@@ -1,6 +1,6 @@
 <template>
     <div
-        class="TextInput DateInput"
+        class="TextInput DateInput HourInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
         ref="containerRef"
     >
@@ -11,12 +11,12 @@
             type="text"
             class="main-input"
             placeholder=" "
-            :value="formattedDate"
+            :value="modelValue"
             :disabled="metadata.disabled.value"
             :readonly="true"
         />
         <button class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
-            <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
+            <span :class="[GGCLASS]">{{ GGICONS.SCHEDULE }}</span>
         </button>
     </div>
 
@@ -27,10 +27,7 @@
             :style="dropdownStyle"
             ref="dropdownRef"
         >
-            <CalendarForInputComponent
-                :model-value="modelValue"
-                @select="onDateSelected"
-            />
+            <ClockPickerComponent @select="onTimeSelected" />
         </div>
     </Teleport>
 
@@ -48,8 +45,8 @@ import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import CalendarForInputComponent from '@/components/Informative/CalendarForInputComponent.vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import ClockPickerComponent from '@/components/Informative/ClockPickerComponent.vue';
 
 interface Props {
     entityClass: typeof BaseEntity;
@@ -72,20 +69,8 @@ const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref<Record<string, string>>({});
 
-const formattedDate = computed<string>(() => {
-    if (!props.modelValue) return '';
-    const date = new Date(`${props.modelValue}T00:00:00`);
-    if (isNaN(date.getTime())) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${day}/${month}/${date.getFullYear()}`;
-});
-
 async function toggleDropdown(): Promise<void> {
-    if (dropdownOpen.value) {
-        dropdownOpen.value = false;
-        return;
-    }
+    if (dropdownOpen.value) { dropdownOpen.value = false; return; }
     dropdownOpen.value = true;
     await nextTick();
     positionDropdown();
@@ -94,25 +79,17 @@ async function toggleDropdown(): Promise<void> {
 function positionDropdown(): void {
     if (!containerRef.value) return;
     const rect = containerRef.value.getBoundingClientRect();
-    dropdownStyle.value = {
-        position: 'fixed',
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
-        zIndex: '9999',
-    };
+    dropdownStyle.value = { position: 'fixed', top: `${rect.bottom + 4}px`, left: `${rect.left}px`, zIndex: '9999' };
 }
 
-function onDateSelected(dateStr: string): void {
-    emit('update:modelValue', dateStr);
+function onTimeSelected(timeStr: string): void {
+    emit('update:modelValue', timeStr);
     dropdownOpen.value = false;
 }
 
 function onClickOutside(e: MouseEvent): void {
     const target = e.target as Node;
-    if (
-        containerRef.value?.contains(target) ||
-        dropdownRef.value?.contains(target)
-    ) return;
+    if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) return;
     dropdownOpen.value = false;
 }
 
@@ -154,8 +131,3 @@ onBeforeUnmount(() => {
     document.removeEventListener('mousedown', onClickOutside);
 });
 </script>
-
-<style scoped>
-/* Component-specific styles inherit from global form.css */
-/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
-</style>

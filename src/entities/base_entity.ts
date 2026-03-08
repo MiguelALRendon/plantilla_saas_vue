@@ -37,6 +37,11 @@ import {
     VALIDATION_KEY,
     VIEW_GROUP_KEY,
     VIEW_GROUP_ROW_KEY,
+    SUPPORTED_FILES_KEY,
+    MAX_SIZE_FILES_KEY,
+    MAX_TAGS_KEY,
+    MAX_TAG_SIZE_KEY,
+    MAX_STRING_SIZE_KEY,
 } from '@/decorations';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
@@ -578,6 +583,64 @@ export abstract class BaseEntity {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
         const masks = (proto[MASK_KEY] as Record<string, { mask: string; side: unknown }>) ?? {};
         return masks[propertyKey];
+    }
+
+    /**
+     * Retrieves the supported file formats for a property.
+     * Defined by @SupportedFiles decorator, used by FileUploadInputComponent.
+     * @param propertyKey The property key to query
+     * @returns Array of accepted MIME types / extensions, or undefined
+     */
+    public getSupportedFiles(propertyKey: string): string[] | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[SUPPORTED_FILES_KEY] as Record<string, string[]>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
+     * Retrieves the maximum allowed file size in bytes for a property.
+     * Defined by @MaxSizeFiles decorator (value in MB). Returns value * 1024 * 1024.
+     * @param propertyKey The property key to query
+     * @returns Max size in bytes, or undefined if decorator not applied
+     */
+    public getMaxFileSizeBytes(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_SIZE_FILES_KEY] as Record<string, number>) ?? {};
+        const mb = map[propertyKey];
+        return mb !== undefined ? mb * 1024 * 1024 : undefined;
+    }
+
+    /**
+     * Returns the maximum number of tags allowed for a TAGS-typed property.
+     * @param propertyKey The property key to query
+     * @returns Max tag count, or undefined if decorator not applied
+     */
+    public getMaxTags(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_TAGS_KEY] as Record<string, number>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
+     * Returns the maximum character length allowed per individual tag.
+     * @param propertyKey The property key to query
+     * @returns Max characters per tag, or undefined if decorator not applied
+     */
+    public getMaxTagSize(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_TAG_SIZE_KEY] as Record<string, number>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
+     * Returns the maximum total character length of the comma-joined tag string.
+     * @param propertyKey The property key to query
+     * @returns Max total string length, or undefined if decorator not applied
+     */
+    public getMaxStringSize(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_STRING_SIZE_KEY] as Record<string, number>) ?? {};
+        return map[propertyKey];
     }
 
     /**

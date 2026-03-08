@@ -22,7 +22,7 @@
     </div>
 
 
-    <FormGroupComponent title="Listas">
+    <FormGroupComponent v-if="entity.getArrayKeysOrdered().length > 0" title="Listas">
         <TabControllerComponent :tabs="getArrayListsTabs()">
             <TabComponent v-for="tab in entity.getArrayKeysOrdered()">
                 <ArrayInputComponent

@@ -126,7 +126,8 @@ export default {
 .toast-card {
     position: relative;
     width: 100%;
-    height: var(--toast-height);
+    min-height: var(--toast-height);
+    height: auto;
     border-radius: var(--border-radius);
     padding: var(--spacing-xs);
     box-sizing: border-box;
@@ -144,15 +145,18 @@ export default {
 
 .toast {
     width: 100%;
-    height: 100%;
+    min-height: calc(var(--toast-height) - 2 * var(--spacing-xs));
+    height: auto;
     border-radius: calc(var(--border-radius) / 1.5);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    padding-block: var(--spacing-xs);
     background-color: var(--overlay-medium);
     box-sizing: border-box;
     padding-inline: var(--spacing-xs);
     justify-content: space-between;
     pointer-events: all;
+    gap: var(--spacing-xs);
 }
 
 .toast-card.toast-error {
@@ -170,6 +174,9 @@ export default {
 
 .toast span {
     color: var(--white);
-    width: 90%;
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+    align-self: center;
 }
 </style>

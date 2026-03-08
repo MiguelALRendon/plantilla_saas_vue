@@ -1,10 +1,12 @@
 import {
     DefaultProperty,
     Module,
+    ModuleCustomComponents,
     OnViewFunction,
     PropertyIndex,
     PropertyName,
 } from '@/decorations';
+import FilePreviewComponent from '@/components/Informative/FilePreviewComponent.vue';
 import { Language } from '@/enums/language';
 import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
@@ -16,6 +18,7 @@ import { BaseEntity } from './base_entity';
 
 @DefaultProperty('appName')
 @Module({ name: 'common.configuration', persistent: false })
+@ModuleCustomComponents(new Map([['file-preview', FilePreviewComponent]]))
 export class Configuration extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('common.framework.configuration.fields.app_name', String)

@@ -14,6 +14,10 @@
 - **[US2]**: Configuration entity and configuration detail flow (P2)
 - **[US3]**: Login-exemption metadata and production closure checks (P3)
 - **[US4]**: Non-persistent safety guards and framework i18n hardening (P1)
+- **[US15]**: Calendar and time input components with custom calendar/clock UI (P1)
+- **[US16]**: Color picker input component (P1)
+- **[US17]**: File upload input with SupportedFiles and MaxSizeFiles decorators (P1)
+- **[US18]**: Tag input with MaxTags, MaxTagSize, and MaxStringSize decorators (P1)
 
 ---
 
@@ -693,3 +697,223 @@ T156 squared logo constants
 ## Clarification Set MVP Scope
 
 Suggested MVP for this clarification set: **US13 first**, then **US12**, then **US14**.
+
+---
+
+---
+
+# Phase 3 Extension: Rich Input Components — Calendar, Color, File Upload, Tag
+
+**Context**: New input component set requested in the 2026-03-07 session. All components follow the existing 5-layer meta-programming pattern: new `StringType` enum values → new decorators → new `BaseEntity` methods → new form components → `InputRegistry` registration. No architectural changes.
+
+## User Stories (Phase 3)
+
+- **[US15]**: Calendar and time input components with custom calendar/clock UI (P1)
+- **[US16]**: Color picker input component (P1)
+- **[US17]**: File upload input with `@SupportedFiles` and `@MaxSizeFiles` decorators (P1)
+- **[US18]**: Tag input with `@MaxTags`, `@MaxTagSize`, and `@MaxStringSize` decorators (P1)
+
+---
+
+## Phase 24: Foundational — New StringType Values
+
+**Purpose**: Extend the `StringType` enum with all new input type sentinels required by US15–US18. All user story phases below depend on this task.
+
+**⚠️ CRITICAL**: T165 must complete before any Phase 25–28 task starts.
+
+- [X] T165 Add `DATE`, `TIME`, `DATETIME`, `COLOR`, `FILE`, `TAGS` values to `StringType` enum in `src/enums/string_type.ts`
+
+**Checkpoint**: New `StringType` values available for registry registration and decorator usage.
+
+---
+
+## Phase 25: User Story 15 — Calendar and Time Input Components (Priority: P1) 🎯 MVP
+
+**Goal**: Replace the native `<input type="date">` in `DateInputComponent` with a custom calendar dropdown; add `HourInputComponent` backed by a circular clock picker; add `DateTimeInputComponent` combining both pickers; all store as strings with `StringType.DATE`, `StringType.TIME`, `StringType.DATETIME`.
+
+**Independent Test**: `DateInputComponent` opens a grid calendar on button click, selecting a day emits `YYYY-MM-DD`; `HourInputComponent` opens a circular clock, confirming emits `HH:MM`; `DateTimeInputComponent` opens calendar + clock side-by-side and emits `YYYY-MM-DDTHH:MM`; all three respond to `required`/`disabled`/`readonly` metadata and show `validation-messages`.
+
+### Informative Picker Components
+
+- [X] T166 [US15] Create `CalendarComponent.vue` — full-size grid-adaptive month calendar: month/year header with prev/next navigation buttons, 7-column day grid, today highlight, selected-day highlight, emits `select(dateStr: string)` (ISO `YYYY-MM-DD`) on day click in `src/components/Informative/CalendarComponent.vue`
+- [X] T167 [P] [US15] Create `CalendarForInputComponent.vue` — compact variant of `CalendarComponent`: same month-grid logic and `select` emit, reduced padding/font-size designed for use inside Teleport dropdown panels in `src/components/Informative/CalendarForInputComponent.vue`
+- [X] T168 [US15] Create `ClockPickerComponent.vue` — circular SVG clock picker: hour ring (1–12/1–24) rendered as clickable arc segments and draggable handle; after hour selection auto-advances to minute ring (0, 5, 10 … 55); AM/PM toggle button; emits `select(timeStr: string)` (`HH:MM` 24-hour format) after minute selection; displays live HH:MM value at centre during interaction in `src/components/Informative/ClockPickerComponent.vue`
+
+### Form Input Components
+
+- [X] T169 [US15] Rewrite `DateInputComponent.vue` — readonly string input displaying locale-formatted date + calendar-icon button; button opens Teleport dropdown containing `CalendarForInputComponent`; day selection closes dropdown, formats display string, emits `update:modelValue` as `YYYY-MM-DD`; closing without picking preserves current value; validates `required` and async validations; data type is `String` with `StringType.DATE` in `src/components/Form/DateInputComponent.vue`
+- [X] T170 [US15] Create `HourInputComponent.vue` — readonly string input displaying `HH:MM` + clock-icon button; button opens Teleport dropdown containing `ClockPickerComponent`; after clock emits `select`, closes dropdown and emits `update:modelValue` as `HH:MM`; closing without confirming preserves current value; validates `required` and async validations; data type is `String` with `StringType.TIME` in `src/components/Form/HourInputComponent.vue`
+- [X] T171 [US15] Create `DateTimeInputComponent.vue` — readonly string input displaying `YYYY-MM-DD HH:MM` + combined-icon button; button opens Teleport dropdown showing `CalendarForInputComponent` and `ClockPickerComponent` side-by-side; date and time can be picked in any order; "Aceptar" confirm button in dropdown footer applies selection and emits `update:modelValue` as `YYYY-MM-DDTHH:MM`; closing without confirming preserves current value; validates `required` and async validations; data type is `String` with `StringType.DATETIME` in `src/components/Form/DateTimeInputComponent.vue`
+
+### Registry and Exports
+
+- [X] T172 [US15] Register `StringType.DATE` → `DateInputComponent`, `StringType.TIME` → `HourInputComponent`, `StringType.DATETIME` → `DateTimeInputComponent` in `src/models/input_registry.ts`
+- [X] T173 [P] [US15] Export `HourInputComponent` and `DateTimeInputComponent` from `src/components/Form/index.ts`
+
+**Checkpoint**: US15 complete — three custom date/time inputs backed by calendar and clock pickers.
+
+---
+
+## Phase 26: User Story 16 — Color Picker Input Component (Priority: P1)
+
+**Goal**: Provide a `ColorInputComponent` where the left 50% is a text input showing the hex value and the right 50% is a solid-color button. Clicking the button opens a Teleport dropdown with a circular HSL color picker + brightness slider and an "Aceptar" confirm button. Closing without confirming discards changes and restores the previous value. Default value is white (`#ffffff`).
+
+**Independent Test**: Opening the dropdown shows the picker initialized to the current value (or white if unset); dragging the circle selects a colour that previews live on the button; clicking "Aceptar" applies it and updates the text input; pressing Escape or clicking outside closes without applying; hex/rgb/hsl lines each have a functional copy-to-clipboard button.
+
+### Picker Component
+
+- [X] T174 [US16] Create `ColorPickerComponent.vue` — circular HSL color wheel (canvas radial gradient, hue on angle, saturation on radius) with a draggable/clickable selection dot; vertical brightness slider below the wheel; below the slider: three read-only lines showing `hex: #rrggbb`, `rgb(r, g, b)`, `hsl(h, s%, l%)` each followed by a small copy-to-clipboard icon button that calls `navigator.clipboard.writeText`; emits `update:modelValue(colorHex: string)` on every interaction so the parent can preview in `src/components/Informative/ColorPickerComponent.vue`
+
+### Form Input Component
+
+- [X] T175 [US16] Create `ColorInputComponent.vue` — flex row: text input (50% width, shows hex string, user-editable) + solid-color button (50% width, `background-color` = current value, no label or icon); default model value is `#ffffff`; clicking button opens Teleport dropdown containing `ColorPickerComponent` + "Aceptar" button in footer; picker emits live previews that update the button colour without committing; "Aceptar" closes dropdown and emits confirmed `update:modelValue`; clicking outside / Escape closes without applying and restores previous value; text input edits are reflected immediately as hex on blur; data type is `String` with `StringType.COLOR` in `src/components/Form/ColorInputComponent.vue`
+
+### Registry and Exports
+
+- [X] T176 [US16] Register `StringType.COLOR` → `ColorInputComponent` in `src/models/input_registry.ts`
+- [X] T177 [P] [US16] Export `ColorInputComponent` from `src/components/Form/index.ts`
+
+**Checkpoint**: US16 complete — colour input with live-preview HSL picker and confirm-before-apply flow.
+
+---
+
+## Phase 27: User Story 17 — File Upload Input with Decorators (Priority: P1)
+
+**Goal**: Add `@SupportedFiles(formats)` and `@MaxSizeFiles(mb)` property decorators with corresponding `BaseEntity` readers, and a `FileUploadInputComponent` that enforces type/size rules, shows a preview button when a file is loaded, and opens a `FilePreviewComponent` popup. The `FilePreviewComponent` is also registered on `Configuration` via `@ModuleCustomComponents`.
+
+**Independent Test**: Uploading a file whose MIME/extension is not in `@SupportedFiles` is rejected with a toast; uploading a file exceeding `@MaxSizeFiles` MB is rejected with a toast and the input is marked nonvalidated; a valid upload succeeds with a success toast and shows the preview button; clicking the preview button opens a popup with image or PDF preview; `getSupportedFiles` and `getMaxFileSizeBytes` return correct values from entity metadata.
+
+### Decorators and BaseEntity
+
+- [X] T178 [US17] Create `@SupportedFiles(formats: string[])` property decorator storing the formats array via `SUPPORTED_FILES_KEY` Symbol on the class prototype in `src/decorations/supported_files_decorator.ts`
+- [X] T179 [P] [US17] Create `@MaxSizeFiles(size: number)` property decorator storing the raw MB number via `MAX_SIZE_FILES_KEY` Symbol on the class prototype in `src/decorations/max_size_files_decorator.ts`
+- [X] T180 [P] [US17] Export `SupportedFiles`, `SUPPORTED_FILES_KEY`, `MaxSizeFiles`, `MAX_SIZE_FILES_KEY` from `src/decorations/index.ts`
+- [X] T181 [US17] Add `getSupportedFiles(propertyKey: string): string[] | undefined` to `BaseEntity` reading `SUPPORTED_FILES_KEY` prototype metadata for the given property in `src/entities/base_entity.ts`
+- [X] T182 [P] [US17] Add `getMaxFileSizeBytes(propertyKey: string): number | undefined` to `BaseEntity` reading `MAX_SIZE_FILES_KEY` prototype metadata and returning `storedValue * 1024 * 1024`; returns `undefined` if decorator is not applied in `src/entities/base_entity.ts`
+
+### Informative and Form Components
+
+- [X] T183 [US17] Create `FilePreviewComponent.vue` — receives `file: File` prop; if `file.type` starts with `image/`, renders `<img :src="objectUrl">`; if `file.type` is `application/pdf`, renders `<embed :src="objectUrl" type="application/pdf">`; shows an unsupported-type placeholder otherwise; creates object URL via `URL.createObjectURL(file)` on mount and revokes it on `onBeforeUnmount` in `src/components/Informative/FilePreviewComponent.vue`
+- [X] T184 [US17] Create `FileUploadInputComponent.vue` — readonly string input showing file name (empty when no file); upload icon button triggers hidden `<input type="file">` with `accept` attribute built from `entity.getSupportedFiles(propertyKey)` joined as comma-separated list; on file selected: if file size in bytes exceeds `entity.getMaxFileSizeBytes(propertyKey)` → show error toast + mark `isInputValidated = false` + cancel; otherwise: store the `File` object as model value, show success toast, set `isInputValidated = true`; when a file is loaded, render a square preview button (height equals input height, uses same border/background CSS tokens as standard inputs, adapts to `disabled`/`nonvalidated` class state) between the text input and the upload button; clicking preview button opens modal via `Application.ApplicationUIService.showModalOnFunction` passing `FilePreviewComponent` and the stored `File` object; only one file at a time; data type is `String` with `StringType.FILE` in `src/components/Form/FileUploadInputComponent.vue`
+
+### Configuration and Registry
+
+- [X] T185 [US17] Add `FilePreviewComponent` to the `@ModuleCustomComponents([...])` decorator list on the `Configuration` entity so it is registered in the application's custom component catalog in `src/entities/configuration.ts`
+- [X] T186 [US17] Register `StringType.FILE` → `FileUploadInputComponent` in `src/models/input_registry.ts`
+- [X] T187 [P] [US17] Export `FileUploadInputComponent` from `src/components/Form/index.ts`
+
+**Checkpoint**: US17 complete — file upload with decorator-driven type/size rules, toast feedback, and inline preview.
+
+---
+
+## Phase 28: User Story 18 — Tag Input with Decorator Constraints (Priority: P1)
+
+**Goal**: Add `@MaxTags`, `@MaxTagSize`, and `@MaxStringSize` property decorators with `BaseEntity` readers, and a `TagInputComponent` that renders comma-separated values as editable outlined chips. Validation enforces per-tag size, overall string length, and maximum tag count, with toast feedback per violation. Editing a single chip disallows comma-split.
+
+**Independent Test**: Adding tags via comma-split correctly splits, validates each chip against `MaxTagSize`, checks total string length against `MaxStringSize`, limits count via `MaxTags`, shows a toast per violated constraint, skips violating tags, and adds valid ones; editing a chip with a comma triggers toast + revert; deleting a chip updates the model value; all three decorators return correct values from `BaseEntity`.
+
+### Decorators and BaseEntity
+
+- [X] T188 [US18] Create `@MaxTags(n: number)` property decorator storing `n` via `MAX_TAGS_KEY` Symbol on the class prototype in `src/decorations/max_tags_decorator.ts`
+- [X] T189 [P] [US18] Create `@MaxTagSize(n: number)` property decorator storing `n` via `MAX_TAG_SIZE_KEY` Symbol on the class prototype in `src/decorations/max_tag_size_decorator.ts`
+- [X] T190 [P] [US18] Create `@MaxStringSize(n: number)` property decorator storing `n` via `MAX_STRING_SIZE_KEY` Symbol on the class prototype in `src/decorations/max_string_size_decorator.ts`
+- [X] T191 [P] [US18] Export `MaxTags`, `MAX_TAGS_KEY`, `MaxTagSize`, `MAX_TAG_SIZE_KEY`, `MaxStringSize`, `MAX_STRING_SIZE_KEY` from `src/decorations/index.ts`
+- [X] T192 [US18] Add `getMaxTags(propertyKey: string): number | undefined` to `BaseEntity` reading `MAX_TAGS_KEY` prototype metadata in `src/entities/base_entity.ts`
+- [X] T193 [P] [US18] Add `getMaxTagSize(propertyKey: string): number | undefined` to `BaseEntity` reading `MAX_TAG_SIZE_KEY` prototype metadata in `src/entities/base_entity.ts`
+- [X] T194 [P] [US18] Add `getMaxStringSize(propertyKey: string): number | undefined` to `BaseEntity` reading `MAX_STRING_SIZE_KEY` prototype metadata in `src/entities/base_entity.ts`
+
+### Form Component
+
+- [X] T195 [US18] Create `TagInputComponent.vue` — `modelValue` is a comma-separated string (e.g. `"alpha,beta,gamma"`); renders chips as a flex-wrap row of outlined button-style elements (CSS token `outlined`, not `fill`) each showing tag text and a delete icon button; clicking a chip's text label enters single-chip inline edit mode: a comma character in the edit value triggers toast `validation.tag_no_comma` + reverts to previous value; on blur/Enter re-validates: if result violates `MaxTagSize` → toast + revert, if result violates `MaxStringSize` (whole new joined string) → toast + revert; an add-button (`GGICONS.ADD`, icon-only) appears after the last chip; clicking it shows an inline text input; on Enter or blur splits input by comma producing candidate tags; each candidate is processed sequentially: skip and toast if it exceeds `MaxTagSize` (if defined); skip and toast if appending it would make the full comma-joined string exceed `MaxStringSize` (if defined); stop and toast remaining if adding it would exceed `MaxTags` count limit (if defined); valid tags are appended to the model value; emits `update:modelValue` after every destructive action (add/delete/edit); full validation runs on the `validate-inputs` event; data type is `String` with `StringType.TAGS` in `src/components/Form/TagInputComponent.vue`
+
+### Registry and Exports
+
+- [X] T196 [US18] Register `StringType.TAGS` → `TagInputComponent` in `src/models/input_registry.ts`
+- [X] T197 [P] [US18] Export `TagInputComponent` from `src/components/Form/index.ts`
+
+**Checkpoint**: US18 complete — tag input with outlined-chip UI and decorator-driven constraint validation.
+
+---
+
+## Phase 29: Phase 3 Fixes and Polish
+
+- [X] T198 Fix typo `lenght` → `length` in prop definition and all internal `props.lenght` usages in `src/components/Form/TelephoneInputComponent.vue`
+
+**Checkpoint**: Phase 3 fixes complete.
+
+---
+
+## Phase 3 Dependencies
+
+- **Phase 24 (Foundational — StringType)**: Must complete before any Phase 25–28 task.
+- **Phase 25 (US15 — Date/Time)**: Depends on Phase 24. T166/T167/T168 (informative pickers) must precede T169/T170/T171 (form inputs). T172/T173 (registry/exports) follow.
+- **Phase 26 (US16 — Color)**: Depends on Phase 24. T174 (picker) must precede T175 (input). T176/T177 follow.
+- **Phase 27 (US17 — File)**: Depends on Phase 24. T178/T179/T180 (decorators) and T181/T182 (BaseEntity) precede T183/T184 (components). T185/T186/T187 follow.
+- **Phase 28 (US18 — Tags)**: Depends on Phase 24. T188–T194 (decorators + BaseEntity) precede T195 (component). T196/T197 follow.
+- **Phase 29 (Fixes)**: Independent of all above. Can run at any time.
+
+## Phase 3 Parallel Opportunities
+
+```bash
+# Phase 24 (single blocking task — no parallelism)
+T165 add DATE, TIME, DATETIME, COLOR, FILE, TAGS to StringType
+
+# Phase 25 — after T165
+Parallel: T166 CalendarComponent.vue + T167 CalendarForInputComponent.vue + T168 ClockPickerComponent.vue
+  ↓
+  T169 DateInputComponent.vue rewrite
+  T170 HourInputComponent.vue (after T168)
+  T171 DateTimeInputComponent.vue (after T167 + T168)
+  ↓
+  T172 register in InputRegistry
+Parallel: T173 Form/index.ts export
+
+# Phase 26 — after T165
+  T174 ColorPickerComponent.vue
+  ↓
+  T175 ColorInputComponent.vue
+  ↓
+  T176 register in InputRegistry
+Parallel: T177 Form/index.ts export
+
+# Phase 27 — after T165
+Parallel: T178 @SupportedFiles + T179 @MaxSizeFiles + T180 index.ts exports
+  ↓
+Parallel: T181 getSupportedFiles BaseEntity + T182 getMaxFileSizeBytes BaseEntity
+  ↓
+  T183 FilePreviewComponent.vue
+  T184 FileUploadInputComponent.vue (after T183)
+  T185 Configuration @ModuleCustomComponents
+  ↓
+  T186 register in InputRegistry
+Parallel: T187 Form/index.ts export
+
+# Phase 28 — after T165
+Parallel: T188 @MaxTags + T189 @MaxTagSize + T190 @MaxStringSize + T191 index.ts exports
+  ↓
+Parallel: T192 getMaxTags + T193 getMaxTagSize + T194 getMaxStringSize in BaseEntity
+  ↓
+  T195 TagInputComponent.vue
+  ↓
+  T196 register in InputRegistry
+Parallel: T197 Form/index.ts export
+
+# Phase 29 — independent at any time
+  T198 fix TelephoneInputComponent lenght typo
+```
+
+## Phase 3 Task Count
+
+| Phase | Tasks | Story | Parallelizable |
+|-------|-------|-------|----------------|
+| Phase 24: Foundational | T165 | — | 0 |
+| Phase 25: US15 Date/Time | T166–T173 | US15 | 4 of 8 |
+| Phase 26: US16 Color | T174–T177 | US16 | 1 of 4 |
+| Phase 27: US17 File Upload | T178–T187 | US17 | 6 of 10 |
+| Phase 28: US18 Tag Input | T188–T197 | US18 | 7 of 10 |
+| Phase 29: Fixes | T198 | — | 1 of 1 |
+| **TOTAL** | **34 tasks** | | **~19 parallelizable** |
+
+## Phase 3 MVP Scope
+
+Suggested Phase 3 MVP: **US15 first** (most foundational — calendar/clock used by other date inputs), then **US18** (tag input, high utility), then **US17** (file upload), then **US16** (color picker).

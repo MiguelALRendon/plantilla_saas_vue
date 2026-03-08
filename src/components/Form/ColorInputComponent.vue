@@ -1,6 +1,6 @@
 <template>
     <div
-        class="TextInput DateInput"
+        class="TextInput ColorInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
         ref="containerRef"
     >
@@ -11,13 +11,18 @@
             type="text"
             class="main-input"
             placeholder=" "
-            :value="formattedDate"
-            :disabled="metadata.disabled.value"
-            :readonly="true"
+            :value="modelValue || '#ffffff'"
+            :disabled="metadata.disabled.value || metadata.readonly.value"
+            @blur="onHexBlur"
+            @keydown.enter.prevent="onHexBlur"
         />
-        <button class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
-            <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
-        </button>
+        <button
+            class="right color-swatch-btn"
+            type="button"
+            :style="{ backgroundColor: modelValue || '#ffffff' }"
+            @click="toggleDropdown"
+            :disabled="metadata.disabled.value || metadata.readonly.value"
+        ></button>
     </div>
 
     <Teleport to="body">
@@ -27,10 +32,15 @@
             :style="dropdownStyle"
             ref="dropdownRef"
         >
-            <CalendarForInputComponent
-                :model-value="modelValue"
-                @select="onDateSelected"
+            <ColorPickerComponent
+                :model-value="pendingColor"
+                @update:model-value="onPickerUpdate"
             />
+            <div class="color-footer">
+                <button type="button" class="color-accept-btn" @click="confirmColor">
+                    {{ GetLanguagedText('common.accept') }}
+                </button>
+            </div>
         </div>
     </Teleport>
 
@@ -44,12 +54,12 @@
 </template>
 
 <script setup lang="ts">
-import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import CalendarForInputComponent from '@/components/Informative/CalendarForInputComponent.vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import ColorPickerComponent from '@/components/Informative/ColorPickerComponent.vue';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 interface Props {
     entityClass: typeof BaseEntity;
@@ -58,7 +68,7 @@ interface Props {
     modelValue?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), { modelValue: '' });
+const props = withDefaults(defineProps<Props>(), { modelValue: '#ffffff' });
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void;
@@ -71,21 +81,11 @@ const dropdownOpen = ref(false);
 const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref<Record<string, string>>({});
-
-const formattedDate = computed<string>(() => {
-    if (!props.modelValue) return '';
-    const date = new Date(`${props.modelValue}T00:00:00`);
-    if (isNaN(date.getTime())) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${day}/${month}/${date.getFullYear()}`;
-});
+const pendingColor = ref<string>(props.modelValue || '#ffffff');
 
 async function toggleDropdown(): Promise<void> {
-    if (dropdownOpen.value) {
-        dropdownOpen.value = false;
-        return;
-    }
+    if (dropdownOpen.value) { dropdownOpen.value = false; return; }
+    pendingColor.value = props.modelValue || '#ffffff';
     dropdownOpen.value = true;
     await nextTick();
     positionDropdown();
@@ -94,25 +94,28 @@ async function toggleDropdown(): Promise<void> {
 function positionDropdown(): void {
     if (!containerRef.value) return;
     const rect = containerRef.value.getBoundingClientRect();
-    dropdownStyle.value = {
-        position: 'fixed',
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
-        zIndex: '9999',
-    };
+    dropdownStyle.value = { position: 'fixed', top: `${rect.bottom + 4}px`, left: `${rect.left}px`, zIndex: '9999' };
 }
 
-function onDateSelected(dateStr: string): void {
-    emit('update:modelValue', dateStr);
+function onPickerUpdate(hex: string): void {
+    pendingColor.value = hex;
+}
+
+function confirmColor(): void {
+    emit('update:modelValue', pendingColor.value);
     dropdownOpen.value = false;
+}
+
+function onHexBlur(e: Event): void {
+    const value = (e.target as HTMLInputElement).value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+        emit('update:modelValue', value);
+    }
 }
 
 function onClickOutside(e: MouseEvent): void {
     const target = e.target as Node;
-    if (
-        containerRef.value?.contains(target) ||
-        dropdownRef.value?.contains(target)
-    ) return;
+    if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) return;
     dropdownOpen.value = false;
 }
 
@@ -156,6 +159,60 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Component-specific styles inherit from global form.css */
-/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+.TextInput.ColorInput {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: nowrap;
+}
+
+.TextInput.ColorInput .main-input {
+    width: 50%;
+    text-align: left;
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+    border-radius: 0;
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+    font-family: monospace;
+    font-size: var(--font-size-sm);
+}
+
+.color-swatch-btn {
+    width: 50% !important;
+    border: var(--border-width-thin) solid var(--sky);
+    border-left: none;
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    cursor: pointer;
+    transition: border-color var(--transition-normal);
+}
+
+.color-swatch-btn:disabled {
+    cursor: not-allowed;
+    border-color: var(--gray-light);
+}
+
+.color-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--spacing-small);
+    border-top: 1px solid var(--gray-lighter);
+    margin-top: var(--spacing-small);
+}
+
+.color-accept-btn {
+    background-color: var(--sky);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xs) var(--padding-medium);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.color-accept-btn:hover {
+    background-color: var(--blue-1);
+}
 </style>

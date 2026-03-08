@@ -18,3 +18,8 @@ export { default as CreditCardDateInputComponent } from '@/components/Form/Credi
 export { default as CreditCardCvvInputComponent } from '@/components/Form/CreditCardCvvInputComponent.vue';
 export { default as EnumInputComponent } from '@/components/Form/EnumInputComponent.vue';
 export { default as ArrayInputComponent } from '@/components/Form/ArrayInputComponent.vue';
+export { default as HourInputComponent } from '@/components/Form/HourInputComponent.vue';
+export { default as DateTimeInputComponent } from '@/components/Form/DateTimeInputComponent.vue';
+export { default as ColorInputComponent } from '@/components/Form/ColorInputComponent.vue';
+export { default as FileUploadInputComponent } from '@/components/Form/FileUploadInputComponent.vue';
+export { default as TagInputComponent } from '@/components/Form/TagInputComponent.vue';

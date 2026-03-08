@@ -10,6 +10,10 @@ import {
     HelpText,
     HideInDetailView,
     HideInListView,
+    MaxSizeFiles,
+    MaxStringSize,
+    MaxTagSize,
+    MaxTags,
     Module,
     OnViewFunction,
     PrimaryProperty,
@@ -17,6 +21,7 @@ import {
     PropertyName,
     Required,
     StringTypeDef,
+    SupportedFiles,
     TabOrder,
     UniquePropertyKey,
     Validation,
@@ -197,6 +202,44 @@ export class Product extends BaseEntity {
     @StringTypeDef(StringType.CREDIT_CARD_CVV)
     @HelpText('custom.products.help.cardCvv')
     cardCvv!: string;
+
+    // ── New input types ──────────────────────────────────────────────────────
+
+    @ViewGroup('custom.products.groups.group_4')
+    @PropertyIndex(18)
+    @PropertyName('custom.products.fields.scheduledDate', String)
+    @StringTypeDef(StringType.DATE)
+    scheduledDate!: string;
+
+    @PropertyIndex(19)
+    @PropertyName('custom.products.fields.scheduledTime', String)
+    @StringTypeDef(StringType.TIME)
+    scheduledTime!: string;
+
+    @PropertyIndex(20)
+    @PropertyName('custom.products.fields.scheduledDateTime', String)
+    @StringTypeDef(StringType.DATETIME)
+    scheduledDateTime!: string;
+
+    @PropertyIndex(21)
+    @PropertyName('custom.products.fields.themeColor', String)
+    @StringTypeDef(StringType.COLOR)
+    themeColor!: string;
+
+    @PropertyIndex(22)
+    @PropertyName('custom.products.fields.attachment', String)
+    @StringTypeDef(StringType.FILE)
+    @SupportedFiles(['.pdf', '.png', '.jpg', '.jpeg'])
+    @MaxSizeFiles(5)
+    attachment!: string;
+
+    @PropertyIndex(23)
+    @PropertyName('custom.products.fields.tags', String)
+    @StringTypeDef(StringType.TAGS)
+    @MaxTags(10)
+    @MaxTagSize(30)
+    @MaxStringSize(200)
+    tags!: string;
 
     /**
      * Array of related Product entities forming a collection.

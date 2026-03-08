@@ -1,6 +1,6 @@
 <template>
     <div
-        class="TextInput DateInput"
+        class="TextInput DateInput DateTimeInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
         ref="containerRef"
     >
@@ -11,7 +11,7 @@
             type="text"
             class="main-input"
             placeholder=" "
-            :value="formattedDate"
+            :value="displayValue"
             :disabled="metadata.disabled.value"
             :readonly="true"
         />
@@ -23,14 +23,23 @@
     <Teleport to="body">
         <div
             v-if="dropdownOpen"
-            class="input-dropdown-panel"
+            class="input-dropdown-panel datetime-panel"
             :style="dropdownStyle"
             ref="dropdownRef"
         >
-            <CalendarForInputComponent
-                :model-value="modelValue"
-                @select="onDateSelected"
-            />
+            <div class="datetime-pickers">
+                <CalendarForInputComponent
+                    :model-value="pendingDate"
+                    @select="onDateSelected"
+                />
+                <div class="datetime-divider"></div>
+                <ClockPickerComponent @select="onTimeSelected" />
+            </div>
+            <div class="datetime-footer">
+                <button type="button" class="datetime-accept-btn" @click="confirmSelection">
+                    {{ GetLanguagedText('common.accept') }}
+                </button>
+            </div>
         </div>
     </Teleport>
 
@@ -50,12 +59,14 @@ import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import CalendarForInputComponent from '@/components/Informative/CalendarForInputComponent.vue';
+import ClockPickerComponent from '@/components/Informative/ClockPickerComponent.vue';
+import { GetLanguagedText } from '@/helpers/language_helper';
 
 interface Props {
     entityClass: typeof BaseEntity;
     entity: BaseEntity;
     propertyKey: string;
-    modelValue?: string;
+    modelValue?: string; // YYYY-MM-DDTHH:MM
 }
 
 const props = withDefaults(defineProps<Props>(), { modelValue: '' });
@@ -72,19 +83,31 @@ const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref<Record<string, string>>({});
 
-const formattedDate = computed<string>(() => {
+const pendingDate = ref<string>('');
+const pendingTime = ref<string>('');
+
+const displayValue = computed<string>(() => {
     if (!props.modelValue) return '';
-    const date = new Date(`${props.modelValue}T00:00:00`);
-    if (isNaN(date.getTime())) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${day}/${month}/${date.getFullYear()}`;
+    const [datePart, timePart] = props.modelValue.split('T');
+    if (!datePart) return '';
+    const d = new Date(`${datePart}T00:00:00`);
+    if (isNaN(d.getTime())) return props.modelValue;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const time = timePart ? ` ${timePart}` : '';
+    return `${day}/${month}/${d.getFullYear()}${time}`;
 });
 
 async function toggleDropdown(): Promise<void> {
-    if (dropdownOpen.value) {
-        dropdownOpen.value = false;
-        return;
+    if (dropdownOpen.value) { dropdownOpen.value = false; return; }
+    // Seed pending values from current model
+    if (props.modelValue) {
+        const [datePart, timePart] = props.modelValue.split('T');
+        pendingDate.value = datePart ?? '';
+        pendingTime.value = timePart ?? '';
+    } else {
+        pendingDate.value = '';
+        pendingTime.value = '';
     }
     dropdownOpen.value = true;
     await nextTick();
@@ -94,25 +117,31 @@ async function toggleDropdown(): Promise<void> {
 function positionDropdown(): void {
     if (!containerRef.value) return;
     const rect = containerRef.value.getBoundingClientRect();
-    dropdownStyle.value = {
-        position: 'fixed',
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
-        zIndex: '9999',
-    };
+    dropdownStyle.value = { position: 'fixed', top: `${rect.bottom + 4}px`, left: `${rect.left}px`, zIndex: '9999' };
 }
 
 function onDateSelected(dateStr: string): void {
-    emit('update:modelValue', dateStr);
+    pendingDate.value = dateStr;
+}
+
+function onTimeSelected(timeStr: string): void {
+    pendingTime.value = timeStr;
+}
+
+function confirmSelection(): void {
+    if (!pendingDate.value && !pendingTime.value) {
+        dropdownOpen.value = false;
+        return;
+    }
+    const date = pendingDate.value || '';
+    const time = pendingTime.value || '00:00';
+    emit('update:modelValue', date ? `${date}T${time}` : '');
     dropdownOpen.value = false;
 }
 
 function onClickOutside(e: MouseEvent): void {
     const target = e.target as Node;
-    if (
-        containerRef.value?.contains(target) ||
-        dropdownRef.value?.contains(target)
-    ) return;
+    if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) return;
     dropdownOpen.value = false;
 }
 
@@ -156,6 +185,44 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Component-specific styles inherit from global form.css */
-/* §04-UI-DESIGN-SYSTEM-CONTRACT 6.13.1: All Vue SFC must have scoped styles */
+.datetime-panel {
+    min-width: fit-content;
+}
+
+.datetime-pickers {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-small);
+    align-items: flex-start;
+}
+
+.datetime-divider {
+    width: 1px;
+    background-color: var(--gray-lighter);
+    align-self: stretch;
+}
+
+.datetime-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--spacing-small);
+    border-top: 1px solid var(--gray-lighter);
+    margin-top: var(--spacing-small);
+}
+
+.datetime-accept-btn {
+    background-color: var(--sky);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xs) var(--padding-medium);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    transition: background-color var(--transition-fast);
+}
+
+.datetime-accept-btn:hover {
+    background-color: var(--blue-1);
+}
 </style>
