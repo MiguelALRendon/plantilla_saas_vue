@@ -1,29 +1,54 @@
 # Implementation Plan: Phase 01 - Core Stabilization
 
-**Branch**: `phase-01-core-stabilization` | **Date**: 2026-03-05 | **Spec**: [spec.md](spec.md)
+**Branch**: `phase-01-core-stabilization` | **Date**: 2026-03-05 | **Last updated**: 2026-03-25 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/phase-01-core-stabilization/spec.md`
+
+---
+
+## Documentation-Only Scope (Active Cycle)
+
+This plan currently operates in a **documentation-only realignment cycle**. No source code changes are authorized within this cycle. All plan updates must:
+
+1. Reflect the committed implementation state on branch `phase-01-core-stabilization`.
+2. Remove or supersede implementation-future language that has since been delivered.
+3. Preserve the historical record of decisions while clearly marking completed phases as delivered.
+
+**Non-goals**: No new feature design, no architectural modification, no stack changes.
+
+---
+
+## Date and Version Update Convention
+
+When updating any artifact in `specs/phase-01-core-stabilization/`:
+
+1. Update the **Last updated** field in the file's front-matter to the current date (`YYYY-MM-DD`).
+2. Do not change the **Date** (original creation date) field.
+3. Do not increment a semantic version for documentation-only artifacts; version numbers apply only to released build artifacts.
+4. Commit messages for documentation-only updates must include the prefix `docs:` followed by the artifact name (e.g., `docs: update spec.md traceability section`).
+
+---
 
 ## Summary
 
-Phase 01 stabilizes the current framework core to reach the first functional production-ready version.
+Phase 01 stabilized the framework core and delivered the first functional production-ready version.
 
-The implementation focuses on architectural consistency and operational reliability for CRUD modules across the 5-layer model, while preserving MI LOGICA axioms and avoiding new architectural surface area.
+All implementation phases (F1–F4) are complete. The framework now provides architectural consistency and operational reliability for CRUD modules across the 5-layer model, preserving MI LOGICA axioms. A documentation-realignment cycle is active to align all spec artifacts with this delivered baseline.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x (strict) + Vue 3 (Composition API)  
 **Primary Dependencies**: Vue 3, Vite, Vue Router, Axios, mitt  
 **Storage**: REST API persistence + browser LocalStorage where decorators enable persistence  
-**Testing**: Current baseline is manual and smoke verification; Vitest adoption is deferred to post-stabilization hardening  
+**Testing**: Manual and smoke verification completed. Vitest adoption is tracked as TD-03 (open technical debt).  
 **Target Platform**: Browser SPA deployment (build artifacts served on standard web hosting)
 **Project Type**: Web application framework template (metadata-driven CRUD)  
 **Performance Goals**: Stable view transitions and CRUD interactions for normal SaaS datasets without noticeable UI blocking  
 **Constraints**: Must preserve 5-layer flow, unidirectional data, metadata-driven UI, and immutable stack (TypeScript + Vue 3 + Decorators)  
 **Scale/Scope**: Stabilization over existing decorators/entities/application/components/composables, plus production readiness baseline and first functional release criteria
 
-## Constitution Check
+## Constitution Check — Satisfied
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*Original gate: Must pass before Phase 0 research. Re-check after Phase 1 design. All checks passed.*
 
 ### MI LÓGICA Verification (4 AXIOMS - NON-NEGOTIABLE)
 
@@ -34,18 +59,16 @@ The implementation focuses on architectural consistency and operational reliabil
 
 ### Core Principles Verification
 
-- [x] **SPEC-FIRST**: `spec.md` for this feature exists and anchors this plan before implementation tasking.
-- [x] **Documentation Sync**: Research, data model, contracts, and quickstart are produced in this phase.
-- [x] **Architectural Authorization**: No major architecture replacement requested; this is a stabilization pass within current contracts.
-- [x] **Contract Hierarchy**: Plan aligns with constitution and references master contracts as mandatory constraints.
-- [x] **Folder Indexes**: No new index in `/src/`; any future doc index updates remain in `/copilot/` scope.
-- [x] **11-Section Structure**: Applies to contractual docs in `/copilot/`; planning artifacts remain Speckit format.
+- [x] **SPEC-FIRST**: `spec.md` exists and anchors the plan.
+- [x] **Documentation Sync**: Research, data model, contracts, and quickstart are complete.
+- [x] **Architectural Authorization**: No major architecture replacement; stabilization within existing contracts.
+- [x] **Contract Hierarchy**: Plan aligns with constitution and references master contracts.
 - [x] **NO /src/ Documentation**: Confirmed.
 
 ### Breaking Change Assessment
 
-- [x] No deliberate breaking change is introduced in this planning scope.
-- [x] No contractual exception is currently required for stabilization planning.
+- [x] No breaking change introduced.
+- [x] No contractual exception required.
 
 ## Project Structure
 
@@ -81,44 +104,35 @@ src/
 
 **Structure Decision**: Single-project Vue SPA framework template with layered source structure and specification artifacts in `specs/`.
 
-## Phase 0: Outline and Research
+## Phase 0: Outline and Research — Complete
 
-Research outcomes to resolve clarification points and lock the stabilization approach:
+All research outcomes resolved before implementation kickoff. Details in `research.md`.
 
-1. Decide production hardening baseline for current stack.
-2. Define reliability guardrails for CRUD lifecycle consistency.
-3. Confirm observability and failure-surfacing approach without violating architecture.
-4. Define first functional release gate and operational checklist.
+## Phase 1: Design and Contracts — Complete
 
-Output: `research.md` with all ambiguities resolved.
+All design outputs produced:
 
-## Phase 1: Design and Contracts
+1. `data-model.md` — stabilization entities, lifecycle states, and relationships.
+2. `contracts/` — BaseEntity, Application orchestration, and metadata/UI contracts.
+3. `quickstart.md` — runnable validation workflow including production-oriented flow.
 
-Design outputs for task generation:
+## Implementation Phases (Delivered)
 
-1. `data-model.md` defining stabilization entities, lifecycle states, and relationships.
-2. `contracts/` describing impacted interfaces (BaseEntity, Application orchestration, metadata/UI contract).
-3. `quickstart.md` for running and validating the first functional version, including production-oriented flow.
+### F1. Core Behavioral Freeze — ✅ Complete
 
-Output: Design package ready for `/task` generation.
+Canonical behavior established for metadata access, CRUD method contracts, and view transitions.
 
-## Implementation Phases (High-Level, Non-Atomic)
+### F2. Reliability Hardening — ✅ Complete
 
-### F1. Core Behavioral Freeze
+Validation order, dirty-state handling, loading flow, and API error propagation stabilized.
 
-Establish and document canonical behavior for metadata access, CRUD method contracts, and view transitions.
+### F3. Production Readiness Baseline — ✅ Complete
 
-### F2. Reliability Hardening
+Environment handling, build/deploy validation, runtime checks, and rollback criteria implemented and documented.
 
-Reduce instability points in validation order, dirty-state handling, loading flow, and API error propagation.
+### F4. First Functional Version Closure — ✅ Complete
 
-### F3. Production Readiness Baseline
-
-Define environment handling, build/deploy validation, runtime checks, and rollback criteria for initial production usage.
-
-### F4. First Functional Version Closure
-
-Confirm the minimum stable capability set is complete, reproducible, and documented for ongoing module development.
+Minimum stable capability set confirmed, smoke-tested, and documented for ongoing module development.
 
 ## Production Approach
 
@@ -142,8 +156,13 @@ No constitution violations identified; no complexity exception entry required.
 
 ## Technical Debt Register
 
-1. `@NotRequiresLogin()` is currently metadata-only.
-2. Authentication/authorization guards must consume `isNotRequiresLogin()` in the dedicated login phase.
+| ID | Debt | Status |
+|----|------|--------|
+| TD-02 | JWT token in localStorage (OWASP A07 risk) | OPEN — auth phase |
+| TD-03 | Zero automated test coverage | OPEN — post-stabilization |
+| TD-04 | `@NotRequiresLogin()` router guard integration | OPEN — auth phase |
+| TD-05 | Field/action permission enforcement | OPEN — depends on auth phase |
+| TD-07 | Async validation debounce verification requires real `@AsyncValidation` fixture | OPEN |
 
 ## Implementation Constitution Confirmation
 
@@ -151,3 +170,17 @@ No constitution violations identified; no complexity exception entry required.
 2. A2 preserved: entity metadata flows through Application to UI actions.
 3. A3 preserved: custom buttons originate from decorator metadata on methods.
 4. A4 preserved: stack unchanged (TypeScript + Vue 3 + Decorators).
+
+---
+
+## Final Plan Closure
+
+**Phase 01 implementation**: ✅ Complete  
+**Documentation realignment**: Active — tasks T001–T048 in `tasks.md`
+
+This plan is closed for new feature work. The documentation-realignment cycle (tasks in `tasks.md`) is the only authorized activity on this branch. On completion, this branch serves as the canonical Phase 01 reference for future development.
+
+**Carry-forward to next phase**:
+- Open technical debts TD-02 through TD-07 must be triaged into the next phase backlog.
+- The authentication phase should address TD-02, TD-04, and TD-05 as a unit.
+- The testing phase should address TD-03 with Vitest adoption over `BaseEntity` statics, common validators, Pinia stores, and `useInputMetadata`.

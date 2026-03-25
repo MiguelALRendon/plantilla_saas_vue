@@ -1,21 +1,81 @@
 # Quickstart: Phase 01 - Core Stabilization
 
 **Branch**: `phase-01-core-stabilization`
-**Date**: 2026-03-05
+**Date**: 2026-03-05 | **Last updated**: 2026-03-25
 **Goal**: Validate first functional framework version with production-oriented checks.
 
 ## 1. Prerequisites
 
-1. Install dependencies:
+**System requirements**:
+- Node.js ^20.19.0 or >=22.12.0 (per `package.json` `engines` field) and npm 9+
+- Git (to clone/checkout branch `phase-01-core-stabilization`)
+
+**Setup steps**:
+
+1. Clone or checkout the branch:
+
+```bash
+git checkout phase-01-core-stabilization
+```
+
+2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Configure environment values (`.env` or equivalent):
-- `VITE_API_BASE_URL`
+3. Create a `.env` file (copy from `.env.example` if available) and configure:
 
-3. Ensure at least one representative module is registered in Application.
+```env
+# App Identity
+VITE_APP_NAME=My SaaS Application
+VITE_APP_VERSION=1.0.0
+VITE_SQUARED_APP_LOGO_IMAGE=   # path or URL to 1:1 ratio squared logo image
+
+# API
+VITE_API_BASE_URL=http://localhost:3000
+VITE_API_TIMEOUT=30000
+VITE_API_RETRY_ATTEMPTS=3
+
+# Auth
+VITE_AUTH_TOKEN_KEY=auth_token
+VITE_AUTH_REFRESH_TOKEN_KEY=refresh_token
+VITE_SESSION_TIMEOUT=3600000
+
+# i18n / Theming
+VITE_SELECTED_LANGUAGE=en      # uses Language enum: 'en' | 'es' | etc.
+VITE_ENVIRONMENT=development
+VITE_LOG_LEVEL=info
+
+# Limits
+VITE_ITEMS_PER_PAGE=20
+VITE_MAX_FILE_SIZE=5242880     # bytes (5 MB default)
+```
+
+> **Note**: `VITE_ASYNC_VALIDATION_DEBOUNCE` is consumed by `toAppConfiguration()` in `src/stores/app_config_store.ts` (default 300 ms) but is **not** a decorated class property of `Configuration` — it does not appear in the UI and does not need to be set for basic operation.
+
+> **Removed**: `VITE_APP_LOGO` does not exist in the codebase. Use `VITE_SQUARED_APP_LOGO_IMAGE` for sidebar branding (fixes DA-09).
+
+4. Verify at least one persistent module (`@Persistent`) is registered in `Application.initializeApplication()`.
+
+### Bootstrap Sequence
+
+> This sequence is executed in `src/main.ts` and must be preserved in this order.
+
+```
+1. const pinia = createPinia()
+2. setActivePinia(pinia)           ← required before Application methods use stores
+3. Application.initializeApplication(router)  ← loads AppConfiguration from env/localStorage
+4. Application.registerModule(Home)
+5. Application.registerModule(Product)    ← (repeat for each module)
+6. const app = createApp(App)
+7. app.use(pinia)
+8. app.use(router)
+9. app.mount('#app')
+10. document.title = Application.AppConfiguration.value.appName
+```
+
+> **Critical**: `setActivePinia(pinia)` must be called **before** `Application.initializeApplication()` because `Application` methods access Pinia stores during initialization. Reversing this order causes a "no active Pinia" error.
 
 ## 2. Development Validation Flow
 
@@ -26,14 +86,22 @@ npm run dev
 ```
 
 2. Validate core behavior:
-- Sidebar renders registered module.
-- List view loads from configured endpoint.
-- Detail view renders metadata-driven inputs.
-- Required/sync/async validations trigger in order.
-- Save/update/delete operations surface success and failure correctly.
+   - Sidebar renders all registered modules with correct name and icon.
+   - List view loads from configured endpoint and displays metadata-driven columns.
+   - Detail view renders metadata-driven inputs with correct types and labels.
+   - Required, sync, and async validations trigger in correct order on save attempt.
+   - Save/update/delete operations surface success toast and failure dialog correctly.
+   - Collapsed sidebar shows icon-only entries with `squared_app_logo_image` at 1:1 ratio.
+   - Expanded sidebar footer shows app title, `© galurensoft`, and version number.
 
 3. Validate navigation safety:
-- Dirty-state confirmation appears on unsafe transition.
+   - Modify a detail-view field; confirm dirty-state confirmation appears on any navigation attempt.
+   - Accept confirmation; confirm view transitions and action buttons update correctly.
+   - Repeat using sidebar, profile menu, and configuration action entrypoints.
+
+4. Validate table layout:
+   - Open a module with many columns; confirm horizontal scroll is on header/body only.
+   - Confirm pagination/footer controls remain anchored to container width.
 
 ## 3. Production-Oriented Validation Flow
 
@@ -50,10 +118,11 @@ npm run preview
 ```
 
 3. Execute smoke checks on preview:
-- Route loading (`/`, module route, detail route).
-- CRUD sequence with one representative module.
-- Error surfacing for failed API response.
-- Loading indicators and view reconciliation behavior.
+   - Route loading (`/`, module list route, module detail route).
+   - Full CRUD sequence with one representative persistent module.
+   - Error surfacing for a failed API response (wrong endpoint).
+   - Loading indicators and view reconciliation behavior.
+   - Configuration detail open, save, and reload from localStorage.
 
 ## 4. Release Readiness Gate
 
@@ -198,3 +267,48 @@ Production build and preview acceptance checklist:
 - US12: Footer anchoring implementation completed; pagination/footer now outside scroll region in both array and detail tables.
 - US13: Navigation orchestration centralized through dirty-guard pipeline and shared transition timing.
 - US14: Sidebar expanded/collapsed branding behavior implemented with icon-only collapsed mode and square-logo switching.
+
+---
+
+## 19. Release-Readiness Documentation Checklist
+
+**Purpose**: Final gate for declaring Phase 01 documentation pack production-ready and handing off to the next implementation phase.
+
+| Check | Criterion | Status |
+|-------|-----------|--------|
+| Spec status | `spec.md` status reflects implemented reality | ✅ |
+| Scope alignment | Scope section covers all delivered behaviors | ✅ |
+| FR coverage | All 11 functional requirements match implementation | ✅ |
+| Traceability | Sections 10 references documentation-realignment tasks T001-T048 | ✅ |
+| Plan framing | `plan.md` implementation phases marked as delivered | ✅ |
+| Research baseline | Implemented-baseline snapshot present in `research.md` | ✅ |
+| Terminology | Canonical terminology table present in `research.md` | ✅ |
+| Data model | Conceptual vs implemented entities clearly distinguished | ✅ |
+| Quickstart executable | Prerequisites runnable from clean checkout; smoke sections current | ✅ |
+| Contract: BaseEntity | Invariants reflect delivered behavior; non-persistent guard documented | ✅ |
+| Contract: Orchestration | Dirty-guard pipeline and Pinia backing documented | ✅ |
+| Contract: Metadata-UI | Sidebar, table footer, form registry behaviors documented | ✅ |
+| Tech debt register | Open debts TD-02 through TD-07 recorded in `research.md` | ✅ |
+| Tasks backlog | `tasks.md` contains only documentation-realignment tasks T001-T048 | ✅ |
+
+**Outcome**: All documentation artifacts are aligned with the committed implementation. Phase 01 is closed for documentation. Next implementation work should open a new feature branch and spec.
+
+---
+
+## 20. Documentation Realignment Verification Log (T047)
+
+**Run date**: 2026-03-25  
+**Scope**: Documentation-only cycle — T001–T048 (no source code modified)
+
+| Artifact | Verification Result | Notes |
+|----------|--------------------|--------------------------------------------|
+| `spec.md` | ✅ Pass | Status header updated; traceability section aligned to T001-T048; section numbering 13–15 sequential |
+| `plan.md` | ✅ Pass | Documentation-only scope clause present; all F1–F4 phases marked delivered; debt register table present |
+| `research.md` | ✅ Pass | Implemented-baseline snapshot, canonical terminology, documentation changelog (37 entries), and maintenance protocol present |
+| `data-model.md` | ✅ Pass | `[Conceptual]` vs `[Implemented]` annotations added to all entities; `Configuration` fields fully listed |
+| `quickstart.md` | ✅ Pass | Prerequisites rebuilt with `.env` template; smoke sections current; release-readiness checklist in Section 19 |
+| `contracts/base-entity-stability-contract.md` | ✅ Pass | Non-persistent guard, `isDirty=false` post-save invariant, and `BaseEntity` index type narrowing documented |
+| `contracts/application-orchestration-contract.md` | ✅ Pass | Pinia backing note, Routing Rule 6, and present-tense error handling language in place |
+| `contracts/metadata-ui-contract.md` | ✅ Pass | `InputRegistry`, `useFormRenderer`, sidebar-collapse guarantee (Rule 6), and `@OnViewFunction` filters (Rules 7–8) documented |
+
+**T047 Outcome**: End-to-end documentation pass complete. All 8 artifacts verified consistent. Tasks T001–T046 confirmed complete.
