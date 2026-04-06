@@ -16,6 +16,7 @@ export default {
     // #region LIFECYCLE
     mounted() {
         Application.View.value.viewType = ViewTypes.LISTVIEW;
+        Application.setButtonList();
     }
     // #endregion
 };

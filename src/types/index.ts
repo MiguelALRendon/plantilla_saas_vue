@@ -3,3 +3,4 @@ export * from '@/types/entity.types';
 export * from '@/types/service.types';
 export * from '@/types/ui.types';
 export * from '@/types/events';
+export * from '@/types/extra_functions';

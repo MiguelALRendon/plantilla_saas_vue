@@ -2,6 +2,7 @@
     "save": { "en": "Save", "es": "Guardar", "jp": "保存" },
     "saved_successfully": { "en": "Saved successfully.", "es": "Guardado con éxito.", "jp": "正常に保存されました。" },
     "cancel": { "en": "Cancel", "es": "Cancelar", "jp": "キャンセル" },
+    "clear": { "en": "Clear", "es": "Limpiar", "jp": "クリア" },
     "accept": { "en": "Accept", "es": "Aceptar", "jp": "承認" },
     "delete": { "en": "Delete", "es": "Eliminar", "jp": "削除" },
     "close": { "en": "Close", "es": "Cerrar", "jp": "閉じる" },
@@ -14,6 +15,8 @@
     "send_to_device": { "en": "Send to Device", "es": "Enviar al dispositivo", "jp": "デバイスに送信" },
     "generic": { "en": "Generic", "es": "Genérico", "jp": "汎用" },
     "select": { "en": "Select", "es": "Seleccionar", "jp": "選択" },
+    "select_all": { "en": "Select all", "es": "Seleccionar todo", "jp": "全選択" },
+    "deselect_all": { "en": "Deselect all", "es": "Deseleccionar todo", "jp": "全解除" },
     "validate": { "en": "Validate", "es": "Validar", "jp": "検証" },
     "previous_page": { "en": "Previous page", "es": "Página anterior", "jp": "前のページ" },
     "next_page": { "en": "Next page", "es": "Página siguiente", "jp": "次のページ" },
@@ -27,7 +30,9 @@
         "jp": "削除しようとしている要素は復元できません。続行しますか？"
     },
     "loading": { "en": "Loading...", "es": "Cargando...", "jp": "読み込み中..." },
+    "home": { "en": "Home", "es": "Inicio", "jp": "ホーム" },
     "configuration": { "en": "Configuration", "es": "Configuración", "jp": "設定" },
+    "settings": { "en": "Settings", "es": "Configuración", "jp": "設定" },
     "change_theme": { "en": "Change Theme", "es": "Cambiar Tema", "jp": "テーマを変更" },
     "english": { "en": "English", "es": "Inglés", "jp": "英語" },
     "spanish": { "en": "Spanish", "es": "Español", "jp": "スペイン語" },
@@ -44,5 +49,26 @@
         "en": "Are you sure you want to exit without saving?",
         "es": "¿Estás seguro de que quieres salir sin guardar?",
         "jp": "保存せずに終了してもよろしいですか？"
+    },
+    "framework": {
+        "configuration": {
+            "fields": {
+                "app_name": { "en": "App Name", "es": "Nombre de la aplicación", "jp": "アプリ名" },
+                "app_version": { "en": "App Version", "es": "Versión de la aplicación", "jp": "アプリバージョン" },
+                "squared_app_logo_image": { "en": "Squared App Logo Image", "es": "Imagen de logo cuadrado", "jp": "正方形アプリロゴ画像" },
+                "api_base_url": { "en": "API Base URL", "es": "URL base del API", "jp": "APIベースURL" },
+                "api_timeout": { "en": "API Timeout", "es": "Tiempo de espera del API", "jp": "APIタイムアウト" },
+                "api_retry_attempts": { "en": "API Retry Attempts", "es": "Reintentos del API", "jp": "API再試行回数" },
+                "environment": { "en": "Environment", "es": "Entorno", "jp": "環境" },
+                "log_level": { "en": "Log Level", "es": "Nivel de log", "jp": "ログレベル" },
+                "auth_token_key": { "en": "Auth Token Key", "es": "Clave de token de autenticación", "jp": "認証トークンキー" },
+                "auth_refresh_token_key": { "en": "Auth Refresh Token Key", "es": "Clave de refresh token", "jp": "リフレッシュトークンキー" },
+                "session_timeout": { "en": "Session Timeout", "es": "Tiempo de sesión", "jp": "セッションタイムアウト" },
+                "items_per_page": { "en": "Items Per Page", "es": "Elementos por página", "jp": "ページあたり件数" },
+                "max_file_size": { "en": "Max File Size", "es": "Tamaño máximo de archivo", "jp": "最大ファイルサイズ" },
+                "dark_mode": { "en": "Dark Mode", "es": "Modo oscuro", "jp": "ダークモード" },
+                "selected_language": { "en": "Selected Language", "es": "Idioma seleccionado", "jp": "選択言語" }
+            }
+        }
     }
 }

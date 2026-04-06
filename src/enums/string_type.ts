@@ -10,4 +10,10 @@ export enum StringType {
     CREDIT_CARD,
     CREDIT_CARD_DATE,
     CREDIT_CARD_CVV,
+    DATE,
+    TIME,
+    DATETIME,
+    COLOR,
+    FILE,
+    TAGS,
 }

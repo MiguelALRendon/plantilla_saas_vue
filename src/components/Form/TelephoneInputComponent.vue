@@ -39,12 +39,12 @@ interface Props {
     entity: BaseEntity;
     propertyKey: string;
     modelValue?: string;
-    lenght?: number;
+    length?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     modelValue: '',
-    lenght: 10
+    length: 10
 });
 
 const emit = defineEmits<{
@@ -57,7 +57,7 @@ const validationMessages = ref<string[]>([]);
 
 function handleInput(event: Event): void {
     const target = event.target as HTMLInputElement;
-    const formatted = formatPhone(target.value, props.lenght);
+    const formatted = formatPhone(target.value, props.length);
     target.value = formatted;
     emit('update:modelValue', formatted);
 }
@@ -73,9 +73,9 @@ async function isValidated(): Promise<boolean> {
         validationMessages.value.push(metadata.requiredMessage.value || `${metadata.propertyName} is required.`);
     }
 
-    if (digitsLength > 0 && digitsLength < props.lenght) {
+    if (digitsLength > 0 && digitsLength < props.length) {
         validated = false;
-        validationMessages.value.push(`${metadata.propertyName} debe tener ${props.lenght} dígitos.`);
+        validationMessages.value.push(`${metadata.propertyName} debe tener ${props.length} dígitos.`);
     }
 
     if (!metadata.validated.value) {

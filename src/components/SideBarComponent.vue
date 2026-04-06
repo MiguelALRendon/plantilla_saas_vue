@@ -1,18 +1,31 @@
 <template>
     <div :class="['sidebar', { toggled }]">
-        <div class="header">Header</div>
-
-        <div class="body">
-            <SideBarItemComponent v-for="module in Application.ModuleList.values()" :module="module" />
+        <div class="header">
+            <img :src="headerLogo" class="header-logo" :class="{ squared: !toggled }" alt="Logo" />
         </div>
 
-        <div class="footer">footer</div>
+        <div class="body">
+            <SideBarItemComponent
+                v-for="module in Application.ModuleList.values()"
+                :module="module"
+                :collapsed="!toggled"
+                :on-select-module="onSelectModule"
+            />
+        </div>
+
+        <div class="footer">
+            <span class="app-title">{{ appName }}</span>
+            <span class="copyright">&copy; galurensoft</span>
+            <span class="version">v{{ appVersion }}</span>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import Application from '@/models/application';
+import ICONS from '@/constants/icons';
+import { BaseEntity } from '@/entities/base_entity';
 
 export default {
     name: 'SideBarComponent',
@@ -24,8 +37,30 @@ export default {
     data() {
         return {
             Application,
+            ICONS,
             toggled: typeof window !== 'undefined' ? window.innerWidth > 1200 : true
         };
+    },
+    // #endregion
+
+    // #region COMPUTED
+    computed: {
+        appName(): string {
+            return Application.AppConfiguration.value.appName;
+        },
+        appVersion(): string {
+            return Application.AppConfiguration.value.appVersion;
+        },
+        headerLogo(): string {
+            return this.toggled
+                ? ICONS.SYSTEM_NAME
+                : (Application.AppConfiguration.value.squared_app_logo_image || ICONS.SQUARED_APP_LOGO);
+        }
+    },
+    methods: {
+        onSelectModule(moduleClass: typeof BaseEntity): void {
+            Application.changeViewToDefaultView(moduleClass);
+        }
     },
     // #endregion
 
@@ -73,9 +108,9 @@ export default {
 
 .sidebar .header {
     height: var(--topbar-height);
-    opacity: 0;
+    opacity: 1;
     max-height: var(--sidebar-header-max-height);
-    padding: 0;
+    padding: var(--spacing-small);
     overflow: hidden;
     border-bottom: var(--border-width-thin) solid var(--border-gray);
     transition: opacity var(--transition-slow) var(--timing-ease),
@@ -86,6 +121,29 @@ export default {
     height: 100%;
     opacity: 1;
     padding: var(--spacing-lg);
+}
+
+.sidebar .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.sidebar .header .header-logo {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.sidebar .header .header-logo.squared {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: var(--border-radius);
 }
 
 .sidebar .body {
@@ -108,6 +166,27 @@ export default {
 .sidebar.toggled .footer {
     height: 100%;
     opacity: 1;
+}
+
+.sidebar .footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.sidebar .footer .copyright,
+.sidebar .footer .version {
+    font-size: var(--font-size-xs);
+    color: var(--gray);
+    white-space: nowrap;
+}
+
+.sidebar .footer .app-title {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--gray-medium);
+    margin-bottom: var(--spacing-xxs);
 }
 
 /* Desktop standard (1201px–1400px): sidebar slightly reduced to free horizontal space.

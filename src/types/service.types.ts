@@ -14,6 +14,8 @@ export interface ListQueryParams {
     page?: number;
     limit?: number;
     filter?: string;
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc';
 }
 
 /**

@@ -11,6 +11,7 @@
         </div>
         <div class="top-right-side">
             <button
+                ref="profileBtnRef"
                 @click.stop="openDropdown"
                 :class="['profile_button', { toggled: toggled_profile }]"
                 id="dropdown-profile-button"
@@ -29,6 +30,7 @@ import ICONS from '@/constants/icons';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import configurationListComponent from '@/views/ConfigurationListComponent.vue';
+import { Configuration } from '@/entities/configuration';
 
 export default {
     name: 'TopBarComponent',
@@ -39,15 +41,27 @@ export default {
             Application.ApplicationUIService.toggleSidebar();
         },
         logout() {
-            console.log('Logout clicked');
+            const { authTokenKey, authRefreshTokenKey } = Application.AppConfiguration.value;
+            localStorage.removeItem(authTokenKey);
+            localStorage.removeItem(authRefreshTokenKey);
+            Application.router?.push('/login').catch(() => {});
         },
         openDropdown() {
-            var button: HTMLElement = document.getElementById('dropdown-profile-button')!;
+            const button = this.$refs.profileBtnRef as HTMLElement;
             Application.ApplicationUIService.openDropdownMenu(
                 button,
                 GetLanguagedText('common.profile'),
-                configurationListComponent
+                configurationListComponent,
+                undefined,
+                {
+                    onOpenConfiguration: this.openConfigurationDetailFromProfile
+                }
             );
+        },
+        openConfigurationDetailFromProfile(): void {
+            Application.ApplicationUIService.closeDropdownMenu();
+            const configuration = Configuration.fromAppConfiguration(Application.getConfigurationSnapshot());
+            Application.changeViewToDetailView(configuration);
         }
     },
     // #endregion

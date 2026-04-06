@@ -52,6 +52,17 @@ table, span{color: var(--gray-medium);}
     height: 100%;
 }
 
+/* Sidebar clipping safeguards for collapsed icon-only mode */
+.sidebar .side-bar-item {
+    min-width: 0;
+}
+
+.sidebar .side-bar-item .module-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .button {
     background-color: var(--white);
     border: var(--border-width-thin) solid var(--button-color);

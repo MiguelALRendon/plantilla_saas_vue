@@ -19,6 +19,8 @@ import {
     MODULE_ICON_KEY,
     MODULE_LIST_COMPONENT_KEY,
     MODULE_NAME_KEY,
+    NOT_REQUIRES_LOGIN_KEY,
+    ON_VIEW_FUNCTION_KEY,
     MASK_KEY,
     MODULE_PERMISSION_KEY,
     PERSISTENT_KEY,
@@ -35,6 +37,11 @@ import {
     VALIDATION_KEY,
     VIEW_GROUP_KEY,
     VIEW_GROUP_ROW_KEY,
+    SUPPORTED_FILES_KEY,
+    MAX_SIZE_FILES_KEY,
+    MAX_TAGS_KEY,
+    MAX_TAG_SIZE_KEY,
+    MAX_STRING_SIZE_KEY,
 } from '@/decorations';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { StringType } from '@/enums/string_type';
@@ -64,6 +71,8 @@ import type {
 } from '@/types/entity.types';
 import type { TransformationSchema } from '@/types/service.types';
 import type { ListQueryParams, PaginatedListResult } from '@/types/service.types';
+import type { ExtraFunctions } from '@/types/extra_functions';
+import type { OnViewFunctionMetadata } from '@/decorations';
 
 function getErrorMessage(error: unknown): string {
     if (error && typeof error === 'object') {
@@ -108,7 +117,9 @@ function resolveI18nText(text?: string): string | undefined {
  * in the framework must extend this class to inherit framework capabilities.
  */
 export abstract class BaseEntity {
-    [key: string]: unknown;
+    // T122 — Tightened index type: replaces `unknown` with a concrete union of
+    // all value types used by entity properties (primitives, dates, relations, arrays).
+    [key: string]: string | number | boolean | Date | BaseEntity | BaseEntity[] | object | null | undefined;
 
     // #region PROPERTIES — Instance properties for entity state management
 
@@ -575,6 +586,64 @@ export abstract class BaseEntity {
     }
 
     /**
+     * Retrieves the supported file formats for a property.
+     * Defined by @SupportedFiles decorator, used by FileUploadInputComponent.
+     * @param propertyKey The property key to query
+     * @returns Array of accepted MIME types / extensions, or undefined
+     */
+    public getSupportedFiles(propertyKey: string): string[] | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[SUPPORTED_FILES_KEY] as Record<string, string[]>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
+     * Retrieves the maximum allowed file size in bytes for a property.
+     * Defined by @MaxSizeFiles decorator (value in MB). Returns value * 1024 * 1024.
+     * @param propertyKey The property key to query
+     * @returns Max size in bytes, or undefined if decorator not applied
+     */
+    public getMaxFileSizeBytes(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_SIZE_FILES_KEY] as Record<string, number>) ?? {};
+        const mb = map[propertyKey];
+        return mb !== undefined ? mb * 1024 * 1024 : undefined;
+    }
+
+    /**
+     * Returns the maximum number of tags allowed for a TAGS-typed property.
+     * @param propertyKey The property key to query
+     * @returns Max tag count, or undefined if decorator not applied
+     */
+    public getMaxTags(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_TAGS_KEY] as Record<string, number>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
+     * Returns the maximum character length allowed per individual tag.
+     * @param propertyKey The property key to query
+     * @returns Max characters per tag, or undefined if decorator not applied
+     */
+    public getMaxTagSize(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_TAG_SIZE_KEY] as Record<string, number>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
+     * Returns the maximum total character length of the comma-joined tag string.
+     * @param propertyKey The property key to query
+     * @returns Max total string length, or undefined if decorator not applied
+     */
+    public getMaxStringSize(propertyKey: string): number | undefined {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const map = (proto[MAX_STRING_SIZE_KEY] as Record<string, number>) ?? {};
+        return map[propertyKey];
+    }
+
+    /**
      * Determines if a property type is an enum (for EnumInput rendering)
      * The decorator stores enum types as EnumAdapter instances — detected via duck-typing.
      * @param propertyKey The property key to check
@@ -649,6 +718,45 @@ export abstract class BaseEntity {
      */
     public getApiMethods(): HttpMethod[] | undefined {
         return (this.constructor as typeof BaseEntity).getApiMethods();
+    }
+
+    /**
+     * Retrieves custom functions registered with @OnViewFunction on entity methods.
+     * Returned callbacks are always bound to the current entity instance.
+     * @returns Custom function metadata list for action-bar rendering
+     */
+    public getCustomFunctions(): ExtraFunctions[] {
+        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
+        const functionMetadata =
+            (proto[ON_VIEW_FUNCTION_KEY] as Record<string | symbol, OnViewFunctionMetadata>) ?? {};
+
+        return Reflect.ownKeys(functionMetadata).flatMap((key) => {
+            const metadata = functionMetadata[key];
+            const method = (this as Record<PropertyKey, unknown>)[key];
+
+            if (!metadata || typeof method !== 'function') {
+                return [];
+            }
+
+            return [
+                {
+                    icon: metadata.icon,
+                    text: resolveI18nText(metadata.text) ?? metadata.text,
+                    viewTypes: metadata.viewTypes,
+                    fn: (method as () => unknown).bind(this),
+                }
+            ];
+        });
+    }
+
+    /**
+     * Indicates whether this entity can bypass login requirements.
+     * NOTE: This flag is metadata-only until login flow is implemented.
+     * @returns True when @NotRequiresLogin is defined on the class
+     */
+    public isNotRequiresLogin(): boolean {
+        const constructorMetadata = (this.constructor as typeof BaseEntity) as DecoratedConstructor<this>;
+        return Boolean(constructorMetadata[NOT_REQUIRES_LOGIN_KEY]);
     }
 
     /**
@@ -735,6 +843,10 @@ export abstract class BaseEntity {
      * @returns API-ready payload mapped to persistent keys
      */
     public buildRequestPayload(): EntityData {
+        if (!this.isPersistent()) {
+            return {};
+        }
+
         const payload = this.toPersistentObject();
 
         for (const key of Object.keys(payload)) {
@@ -848,6 +960,18 @@ export abstract class BaseEntity {
      * @returns True if persistence configuration is valid, false otherwise (shows error dialog)
      */
     public validatePersistenceConfiguration(): boolean {
+        if (!this.isPersistent()) {
+            Application.ApplicationUIService.openConfirmationMenu(
+                confMenuType.ERROR,
+                GetLanguagedText('errors.persistence_configuration_error'),
+                GetLanguagedText('errors.entity_not_persistent'),
+                undefined,
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
+            );
+            return false;
+        }
+
         if (!this.validateModuleConfiguration()) {
             return false;
         }
@@ -980,11 +1104,11 @@ export abstract class BaseEntity {
         if (this.isNew()) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al actualizar',
-                'No se puede actualizar un elemento que no ha sido guardado',
+                GetLanguagedText('errors.update_error'),
+                GetLanguagedText('errors.update_requires_saved_entity'),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return this;
         }
@@ -1010,11 +1134,11 @@ export abstract class BaseEntity {
             this.updateFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al actualizar',
+                GetLanguagedText('errors.update_error'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }
@@ -1039,11 +1163,11 @@ export abstract class BaseEntity {
         if (this.isNew()) {
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al eliminar',
-                'No se puede eliminar un elemento que no ha sido guardado',
+                GetLanguagedText('errors.delete_error'),
+                GetLanguagedText('errors.delete_requires_saved_entity'),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             return;
         }
@@ -1061,11 +1185,11 @@ export abstract class BaseEntity {
             this.deleteFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
-                'Error al eliminar',
+                GetLanguagedText('errors.delete_error'),
                 getErrorMessage(error),
                 undefined,
-                'Aceptar',
-                'Cerrar'
+                GetLanguagedText('common.accept'),
+                GetLanguagedText('common.close')
             );
             throw error;
         }
@@ -1078,6 +1202,10 @@ export abstract class BaseEntity {
      * @throws Error if API request fails
      */
     public async refresh(filter: string = ''): Promise<this[]> {
+        if (!this.isPersistent()) {
+            return [];
+        }
+
         try {
             const entityClass = (this.constructor as typeof BaseEntity) as Pick<ConcreteEntityClass<this>, 'getElementList'>;
             const instances = await entityClass.getElementList(filter);
@@ -1533,6 +1661,11 @@ export abstract class BaseEntity {
         this: typeof BaseEntity,
         data: EntityData
     ): EntityData {
+        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
+        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
+            return { ...data };
+        }
+
         const persistentKeys = this.getPersistentKeys();
         let mapped: EntityData = {};
 
@@ -1560,6 +1693,11 @@ export abstract class BaseEntity {
         this: typeof BaseEntity,
         data: EntityData
     ): EntityData {
+        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
+        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
+            return { ...data };
+        }
+
         let mapped: EntityData = {};
 
         for (const [persistentKey, value] of Object.entries(data)) {
@@ -1674,6 +1812,11 @@ export abstract class BaseEntity {
         this: ConcreteEntityClass<T>,
         entityObjectId: string
     ): Promise<T> {
+        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
+        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
+            return new this({});
+        }
+
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
@@ -1714,6 +1857,11 @@ export abstract class BaseEntity {
         this: ConcreteEntityClass<T>,
         paramsOrFilter: ListQueryParams | string = ''
     ): Promise<T[]> {
+        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
+        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
+            return [];
+        }
+
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {
@@ -1773,6 +1921,16 @@ export abstract class BaseEntity {
         this: ConcreteEntityClass<T>,
         params: ListQueryParams = {}
     ): Promise<PaginatedListResult<T>> {
+        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
+        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
+            return {
+                data: [],
+                total: 0,
+                page: params.page ?? 1,
+                limit: params.limit ?? 20,
+            };
+        }
+
         const endpoint = this.getApiEndpoint();
 
         if (!endpoint) {

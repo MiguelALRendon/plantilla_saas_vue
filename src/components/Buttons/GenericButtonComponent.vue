@@ -1,18 +1,40 @@
 <template>
-    <button class="button">{{ t('common.generic') }}</button>
+    <button class="button info" type="button" @click="handleClick">
+        <span v-if="iconGlyph" :class="[GGCLASS, 'btn-icon']">{{ iconGlyph }}</span>
+        <span>{{ text }}</span>
+    </button>
 </template>
 
-<script lang="ts">
-import { GetLanguagedText } from '@/helpers/language_helper';
+<script setup lang="ts">
+import { computed } from 'vue';
 
-export default {
-    name: 'GenericButtonComponent',
-    methods: {
-        t(path: string): string {
-            return GetLanguagedText(path);
-        }
+import { GGCLASS, GGICONS } from '@/constants/ggicons';
+
+import type { GGIconKey } from '@/constants/ggicons';
+
+const props = withDefaults(
+    defineProps<{
+        icon?: GGIconKey;
+        text: string;
+        onClick?: () => unknown;
+    }>(),
+    {
+        icon: undefined,
+        onClick: undefined,
     }
-};
+);
+
+const iconGlyph = computed<string>(() => {
+    if (!props.icon) {
+        return '';
+    }
+
+    return GGICONS[props.icon] ?? '';
+});
+
+function handleClick(): void {
+    props.onClick?.();
+}
 </script>
 
 <style scoped>

@@ -2,6 +2,7 @@
     <div
         class="TextInput DateInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
+        ref="containerRef"
     >
         <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
         <input
@@ -14,20 +15,24 @@
             :disabled="metadata.disabled.value"
             :readonly="true"
         />
-        <input
-            ref="dateInput"
-            :id="`date-id-${metadata.propertyName}`"
-            :name="metadata.propertyName"
-            type="date"
-            class="date-input"
-            :value="modelValue"
-            :disabled="metadata.disabled.value || metadata.readonly.value"
-            @input="updateDate"
-        />
-        <button class="right" @click="openCalendar" :disabled="metadata.disabled.value || metadata.readonly.value">
+        <button class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
             <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
         </button>
     </div>
+
+    <Teleport to="body">
+        <div
+            v-if="dropdownOpen"
+            class="input-dropdown-panel"
+            :style="dropdownStyle"
+            ref="dropdownRef"
+        >
+            <CalendarForInputComponent
+                :model-value="modelValue"
+                @select="onDateSelected"
+            />
+        </div>
+    </Teleport>
 
     <div class="help-text" v-if="metadata.helpText.value">
         <span>{{ metadata.helpText.value }}</span>
@@ -39,12 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
 import Application from '@/models/application';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import CalendarForInputComponent from '@/components/Informative/CalendarForInputComponent.vue';
 
 interface Props {
     entityClass: typeof BaseEntity;
@@ -53,55 +58,62 @@ interface Props {
     modelValue?: string;
 }
 
-// #region PROPERTIES
-const props = withDefaults(defineProps<Props>(), {
-    modelValue: ''
-});
+const props = withDefaults(defineProps<Props>(), { modelValue: '' });
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void;
 }>();
 
 const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
-const dateInput = ref<HTMLInputElement | null>(null);
 const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
+const dropdownOpen = ref(false);
+const containerRef = ref<HTMLElement | null>(null);
+const dropdownRef = ref<HTMLElement | null>(null);
+const dropdownStyle = ref<Record<string, string>>({});
 
 const formattedDate = computed<string>(() => {
     if (!props.modelValue) return '';
-
-    // Prefer YYYY-MM-DD (from input[type=date]); fall back to parsing arbitrary date strings
-    let date = new Date(`${props.modelValue}${DATE_TIME_LOCAL_SUFFIX}`);
-    if (isNaN(date.getTime())) {
-        date = new Date(`${props.modelValue}${DATE_TIME_LOCAL_SUFFIX}`);
-    }
-
+    const date = new Date(`${props.modelValue}T00:00:00`);
     if (isNaN(date.getTime())) return '';
-
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}/${month}/${year}`;
+    return `${day}/${month}/${date.getFullYear()}`;
 });
-// #endregion
 
-// #region METHODS
-function updateDate(event: Event): void {
-    if (metadata.readonly.value) {
+async function toggleDropdown(): Promise<void> {
+    if (dropdownOpen.value) {
+        dropdownOpen.value = false;
         return;
     }
-
-    const value = (event.target as HTMLInputElement).value;
-    emit('update:modelValue', value);
+    dropdownOpen.value = true;
+    await nextTick();
+    positionDropdown();
 }
 
-function openCalendar(): void {
-    if (metadata.readonly.value) {
-        return;
-    }
+function positionDropdown(): void {
+    if (!containerRef.value) return;
+    const rect = containerRef.value.getBoundingClientRect();
+    dropdownStyle.value = {
+        position: 'fixed',
+        top: `${rect.bottom + 4}px`,
+        left: `${rect.left}px`,
+        zIndex: '9999',
+    };
+}
 
-    dateInput.value?.showPicker?.();
+function onDateSelected(dateStr: string): void {
+    emit('update:modelValue', dateStr);
+    dropdownOpen.value = false;
+}
+
+function onClickOutside(e: MouseEvent): void {
+    const target = e.target as Node;
+    if (
+        containerRef.value?.contains(target) ||
+        dropdownRef.value?.contains(target)
+    ) return;
+    dropdownOpen.value = false;
 }
 
 async function isValidated(): Promise<boolean> {
@@ -121,9 +133,7 @@ async function isValidated(): Promise<boolean> {
     if (!isAsyncValid) {
         validated = false;
         const asyncMessage = props.entity.asyncValidationMessage(props.propertyKey);
-        if (asyncMessage) {
-            validationMessages.value.push(asyncMessage);
-        }
+        if (asyncMessage) validationMessages.value.push(asyncMessage);
     }
 
     return validated;
@@ -131,21 +141,18 @@ async function isValidated(): Promise<boolean> {
 
 async function handleValidation(): Promise<void> {
     isInputValidated.value = await isValidated();
-    if (!isInputValidated.value) {
-        Application.View.value.isValid = false;
-    }
+    if (!isInputValidated.value) Application.View.value.isValid = false;
 }
-// #endregion
 
-// #region LIFECYCLE
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
+    document.addEventListener('mousedown', onClickOutside);
 });
 
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
+    document.removeEventListener('mousedown', onClickOutside);
 });
-// #endregion
 </script>
 
 <style scoped>

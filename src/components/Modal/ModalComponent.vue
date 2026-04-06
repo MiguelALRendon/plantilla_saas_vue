@@ -21,11 +21,11 @@
             <div class="modal-footer">
                 <button class="button info fill">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
-                    <span class="btn-label">Aceptar</span>
+                    <span class="btn-label">{{ t('common.accept') }}</span>
                 </button>
                 <button class="button alert fill" @click="closeModal">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
-                    <span class="btn-label">Cerrar</span>
+                    <span class="btn-label">{{ t('common.close') }}</span>
                 </button>
             </div>
         </div>
@@ -37,6 +37,7 @@ import { GGCLASS, GGICONS } from '@/constants/ggicons';
 import ICONS from '@/constants/icons';
 import { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
+import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import { Modal } from '@/models/modal';
 import Defaultlookuplistview from '@/views/default_lookup_listview.vue';
@@ -54,6 +55,9 @@ export default {
             if (e.key === 'Escape' && this.isShowing) {
                 Application.ApplicationUIService.closeModal();
             }
+        },
+        t(path: string): string {
+            return GetLanguagedText(path);
         }
     },
     // #endregion

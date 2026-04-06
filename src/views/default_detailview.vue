@@ -8,161 +8,21 @@
                     :is="getRowComponent(chunk.rowType)"
                     :class="getChunkClass(chunk.rowType)"
                 >
+                    <!-- T126 — Registry-based component resolution; replaces 16-branch v-if cascade -->
                     <div v-for="prop in chunk.properties" :key="prop">
-                        <NumberInputComponent
-                            v-if="propertyMetadata[prop].showNumberInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getNumberModel(prop)"
-                            @update:model-value="setNumberModel(prop, $event)"
+                        <component
+                            v-if="resolveInputForProp(prop)"
+                            :is="resolveInputForProp(prop)"
+                            v-bind="getInputProps(prop)"
                         />
-
-                        <ObjectInputComponent
-                            v-if="propertyMetadata[prop].showObjectInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :modelType="getObjectModelType(prop)"
-                            :model-value="getObjectModel(prop)"
-                            @update:model-value="setObjectModel(prop, $event)"
-                        />
-
-                        <DateInputComponent
-                            v-if="propertyMetadata[prop].showDateInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getDateModel(prop)"
-                            @update:model-value="setDateModel(prop, $event)"
-                        />
-
-                        <BooleanInputComponent
-                            v-if="propertyMetadata[prop].showBooleanInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getBooleanModel(prop)"
-                            @update:model-value="setBooleanModel(prop, $event)"
-                        />
-
-                        <EnumInputComponent
-                            v-if="propertyMetadata[prop].showEnumInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :property-enum-values="getEnumAdapter(prop)"
-                            :model-value="getListModel(prop)"
-                            @update:model-value="setListModel(prop, $event)"
-                        />
-
-                        <!-- APARTADO PARA LOS INPUTS EN BASE STRING -->
-                        <TextInputComponent
-                            v-if="propertyMetadata[prop].showTextInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <TextAreaComponent
-                            v-if="propertyMetadata[prop].showTextAreaInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <EmailInputComponent
-                            v-if="propertyMetadata[prop].showEmailInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <PasswordInputComponent
-                            v-if="propertyMetadata[prop].showPasswordInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <TelephoneInputComponent
-                            v-if="propertyMetadata[prop].showTelephoneInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <UrlInputComponent
-                            v-if="propertyMetadata[prop].showUrlInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <UrlImageInputComponent
-                            v-if="propertyMetadata[prop].showUrlImageInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <SearchInputComponent
-                            v-if="propertyMetadata[prop].showSearchInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <CreditCardInputComponent
-                            v-if="propertyMetadata[prop].showCreditCardInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <CreditCardDateInputComponent
-                            v-if="propertyMetadata[prop].showCreditCardDateInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-
-                        <CreditCardCvvInputComponent
-                            v-if="propertyMetadata[prop].showCreditCardCvvInput"
-                            :entity-class="entityClass"
-                            :entity="entity"
-                            :property-key="prop"
-                            :model-value="getStringModel(prop)"
-                            @update:model-value="setStringModel(prop, $event)"
-                        />
-                        <!---------------------------------------------->
                     </div>
                 </component>
             </template>
         </FormGroupComponent>
     </div>
 
-    <FormGroupComponent title="Listas">
+
+    <FormGroupComponent v-if="entity.getArrayKeysOrdered().length > 0" title="Listas">
         <TabControllerComponent :tabs="getArrayListsTabs()">
             <TabComponent v-for="tab in entity.getArrayKeysOrdered()">
                 <ArrayInputComponent
@@ -188,10 +48,12 @@ import TabControllerComponent from '@/components/TabControllerComponent.vue';
 import TabComponent from '@/components/TabComponent.vue';
 import Application from '@/models/application';
 import { BaseEntity, EmptyEntity } from '@/entities/base_entity';
-import { StringType } from '@/enums/string_type';
 import { ViewGroupRow } from '@/enums/view_group_row';
-import { EnumAdapter } from '@/models/enum_adapter';
-import { DATE_TIME_LOCAL_SUFFIX } from '@/constants/datetime';
+import { ViewTypes } from '@/enums/view_type';
+import { useFormRenderer } from '@/composables/useFormRenderer';
+import type { Component } from 'vue';
+
+const _renderer = useFormRenderer();
 
 export default {
     name: 'DefaultDetailView',
@@ -203,11 +65,7 @@ export default {
 
     // #region PROPERTIES
     data() {
-        return {
-            StringType,
-            EnumAdapter,
-            BaseEntity
-        };
+        return {};
     },
     // #endregion
 
@@ -218,6 +76,9 @@ export default {
                 ? Application.View.value.entityClass.createNewInstance()
                 : new EmptyEntity({});
         }
+
+        Application.View.value.viewType = Application.View.value.entityObject ? ViewTypes.DETAILVIEW : ViewTypes.DEFAULTVIEW;
+        Application.setButtonList();
     },
     // #endregion
 
@@ -231,75 +92,6 @@ export default {
         },
         defaultPropertyValue(): string {
             return String(this.entity.getDefaultPropertyValue() ?? '');
-        },
-        propertyMetadata(): Record<
-            string,
-            {
-                showNumberInput: boolean;
-                showObjectInput: boolean;
-                showDateInput: boolean;
-                showBooleanInput: boolean;
-                showEnumInput: boolean;
-                showTextInput: boolean;
-                showTextAreaInput: boolean;
-                showEmailInput: boolean;
-                showPasswordInput: boolean;
-                showTelephoneInput: boolean;
-                showUrlInput: boolean;
-                showUrlImageInput: boolean;
-                showSearchInput: boolean;
-                showCreditCardInput: boolean;
-                showCreditCardDateInput: boolean;
-                showCreditCardCvvInput: boolean;
-            }
-        > {
-            const metadata: Record<
-                string,
-                {
-                    showNumberInput: boolean;
-                    showObjectInput: boolean;
-                    showDateInput: boolean;
-                    showBooleanInput: boolean;
-                    showEnumInput: boolean;
-                    showTextInput: boolean;
-                    showTextAreaInput: boolean;
-                    showEmailInput: boolean;
-                    showPasswordInput: boolean;
-                    showTelephoneInput: boolean;
-                    showUrlInput: boolean;
-                    showUrlImageInput: boolean;
-                    showSearchInput: boolean;
-                    showCreditCardInput: boolean;
-                    showCreditCardDateInput: boolean;
-                    showCreditCardCvvInput: boolean;
-                }
-            > = {};
-            const keys = this.entity.getKeys();
-
-            for (const prop of keys) {
-                const propType = this.entityClass.getPropertyType(prop);
-                const stringType = this.entity.getStringType()[prop];
-
-                metadata[prop] = {
-                    showNumberInput: propType === Number,
-                    showObjectInput: !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity,
-                    showDateInput: propType === Date,
-                    showBooleanInput: propType === Boolean,
-                    showEnumInput: this.entity.isEnumProperty(prop),
-                    showTextInput: propType === String && stringType === StringType.TEXT,
-                    showTextAreaInput: propType === String && stringType == StringType.TEXTAREA,
-                    showEmailInput: propType === String && stringType == StringType.EMAIL,
-                    showPasswordInput: propType === String && stringType == StringType.PASSWORD,
-                    showTelephoneInput: propType === String && stringType == StringType.TELEPHONE,
-                    showUrlInput: propType === String && stringType == StringType.URL,
-                    showUrlImageInput: propType === String && stringType == StringType.URL_IMAGE,
-                    showSearchInput: propType === String && stringType == StringType.SEARCH,
-                    showCreditCardInput: propType === String && stringType == StringType.CREDIT_CARD,
-                    showCreditCardDateInput: propType === String && stringType == StringType.CREDIT_CARD_DATE,
-                    showCreditCardCvvInput: propType === String && stringType == StringType.CREDIT_CARD_CVV
-                };
-            }
-            return metadata;
         },
         groupedProperties() {
             const viewGroups = this.entity.getViewGroups();
@@ -373,61 +165,18 @@ export default {
         getChunkClass(rowType: ViewGroupRow): string {
             return rowType === ViewGroupRow.SINGLE ? 'form-row-single' : '';
         },
-        isBaseEntityType(prop: string): boolean {
-            const propType = this.entityClass.getPropertyType(prop);
-            return !!propType && typeof propType === 'function' && propType.prototype instanceof BaseEntity;
+        resolveInputForProp(prop: string): Component | null {
+            return _renderer.resolveInputForProp(this.entityClass, this.entity, prop);
         },
-        getObjectModelType(prop: string): typeof BaseEntity {
-            return this.entityClass.getPropertyType(prop) as typeof BaseEntity;
-        },
-        getEnumAdapter(prop: string): EnumAdapter {
-            // The decorator already stores the type as an EnumAdapter instance — return it directly.
-            return this.entityClass.getPropertyType(prop) as EnumAdapter;
-        },
-        getNumberModel(prop: string): number {
-            return Number(this.entity[prop] ?? 0);
-        },
-        setNumberModel(prop: string, value: number): void {
-            this.entity[prop] = value;
-        },
-        getStringModel(prop: string): string {
-            return String(this.entity[prop] ?? '');
-        },
-        getDateModel(prop: string): string {
-            const value = this.entity[prop];
-            if (!value) return '';
-            const date = value instanceof Date ? value : new Date(`${String(value)}${DATE_TIME_LOCAL_SUFFIX}`);
-            if (isNaN(date.getTime())) return '';
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        },
-        setStringModel(prop: string, value: string): void {
-            this.entity[prop] = value;
-        },
-        setDateModel(prop: string, value: string): void {
-            this.entity[prop] = value ? new Date(`${value}${DATE_TIME_LOCAL_SUFFIX}`) : null;
-        },
-        getBooleanModel(prop: string): boolean {
-            return Boolean(this.entity[prop]);
-        },
-        setBooleanModel(prop: string, value: boolean): void {
-            this.entity[prop] = value;
-        },
-        getListModel(prop: string): string | number {
-            const currentValue = this.entity[prop];
-            return typeof currentValue === 'number' ? currentValue : String(currentValue ?? '');
-        },
-        setListModel(prop: string, value: string | number): void {
-            this.entity[prop] = value;
-        },
-        getObjectModel(prop: string): BaseEntity {
-            const value = this.entity[prop];
-            return value instanceof BaseEntity ? value : new EmptyEntity({});
-        },
-        setObjectModel(prop: string, value: BaseEntity): void {
-            this.entity[prop] = value;
+        getInputProps(prop: string): Record<string, unknown> {
+            return {
+                entityClass: this.entityClass,
+                entity: this.entity,
+                propertyKey: prop,
+                modelValue: _renderer.getModelValue(this.entityClass, this.entity, prop),
+                'onUpdate:modelValue': (val: unknown) => _renderer.setModelValue(this.entity, prop, val),
+                ..._renderer.getExtraProps(this.entityClass, this.entity, prop)
+            };
         },
         getArrayModel(prop: string): BaseEntity[] {
             const value = this.entity[prop];

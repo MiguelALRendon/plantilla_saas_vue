@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import type { Router } from 'vue-router';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
-import type { EntityCtor } from '@/models/View';
+import type { EntityCtor } from '@/models/view';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
@@ -54,7 +54,7 @@ const router: Router = createRouter({
 router.beforeEach(async (to, _from, next) => {
     /** Dirty state guard — spec §8.7 Navigation with Dirty State Guard */
     const currentEntity = Application.View.value.entityObject;
-    if (currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
+    if (currentEntity?.isPersistent() && currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {
         Application.ApplicationUIService.openConfirmationMenu(
             confMenuType.WARNING,
             GetLanguagedText('common.exit_without_saving'),
@@ -120,12 +120,18 @@ router.beforeEach(async (to, _from, next) => {
                     }
                 }
             } else {
-                /** List view - Display table of entities */
+                /** Default view takes priority over list view when module has @ModuleDefaultComponent */
+                const defaultComponent = moduleClass.getModuleDefaultComponent();
                 Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                 Application.View.value.entityObject = null;
-                Application.View.value.component = moduleClass.getModuleListComponent();
-                Application.View.value.viewType = ViewTypes.LISTVIEW;
                 Application.View.value.entityOid = '';
+                if (defaultComponent) {
+                    Application.View.value.component = defaultComponent;
+                    Application.View.value.viewType = ViewTypes.DEFAULTVIEW;
+                } else {
+                    Application.View.value.component = moduleClass.getModuleListComponent();
+                    Application.View.value.viewType = ViewTypes.LISTVIEW;
+                }
                 Application.setButtonList();
             }
         }

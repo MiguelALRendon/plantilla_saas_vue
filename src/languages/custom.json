@@ -43,6 +43,9 @@
             "invalid_email": { "en": "Invalid email format", "es": "Formato de email inválido", "jp": "無効なメール形式" },
             "email_test_domain": { "en": "Email cannot end with @test.com", "es": "El email no puede terminar en @test.com", "jp": "メールは @test.com で終われません" },
             "min_list_items": { "en": "Minimum quantity must be greater than 3", "es": "La cantidad minima tiene que ser mayor a 3", "jp": "最小数量は3より大きい必要があります" }
+        },
+        "actions": {
+            "random_toast": { "en": "Random Toast", "es": "Toast Aleatorio", "jp": "ランダムトースト" }
         }
     }
 }

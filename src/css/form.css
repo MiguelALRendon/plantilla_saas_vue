@@ -229,3 +229,69 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
         left: var(--input-padding);
     }
 }
+
+/* ── Teleport dropdown panel (shared by DateInput, HourInput, DateTimeInput, ColorInput) ── */
+.input-dropdown-panel {
+    background: var(--white);
+    border: var(--border-width-thin) solid var(--gray-lighter);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-dark);
+    padding: var(--padding-small);
+    z-index: 9999;
+}
+
+/* ── TagInput ─────────────────────────────────────────────────────────────── */
+.TextInput.TagInput .tag-chips-container {
+    border: var(--border-width-thin) solid var(--sky);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-gray);
+    transition: border-color var(--transition-slow) var(--timing-ease),
+                border-width var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease);
+}
+
+/* Float label when chips are present or an inline edit input is visible */
+.TextInput.TagInput:has(.tag-chip-label) .label-input,
+.TextInput.TagInput:has(.tag-chip-edit) .label-input {
+    background-color: var(--sky);
+    color: var(--white);
+    font-size: var(--font-size-small);
+    top: var(--label-focused-top);
+    left: var(--label-focused-left);
+    padding: var(--label-focused-padding);
+    border-top-left-radius: var(--padding-small);
+    border-top-right-radius: var(--padding-small);
+}
+.TextInput.TagInput:has(.tag-chip-label) .label-input span,
+.TextInput.TagInput:has(.tag-chip-edit) .label-input span {
+    color: var(--white);
+}
+
+/* Focus state — blue border + white bg when typing inside a chip */
+.TextInput.TagInput:has(.tag-chip-edit:focus) .tag-chips-container,
+.TextInput.TagInput:has(.tag-add-btn:focus) .tag-chips-container {
+    border: var(--border-width-medium) solid var(--lavender);
+    background-color: var(--white);
+}
+.TextInput.TagInput:has(.tag-chip-edit:focus) .label-input,
+.TextInput.TagInput:has(.tag-add-btn:focus) .label-input {
+    background-color: var(--lavender);
+    color: var(--white);
+    font-size: var(--font-size-small);
+    top: var(--label-focused-top);
+    left: var(--label-focused-left);
+    padding: var(--label-focused-padding);
+    border-top-left-radius: var(--padding-small);
+    border-top-right-radius: var(--padding-small);
+}
+
+/* Disabled */
+.TextInput.TagInput.disabled .tag-chips-container {
+    border-color: var(--gray-light);
+    cursor: not-allowed;
+}
+
+/* Nonvalidated */
+.TextInput.TagInput.nonvalidated .tag-chips-container {
+    border-color: var(--accent-red);
+}

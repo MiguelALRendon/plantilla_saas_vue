@@ -44,7 +44,18 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th class="selection" :class="[{ display: isSelection }]"></th>
+                        <th class="selection" :class="[{ display: isSelection }]">
+                            <!-- T120 — select-all toggle, only shown when selection mode is active -->
+                            <button
+                                v-if="isSelection"
+                                class="select-btn"
+                                :class="[{ added: isAllSelected }]"
+                                :title="isAllSelected ? t('common.deselect_all') : t('common.select_all')"
+                                @click="toggleSelectAll"
+                            >
+                                <span :class="[GGCLASS]">{{ isAllSelected ? GGICONS.REMOVE : GGICONS.ADD }}</span>
+                            </button>
+                        </th>
                         <th
                             v-for="colKey in columnOrder"
                             :key="colKey"
@@ -57,7 +68,14 @@
                             @drop.prevent="onDrop(colKey)"
                             :class="{ 'drag-over': dragOverKey === colKey }"
                         >
-                            {{ visibleProperties[colKey] }}
+                            <button
+                                class="col-sort-btn"
+                                :class="{ 'is-sorted': sortColumn === colKey }"
+                                @click.stop="toggleSort(colKey)"
+                            >
+                                <span :class="[GGCLASS]">{{ getSortIcon(colKey) }}</span>
+                            </button>
+                            <span class="col-label">{{ visibleProperties[colKey] }}</span>
                             <button
                                 class="col-filter-btn"
                                 :class="{ 'has-filter': (columnFilters[colKey]?.length ?? 0) > 0 }"
@@ -85,41 +103,38 @@
                         </td>
                     </tr>
                 </tbody>
-                <tfoot>
-                    <tr>
-                        <td class="pagination-td" :colspan="columnOrder.length + 1">
-                            <div class="pagination-bar">
-                                <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
-                                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-                                </select>
-                                <div class="pagination-nav">
-                                    <button
-                                        class="page-btn"
-                                        :disabled="currentPage === 1 || pageSize === 'ALL'"
-                                        @click="prevPage"
-                                        :title="t('common.previous_page')"
-                                    >&#8249;</button>
-                                    <button
-                                        v-for="page in visiblePages"
-                                        :key="page"
-                                        class="page-btn"
-                                        :class="{ active: page === currentPage }"
-                                        :disabled="pageSize === 'ALL'"
-                                        @click="goToPage(page)"
-                                    >{{ page }}</button>
-                                    <button
-                                        class="page-btn"
-                                        :disabled="currentPage === totalPages || pageSize === 'ALL'"
-                                        @click="nextPage"
-                                        :title="t('common.next_page')"
-                                    >&#8250;</button>
-                                </div>
-                                <span class="pagination-info">{{ paginationInfo }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
+        </div>
+
+        <div class="table-footer">
+            <div class="pagination-bar">
+                <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
+                    <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                </select>
+                <div class="pagination-nav">
+                    <button
+                        class="page-btn"
+                        :disabled="currentPage === 1 || pageSize === 'ALL'"
+                        @click="prevPage"
+                        :title="t('common.previous_page')"
+                    >&#8249;</button>
+                    <button
+                        v-for="page in visiblePages"
+                        :key="page"
+                        class="page-btn"
+                        :class="{ active: page === currentPage }"
+                        :disabled="pageSize === 'ALL'"
+                        @click="goToPage(page)"
+                    >{{ page }}</button>
+                    <button
+                        class="page-btn"
+                        :disabled="currentPage === totalPages || pageSize === 'ALL'"
+                        @click="nextPage"
+                        :title="t('common.next_page')"
+                    >&#8250;</button>
+                </div>
+                <span class="pagination-info">{{ paginationInfo }}</span>
+            </div>
         </div>
     </div>
 </template>
@@ -174,6 +189,10 @@ let resizeStartWidth = 0;
 // T244 — Column filter state
 const columnFilters: Ref<Record<string, unknown[]>> = ref({});
 
+// Sort state
+const sortColumn = ref<string>('');
+const sortDirection = ref<'asc' | 'desc' | null>(null);
+
 // T245 — Column drag-reorder state
 const columnOrder = ref<string[]>([]);
 const dragSourceKey = ref<string | null>(null);
@@ -211,11 +230,30 @@ const filteredItems = computed<BaseEntity[]>(() => {
     );
 });
 
+const sortedItems = computed<BaseEntity[]>(() => {
+    if (!sortColumn.value || !sortDirection.value) return filteredItems.value;
+    const col = sortColumn.value;
+    const dir = sortDirection.value;
+    return [...filteredItems.value].sort((a, b) => {
+        const aVal = getCellValue(a, col);
+        const bVal = getCellValue(b, col);
+        const aNum = Number(aVal);
+        const bNum = Number(bVal);
+        let cmp: number;
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            cmp = aNum - bNum;
+        } else {
+            cmp = String(aVal).localeCompare(String(bVal));
+        }
+        return dir === 'asc' ? cmp : -cmp;
+    });
+});
+
 const paginatedItems = computed<BaseEntity[]>(() => {
-    if (pageSize.value === 'ALL') return filteredItems.value;
+    if (pageSize.value === 'ALL') return sortedItems.value;
     const size = pageSize.value as number;
     const start = (currentPage.value - 1) * size;
-    return filteredItems.value.slice(start, start + size);
+    return sortedItems.value.slice(start, start + size);
 });
 
 const totalPages = computed<number>(() => {
@@ -271,6 +309,29 @@ function toggleItemSelection(item: BaseEntity): void {
         selectedItems.value.splice(selectedItems.value.indexOf(item), 1);
     } else {
         selectedItems.value.push(item);
+    }
+}
+
+// T118 — Computed: true when every item on the current page is selected
+const isAllSelected = computed<boolean>(() => {
+    if (paginatedItems.value.length === 0) return false;
+    return paginatedItems.value.every((item) => selectedItems.value.includes(item));
+});
+
+// T119 — Toggle select/deselect all visible (current-page) items
+function toggleSelectAll(): void {
+    if (isAllSelected.value) {
+        // Deselect all paginatedItems
+        selectedItems.value = selectedItems.value.filter(
+            (item) => !paginatedItems.value.includes(item)
+        );
+    } else {
+        // Select all paginatedItems not yet selected
+        for (const item of paginatedItems.value) {
+            if (!selectedItems.value.includes(item)) {
+                selectedItems.value.push(item);
+            }
+        }
     }
 }
 
@@ -345,6 +406,23 @@ function parseEnumValue(key: string): string {
         .split('_')
         .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
         .join(' ');
+}
+
+function toggleSort(colKey: string): void {
+    if (sortColumn.value !== colKey) {
+        sortColumn.value = colKey;
+        sortDirection.value = 'asc';
+    } else if (sortDirection.value === 'asc') {
+        sortDirection.value = 'desc';
+    } else {
+        sortColumn.value = '';
+        sortDirection.value = null;
+    }
+}
+
+function getSortIcon(colKey: string): string {
+    if (sortColumn.value !== colKey || sortDirection.value === null) return GGICONS.SORT;
+    return sortDirection.value === 'asc' ? GGICONS.ARROW_UPWARD : GGICONS.ARROW_DOWNWARD;
 }
 
 // T244 — Column filter helpers
@@ -577,8 +655,18 @@ watch(
     width: 100%;
     min-width: 0;
     background-color: var(--white);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
     box-shadow: var(--shadow-light);
+    overscroll-behavior: contain;
+}
+
+.table-footer {
+    width: 100%;
+    background-color: var(--white);
+    border-top: var(--border-width-thin) solid var(--gray-lighter);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
 }
 
 .table-container .table-header-row {
@@ -638,7 +726,45 @@ watch(
 }
 
 .table th {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 8px;
     position: relative; /* anchor for .col-resize-handle */
+    font-weight: bold;
+}
+
+.col-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.col-sort-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    cursor: pointer;
+    line-height: 1;
+    color: var(--gray-light);
+    transition: color var(--transition-fast) var(--timing-ease),
+                filter var(--transition-fast) var(--timing-ease);
+}
+.col-sort-btn span {
+    font-size: var(--font-size-sm);
+}
+.col-sort-btn:hover {
+    color: var(--gray-medium);
+    filter: brightness(0.85);
+}
+.col-sort-btn.is-sorted {
+    color: var(--gray-medium);
 }
 
 .table th:hover {
@@ -665,10 +791,7 @@ watch(
 
 /* T244 — Column filter funnel button */
 .col-filter-btn {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    flex-shrink: 0;
     background: transparent;
     border: none;
     padding: 0 2px;
@@ -707,31 +830,8 @@ watch(
     flex: 1; /* fill remaining space between thead and tfoot */
 }
 
-.table tfoot {
-    display: block;
-    width: 100%;
-    position: sticky;
-    bottom: 0;
-    background-color: var(--white);
-    z-index: var(--z-base);
-    border-top: var(--border-width-thin) solid var(--gray-lighter);
-    height: auto;
-}
-
-.tfoot-add-cell {
-    display: flex;
-    align-items: center;
-    padding: var(--spacing-sm);
-    flex: 1;
-}
-
-.tfoot-add-btn {
-    flex-shrink: 0;
-}
-
 .table thead tr,
-.table tbody tr,
-.table tfoot tr {
+.table tbody tr {
     display: flex;
     min-width: 100%;
 }

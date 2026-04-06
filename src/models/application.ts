@@ -1,11 +1,15 @@
-﻿import { Component, markRaw, ref, Ref } from 'vue';
+﻿import { Component, defineComponent, h, markRaw, ref, Ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import type { Router } from 'vue-router';
 
 import axios from 'axios';
 import type { AxiosError, AxiosInstance } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
+import { useAppConfigStore, useUiStore, useViewStore } from '@/stores';
 import { DefaultButtonLists } from '@/constants/default_button_lists';
+import ICONS from '@/constants/icons';
+import GenericButtonComponent from '@/components/Buttons/GenericButtonComponent.vue';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { Language } from '@/enums/language';
@@ -14,6 +18,7 @@ import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
 
 import type { Events } from '@/types/events';
+import type { ExtraFunctions } from '@/types/extra_functions';
 import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
 import { AppConfiguration } from './app_configuration';
@@ -37,6 +42,8 @@ import type { Toast } from './toast';
 class ApplicationClass implements ApplicationUIContext {
     private static instance: ApplicationClass | null = null;
     private static readonly VIEW_TRANSITION_DELAY_MS = 400;
+    private static readonly BUTTON_UPDATE_DELAY_MS = 405;
+    private static readonly CONFIG_STORAGE_KEY = 'app_configuration';
 
     // #region PROPERTIES — Reactive and non-reactive properties of the Application singleton
 
@@ -122,38 +129,43 @@ class ApplicationClass implements ApplicationUIContext {
     // #endregion
 
     private constructor() {
+        // Initialize with plain refs so this can safely run at module evaluation
+        // time (before Pinia is active). _connectPinia() replaces these with
+        // Pinia-backed refs once initializeApplication() is called.
         this.AppConfiguration = ref<AppConfiguration>({
-            appName: import.meta.env.VITE_APP_NAME || 'My SaaS Application',
-            appVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
-            apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'https://api.my-saas-app.com',
+            appName: (import.meta.env.VITE_APP_NAME as string) || 'My SaaS Application',
+            appVersion: (import.meta.env.VITE_APP_VERSION as string) || '1.0.0',
+            squared_app_logo_image: (import.meta.env.VITE_SQUARED_APP_LOGO_IMAGE as string) || ICONS.SQUARED_APP_LOGO,
+            apiBaseUrl: (import.meta.env.VITE_API_BASE_URL as string) || 'https://api.my-saas-app.com',
             apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
             apiRetryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
-            environment: import.meta.env.VITE_ENVIRONMENT || 'development',
-            logLevel: import.meta.env.VITE_LOG_LEVEL || 'info',
-            authTokenKey: import.meta.env.VITE_AUTH_TOKEN_KEY || 'auth_token',
-            authRefreshTokenKey: import.meta.env.VITE_AUTH_REFRESH_TOKEN_KEY || 'refresh_token',
+            environment: (import.meta.env.VITE_ENVIRONMENT as string) || 'development',
+            logLevel: (import.meta.env.VITE_LOG_LEVEL as string) || 'info',
+            authTokenKey: (import.meta.env.VITE_AUTH_TOKEN_KEY as string) || 'auth_token',
+            authRefreshTokenKey: (import.meta.env.VITE_AUTH_REFRESH_TOKEN_KEY as string) || 'refresh_token',
             sessionTimeout: Number(import.meta.env.VITE_SESSION_TIMEOUT) || 3600000,
             itemsPerPage: Number(import.meta.env.VITE_ITEMS_PER_PAGE) || 20,
             maxFileSize: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880,
             isDarkMode: false,
-            // §8E T227 — language from env, default EN
-            selectedLanguage: (Number(import.meta.env.VITE_SELECTED_LANGUAGE) as Language) || Language.EN
-        }) as Ref<AppConfiguration>;
+            selectedLanguage: (Number(import.meta.env.VITE_SELECTED_LANGUAGE) as Language) || Language.EN,
+            asyncValidationDebounce: Number(import.meta.env.VITE_ASYNC_VALIDATION_DEBOUNCE) || 300,
+        });
         this.View = ref<View>({
             entityClass: null,
             entityObject: null,
             component: null,
             viewType: ViewTypes.DEFAULTVIEW,
             isValid: true,
-            entityOid: ''
-        }) as Ref<View>;
-        this.ModuleList = ref<(typeof BaseEntity)[]>([]) as Ref<(typeof BaseEntity)[]>;
-        this.eventBus = mitt<Events>();
+            entityOid: '',
+        });
+        this.ModuleList = ref<(typeof BaseEntity)[]>([]);
+        this.ListButtons = ref<Component[]>([]);
+        this.ToastList = ref<Toast[]>([]);
         this.modal = ref<Modal>({
             modalView: null,
             modalOnCloseFunction: null,
-            viewType: ViewTypes.LISTVIEW
-        }) as Ref<Modal>;
+            viewType: ViewTypes.LISTVIEW,
+        });
         this.dropdownMenu = ref<DropdownMenu>({
             showing: false,
             title: '',
@@ -161,19 +173,19 @@ class ApplicationClass implements ApplicationUIContext {
             width: '250px',
             position_x: '0px',
             position_y: '0px',
-            canvasWidth: `${window.innerWidth}px`,
-            canvasHeight: `${window.innerHeight}px`,
+            canvasWidth: typeof window !== 'undefined' ? `${window.innerWidth}px` : '1024px',
+            canvasHeight: typeof window !== 'undefined' ? `${window.innerHeight}px` : '768px',
             activeElementWidth: '0px',
-            activeElementHeight: '0px'
-        }) as Ref<DropdownMenu>;
+            activeElementHeight: '0px',
+        });
         this.confirmationMenu = ref<confirmationMenu>({
             type: confMenuType.INFO,
             title: '',
             message: '',
-            confirmationAction: () => {}
-        }) as Ref<confirmationMenu>;
-        this.ListButtons = ref<Component[]>([]) as Ref<Component[]>;
-        this.ToastList = ref<Toast[]>([]) as Ref<Toast[]>;
+            confirmationAction: () => {},
+        });
+
+        this.eventBus = mitt<Events>();
         this.ApplicationDataService = new ApplicationDataService();
         this.ApplicationUIService = new ApplicationUIService(this);
         this.axiosInstance = axios.create({
@@ -350,18 +362,58 @@ class ApplicationClass implements ApplicationUIContext {
         viewType: ViewTypes,
         entity: BaseEntity | null = null
     ) => {
-        if (this.View.value.entityObject && this.View.value.entityObject.getDirtyState()) {
+        this.navigateWithDirtyGuard(entityClass, component, viewType, entity);
+    };
+
+    /**
+     * True when current detail entity is persistent and has unsaved changes.
+     */
+    private hasDirtyPersistentEntity(): boolean {
+        return Boolean(this.View.value.entityObject?.isPersistent() && this.View.value.entityObject.getDirtyState());
+    }
+
+    /**
+     * Canonical transition sequence for all view navigations.
+     * Keeps timer/state ordering consistent across every entrypoint.
+     */
+    private executeViewTransition = async (
+        entityClass: typeof BaseEntity,
+        component: Component,
+        viewType: ViewTypes,
+        entity: BaseEntity | null = null
+    ): Promise<void> => {
+        // Keep legacy button-delay value but start waiting immediately so
+        // dirty-confirmed navigations do not accumulate transition + button delays.
+        const buttonRefreshDelay = ApplicationClass.wait(ApplicationClass.BUTTON_UPDATE_DELAY_MS);
+        await this.setViewChanges(entityClass, component, viewType, entity);
+        await buttonRefreshDelay;
+        this.setButtonList();
+    };
+
+    /**
+     * Centralized dirty-guarded navigation entrypoint.
+     */
+    navigateWithDirtyGuard = (
+        entityClass: typeof BaseEntity,
+        component: Component,
+        viewType: ViewTypes,
+        entity: BaseEntity | null = null
+    ): void => {
+        const continueNavigation = (): void => {
+            void this.executeViewTransition(entityClass, component, viewType, entity);
+        };
+
+        if (this.hasDirtyPersistentEntity()) {
             this.ApplicationUIService.openConfirmationMenu(
                 confMenuType.WARNING,
                 GetLanguagedText('common.exit_without_saving'),
                 GetLanguagedText('common.unsaved_changes_confirm'),
-                () => {
-                    this.setViewChanges(entityClass, component, viewType, entity);
-                }
+                continueNavigation
             );
             return;
         }
-        this.setViewChanges(entityClass, component, viewType, entity);
+
+        continueNavigation();
     };
 
     /**
@@ -412,6 +464,13 @@ class ApplicationClass implements ApplicationUIContext {
     ) => {
         if (!this.router) return;
 
+        const isRegisteredModule = this.ModuleList.value.includes(entityClass);
+        if (!isRegisteredModule) {
+            // Keep internal view state for transient/non-registered entities (e.g., Configuration editor)
+            // without forcing URL routes that router guards resolve from ModuleList.
+            return;
+        }
+
         const moduleName = entityClass.getModuleName() || entityClass.name;
         const moduleNameLower = moduleName.toLowerCase();
 
@@ -461,10 +520,7 @@ class ApplicationClass implements ApplicationUIContext {
      * @param entityClass The entity class whose default view to display
      */
     changeViewToDefaultView = (entityClass: typeof BaseEntity) => {
-        this.changeView(entityClass, entityClass.getModuleDefaultComponent(), ViewTypes.DEFAULTVIEW);
-        setTimeout(() => {
-            this.setButtonList();
-        }, 405);
+        this.navigateWithDirtyGuard(entityClass, entityClass.getModuleDefaultComponent(), ViewTypes.DEFAULTVIEW);
     };
 
     /**
@@ -473,10 +529,7 @@ class ApplicationClass implements ApplicationUIContext {
      * @param entityClass The entity class whose list view to display
      */
     changeViewToListView = (entityClass: typeof BaseEntity) => {
-        this.changeView(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW, null);
-        setTimeout(() => {
-            this.setButtonList();
-        }, 405);
+        this.navigateWithDirtyGuard(entityClass, entityClass.getModuleListComponent(), ViewTypes.LISTVIEW, null);
     };
 
     /**
@@ -486,10 +539,7 @@ class ApplicationClass implements ApplicationUIContext {
      */
     changeViewToDetailView = <T extends BaseEntity>(entity: T): void => {
         const entityClass: typeof BaseEntity = entity.constructor as typeof BaseEntity;
-        this.changeView(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
-        setTimeout((): void => {
-            this.setButtonList();
-        }, 405);
+        this.navigateWithDirtyGuard(entityClass, entityClass.getModuleDetailComponent(), ViewTypes.DETAILVIEW, entity);
     };
 
     /**
@@ -499,14 +549,17 @@ class ApplicationClass implements ApplicationUIContext {
      */
     setButtonList() {
         const isPersistentEntity = this.View.value.entityObject?.isPersistent() ?? false;
+        const isPersistentModule = this.View.value.entityClass?.createNewInstance().isPersistent() ?? false;
         let buttonList: Component[];
 
         switch (this.View.value.viewType) {
             case ViewTypes.LISTVIEW:
-                buttonList = DefaultButtonLists.ListView;
+                buttonList = isPersistentModule ? DefaultButtonLists.ListView : [];
                 break;
             case ViewTypes.DEFAULTVIEW:
-                buttonList = this.View.value.entityClass?.getDefaultViewButtonList() ?? DefaultButtonLists.ListView;
+                buttonList = isPersistentModule
+                    ? (this.View.value.entityClass?.getDefaultViewButtonList() ?? DefaultButtonLists.ListView)
+                    : [];
                 break;
             case ViewTypes.DETAILVIEW:
                 buttonList = isPersistentEntity
@@ -518,7 +571,44 @@ class ApplicationClass implements ApplicationUIContext {
                 break;
         }
 
+        const customButtons = this.getCustomViewButtons(
+            this.View.value.entityObject,
+            this.View.value.viewType
+        );
+        buttonList = [...buttonList, ...customButtons];
+
         this.ListButtons.value = buttonList.map(markRaw);
+    }
+
+    /**
+     * Builds GenericButton components for custom entity methods decorated with @OnViewFunction.
+     * Falls back to a fresh instance from entityClass when no entity object is available (e.g. LISTVIEW).
+     */
+    private getCustomViewButtons(entity: BaseEntity | null, viewType: ViewTypes): Component[] {
+        const resolved: BaseEntity | null =
+            entity ?? (this.View.value.entityClass?.createNewInstance() ?? null);
+
+        if (!resolved) {
+            return [];
+        }
+
+        const customFunctions: ExtraFunctions[] = resolved.getCustomFunctions().filter((item) =>
+            item.viewTypes.includes(viewType)
+        );
+
+        return customFunctions.map((item) =>
+            defineComponent({
+                name: `CustomActionButton_${String(item.text).replace(/\s+/g, '_')}`,
+                setup() {
+                    return () =>
+                        h(GenericButtonComponent, {
+                            icon: item.icon,
+                            text: item.text,
+                            onClick: item.fn,
+                        });
+                },
+            })
+        );
     }
 
     /**
@@ -531,12 +621,110 @@ class ApplicationClass implements ApplicationUIContext {
     }
 
     /**
+     * Replaces plain-ref properties with Pinia store-backed refs.
+     * Must be called after setActivePinia() — i.e., from initializeApplication().
+     * Syncs any values already set on the plain refs into the stores before replacing.
+     */
+    private _connectPinia(): void {
+        const appConfigStore = useAppConfigStore();
+        const viewStore = useViewStore();
+        const uiStore = useUiStore();
+
+        const { config } = storeToRefs(appConfigStore);
+        config.value = { ...this.AppConfiguration.value };
+        this.AppConfiguration = config as unknown as Ref<AppConfiguration>;
+
+        const { view, moduleList, listButtons } = storeToRefs(viewStore);
+        view.value = { ...this.View.value };
+        this.View = view as Ref<View>;
+        this.ModuleList = moduleList as Ref<(typeof BaseEntity)[]>;
+        this.ListButtons = listButtons as Ref<Component[]>;
+
+        const { toastList, modal, dropdownMenu, confirmationMenu } = storeToRefs(uiStore);
+        this.ToastList = toastList as Ref<Toast[]>;
+        this.modal = modal as Ref<Modal>;
+        this.dropdownMenu = dropdownMenu as Ref<DropdownMenu>;
+        this.confirmationMenu = confirmationMenu as Ref<confirmationMenu>;
+    }
+
+    /**
      * Initializes the application with the provided router instance
      * Canonical bootstrap method name per spec §8.1 Flow
      * @param router Vue Router instance to use for navigation
      */
     initializeApplication(router: Router) {
+        this._connectPinia();
         this.initializeRouter(router);
+        this.loadConfigurationFromStorage();
+        this.validateModuleRuntimeState();
+    }
+
+    /**
+     * Returns a cloned configuration snapshot suitable for entity mapping/edit flows.
+     */
+    getConfigurationSnapshot(): AppConfiguration {
+        return {
+            ...this.AppConfiguration.value,
+        };
+    }
+
+    /**
+     * Applies and persists configuration updates.
+     */
+    applyConfigurationSnapshot(config: AppConfiguration): void {
+        this.AppConfiguration.value = {
+            ...config,
+        };
+
+        this.axiosInstance.defaults.baseURL = this.AppConfiguration.value.apiBaseUrl;
+
+        localStorage.setItem(
+            ApplicationClass.CONFIG_STORAGE_KEY,
+            JSON.stringify(this.AppConfiguration.value)
+        );
+    }
+
+    /**
+     * Loads persisted configuration and applies it if shape is valid.
+     */
+    loadConfigurationFromStorage(): void {
+        const rawConfig = localStorage.getItem(ApplicationClass.CONFIG_STORAGE_KEY);
+
+        if (rawConfig === null) {
+            localStorage.setItem(
+                ApplicationClass.CONFIG_STORAGE_KEY,
+                JSON.stringify(this.AppConfiguration.value)
+            );
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(rawConfig) as Partial<AppConfiguration>;
+
+            this.applyConfigurationSnapshot({
+                ...this.AppConfiguration.value,
+                ...parsed,
+                squared_app_logo_image: String(parsed.squared_app_logo_image ?? this.AppConfiguration.value.squared_app_logo_image),
+                selectedLanguage: Number(parsed.selectedLanguage ?? this.AppConfiguration.value.selectedLanguage) as Language,
+                isDarkMode: Boolean(parsed.isDarkMode ?? this.AppConfiguration.value.isDarkMode),
+            });
+        } catch (error) {
+            console.warn('[Application] Invalid stored configuration payload. Falling back to defaults.', error);
+        }
+    }
+
+    /**
+     * Validates registration/runtime assumptions used by router and action bars.
+     */
+    validateModuleRuntimeState(): void {
+        const hasDuplicateNames = this.ModuleList.value.some((module, index, list) => {
+            const moduleName = module.getModuleName()?.toLowerCase() ?? module.name.toLowerCase();
+            return list.findIndex((m) => (m.getModuleName()?.toLowerCase() ?? m.name.toLowerCase()) === moduleName) !== index;
+        });
+
+        if (hasDuplicateNames) {
+            console.warn('[Application] Duplicate module names detected. Route resolution may be unstable.');
+        }
     }
 
     /**
@@ -551,7 +739,7 @@ class ApplicationClass implements ApplicationUIContext {
      *
      * @example
      * ```typescript
-     * Application.registerModule(CustomerEntity);
+    * Application.registerModule(HomeEntity);
      * Application.registerModule(ProductEntity);
      * ```
      */
@@ -570,6 +758,7 @@ class ApplicationClass implements ApplicationUIContext {
         }
 
         this.ModuleList.value.push(moduleClass);
+        this.validateModuleRuntimeState();
         return true;
     }
     // #endregion
