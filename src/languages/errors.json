@@ -138,5 +138,15 @@
         "en": "Unknown error",
         "es": "Error desconocido",
         "jp": "不明なエラー"
+    },
+    "authentication_failed": {
+        "en": "Authentication failed. Please check your credentials.",
+        "es": "Autenticación fallida. Verifique sus credenciales.",
+        "jp": "認証に失敗しました。認証情報を確認してください。"
+    },
+    "invalid_credentials": {
+        "en": "Invalid username or password.",
+        "es": "Usuario o contraseña inválidos.",
+        "jp": "ユーザー名またはパスワードが無効です。"
     }
 }

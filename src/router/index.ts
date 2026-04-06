@@ -9,6 +9,12 @@ import { GetLanguagedText } from '@/helpers/language_helper';
 
 const routes: Array<RouteRecordRaw> = [
     {
+        path: '/login',
+        name: 'Login',
+        component: () => import('@/views/LoginView.vue'),
+        meta: { requiresAuth: false }
+    },
+    {
         path: '/',
         name: 'Home',
         redirect: () => {
@@ -52,6 +58,19 @@ const router: Router = createRouter({
  * Prevents infinite loops by comparing current state before updating
  */
 router.beforeEach(async (to, _from, next) => {
+    // Allow public routes (e.g. /login) to bypass all auth and module guards
+    if (to.meta.requiresAuth === false) {
+        next();
+        return;
+    }
+
+    // Auth guard — redirect unauthenticated users to login
+    const userData = sessionStorage.getItem('current_user');
+    if (!userData) {
+        next({ name: 'Login' });
+        return;
+    }
+
     /** Dirty state guard — spec §8.7 Navigation with Dirty State Guard */
     const currentEntity = Application.View.value.entityObject;
     if (currentEntity?.isPersistent() && currentEntity?.getDirtyState() && Application.router?.currentRoute.value.path !== to.path) {

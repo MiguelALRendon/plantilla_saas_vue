@@ -1,5 +1,13 @@
 <template>
-    <div class="app-container">
+    <!-- Login shell: no sidebar, no topbar —  only the form + feedback layers -->
+    <template v-if="isLoginRoute">
+        <LoginView />
+        <ToastContainerComponent />
+        <LoadingScreenComponent />
+    </template>
+
+    <!-- Main app shell -->
+    <div v-else class="app-container">
         <SideBarComponent />
         <!-- Sidebar backdrop overlay — only interactive at ≤1200px when sidebar is open.
              Clicking it closes the floating sidebar without triggering content below. -->
@@ -20,8 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watchEffect } from 'vue';
+import { useRoute } from 'vue-router';
 
+import LoginView from './views/LoginView.vue';
 import ComponentContainerComponent from './components/ComponentContainerComponent.vue';
 import SideBarComponent from './components/SideBarComponent.vue';
 import ModalComponent from './components/Modal/ModalComponent.vue';
@@ -51,6 +61,9 @@ watchEffect(() => {
         languageMap[Number(Application.AppConfiguration.value.selectedLanguage)] ?? 'en';
 });
 
+const route = useRoute();
+const isLoginRoute = computed(() => route.path === '/login');
+
 // Track sidebar open/closed state to control overlay visibility.
 // Initialized to match SideBarComponent initial state (open only at > 1200px).
 const sidebarOpen = ref(typeof window !== 'undefined' ? window.innerWidth > 1200 : true);
@@ -67,6 +80,11 @@ onMounted(() => {
     Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
         sidebarOpen.value = state !== undefined ? !!state : !sidebarOpen.value;
     });
+
+    // Redirect to login if no authenticated session exists
+    if (!Application.CurrentUser() && Application.router?.currentRoute.value.path !== '/login') {
+        Application.router?.push('/login').catch(() => {});
+    }
 });
 
 onBeforeUnmount(() => {

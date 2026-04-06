@@ -50,6 +50,14 @@
         "es": "¿Estás seguro de que quieres salir sin guardar?",
         "jp": "保存せずに終了してもよろしいですか？"
     },
+    "auth": {
+        "username": { "en": "Username", "es": "Usuario", "jp": "ユーザー名" },
+        "password": { "en": "Password", "es": "Contraseña", "jp": "パスワード" },
+        "login": { "en": "Login", "es": "Iniciar Sesión", "jp": "ログイン" },
+        "logout": { "en": "Logout", "es": "Cerrar Sesión", "jp": "ログアウト" },
+        "login_success": { "en": "Login successful", "es": "Inicio de sesión exitoso", "jp": "ログイン成功" },
+        "logout_success": { "en": "Logged out successfully", "es": "Sesión cerrada exitosamente", "jp": "ログアウト成功" }
+    },
     "framework": {
         "configuration": {
             "fields": {

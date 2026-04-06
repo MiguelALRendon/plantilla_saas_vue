@@ -198,7 +198,7 @@ class ApplicationClass implements ApplicationUIContext {
 
         this.axiosInstance.interceptors.request.use(
             (config) => {
-                const token = localStorage.getItem(this.AppConfiguration.value.authTokenKey);
+                const token = sessionStorage.getItem(this.AppConfiguration.value.authTokenKey);
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
@@ -246,7 +246,9 @@ class ApplicationClass implements ApplicationUIContext {
 
                 switch (status) {
                     case 401:
-                        localStorage.removeItem(this.AppConfiguration.value.authTokenKey);
+                        sessionStorage.removeItem(this.AppConfiguration.value.authTokenKey);
+                        sessionStorage.removeItem(this.AppConfiguration.value.authRefreshTokenKey);
+                        sessionStorage.removeItem('current_user');
                         this.ApplicationUIService.showToast(
                             GetLanguagedText('errors.session_expired'),
                             ToastType.ERROR
@@ -764,6 +766,56 @@ class ApplicationClass implements ApplicationUIContext {
     // #endregion
 
     // #region METHODS OVERRIDES — Reserved for method overrides if ApplicationClass is extended (currently unused)
+    // #endregion
+
+    // #region AUTH METHODS — Session management: SaveUserData, CurrentUser, Logout
+
+    /**
+     * Serializes user data and tokens into SessionStorage after a successful login.
+     * @param userData The user object returned from the auth API (excluding password)
+     * @param accessToken JWT access token
+     * @param refreshToken JWT refresh token
+     */
+    SaveUserData(userData: Record<string, unknown>, accessToken: string, refreshToken: string): void {
+        const { authTokenKey, authRefreshTokenKey } = this.AppConfiguration.value;
+        try {
+            sessionStorage.setItem('current_user', JSON.stringify(userData));
+            sessionStorage.setItem(authTokenKey, accessToken);
+            sessionStorage.setItem(authRefreshTokenKey, refreshToken);
+        } catch (error) {
+            console.error('[Application] Failed to save user data to SessionStorage.', error);
+        }
+    }
+
+    /**
+     * Retrieves and parses the current user object from SessionStorage.
+     * @returns The stored user data object, or null if not found or invalid.
+     */
+    CurrentUser(): Record<string, unknown> | null {
+        try {
+            const raw = sessionStorage.getItem('current_user');
+            if (!raw) return null;
+            return JSON.parse(raw) as Record<string, unknown>;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Clears session data from SessionStorage and redirects to the login view.
+     */
+    Logout(): void {
+        const { authTokenKey, authRefreshTokenKey } = this.AppConfiguration.value;
+        sessionStorage.removeItem('current_user');
+        sessionStorage.removeItem(authTokenKey);
+        sessionStorage.removeItem(authRefreshTokenKey);
+        this.ApplicationUIService.showToast(
+            GetLanguagedText('common.auth.logout_success'),
+            ToastType.SUCCESS
+        );
+        this.router?.push('/login').catch(() => {});
+    }
+
     // #endregion
 
     /**

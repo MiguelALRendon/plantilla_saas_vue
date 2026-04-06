@@ -270,6 +270,9 @@
     --array-input-height-medium: 5rem;
     --array-input-table-height: 2.5rem;
     --array-input-row-height: 4rem;
+
+    /* Login view — La constante activa se puede cambiar vía JS (localStorage key: login_theme) */
+    --login-panel-bg: var(--btn-primary);
 }
 
 .dark-mode {

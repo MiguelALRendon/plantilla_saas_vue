@@ -1,6 +1,7 @@
 <template>
     <div class="container">
         <button class="button" @click="openConfigurationDetail()">{{ t('common.settings') }}</button>
+        <button class="button button--danger" @click="logout()">{{ t('common.auth.logout') }}</button>
     </div>
 </template>
 
@@ -27,6 +28,11 @@ function openConfigurationDetail(): void {
     Application.ApplicationUIService.closeDropdownMenu();
     const configuration = Configuration.fromAppConfiguration(Application.getConfigurationSnapshot());
     Application.changeViewToDetailView(configuration);
+}
+
+function logout(): void {
+    Application.ApplicationUIService.closeDropdownMenu();
+    Application.Logout();
 }
 </script>
 
