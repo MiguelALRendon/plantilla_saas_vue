@@ -9,6 +9,7 @@ import {
     PropertyName,
     Required,
     StringTypeDef,
+    UniquePropertyKey,
 } from '@/decorations';
 import { StringType } from '@/enums/string_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
@@ -26,6 +27,7 @@ import { BaseEntity } from './base_entity';
 })
 @NotRequiresLogin()
 @PrimaryProperty('oid')
+@UniquePropertyKey('oid')
 @DefaultProperty('usuario')
 export class User extends BaseEntity {
     // #region PROPERTIES

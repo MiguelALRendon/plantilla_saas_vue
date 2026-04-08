@@ -3,6 +3,8 @@
     <template v-if="isLoginRoute">
         <LoginView />
         <ToastContainerComponent />
+        <ConfirmationDialogComponent />
+        <LoadingPopupComponent />
         <LoadingScreenComponent />
     </template>
 
