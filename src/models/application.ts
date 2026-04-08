@@ -702,10 +702,9 @@ class ApplicationClass implements ApplicationUIContext {
 
         try {
             const parsed = JSON.parse(rawConfig) as Partial<AppConfiguration>;
-
+            
             this.applyConfigurationSnapshot({
                 ...this.AppConfiguration.value,
-                ...parsed,
                 squared_app_logo_image: String(parsed.squared_app_logo_image ?? this.AppConfiguration.value.squared_app_logo_image),
                 selectedLanguage: Number(parsed.selectedLanguage ?? this.AppConfiguration.value.selectedLanguage) as Language,
                 isDarkMode: Boolean(parsed.isDarkMode ?? this.AppConfiguration.value.isDarkMode),
