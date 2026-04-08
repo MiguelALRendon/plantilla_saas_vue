@@ -233,8 +233,8 @@ export const GGICONS = {
 
     // ── Color ─────────────────────────────────────────────────────────────────
     COLOR_LENS:         'color_lens',
-    INVERT_COLORS:      'invert_colors',
-
+    INVERT_COLORS:      'invert_colors',    LIGHT_MODE:         'light_mode',
+    DARK_MODE:          'dark_mode',
     // ── Tags ──────────────────────────────────────────────────────────────────
     LOCAL_OFFER:        'local_offer',
     SELL:               'sell',

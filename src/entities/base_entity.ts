@@ -1035,15 +1035,15 @@ export abstract class BaseEntity {
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
-
+console.log('Persistence configuration validated successfully.');
         if (!this.validateApiMethod(this.isNew() ? 'POST' : 'PUT')) {
             return this;
         }
-
+console.log('API method validation passed successfully.');
         if (!(await this.validateInputs())) {
             return this;
         }
-
+console.log('All validations passed successfully.');
         this._isSaving = true;
         Application.ApplicationUIService.showLoadingMenu();
         await new Promise((resolve) => setTimeout(resolve, 400));

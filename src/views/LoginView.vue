@@ -1,5 +1,5 @@
 <template>
-    <div class="login-wrapper" @click="closePicker">
+    <div class="login-wrapper">
 
         <!-- ── Panel izquierdo: imagen/marca ─────────────────────── -->
         <div class="login-left">
@@ -8,29 +8,12 @@
         </div>
 
         <!-- ── Panel derecho: formulario con color plano ─────────── -->
-        <div class="login-right" :style="panelStyle" @click.stop>
+        <div class="login-right">
 
-            <!-- Botón para cambiar el tema de color -->
-            <button class="login-theme-trigger" type="button" @click.stop="togglePicker" title="Cambiar tema">
-                <span class="material-symbols-outlined">palette</span>
+            <!-- Botón dark/light mode — usa el sistema real de temas -->
+            <button class="login-theme-toggle" type="button" @click="toggleDarkMode" :title="isDark ? 'Modo claro' : 'Modo oscuro'">
+                <span :class="GGCLASS">{{ isDark ? GGICONS.LIGHT_MODE : GGICONS.DARK_MODE }}</span>
             </button>
-
-            <!-- Paleta de colores del sistema -->
-            <div class="theme-picker" v-if="showPicker" @click.stop>
-                <span class="theme-picker-label">Tema de color</span>
-                <div class="theme-swatches">
-                    <button
-                        v-for="theme in THEMES"
-                        :key="theme.var"
-                        type="button"
-                        class="theme-swatch"
-                        :style="{ backgroundColor: theme.preview }"
-                        :class="{ active: selectedTheme === theme.var }"
-                        :title="theme.label"
-                        @click="selectTheme(theme.var)"
-                    />
-                </div>
-            </div>
 
             <!-- Formulario -->
             <div class="login-form-wrapper">
@@ -53,11 +36,7 @@
                         @update:model-value="loginEntity.contraseña = $event"
                     />
 
-                    <button
-                        type="submit"
-                        class="login-submit"
-                        :disabled="isLoading"
-                    >
+                    <button type="submit" class="login-submit" :disabled="isLoading">
                         {{ isLoading ? t('common.loading') : t('common.auth.login') }}
                     </button>
                 </form>
@@ -68,49 +47,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed, ref } from 'vue';
 import { User } from '@/entities/user';
 import Application from '@/models/application';
 import { GetLanguagedText } from '@/helpers/language_helper';
+import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import TextInputComponent from '@/components/Form/TextInputComponent.vue';
 import PasswordInputComponent from '@/components/Form/PasswordInputComponent.vue';
 
-// #region CONSTANTS — Cada entrada apunta a una constante de sistema definida en constants.css
-const THEME_STORAGE_KEY = 'login_theme';
-
-const THEMES = [
-    { var: '--btn-primary',   preview: '#2563eb', label: 'Primario'  },
-    { var: '--btn-secondary', preview: '#8b5fc7', label: 'Morado'    },
-    { var: '--btn-success',   preview: '#52b5bc', label: 'Verde'     },
-    { var: '--btn-accent',    preview: '#c74d8a', label: 'Rosa'      },
-    { var: '--btn-warning',   preview: '#f5a623', label: 'Naranja'   },
-    { var: '--accent-red',    preview: '#db3955', label: 'Rojo'      },
-    { var: '--green-deep',    preview: '#3f8f7d', label: 'Bosque'    },
-    { var: '--purple-1',      preview: '#8660b3', label: 'Lavanda'   },
-    { var: '--gray-medium',   preview: '#4a5568', label: 'Gris'      },
-] as const;
-// #endregion
-
 // #region PROPERTIES
 const userClass = User;
-const loginEntity = ref(new User());
-const isLoading  = ref(false);
-const showPicker = ref(false);
+const loginEntity = ref(new User({}));
+const isLoading = ref(false);
 
 const appLogo = Application.AppConfiguration.value.squared_app_logo_image;
 const appName = Application.AppConfiguration.value.appName;
 
-const selectedTheme = ref<string>(
-    localStorage.getItem(THEME_STORAGE_KEY) ?? '--btn-primary'
-);
-
-/**
- * Inyecta --login-panel-bg apuntando a la constante seleccionada del sistema.
- * El formulario y el botón consumen esta variable localmente, sin contaminar :root.
- */
-const panelStyle = computed(() => ({
-    '--login-panel-bg': `var(${selectedTheme.value})`,
-}));
+const isDark = computed(() => Application.AppConfiguration.value.isDarkMode);
 // #endregion
 
 // #region METHODS
@@ -118,18 +71,11 @@ function t(key: string): string {
     return GetLanguagedText(key);
 }
 
-function selectTheme(varName: string): void {
-    selectedTheme.value = varName;
-    localStorage.setItem(THEME_STORAGE_KEY, varName);
-    showPicker.value = false;
-}
-
-function togglePicker(): void {
-    showPicker.value = !showPicker.value;
-}
-
-function closePicker(): void {
-    showPicker.value = false;
+function toggleDarkMode(): void {
+    Application.applyConfigurationSnapshot({
+        ...Application.AppConfiguration.value,
+        isDarkMode: !Application.AppConfiguration.value.isDarkMode,
+    });
 }
 
 async function handleLogin(): Promise<void> {
@@ -142,11 +88,6 @@ async function handleLogin(): Promise<void> {
         isLoading.value = false;
     }
 }
-// #endregion
-
-// #region LIFECYCLE
-onMounted(() => document.addEventListener('click', closePicker));
-onUnmounted(() => document.removeEventListener('click', closePicker));
 // #endregion
 </script>
 
@@ -187,8 +128,6 @@ onUnmounted(() => document.removeEventListener('click', closePicker));
 /* ── Panel derecho: color plano ─────────────────────────────────────── */
 .login-right {
     flex: 1;
-    /* El color apunta a --login-panel-bg, que a su vez apunta a la constante
-       seleccionada (p. ej. var(--btn-primary)). Inyectado reactivamente vía :style */
     background-color: var(--login-panel-bg, var(--btn-primary));
     display: flex;
     flex-direction: column;
@@ -199,7 +138,7 @@ onUnmounted(() => document.removeEventListener('click', closePicker));
 }
 
 /* ── Botón de tema ────────────────────────────────────────────────────── */
-.login-theme-trigger {
+.login-theme-toggle {
     position: absolute;
     top: var(--margin-medium);
     right: var(--margin-medium);
@@ -215,56 +154,8 @@ onUnmounted(() => document.removeEventListener('click', closePicker));
     transition: background-color var(--transition-fast) var(--timing-ease);
 }
 
-.login-theme-trigger:hover {
+.login-theme-toggle:hover {
     background-color: rgba(255, 255, 255, 0.35);
-}
-
-/* ── Paleta de colores ────────────────────────────────────────────────── */
-.theme-picker {
-    position: absolute;
-    top: 3.75rem;
-    right: var(--margin-medium);
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    padding: var(--padding-small);
-    box-shadow: var(--shadow-dark);
-    z-index: var(--z-dropdown);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    min-width: 140px;
-}
-
-.theme-picker-label {
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    color: var(--gray-medium);
-    padding-inline: var(--spacing-xs);
-}
-
-.theme-swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs);
-}
-
-.theme-swatch {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: var(--border-radius-circle);
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: transform var(--transition-fast) var(--timing-ease);
-}
-
-.theme-swatch:hover {
-    transform: scale(1.15);
-}
-
-.theme-swatch.active {
-    border-color: var(--gray-medium);
-    transform: scale(1.1);
 }
 
 /* ── Formulario ──────────────────────────────────────────────────────── */
@@ -289,8 +180,6 @@ onUnmounted(() => document.removeEventListener('click', closePicker));
 }
 
 /* ── Botón de submit ─────────────────────────────────────────────────── */
-/* Fondo: var(--white) — Texto: var(--login-panel-bg) que apunta a la constante activa.
-   La relación color-texto ↔ fondo-panel garantiza contraste automático. */
 .login-submit {
     width: 100%;
     height: var(--button-height);
@@ -320,24 +209,9 @@ onUnmounted(() => document.removeEventListener('click', closePicker));
 
 /* ── Responsive: móvil apila los paneles ──────────────────────────────── */
 @media (max-width: 768px) {
-    .login-wrapper {
-        flex-direction: column;
-    }
-
-    .login-left {
-        flex: none;
-        min-height: 30vh;
-        padding: var(--padding-large);
-    }
-
-    .login-logo {
-        width: 72px;
-        height: 72px;
-    }
-
-    .login-right {
-        flex: 1;
-        min-height: 70vh;
-    }
+    .login-wrapper { flex-direction: column; }
+    .login-left { flex: none; min-height: 30vh; }
+    .login-logo { width: 72px; height: 72px; }
+    .login-right { flex: 1; min-height: 70vh; }
 }
 </style>

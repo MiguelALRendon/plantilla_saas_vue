@@ -61,7 +61,6 @@ import Application from '@/models/application';
 import { ToastType } from '@/enums/toast_type';
 import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
-import { Configuration } from '@/entities/configuration';
 import { ViewTypes } from '@/enums/view_type';
 import { previewFile } from '@/stores/file_preview_store';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
@@ -122,8 +121,9 @@ function onFileChange(e: Event): void {
     input.value = '';
 }
 
-function openPreview(): void {
+async function openPreview(): Promise<void> {
     previewFile.value = currentFile.value;
+    const { Configuration } = await import('@/entities/configuration');
     Application.ApplicationUIService.showModal(Configuration, ViewTypes.CUSTOMVIEW, 'file-preview');
 }
 
