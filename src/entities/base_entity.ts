@@ -1065,22 +1065,26 @@ console.log('All validations passed successfully.');
             Object.assign(this, mappedData);
             this._originalState = deepClone(this.toPersistentObject());
             this._isSaving = false;
-            this.afterSave();
+            const afterSaveHandled = this.afterSave();
             Application.ApplicationUIService.hideLoadingMenu();
-            Application.ApplicationUIService.showToast(GetLanguagedText('common.saved_successfully'), ToastType.SUCCESS);
+            if (!afterSaveHandled) {
+                Application.ApplicationUIService.showToast(GetLanguagedText('common.saved_successfully'), ToastType.SUCCESS);
+            }
             return this;
         } catch (error: unknown) {
             this._isSaving = false;
             Application.ApplicationUIService.hideLoadingMenu();
             this.saveFailed();
-            Application.ApplicationUIService.openConfirmationMenu(
-                confMenuType.ERROR,
-                GetLanguagedText('errors.save_error'),
-                getErrorMessage(error),
-                undefined,
-                GetLanguagedText('common.accept'),
-                GetLanguagedText('common.close')
-            );
+            if (!(error as Record<string, unknown>).__handled) {
+                Application.ApplicationUIService.openConfirmationMenu(
+                    confMenuType.ERROR,
+                    GetLanguagedText('errors.save_error'),
+                    getErrorMessage(error),
+                    undefined,
+                    GetLanguagedText('common.accept'),
+                    GetLanguagedText('common.close')
+                );
+            }
             throw error;
         }
     }
@@ -1258,10 +1262,10 @@ console.log('All validations passed successfully.');
     public onSaving(): void {}
 
     /**
-     * Lifecycle hook called after save operation succeeds
-     * Override to implement custom post-save logic
+     * Lifecycle hook called after save operation succeeds.
+     * Override to implement custom post-save logic.
      */
-    public afterSave(): void {}
+    public afterSave(): boolean | void {}
 
     /**
      * Lifecycle hook called when save operation fails

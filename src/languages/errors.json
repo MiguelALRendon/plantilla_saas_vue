@@ -109,6 +109,11 @@
         "es": "Sesión expirada. Por favor, inicia sesión nuevamente.",
         "jp": "セッションの有効期限が切れました。再度ログインしてください。"
     },
+    "invalid_credentials": {
+        "en": "Invalid credentials.",
+        "es": "Credenciales inválidas.",
+        "jp": "認証情報が無効です。"
+    },
     "no_permissions": {
         "en": "You do not have permission to perform this action.",
         "es": "No tienes permisos para realizar esta acción.",

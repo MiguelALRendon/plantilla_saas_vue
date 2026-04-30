@@ -245,19 +245,49 @@ class ApplicationClass implements ApplicationUIContext {
                 }
 
                 switch (status) {
-                    case 401:
-                        sessionStorage.removeItem(this.AppConfiguration.value.authTokenKey);
-                        sessionStorage.removeItem(this.AppConfiguration.value.authRefreshTokenKey);
-                        sessionStorage.removeItem('current_user');
-                        this.ApplicationUIService.showToast(
-                            GetLanguagedText('errors.session_expired'),
-                            ToastType.ERROR
-                        );
+                    case 401: {
+                        const isLoginEndpoint = requestConfig?.url?.includes('/auth/login');
 
-                        if (this.router) {
-                            this.router.push('/login').catch(() => {});
+                        if (isLoginEndpoint) {
+                            const responseData = error.response?.data as Record<string, unknown> | undefined;
+                            const errors = responseData?.errors;
+                            const message = Array.isArray(errors) && errors.length > 0
+                                ? errors.map(String).join(', ')
+                                : GetLanguagedText('errors.invalid_credentials');
+                            this.ApplicationUIService.showToast(message, ToastType.ERROR);
+                            (error as unknown as Record<string, unknown>).__handled = true;
+                        } else {
+                            const refreshToken = sessionStorage.getItem(this.AppConfiguration.value.authRefreshTokenKey);
+                            if (refreshToken && requestConfig && !requestConfig.__retryCount) {
+                                try {
+                                    const refreshResponse = await this.axiosInstance.post(
+                                        '/auth/refresh',
+                                        {},
+                                        { headers: { Authorization: `Bearer ${refreshToken}` } }
+                                    );
+                                    const newAccessToken = (refreshResponse.data as Record<string, unknown>).access_token as string;
+                                    sessionStorage.setItem(this.AppConfiguration.value.authTokenKey, newAccessToken);
+                                    requestConfig.__retryCount = 1;
+                                    requestConfig.headers = {
+                                        ...requestConfig.headers,
+                                        Authorization: `Bearer ${newAccessToken}`,
+                                    };
+                                    return this.axiosInstance.request(requestConfig);
+                                } catch {}
+                            }
+                            sessionStorage.removeItem(this.AppConfiguration.value.authTokenKey);
+                            sessionStorage.removeItem(this.AppConfiguration.value.authRefreshTokenKey);
+                            sessionStorage.removeItem('current_user');
+                            this.ApplicationUIService.showToast(
+                                GetLanguagedText('errors.session_expired'),
+                                ToastType.ERROR
+                            );
+                            if (this.router) {
+                                this.router.push('/login').catch(() => {});
+                            }
                         }
                         break;
+                    }
 
                     case 403:
                         this.ApplicationUIService.showToast(

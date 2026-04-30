@@ -75,22 +75,16 @@ export class User extends BaseEntity {
      *   - this.access_token  = JWT access token
      *   - this.refresh_token = JWT refresh token
      */
-    override afterSave(): void {
-        // Extract nested user data (API response assigns the "usuario" object to this.usuario)
+    override afterSave(): boolean {
         const userData = this.usuario as unknown as Record<string, unknown>;
-
-        // Clear password from memory immediately
         this.contraseña = '';
-
-        // Persist session via Application
         Application.SaveUserData(userData, this.access_token ?? '', this.refresh_token ?? '');
-
-        // Show success feedback and navigate to the home page
         Application.ApplicationUIService.showToast(
             GetLanguagedText('common.auth.login_success'),
             ToastType.SUCCESS
         );
         Application.router?.push('/home').catch(() => {});
+        return true;
     }
 
     // #endregion
