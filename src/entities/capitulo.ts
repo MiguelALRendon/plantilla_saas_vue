@@ -44,7 +44,7 @@ import { BaseEntity } from './base_entity';
 @Module({
     name: 'custom.capitulo.title',
     icon: ICONS.AVATAR,
-    apiEndpoint: '/api/continental/capitulo',
+    apiEndpoint: '/capitulo/',
     apiMethods: ['GET', 'POST', 'PUT', 'DELETE'],
 })
 @PrimaryProperty('id')

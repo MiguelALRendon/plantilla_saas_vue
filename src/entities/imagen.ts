@@ -31,16 +31,18 @@ import {
     PropertyIndex,
     PropertyName,
     Required,
+    StringTypeDef,
     UniquePropertyKey,
 } from '@/decorations';
 import ICONS from '@/constants/icons';
 
 import { BaseEntity } from './base_entity';
+import { StringType } from '@/enums/string_type';
 
 @Module({
     name: 'custom.imagen.title',
     icon: ICONS.AVATAR,
-    apiEndpoint: '/api/continental/imagen',
+    apiEndpoint: '/imagen/',
     apiMethods: ['GET', 'POST', 'PUT', 'DELETE'],
 })
 @PrimaryProperty('id')
@@ -61,6 +63,7 @@ export class Imagen extends BaseEntity {
     @PropertyIndex(3)
     @PropertyName('custom.imagen.url_archivo', String)
     @Required(true, 'custom.imagen.errors.url_required')
+    @StringTypeDef(StringType.URL_IMAGE)
     url_archivo?: string;
 
     // ── Campos de respuesta de la API (sin @PropertyName) ────────────────
