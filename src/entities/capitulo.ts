@@ -35,6 +35,7 @@ import {
     StringTypeDef,
     UniquePropertyKey,
     Disabled,
+    HideInListView,
 } from '@/decorations';
 import { StringType } from '@/enums/string_type';
 import ICONS from '@/constants/icons';
@@ -61,6 +62,7 @@ export class Capitulo extends BaseEntity {
     @PropertyIndex(1)
     @PropertyName('ID', String)
     @HideInDetailView()
+    @HideInListView()
     id?: string;
 
     // ── Campos principales (con @PropertyName = se serializan) ───────────
@@ -78,6 +80,7 @@ export class Capitulo extends BaseEntity {
     @PropertyIndex(4)
     @PropertyName('custom.capitulo.obra_id', String)
     @Required(true, 'custom.capitulo.errors.obra_required')
+    @HideInListView()
     obra_id?: string;
 
     @PropertyIndex(5)
@@ -88,6 +91,7 @@ export class Capitulo extends BaseEntity {
     @PropertyIndex(6)
     @PropertyName('custom.capitulo.descripcion_larga', String)
     @StringTypeDef(StringType.TEXTAREA)
+    @HideInListView()
     descripcion_larga?: string;
 
     @PropertyIndex(7)
@@ -101,6 +105,7 @@ export class Capitulo extends BaseEntity {
     @PropertyIndex(9)
     @PropertyName('custom.capitulo.texto_capitulo', String)
     @StringTypeDef(StringType.TEXTAREA)
+    @HideInListView()
     texto_capitulo?: string;
 
     @PropertyIndex(10)

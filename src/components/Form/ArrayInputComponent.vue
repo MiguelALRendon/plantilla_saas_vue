@@ -140,14 +140,13 @@
 </template>
 <script setup lang="ts">
 import { BaseEntity } from '@/entities/base_entity';
-import { EnumAdapter } from '@/models/enum_adapter';
 import Application from '@/models/application';
 import { ViewTypes } from '@/enums/view_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
-import ColumnFilterPanelComponent from '@/components/Form/ColumnFilterPanelComponent.vue';
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useTableCore } from '@/composables/useTableCore';
 
 interface Props {
     modelValue: BaseEntity[];
@@ -179,38 +178,17 @@ const isSelection = ref(false);
 const isInputValidated = ref(true);
 const selectedItems = ref<BaseEntity[]>([]);
 const validationMessages = ref<string[]>([]);
+// #endregion
 
-const columnWidths: Ref<Record<string, number>> = ref({});
-const MIN_COL_WIDTH = 50; // px — equivalent of var(--table-width-very-small)
-let resizeColumn = '';
-let resizeStartX = 0;
-let resizeStartWidth = 0;
-
-// T244 — Column filter state
-const columnFilters: Ref<Record<string, unknown[]>> = ref({});
-
-// Sort state
-const sortColumn = ref<string>('');
-const sortDirection = ref<'asc' | 'desc' | null>(null);
-
-// T245 — Column drag-reorder state
-const columnOrder = ref<string[]>([]);
-const dragSourceKey = ref<string | null>(null);
-const dragOverKey = ref<string | null>(null);
-
-// FR-034 — Pagination
-const pageSizeOptions: (number | 'ALL')[] = [10, 20, 50, 100, 'ALL'];
-const pageSize = ref<number | 'ALL'>(10);
-const currentPage = ref<number>(1);
+// #region COMPUTED PROPERTIES
 
 const moduleIcon = computed<string | undefined>(() => props.typeValue?.getModuleIcon());
 const moduleName = computed<string | undefined>(() => props.typeValue?.getModuleName());
 const selectionIcon = computed<string>(() => (isSelection.value ? GGICONS.SELECT_CHECKBOX : GGICONS.SELECT_VOID));
 
+// Search filter applied to the full modelValue list
 const filteredData = computed<BaseEntity[]>(() => {
-    if (!search.value) {
-        return props.modelValue;
-    }
+    if (!search.value) return props.modelValue;
     return props.modelValue.filter((item) => {
         const defaultValue = item.getDefaultPropertyValue();
         if (defaultValue && typeof defaultValue === 'string') {
@@ -220,72 +198,7 @@ const filteredData = computed<BaseEntity[]>(() => {
     });
 });
 
-// T244 — filteredItems = filteredData further filtered by active columnFilters (AND across columns)
-const filteredItems = computed<BaseEntity[]>(() => {
-    const activeFilters = columnFilters.value;
-    const filterKeys = Object.keys(activeFilters).filter(k => activeFilters[k].length > 0);
-    if (filterKeys.length === 0) return filteredData.value;
-    return filteredData.value.filter(item =>
-        filterKeys.every(col => activeFilters[col].includes(getCellValue(item, col)))
-    );
-});
-
-const sortedItems = computed<BaseEntity[]>(() => {
-    if (!sortColumn.value || !sortDirection.value) return filteredItems.value;
-    const col = sortColumn.value;
-    const dir = sortDirection.value;
-    return [...filteredItems.value].sort((a, b) => {
-        const aVal = getCellValue(a, col);
-        const bVal = getCellValue(b, col);
-        const aNum = Number(aVal);
-        const bNum = Number(bVal);
-        let cmp: number;
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-            cmp = aNum - bNum;
-        } else {
-            cmp = String(aVal).localeCompare(String(bVal));
-        }
-        return dir === 'asc' ? cmp : -cmp;
-    });
-});
-
-const paginatedItems = computed<BaseEntity[]>(() => {
-    if (pageSize.value === 'ALL') return sortedItems.value;
-    const size = pageSize.value as number;
-    const start = (currentPage.value - 1) * size;
-    return sortedItems.value.slice(start, start + size);
-});
-
-const totalPages = computed<number>(() => {
-    if (pageSize.value === 'ALL' || filteredItems.value.length === 0) return 1;
-    return Math.ceil(filteredItems.value.length / (pageSize.value as number));
-});
-
-const visiblePages = computed<number[]>(() => {
-    const total = totalPages.value;
-    const current = currentPage.value;
-    const delta = 2;
-    const pages: number[] = [];
-    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
-        pages.push(i);
-    }
-    return pages;
-});
-
-const paginationInfo = computed<string>(() => {
-    if (pageSize.value === 'ALL') {
-        return t('common.records_count').split('{count}').join(String(filteredItems.value.length));
-    }
-    const size = pageSize.value as number;
-    if (filteredItems.value.length === 0) return t('common.zero_records');
-    const start = (currentPage.value - 1) * size + 1;
-    const end = Math.min(currentPage.value * size, filteredItems.value.length);
-    return t('common.pagination_range')
-        .split('{start}').join(String(start))
-        .split('{end}').join(String(end))
-        .split('{total}').join(String(filteredItems.value.length));
-});
-
+// Column metadata: visible non-array properties respecting @HideInListView
 const visibleProperties = computed<Record<string, string>>(() => {
     if (!props.typeValue) return {};
     const allProps = props.typeValue.getProperties();
@@ -297,9 +210,50 @@ const visibleProperties = computed<Record<string, string>>(() => {
         })
     );
 });
+
+function t(path: string): string {
+    return GetLanguagedText(path);
+}
+
+// Composable — sort, column filters, resize, drag-reorder, client-side pagination
+const {
+    columnOrder,
+    dragOverKey,
+    columnFilters,
+    sortColumn,
+    pageSize,
+    currentPage,
+    pageSizeOptions,
+    paginatedItems,
+    totalPages,
+    visiblePages,
+    paginationInfo,
+    getCellValue,
+    getColumnStyle,
+    getSortIcon,
+    toggleSort,
+    openColumnFilter,
+    startResize,
+    autoFitColumn,
+    onDragStart,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+    prevPage,
+    nextPage,
+    goToPage,
+    onPageSizeChange,
+    cleanup,
+} = useTableCore({
+    sourceData: filteredData,
+    visibleProperties,
+    t,
+});
+
 // #endregion
 
-// #region METHODS
+// #region SELECTION
+
 function getItemIcon(item: BaseEntity): string {
     return selectedItems.value.includes(item) ? GGICONS.REMOVE : GGICONS.ADD;
 }
@@ -312,7 +266,7 @@ function toggleItemSelection(item: BaseEntity): void {
     }
 }
 
-// T118 — Computed: true when every item on the current page is selected
+// T118 — true when every item on the current page is selected
 const isAllSelected = computed<boolean>(() => {
     if (paginatedItems.value.length === 0) return false;
     return paginatedItems.value.every((item) => selectedItems.value.includes(item));
@@ -321,12 +275,10 @@ const isAllSelected = computed<boolean>(() => {
 // T119 — Toggle select/deselect all visible (current-page) items
 function toggleSelectAll(): void {
     if (isAllSelected.value) {
-        // Deselect all paginatedItems
         selectedItems.value = selectedItems.value.filter(
             (item) => !paginatedItems.value.includes(item)
         );
     } else {
-        // Select all paginatedItems not yet selected
         for (const item of paginatedItems.value) {
             if (!selectedItems.value.includes(item)) {
                 selectedItems.value.push(item);
@@ -337,7 +289,6 @@ function toggleSelectAll(): void {
 
 function openModal(): void {
     if (!props.typeValue) return;
-
     Application.ApplicationUIService.showModalOnFunction(
         props.typeValue,
         (param: unknown): void => {
@@ -363,10 +314,6 @@ function toggleSelection(): void {
     }
 }
 
-function t(path: string): string {
-    return GetLanguagedText(path);
-}
-
 function showDeleteModal(): void {
     Application.ApplicationUIService.openConfirmationMenu(
         confMenuType.WARNING,
@@ -381,188 +328,9 @@ function showDeleteModal(): void {
     );
 }
 
-function getCellValue(item: BaseEntity, column: string): string {
-    const value = item[column];
+// #endregion
 
-    if (value instanceof BaseEntity) {
-        return String(value.getDefaultPropertyValue() ?? '');
-    }
-
-    // SC-017 — enum resolution: getPropertyType stores an EnumAdapter instance for enum columns.
-    if (item.isEnumProperty(column) && typeof value === 'number') {
-        const adapter = item.getPropertyType(column) as EnumAdapter;
-        const found = adapter.getKeyValuePairs().find((pair) => pair.value === value);
-        if (found) {
-            return parseEnumValue(found.key);
-        }
-    }
-
-    return item.getFormattedValue(column);
-}
-
-function parseEnumValue(key: string): string {
-    return key
-        .toLowerCase()
-        .split('_')
-        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-        .join(' ');
-}
-
-function toggleSort(colKey: string): void {
-    if (sortColumn.value !== colKey) {
-        sortColumn.value = colKey;
-        sortDirection.value = 'asc';
-    } else if (sortDirection.value === 'asc') {
-        sortDirection.value = 'desc';
-    } else {
-        sortColumn.value = '';
-        sortDirection.value = null;
-    }
-}
-
-function getSortIcon(colKey: string): string {
-    if (sortColumn.value !== colKey || sortDirection.value === null) return GGICONS.SORT;
-    return sortDirection.value === 'asc' ? GGICONS.ARROW_UPWARD : GGICONS.ARROW_DOWNWARD;
-}
-
-// T244 — Column filter helpers
-function getDistinctValues(column: string): unknown[] {
-    const seen = new Set<unknown>();
-    for (const item of props.modelValue) {
-        seen.add(getCellValue(item, column));
-    }
-    return Array.from(seen);
-}
-
-function openColumnFilter(event: MouseEvent, column: string): void {
-    const buttonEl = event.currentTarget as HTMLElement;
-    Application.ApplicationUIService.openDropdownMenu(
-        buttonEl,
-        visibleProperties.value[column] ?? column,
-        ColumnFilterPanelComponent,
-        '18rem',
-        {
-            distinctValues: getDistinctValues(column),
-            activeFilters: columnFilters.value[column] ?? [],
-            columnLabel: visibleProperties.value[column] ?? column,
-            onApply: (selected: unknown[]) => {
-                if (selected.length === 0) {
-                    const updated = { ...columnFilters.value };
-                    delete updated[column];
-                    columnFilters.value = updated;
-                } else {
-                    columnFilters.value = { ...columnFilters.value, [column]: selected };
-                }
-                Application.ApplicationUIService.closeDropdownMenu();
-            },
-            onClear: () => {
-                const updated = { ...columnFilters.value };
-                delete updated[column];
-                columnFilters.value = updated;
-                Application.ApplicationUIService.closeDropdownMenu();
-            },
-        }
-    );
-}
-
-// T245 — Column drag-reorder handlers
-function onDragStart(colKey: string): void {
-    dragSourceKey.value = colKey;
-}
-
-function onDragOver(colKey: string): void {
-    dragOverKey.value = colKey;
-}
-
-function onDragLeave(colKey: string): void {
-    if (dragOverKey.value === colKey) {
-        dragOverKey.value = null;
-    }
-}
-
-function onDrop(colKey: string): void {
-    const source = dragSourceKey.value;
-    if (!source || source === colKey) {
-        dragSourceKey.value = null;
-        dragOverKey.value = null;
-        return;
-    }
-    const order = [...columnOrder.value];
-    const fromIdx = order.indexOf(source);
-    const toIdx = order.indexOf(colKey);
-    if (fromIdx === -1 || toIdx === -1) return;
-    order.splice(fromIdx, 1);
-    order.splice(toIdx, 0, source);
-    columnOrder.value = order;
-    dragSourceKey.value = null;
-    dragOverKey.value = null;
-}
-
-function getColumnStyle(column: string): Record<string, string> | undefined {
-    const width = columnWidths.value[column];
-    if (!width) return undefined;
-    return { width: `${width}px`, minWidth: `${width}px` };
-}
-
-function startResize(event: MouseEvent, column: string): void {
-    const td = (event.target as HTMLElement).parentElement;
-    if (!td) return;
-    resizeColumn = column;
-    resizeStartX = event.clientX;
-    resizeStartWidth = td.offsetWidth;
-    document.addEventListener('mousemove', onResizeMove);
-    document.addEventListener('mouseup', onResizeUp);
-}
-
-function onResizeMove(event: MouseEvent): void {
-    if (!resizeColumn) return;
-    const delta = event.clientX - resizeStartX;
-    columnWidths.value[resizeColumn] = Math.max(MIN_COL_WIDTH, resizeStartWidth + delta);
-}
-
-function onResizeUp(): void {
-    resizeColumn = '';
-    document.removeEventListener('mousemove', onResizeMove);
-    document.removeEventListener('mouseup', onResizeUp);
-}
-
-// FR-032 — already defined above (autoFitColumn, startResize, onResizeMove, onResizeUp)
-
-// FR-034 — Pagination helpers
-function prevPage(): void {
-    if (currentPage.value > 1) currentPage.value--;
-}
-
-function nextPage(): void {
-    if (currentPage.value < totalPages.value) currentPage.value++;
-}
-
-function goToPage(page: number): void {
-    currentPage.value = page;
-}
-
-function onPageSizeChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    pageSize.value = value === 'ALL' ? 'ALL' : Number(value);
-    currentPage.value = 1;
-}
-
-function autoFitColumn(event: MouseEvent, column: string): void {
-    const th = event.currentTarget as HTMLElement;
-    const tableEl = th.closest('table');
-    if (!tableEl) return;
-    const headers = Array.from(th.parentElement!.children) as HTMLElement[];
-    const colIndex = headers.indexOf(th);
-    if (colIndex === -1) return;
-    const bodyRows = tableEl.querySelectorAll('tbody tr');
-    // FR-032: seed with th.scrollWidth so the header label is always included in the max
-    let maxWidth = th.scrollWidth;
-    bodyRows.forEach((row) => {
-        const cell = row.children[colIndex] as HTMLElement | undefined;
-        if (cell) maxWidth = Math.max(maxWidth, cell.scrollWidth);
-    });
-    columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
-}
+// #region VALIDATION
 
 async function isValidated(): Promise<boolean> {
     validationMessages.value = [];
@@ -590,35 +358,20 @@ async function handleValidation(): Promise<void> {
         Application.View.value.isValid = false;
     }
 }
+
 // #endregion
 
 // #region LIFECYCLE
+
 onMounted(() => {
     Application.eventBus.on('validate-inputs', handleValidation);
-    columnOrder.value = Object.keys(visibleProperties.value);
 });
 
 onBeforeUnmount(() => {
     Application.eventBus.off('validate-inputs', handleValidation);
-    document.removeEventListener('mousemove', onResizeMove);
-    document.removeEventListener('mouseup', onResizeUp);
+    cleanup();
 });
 
-// FR-034: reset to page 1 when the filtered list length changes (search, column filters, or modelValue update)
-watch(
-    () => filteredItems.value.length,
-    () => {
-        currentPage.value = 1;
-    }
-);
-
-// T245: reset columnOrder when visible properties change (e.g. entity class swap)
-watch(
-    () => visibleProperties.value,
-    (newProps) => {
-        columnOrder.value = Object.keys(newProps);
-    }
-);
 // #endregion
 </script>
 

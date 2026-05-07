@@ -1,60 +1,67 @@
-<template>
+﻿<template>
     <!-- .table-wrapper is the SINGLE scroll container for both header and body.
          This ensures the sticky header always aligns with the scrolling body columns. -->
     <div class="table-wrapper">
         <div class="table-scroll-area">
             <table>
                 <thead>
-                <tr>
-                    <td
-                        v-for="column in getVisibleColumns()"
-                        :key="column"
-                        :class="Application.View.value.entityClass?.getCSSClasses()[column]"
-                        :style="getColumnStyle(column)"
-                        @dblclick="autoFitColumn($event, column)"
-                    >
-                        <button
-                            class="col-sort-btn"
-                            :class="{ 'is-sorted': sortColumn === column }"
-                            @click.stop="toggleSort(column)"
+                    <tr>
+                        <th
+                            v-for="colKey in columnOrder"
+                            :key="colKey"
+                            :style="getColumnStyle(colKey)"
+                            @dblclick="autoFitColumn($event, colKey)"
+                            draggable="true"
+                            @dragstart="onDragStart(colKey)"
+                            @dragover.prevent="onDragOver(colKey)"
+                            @dragleave="onDragLeave(colKey)"
+                            @drop.prevent="onDrop(colKey)"
+                            :class="{ 'drag-over': dragOverKey === colKey }"
                         >
-                            <span :class="[GGCLASS]">{{ getSortIcon(column) }}</span>
-                        </button>
-                        <span class="col-label">{{ Application.View.value.entityClass?.getProperties()[column] }}</span>
-                        <button
-                            class="col-filter-btn"
-                            :class="{ 'has-filter': (columnFilters[column]?.length ?? 0) > 0 }"
-                            @click.stop="openColumnFilter($event, column)"
-                        >
-                            <span :class="[GGCLASS]">{{ GGICONS.FILTER_LIST }}</span>
-                        </button>
-                        <span class="col-resize-handle" @mousedown.prevent="startResize($event, column)"></span>
-                    </td>
-                </tr>
+                            <button
+                                class="col-sort-btn"
+                                :class="{ 'is-sorted': sortColumn === colKey }"
+                                @click.stop="toggleSort(colKey)"
+                            >
+                                <span :class="[GGCLASS]">{{ getSortIcon(colKey) }}</span>
+                            </button>
+                            <span class="col-label">{{ visibleProperties[colKey] }}</span>
+                            <button
+                                class="col-filter-btn"
+                                :class="{ 'has-filter': (columnFilters[colKey]?.length ?? 0) > 0 }"
+                                @click.stop="openColumnFilter($event, colKey)"
+                            >
+                                <span :class="[GGCLASS]">{{ GGICONS.FILTER_LIST }}</span>
+                            </button>
+                            <span class="col-resize-handle" @mousedown.prevent="startResize($event, colKey)"></span>
+                        </th>
+                    </tr>
                 </thead>
 
                 <tbody>
-                <tr v-for="item in paginatedRows" :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')" @click="openDetailView(item)">
-                    <template v-for="column in getVisibleColumns(item)" :key="column">
+                    <tr
+                        v-for="item in paginatedItems"
+                        :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')"
+                        @click="openDetailView(item)"
+                    >
                         <td
-                            :class="item.getCSSClasses()[column]"
-                            :style="getColumnStyle(column)"
-                            class="table-row"
+                            v-for="colKey in columnOrder"
+                            :key="colKey"
+                            :class="[item.getCSSClasses()[colKey], 'table-row']"
+                            :style="getColumnStyle(colKey)"
                         >
-                            <span v-if="Application.View.value.entityClass?.getPropertyType(column) !== Boolean">
-                                {{ getCellValue(item, column) }}
+                            <span v-if="entityClass?.getPropertyType(colKey) !== Boolean">
+                                {{ getCellValue(item, colKey) }}
                             </span>
-
                             <span
-                                v-else-if="Application.View.value.entityClass?.getPropertyType(column) === Boolean"
-                                :class="[GGCLASS, item.toObject()[column] ? 'row-check' : 'row-cancel']"
+                                v-else
+                                :class="[GGCLASS, item.toObject()[colKey] ? 'row-check' : 'row-cancel']"
                                 class="boolean-row"
                             >
-                                {{ getBooleanIcon(item, column) }}
+                                {{ getBooleanIcon(item, colKey) }}
                             </span>
                         </td>
-                    </template>
-                </tr>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -93,131 +100,103 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
 import { GetLanguagedText } from '@/helpers/language_helper';
-import { EnumAdapter } from '@/models/enum_adapter';
 import Application from '@/models/application';
-import ColumnFilterPanelComponent from '@/components/Form/ColumnFilterPanelComponent.vue';
 import type { ConcreteEntityClass } from '@/types/entity.types';
+import { useTableCore } from '@/composables/useTableCore';
 
-// #region PROPERTIES
-const data: Ref<BaseEntity[]> = ref([]);
-const columnWidths: Ref<Record<string, number>> = ref({});
+// #region STATE
 
-// T243 — Column filter state (distinct values scoped to current page per I3)
-const columnFilters: Ref<Record<string, unknown[]>> = ref({});
-
-// T113 — Sort state for server-side column sort
-const sortColumn = ref<string | null>(null);
-const sortDirection = ref<'asc' | 'desc' | null>(null);
-
-const MIN_COL_WIDTH = 50; // px — equivalent of var(--table-width-very-small)
-let resizeColumn = '';
-let resizeStartX = 0;
-let resizeStartWidth = 0;
-
-// FR-034 — Pagination (T217: server-side pagination state)
-const pageSizeOptions: (number | 'ALL')[] = [10, 20, 50, 100, 'ALL'];
-const pageSize = ref<number | 'ALL'>(10);
-const currentPage = ref<number>(1);
-/** T217: total record count returned by the server (or full dataset if API returns flat array) */
+const data = ref<BaseEntity[]>([]);
 const totalFromServer = ref<number>(0);
 
-/**
- * T217: paginatedRows === data.value because getElementListPaginated already returns
- * the current page's slice from the server. No client-side slicing needed.
- * T243: further filtered by active columnFilters (current-page values only — I3).
- */
-const filteredRows = computed<BaseEntity[]>(() => {
-    const activeFilters = columnFilters.value;
-    const filterKeys = Object.keys(activeFilters).filter(k => activeFilters[k].length > 0);
-    if (filterKeys.length === 0) return data.value;
-    return data.value.filter(item =>
-        filterKeys.every(col => activeFilters[col].includes(getCellValue(item, col)))
-    );
-});
+// #endregion
 
-/**
- * T135 — In-memory sort applied after column filters.
- * Uses numeric comparison when both getCellValue results parse as numbers,
- * falls back to localeCompare for strings.
- */
-const sortedRows = computed<BaseEntity[]>(() => {
-    if (!sortColumn.value || !sortDirection.value) return filteredRows.value;
-    const col = sortColumn.value;
-    const dir = sortDirection.value;
-    return [...filteredRows.value].sort((a, b) => {
-        const aVal = getCellValue(a, col);
-        const bVal = getCellValue(b, col);
-        const aNum = Number(aVal);
-        const bNum = Number(bVal);
-        let cmp: number;
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-            cmp = aNum - bNum;
-        } else {
-            cmp = String(aVal).localeCompare(String(bVal));
-        }
-        return dir === 'asc' ? cmp : -cmp;
-    });
-});
-
-const paginatedRows = computed<BaseEntity[]>(() => sortedRows.value);
-
-const totalPages = computed<number>(() => {
-    if (pageSize.value === 'ALL' || totalFromServer.value === 0) return 1;
-    return Math.ceil(totalFromServer.value / (pageSize.value as number));
-});
-
-const visiblePages = computed<number[]>(() => {
-    const total = totalPages.value;
-    const current = currentPage.value;
-    const delta = 2;
-    const pages: number[] = [];
-    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
-        pages.push(i);
-    }
-    return pages;
-});
-
-const paginationInfo = computed<string>(() => {
-    if (pageSize.value === 'ALL') {
-        return t('common.records_count').split('{count}').join(String(totalFromServer.value));
-    }
-    const size = pageSize.value as number;
-    if (totalFromServer.value === 0) return t('common.zero_records');
-    const start = (currentPage.value - 1) * size + 1;
-    const end = Math.min(currentPage.value * size, totalFromServer.value);
-    return t('common.pagination_range')
-        .split('{start}').join(String(start))
-        .split('{end}').join(String(end))
-        .split('{total}').join(String(totalFromServer.value));
-});
+// #region HELPERS
 
 function t(path: string): string {
     return GetLanguagedText(path);
 }
+
+const entityClass = computed(() =>
+    Application.View.value.entityClass as unknown as typeof BaseEntity | null
+);
+
+const visibleProperties = computed<Record<string, string>>(() => {
+    const ec = entityClass.value;
+    if (!ec) return {};
+    const allProps = ec.getProperties();
+    const tempEntity = ec.createNewInstance();
+    return Object.fromEntries(
+        Object.entries(allProps).filter(([key]) => {
+            if (ec.getPropertyType(key) === Array) return false;
+            return !tempEntity.isHideInListView(key);
+        })
+    );
+});
+
+// #endregion
+
+// #region COMPOSABLE
+
+const {
+    columnOrder,
+    dragOverKey,
+    columnFilters,
+    sortColumn,
+    sortDirection,
+    pageSize,
+    currentPage,
+    pageSizeOptions,
+    paginatedItems,
+    totalPages,
+    visiblePages,
+    paginationInfo,
+    getCellValue,
+    getColumnStyle,
+    getSortIcon,
+    toggleSort,
+    openColumnFilter,
+    startResize,
+    autoFitColumn,
+    onDragStart,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+    prevPage,
+    nextPage,
+    goToPage,
+    onPageSizeChange,
+    cleanup,
+} = useTableCore({
+    sourceData: data,
+    visibleProperties,
+    t,
+    serverPagination: {
+        total: totalFromServer,
+        onPageChange: loadData,
+    },
+});
+
 // #endregion
 
 // #region METHODS
-/**
- * T217: Loads entity data using server-side pagination via getElementListPaginated.
- * Passes current page and pageSize so the API receives real pagination params.
- * For 'ALL' option, sends a very high limit so the server returns everything.
- */
-async function loadData(): Promise<void> {
-    const entityClass = Application.View.value.entityClass as ConcreteEntityClass<BaseEntity> | null;
 
-    if (!entityClass) {
+async function loadData(): Promise<void> {
+    const ec = Application.View.value.entityClass as ConcreteEntityClass<BaseEntity> | null;
+
+    if (!ec) {
         data.value = [];
         totalFromServer.value = 0;
         currentPage.value = 1;
         return;
     }
 
-    const probeEntity = new entityClass({});
+    const probeEntity = new ec({});
     if (!probeEntity.isPersistent()) {
         data.value = [];
         totalFromServer.value = 0;
@@ -228,12 +207,12 @@ async function loadData(): Promise<void> {
     const limit = pageSize.value === 'ALL' ? 999999 : (pageSize.value as number);
 
     try {
-        const result = await entityClass.getElementListPaginated({
+        const result = await ec.getElementListPaginated({
             page: currentPage.value,
             limit,
             filter: '',
-            sortBy: sortColumn.value ?? undefined,
-            sortDir: sortDirection.value ?? undefined
+            sortBy: sortColumn.value || undefined,
+            sortDir: sortDirection.value || undefined,
         });
         data.value = result.data;
         totalFromServer.value = result.total;
@@ -249,237 +228,6 @@ function getBooleanIcon(item: BaseEntity, column: string): string {
     return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
 }
 
-/**
- * Formats a cell value for display.
- * Resolves enum numeric values to their human-readable key name (SC-017).
- * @param item The entity instance for the row.
- * @param column The property key.
- * @returns Formatted display string.
- */
-function getCellValue(item: BaseEntity, column: string): string {
-    const value = item[column];
-
-    if (value instanceof BaseEntity) {
-        return String(value.getDefaultPropertyValue() ?? '');
-    }
-
-    // SC-017 — enum resolution via BaseEntity.isEnumProperty().
-    // getPropertyType() stores an EnumAdapter instance for enum columns — use it directly.
-    if (item.isEnumProperty(column) && typeof value === 'number') {
-        const adapter = item.getPropertyType(column) as EnumAdapter;
-        const found = adapter.getKeyValuePairs().find((pair) => pair.value === value);
-        if (found) {
-            return parseEnumValue(found.key);
-        }
-    }
-
-    return item.getFormattedValue(column);
-}
-
-/**
- * Converts an enum key string to human-readable format.
- * e.g. STATUS_ACTIVE → Status Active
- * @param key Enum key string.
- * @returns Formatted display string.
- */
-function parseEnumValue(key: string): string {
-    return key
-        .toLowerCase()
-        .split('_')
-        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-        .join(' ');
-}
-
-/**
- * T115/T136 — Cycles sort state for a column: null → 'asc' → 'desc' → null.
- * Sort is in-memory (sortedRows computed); no API reload triggered.
- */
-function toggleSort(column: string): void {
-    if (sortColumn.value !== column) {
-        sortColumn.value = column;
-        sortDirection.value = 'asc';
-    } else if (sortDirection.value === 'asc') {
-        sortDirection.value = 'desc';
-    } else {
-        sortColumn.value = null;
-        sortDirection.value = null;
-    }
-}
-
-/**
- * T114 — Returns the sort icon string for a given column header.
- * Uses ARROW_UPWARD for asc, ARROW_DOWNWARD for desc, and SORT for neutral/inactive.
- */
-function getSortIcon(column: string): string {
-    if (sortColumn.value !== column || sortDirection.value === null) return GGICONS.SORT;
-    return sortDirection.value === 'asc' ? GGICONS.ARROW_UPWARD : GGICONS.ARROW_DOWNWARD;
-}
-
-/**
- * T243 — Returns distinct display values for a given column from the current page.
- * ⚠ I3: limited to current page because DetailViewTableComponent uses server-side pagination (T217).
- */
-function getDistinctValues(column: string): unknown[] {
-    const seen = new Set<unknown>();
-    for (const item of data.value) {
-        seen.add(getCellValue(item, column));
-    }
-    return Array.from(seen);
-}
-
-/**
- * T243 — Opens the ColumnFilterPanel dropdown for a given column header.
- */
-function openColumnFilter(event: MouseEvent, column: string): void {
-    const buttonEl = event.currentTarget as HTMLElement;
-    const columnLabel = Application.View.value.entityClass?.getProperties()[column] ?? column;
-    Application.ApplicationUIService.openDropdownMenu(
-        buttonEl,
-        columnLabel,
-        ColumnFilterPanelComponent,
-        '18rem',
-        {
-            distinctValues: getDistinctValues(column),
-            activeFilters: columnFilters.value[column] ?? [],
-            columnLabel,
-            onApply: (selected: unknown[]) => {
-                if (selected.length === 0) {
-                    const updated = { ...columnFilters.value };
-                    delete updated[column];
-                    columnFilters.value = updated;
-                } else {
-                    columnFilters.value = { ...columnFilters.value, [column]: selected };
-                }
-                Application.ApplicationUIService.closeDropdownMenu();
-            },
-            onClear: () => {
-                const updated = { ...columnFilters.value };
-                delete updated[column];
-                columnFilters.value = updated;
-                Application.ApplicationUIService.closeDropdownMenu();
-            },
-        }
-    );
-}
-
-/**
- * Returns inline style binding for a column's resize width.
- * @param column The property key.
- * @returns Style object if width is set, undefined otherwise.
- */
-function getColumnStyle(column: string): Record<string, string> | undefined {
-    const width = columnWidths.value[column];
-    if (!width) return undefined;
-    return { width: `${width}px`, minWidth: `${width}px` };
-}
-
-/**
- * Initiates column resize on mousedown of the resize handle.
- * @param event The MouseEvent from the handle.
- * @param column The property key of the column being resized.
- */
-function startResize(event: MouseEvent, column: string): void {
-    const td = (event.target as HTMLElement).parentElement;
-    if (!td) return;
-    resizeColumn = column;
-    resizeStartX = event.clientX;
-    resizeStartWidth = td.offsetWidth;
-    document.addEventListener('mousemove', onResizeMove);
-    document.addEventListener('mouseup', onResizeUp);
-}
-
-/**
- * Updates column width during drag.
- * @param event The mousemove MouseEvent.
- */
-function onResizeMove(event: MouseEvent): void {
-    if (!resizeColumn) return;
-    const delta = event.clientX - resizeStartX;
-    columnWidths.value[resizeColumn] = Math.max(MIN_COL_WIDTH, resizeStartWidth + delta);
-}
-
-/**
- * Auto-fits a column width to the maximum scrollWidth found in tbody cells.
- * Triggered by double-clicking a header cell.
- * @param event The dblclick MouseEvent.
- * @param column The property key of the clicked column.
- */
-function autoFitColumn(event: MouseEvent, column: string): void {
-    const th = event.currentTarget as HTMLElement;
-    const tableEl = th.closest('table');
-    if (!tableEl) return;
-    const headers = Array.from(th.parentElement!.children) as HTMLElement[];
-    const colIndex = headers.indexOf(th);
-    if (colIndex === -1) return;
-    const bodyRows = tableEl.querySelectorAll('tbody tr');
-    // FR-032: seed with th.scrollWidth so the header label is always included in the max
-    let maxWidth = th.scrollWidth;
-    bodyRows.forEach((row) => {
-        const cell = row.children[colIndex] as HTMLElement | undefined;
-        if (cell) maxWidth = Math.max(maxWidth, cell.scrollWidth);
-    });
-    columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
-}
-
-/**
- * Finalises column resize on mouseup.
- */
-function onResizeUp(): void {
-    resizeColumn = '';
-    document.removeEventListener('mousemove', onResizeMove);
-    document.removeEventListener('mouseup', onResizeUp);
-}
-
-// FR-034 — Pagination helpers (T217: all page changes re-fetch from server)
-function prevPage(): void {
-    if (currentPage.value > 1) {
-        currentPage.value--;
-        loadData();
-    }
-}
-
-function nextPage(): void {
-    if (currentPage.value < totalPages.value) {
-        currentPage.value++;
-        loadData();
-    }
-}
-
-function goToPage(page: number): void {
-    currentPage.value = page;
-    loadData();
-}
-
-function onPageSizeChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    pageSize.value = value === 'ALL' ? 'ALL' : Number(value);
-    currentPage.value = 1;
-    loadData();
-}
-
-function getVisibleColumns(entity?: BaseEntity): string[] {
-    const entityClass = Application.View.value.entityClass;
-
-    if (!entityClass) {
-        return [];
-    }
-
-    const sourceKeys = entity ? entity.getKeys() : Object.keys(entityClass.getProperties());
-
-    return sourceKeys.filter((column) => {
-        if (entityClass.getPropertyType(column) === Array) {
-            return false;
-        }
-
-        if (entity) {
-            return !entity.isHideInListView(column);
-        }
-
-        const tempEntity = entityClass.createNewInstance();
-        return !tempEntity.isHideInListView(column);
-    });
-}
-
 function openDetailView(entity: BaseEntity): void {
     const uniqueValue = entity.getUniquePropertyValue();
 
@@ -492,38 +240,36 @@ function openDetailView(entity: BaseEntity): void {
     Application.changeViewToDetailView(entity);
 }
 
+// #endregion
+
+// #region WATCHERS
+
 watch(
     () => Application.View.value.entityClass,
     () => {
-        // T217: reset to page 1 when module changes so the API call uses correct offset
         currentPage.value = 1;
-        loadData();
+        void loadData();
     }
 );
+
 // #endregion
 
 // #region LIFECYCLE
+
 onMounted((): void => {
-    loadData();
+    void loadData();
 });
 
 onBeforeUnmount((): void => {
-    document.removeEventListener('mousemove', onResizeMove);
-    document.removeEventListener('mouseup', onResizeUp);
+    cleanup();
 });
+
 // #endregion
 </script>
 
 <style scoped>
 @import '@/css/table.css';
 
-/* ─── Single-scroll-container table layout ────────────────────────────────────
-   .table-wrapper is the ONE element that scrolls (both x and y).
-   thead uses position:sticky so it remains visible during vertical scroll while
-   ALSO tracking horizontal scroll — both move inside the same scroll viewport.
-   This eliminates the previous thead/tbody misalignment caused by having a
-   separate overflow-x:auto on tbody (which created an independent scroll context).
-──────────────────────────────────────────────────────────────────────────────── */
 .table-wrapper {
     width: 100%;
     height: calc(100vh - var(--topbar-height) - (var(--spacing-2xl) * 2.5) - var(--detail-table-footer-offset));
@@ -545,8 +291,8 @@ onBeforeUnmount((): void => {
 
 table {
     width: 100%;
-    min-width: max-content; /* prevent table from squishing below its natural column-sum width */
-    min-height: 100%; /* stretch to fill .table-wrapper so tbody can expand with flex: 1 */
+    min-width: max-content;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -557,7 +303,7 @@ thead {
     position: sticky;
     top: 0;
     z-index: var(--z-base);
-    background-color: var(--white); /* opaque so rows don't bleed through on scroll */
+    background-color: var(--white);
 }
 
 thead tr {
@@ -565,31 +311,42 @@ thead tr {
     min-width: 100%;
 }
 
-thead td {
+thead th {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding-right: 8px; /* keeps filter-btn clear of the resize handle */
-    position: relative; /* required for .col-resize-handle absolute positioning */
+    padding-right: 8px;
+    position: relative;
     min-width: max(min-content, 5rem);
+    font-weight: bold;
 }
 
-thead td:hover {
+thead th:hover {
     background-color: var(--bg-gray);
     box-shadow: inset 0 0 0 var(--border-width-thin) var(--gray-lighter);
 }
 
-/* T138 — Column label text flex child */
+thead th[draggable] {
+    cursor: grab;
+}
+
+thead th[draggable]:active {
+    cursor: grabbing;
+}
+
+thead th.drag-over {
+    border-left: 2px solid var(--primary-main);
+}
+
 .col-label {
     flex: 1 1 auto;
-    min-width: 0; /* prevents label text-width from inflating the cell's min-content */
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: bold;
 }
 
-/* Column resize drag handle — appears on the right edge of each header cell */
 .col-resize-handle {
     position: absolute;
     right: 0;
@@ -606,7 +363,6 @@ thead td:hover {
     background-color: var(--gray-lighter);
 }
 
-/* T243 — Column filter funnel button */
 .col-filter-btn {
     flex-shrink: 0;
     background: transparent;
@@ -618,19 +374,21 @@ thead td:hover {
     transition: opacity var(--transition-fast) var(--timing-ease),
                 color var(--transition-fast) var(--timing-ease);
 }
+
 .col-filter-btn span {
     font-size: var(--font-size-base);
     color: var(--blue-1);
 }
-thead td:hover .col-filter-btn,
+
+thead th:hover .col-filter-btn,
 .col-filter-btn.has-filter {
     opacity: 1;
 }
+
 .col-filter-btn.has-filter span {
     color: var(--lavender);
 }
 
-/* T114 — Column sort button (left of column label) */
 .col-sort-btn {
     display: inline-flex;
     align-items: center;
@@ -645,13 +403,16 @@ thead td:hover .col-filter-btn,
     transition: color var(--transition-fast) var(--timing-ease),
                 filter var(--transition-fast) var(--timing-ease);
 }
+
 .col-sort-btn span {
     font-size: var(--font-size-sm);
 }
+
 .col-sort-btn:hover {
     color: var(--gray-medium);
     filter: brightness(0.85);
 }
+
 .col-sort-btn.is-sorted {
     color: var(--gray-medium);
 }
@@ -659,13 +420,12 @@ thead td:hover .col-filter-btn,
 tbody {
     display: block;
     width: 100%;
-    flex: 1; /* fill remaining space between thead and tfoot */
-    /* No overflow here — .table-wrapper owns all scroll, ensuring header stays in sync */
+    flex: 1;
 }
 
 tbody tr {
     display: flex;
-    min-width: 100%; /* at least fills wrapper width; cells' min-widths can push it wider */
+    min-width: 100%;
 }
 
 .table-footer {
@@ -694,6 +454,7 @@ tbody tr {
     flex-shrink: 0;
     transition: var(--transition-slow) var(--timing-ease);
 }
+
 .page-size-select:focus {
     outline: none;
     box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--green-main);
@@ -744,21 +505,22 @@ td {
     padding-block: var(--spacing-small);
     border-bottom: var(--border-width-thin) solid var(--gray-lighter);
     user-select: none;
-    flex-shrink: 0; /* cells never shrink below their declared width */
+    flex-shrink: 0;
 }
 
-/* Flexible column that fills remaining row space (used by .table-length-full) */
 td:not([class*='table-length-']) {
     flex: 1;
-    min-width: var(--table-width-small); /* fallback minimum so unstyled cols stay readable */
+    min-width: var(--table-width-small);
 }
 
 tr {
     min-height: var(--table-row-min-height);
 }
+
 tbody tr {
     cursor: pointer;
 }
+
 tbody tr:hover {
     background-color: var(--bg-gray);
 }
@@ -778,11 +540,11 @@ tbody tr:hover {
     background-color: var(--btn-info);
     color: var(--white);
 }
+
 .boolean-row.row-cancel {
     color: var(--accent-red);
 }
 
-/* Mobile: reduce internal padding so more columns fit before scroll kicks in */
 @media (max-width: 768px) {
     td {
         padding-inline: var(--spacing-sm);
