@@ -1,11 +1,26 @@
-﻿<template>
-    <!-- .table-wrapper is the SINGLE scroll container for both header and body.
-         This ensures the sticky header always aligns with the scrolling body columns. -->
-    <div class="table-wrapper">
-        <div class="table-scroll-area">
+<template>
+    <div class="dt-root">
+        <!-- Toolbar slot: search bars, action buttons, etc. Rendered by the parent. -->
+        <slot name="toolbar" />
+
+        <div class="dt-scroll">
             <table>
                 <thead>
                     <tr>
+                        <!-- Selection header cell — only when selectable=true -->
+                        <th v-if="selectable" class="dt-selection" :class="{ display: isSelection }">
+                            <button
+                                v-if="isSelection"
+                                class="select-btn"
+                                :class="{ added: isAllSelected }"
+                                :title="isAllSelected ? t('common.deselect_all') : t('common.select_all')"
+                                @click="emit('toggle-select-all')"
+                            >
+                                <span :class="[GGCLASS]">{{ isAllSelected ? GGICONS.REMOVE : GGICONS.ADD }}</span>
+                            </button>
+                        </th>
+
+                        <!-- Data column headers -->
                         <th
                             v-for="colKey in columnOrder"
                             :key="colKey"
@@ -42,8 +57,23 @@
                     <tr
                         v-for="item in paginatedItems"
                         :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')"
-                        @click="openDetailView(item)"
+                        :class="{ selected: selectedItems?.includes(item) }"
+                        @click="emit('row-click', item)"
                     >
+                        <!-- Selection cell -->
+                        <td v-if="selectable" class="dt-selection" :class="{ display: isSelection }">
+                            <button
+                                class="select-btn"
+                                :class="{ added: selectedItems?.includes(item) }"
+                                @click.stop="emit('toggle-item-selection', item)"
+                            >
+                                <span :class="[GGCLASS]">
+                                    {{ selectedItems?.includes(item) ? GGICONS.REMOVE : GGICONS.ADD }}
+                                </span>
+                            </button>
+                        </td>
+
+                        <!-- Data cells -->
                         <td
                             v-for="colKey in columnOrder"
                             :key="colKey"
@@ -58,7 +88,7 @@
                                 :class="[GGCLASS, item.toObject()[colKey] ? 'row-check' : 'row-cancel']"
                                 class="boolean-row"
                             >
-                                {{ getBooleanIcon(item, colKey) }}
+                                {{ item.toObject()[colKey] ? GGICONS.CHECK : GGICONS.CANCEL }}
                             </span>
                         </td>
                     </tr>
@@ -66,7 +96,12 @@
             </table>
         </div>
 
-        <div class="table-footer">
+        <!-- Loading overlay: covers the entire table while data is being fetched -->
+        <div class="dt-loading-overlay" :class="{ active: loading }">
+            <span :class="[GGCLASS]" class="dt-spin-icon">{{ GGICONS.REFRESH }}</span>
+        </div>
+
+        <div class="dt-footer">
             <div class="pagination-bar">
                 <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
                     <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
@@ -100,48 +135,82 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount } from 'vue';
 
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
-import { GetLanguagedText } from '@/helpers/language_helper';
-import Application from '@/models/application';
-import type { ConcreteEntityClass } from '@/types/entity.types';
 import { useTableCore } from '@/composables/useTableCore';
 
-// #region STATE
+// #region TYPES
 
-const data = ref<BaseEntity[]>([]);
-const totalFromServer = ref<number>(0);
+export interface RequestDataParams {
+    page: number;
+    pageSize: number | 'ALL';
+    sortBy?: string;
+    sortDir?: 'asc' | 'desc' | null;
+}
 
 // #endregion
 
-// #region HELPERS
+// #region PROPS & EMITS
 
-function t(path: string): string {
-    return GetLanguagedText(path);
+interface Props {
+    sourceData: BaseEntity[];
+    visibleProperties: Record<string, string>;
+    t: (key: string) => string;
+    /** Required to enable boolean icon rendering in cells. */
+    entityClass?: typeof BaseEntity | null;
+    /**
+     * Provide the server total to enable server-side pagination mode.
+     * Omit (undefined) for client-side in-memory pagination.
+     */
+    totalCount?: number;
+    /** Show a selection column on each row. */
+    selectable?: boolean;
+    /** Whether selection mode is currently active (shows/hides selection column). */
+    isSelection?: boolean;
+    /** Whether all visible items are selected (drives select-all button state). */
+    isAllSelected?: boolean;
+    /** Currently selected items (used for row highlight and button state). */
+    selectedItems?: BaseEntity[];
+    /** Shows a semi-transparent overlay that blocks interaction while data is loading. */
+    loading?: boolean;
 }
 
-const entityClass = computed(() =>
-    Application.View.value.entityClass as unknown as typeof BaseEntity | null
-);
-
-const visibleProperties = computed<Record<string, string>>(() => {
-    const ec = entityClass.value;
-    if (!ec) return {};
-    const allProps = ec.getProperties();
-    const tempEntity = ec.createNewInstance();
-    return Object.fromEntries(
-        Object.entries(allProps).filter(([key]) => {
-            if (ec.getPropertyType(key) === Array) return false;
-            return !tempEntity.isHideInListView(key);
-        })
-    );
+const props = withDefaults(defineProps<Props>(), {
+    entityClass: null,
+    totalCount: undefined,
+    selectable: false,
+    isSelection: false,
+    isAllSelected: false,
+    selectedItems: () => [],
+    loading: false,
 });
+
+const emit = defineEmits<{
+    /** A data row was clicked. */
+    'row-click': [item: BaseEntity];
+    /** The selection button on a row was clicked. */
+    'toggle-item-selection': [item: BaseEntity];
+    /** The select-all button in the header was clicked. */
+    'toggle-select-all': [];
+    /**
+     * Emitted in server-side mode whenever the page, page-size, or sort changes.
+     * The parent should use the params to re-fetch from the API and update sourceData.
+     */
+    'request-data': [params: RequestDataParams];
+}>();
 
 // #endregion
 
 // #region COMPOSABLE
+
+const sourceDataRef = computed(() => props.sourceData);
+const visiblePropertiesRef = computed(() => props.visibleProperties);
+const totalCountRef = computed(() => props.totalCount ?? 0);
+
+// Determined once at setup — whether to use server-side or client-side pagination.
+const isServerMode = props.totalCount !== undefined;
 
 const {
     columnOrder,
@@ -173,96 +242,29 @@ const {
     onPageSizeChange,
     cleanup,
 } = useTableCore({
-    sourceData: data,
-    visibleProperties,
-    t,
-    serverPagination: {
-        total: totalFromServer,
-        onPageChange: loadData,
-    },
+    sourceData: sourceDataRef,
+    visibleProperties: visiblePropertiesRef,
+    t: props.t,
+    serverPagination: isServerMode
+        ? {
+              total: totalCountRef,
+              onPageChange: () => {
+                  emit('request-data', {
+                      page: currentPage.value,
+                      pageSize: pageSize.value,
+                      sortBy: sortColumn.value || undefined,
+                      sortDir: sortDirection.value,
+                  });
+              },
+          }
+        : undefined,
 });
-
-// #endregion
-
-// #region METHODS
-
-async function loadData(): Promise<void> {
-    const ec = Application.View.value.entityClass as ConcreteEntityClass<BaseEntity> | null;
-
-    if (!ec) {
-        data.value = [];
-        totalFromServer.value = 0;
-        currentPage.value = 1;
-        return;
-    }
-
-    const probeEntity = new ec({});
-    if (!probeEntity.isPersistent()) {
-        data.value = [];
-        totalFromServer.value = 0;
-        currentPage.value = 1;
-        return;
-    }
-
-    const limit = pageSize.value === 'ALL' ? 999999 : (pageSize.value as number);
-
-    try {
-        const result = await ec.getElementListPaginated({
-            page: currentPage.value,
-            limit,
-            filter: '',
-            sortBy: sortColumn.value || undefined,
-            sortDir: sortDirection.value || undefined,
-        });
-        data.value = result.data;
-        totalFromServer.value = result.total;
-    } catch (error: unknown) {
-        console.error('[DetailViewTableComponent] Failed to load entity list', error);
-        data.value = [];
-        totalFromServer.value = 0;
-        currentPage.value = 1;
-    }
-}
-
-function getBooleanIcon(item: BaseEntity, column: string): string {
-    return item.toObject()[column] ? GGICONS.CHECK : GGICONS.CANCEL;
-}
-
-function openDetailView(entity: BaseEntity): void {
-    const uniqueValue = entity.getUniquePropertyValue();
-
-    if (uniqueValue === undefined || uniqueValue === null || uniqueValue === '') {
-        Application.View.value.entityOid = 'new';
-    } else {
-        Application.View.value.entityOid = String(uniqueValue);
-    }
-
-    Application.changeViewToDetailView(entity);
-}
-
-// #endregion
-
-// #region WATCHERS
-
-watch(
-    () => Application.View.value.entityClass,
-    () => {
-        currentPage.value = 1;
-        void loadData();
-    }
-);
 
 // #endregion
 
 // #region LIFECYCLE
 
-onMounted((): void => {
-    void loadData();
-});
-
-onBeforeUnmount((): void => {
-    cleanup();
-});
+onBeforeUnmount(() => cleanup());
 
 // #endregion
 </script>
@@ -270,24 +272,61 @@ onBeforeUnmount((): void => {
 <style scoped>
 @import '@/css/table.css';
 
-.table-wrapper {
-    width: 100%;
-    height: calc(100vh - var(--topbar-height) - (var(--spacing-2xl) * 2.5) - var(--detail-table-footer-offset));
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-light);
-    overflow: hidden;
+/* ── Root layout ─────────────────────────────────────────────────────────── */
+
+.dt-root {
+    position: relative;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    width: 100%;
 }
 
-.table-scroll-area {
+/* ── Loading overlay ────────────────────────────────────────────────────── */
+
+.dt-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal) var(--timing-ease);
+}
+
+.dt-loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.dt-spin-icon {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--green-soft);
+    animation: dt-spin var(--animation-spin-duration) var(--timing-bounce) infinite;
+}
+
+@keyframes dt-spin {
+    0%   { transform: var(--transform-rotate-0); }
+    100% { transform: var(--transform-rotate-360); }
+}
+
+/* ── Scroll area ─────────────────────────────────────────────────────────── */
+
+.dt-scroll {
     flex: 1;
     overflow: auto;
     width: 100%;
     min-width: 0;
     overscroll-behavior: contain;
 }
+
+/* ── Table structure ─────────────────────────────────────────────────────── */
 
 table {
     width: 100%;
@@ -337,6 +376,50 @@ thead th[draggable]:active {
 thead th.drag-over {
     border-left: 2px solid var(--primary-main);
 }
+
+tbody {
+    display: block;
+    width: 100%;
+    flex: 1;
+}
+
+tbody tr {
+    display: flex;
+    min-width: 100%;
+    cursor: pointer;
+}
+
+tbody tr:hover {
+    background-color: var(--bg-gray);
+}
+
+tbody tr.selected {
+    background-color: var(--beige);
+}
+
+td {
+    padding-inline: var(--spacing-medium);
+    padding-block: var(--spacing-small);
+    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
+    user-select: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+td:not([class*='table-length-']) {
+    flex: 1;
+    min-width: var(--table-width-small);
+}
+
+tr {
+    min-height: var(--table-row-min-height);
+}
+
+/* ── Column header controls ──────────────────────────────────────────────── */
 
 .col-label {
     flex: 1 1 auto;
@@ -417,18 +500,49 @@ thead th:hover .col-filter-btn,
     color: var(--gray-medium);
 }
 
-tbody {
-    display: block;
-    width: 100%;
-    flex: 1;
+/* ── Boolean cell ────────────────────────────────────────────────────────── */
+
+.boolean-row {
+    font-size: var(--font-size-h2);
+    margin-left: var(--spacing-2xl);
+    border-radius: 100%;
 }
 
-tbody tr {
+.boolean-row.row-check {
+    background-color: var(--btn-info);
+    color: var(--white);
+}
+
+.boolean-row.row-cancel {
+    color: var(--accent-red);
+}
+
+/* ── Selection column ────────────────────────────────────────────────────── */
+
+.dt-selection {
+    display: none;
+}
+
+.dt-selection.display {
     display: flex;
-    min-width: 100%;
+    max-width: 2rem;
 }
 
-.table-footer {
+.select-btn span {
+    color: var(--sky);
+    transform: rotate(-180deg);
+    transition: transform var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease);
+}
+
+.select-btn.added span {
+    transform: rotate(0deg);
+    color: var(--accent-red);
+}
+
+/* ── Footer / pagination ─────────────────────────────────────────────────── */
+
+.dt-footer {
     width: 100%;
     border-top: var(--border-width-thin) solid var(--gray-lighter);
     background-color: var(--white);
@@ -498,51 +612,6 @@ tbody tr {
     color: var(--gray);
     margin-left: auto;
     white-space: nowrap;
-}
-
-td {
-    padding-inline: var(--spacing-medium);
-    padding-block: var(--spacing-small);
-    border-bottom: var(--border-width-thin) solid var(--gray-lighter);
-    user-select: none;
-    flex-shrink: 0;
-}
-
-td:not([class*='table-length-']) {
-    flex: 1;
-    min-width: var(--table-width-small);
-}
-
-tr {
-    min-height: var(--table-row-min-height);
-}
-
-tbody tr {
-    cursor: pointer;
-}
-
-tbody tr:hover {
-    background-color: var(--bg-gray);
-}
-
-.table-row {
-    display: flex;
-    align-items: center;
-}
-
-.boolean-row {
-    font-size: var(--font-size-h2);
-    margin-left: var(--spacing-2xl);
-    border-radius: 100%;
-}
-
-.boolean-row.row-check {
-    background-color: var(--btn-info);
-    color: var(--white);
-}
-
-.boolean-row.row-cancel {
-    color: var(--accent-red);
 }
 
 @media (max-width: 768px) {

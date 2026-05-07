@@ -52,7 +52,7 @@
    ============================================================ */
 
 /* Mobile: column width classes are intentionally preserved at all viewports.
-   The table scrolls horizontally inside .table-wrapper (see DetailViewTableComponent.vue)
+   The table scrolls horizontally inside .table-wrapper (see default_listview.vue)
    so cells always have their defined minimum widths, even on small screens.
    This prevents header/body misalignment by keeping both rows the same width.
    Previous rule that set min-width:unset on mobile was REMOVED — it broke alignment. */

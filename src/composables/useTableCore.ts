@@ -24,7 +24,7 @@ export interface UseTableCoreOptions {
     /**
      * Pre-filtered data rows.
      * For form inputs (ArrayInputComponent) this is the search-filtered modelValue.
-     * For list views (DetailViewTableComponent) this is the API-loaded page slice.
+     * For list views (DefaultListView) this is the API-loaded page slice.
      */
     sourceData: Ref<BaseEntity[]>;
     /**
@@ -49,11 +49,11 @@ export interface UseTableCoreOptions {
  *
  * Encapsulates all column-management (sort, resize, drag-reorder, column filters)
  * and pagination logic that is identical between ArrayInputComponent (form input)
- * and DetailViewTableComponent (list view).
+ * and DefaultListView (list view).
  *
  * Each consumer keeps its own responsibilities:
  *  - ArrayInputComponent: toolbar, selection, v-model, form validation
- *  - DetailViewTableComponent: API loading, row-click navigation, boolean/CSS rendering
+ *  - DefaultListView: API loading, row-click navigation, boolean/CSS rendering
  */
 export function useTableCore(options: UseTableCoreOptions) {
     const { sourceData, visibleProperties, t, serverPagination } = options;
