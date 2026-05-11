@@ -62,6 +62,8 @@ export function useTableCore(options: UseTableCoreOptions) {
 
     // ── Column resize ─────────────────────────────────────────────────────
     const columnWidths: Ref<Record<string, number>> = ref({});
+    /** Columns the user has explicitly resized or auto-fitted. Only these get a fixed width. */
+    const resizedColumns: Ref<Set<string>> = ref(new Set());
     const MIN_COL_WIDTH = 50; // px — var(--table-width-very-small)
     let resizeColumn = '';
     let resizeStartX = 0;
@@ -267,12 +269,14 @@ export function useTableCore(options: UseTableCoreOptions) {
 
     const DEFAULT_COL_WIDTH = 250; // px — initial cap before user resizes
 
-    function getColumnStyle(column: string): Record<string, string> | undefined {
+    function getColumnStyle(column: string): Record<string, string> {
         const width = columnWidths.value[column];
-        if (!width) return undefined;
-        // flex: none ensures both th and td in the same flex-row honour the
-        // explicit width instead of distributing remaining space independently.
-        return { width: `${width}px`, minWidth: `${width}px`, flex: 'none' };
+        if (resizedColumns.value.has(column) && width) {
+            // Explicitly resized by the user — honour the fixed width exactly.
+            return { width: `${width}px`, minWidth: `${width}px`, flex: 'none' };
+        }
+        // Default: grow to fill available container space, but never below min.
+        return { minWidth: `${DEFAULT_COL_WIDTH}px`, flex: '1' };
     }
 
     function startResize(event: MouseEvent, column: string): void {
@@ -292,6 +296,12 @@ export function useTableCore(options: UseTableCoreOptions) {
     }
 
     function onResizeUp(): void {
+        if (resizeColumn) {
+            // Mark as explicitly resized so getColumnStyle locks it to the fixed width.
+            const next = new Set(resizedColumns.value);
+            next.add(resizeColumn);
+            resizedColumns.value = next;
+        }
         resizeColumn = '';
         document.removeEventListener('mousemove', onResizeMove);
         document.removeEventListener('mouseup', onResizeUp);
@@ -316,6 +326,10 @@ export function useTableCore(options: UseTableCoreOptions) {
             if (cell) maxWidth = Math.max(maxWidth, cell.scrollWidth);
         });
         columnWidths.value[column] = Math.max(MIN_COL_WIDTH, maxWidth);
+        // Treat auto-fit as an explicit user action — lock to the computed width.
+        const next = new Set(resizedColumns.value);
+        next.add(column);
+        resizedColumns.value = next;
     }
 
     // #endregion
@@ -394,6 +408,8 @@ export function useTableCore(options: UseTableCoreOptions) {
         (newProps) => {
             const newKeys = Object.keys(newProps);
             columnOrder.value = newKeys;
+            // Reset explicit resize tracking so all columns revert to flex:1 fill.
+            resizedColumns.value = new Set();
             const widths = { ...columnWidths.value };
             let changed = false;
             for (const key of newKeys) {
