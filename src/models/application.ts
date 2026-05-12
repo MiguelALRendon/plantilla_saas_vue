@@ -202,6 +202,13 @@ class ApplicationClass implements ApplicationUIContext {
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
+                const mutatingMethods = ['post', 'put', 'patch', 'delete'];
+                if (config.method && mutatingMethods.includes(config.method.toLowerCase())) {
+                    const csrfToken = sessionStorage.getItem('csrf_token');
+                    if (csrfToken) {
+                        config.headers['X-CSRF-Token'] = csrfToken;
+                    }
+                }
                 return config;
             },
             (error) => {
@@ -805,12 +812,15 @@ class ApplicationClass implements ApplicationUIContext {
      * @param accessToken JWT access token
      * @param refreshToken JWT refresh token
      */
-    SaveUserData(userData: Record<string, unknown>, accessToken: string, refreshToken: string): void {
+    SaveUserData(userData: Record<string, unknown>, accessToken: string, refreshToken: string, csrfToken: string = ''): void {
         const { authTokenKey, authRefreshTokenKey } = this.AppConfiguration.value;
         try {
             sessionStorage.setItem('current_user', JSON.stringify(userData));
             sessionStorage.setItem(authTokenKey, accessToken);
             sessionStorage.setItem(authRefreshTokenKey, refreshToken);
+            if (csrfToken) {
+                sessionStorage.setItem('csrf_token', csrfToken);
+            }
         } catch (error) {
             console.error('[Application] Failed to save user data to SessionStorage.', error);
         }
@@ -838,6 +848,7 @@ class ApplicationClass implements ApplicationUIContext {
         sessionStorage.removeItem('current_user');
         sessionStorage.removeItem(authTokenKey);
         sessionStorage.removeItem(authRefreshTokenKey);
+        sessionStorage.removeItem('csrf_token');
         this.ApplicationUIService.showToast(
             GetLanguagedText('common.auth.logout_success'),
             ToastType.SUCCESS

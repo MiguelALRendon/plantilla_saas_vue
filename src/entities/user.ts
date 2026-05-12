@@ -63,6 +63,7 @@ export class User extends BaseEntity {
     // Tokens set directly by Object.assign from API response
     access_token?: string;
     refresh_token?: string;
+    csrf_token?: string;
 
     // #endregion
 
@@ -78,7 +79,7 @@ export class User extends BaseEntity {
     override afterSave(): boolean {
         const userData = this.usuario as unknown as Record<string, unknown>;
         this.contraseña = '';
-        Application.SaveUserData(userData, this.access_token ?? '', this.refresh_token ?? '');
+        Application.SaveUserData(userData, this.access_token ?? '', this.refresh_token ?? '', this.csrf_token ?? '');
         Application.ApplicationUIService.showToast(
             GetLanguagedText('common.auth.login_success'),
             ToastType.SUCCESS

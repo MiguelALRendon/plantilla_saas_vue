@@ -96,6 +96,11 @@ function getErrorMessage(error: unknown): string {
 
 const I18N_KEY_PATTERN = /^(common|errors|validation|navigation|custom)\./;
 
+/** Joins an API endpoint with an ID segment, normalising any trailing slash on the base. */
+function joinUrl(endpoint: string, id: unknown): string {
+    return `${endpoint.replace(/\/+$/, '')}/${String(id)}`;
+}
+
 function resolveI18nText(text?: string): string | undefined {
     if (!text) {
         return text;
@@ -1058,7 +1063,7 @@ console.log('All validations passed successfully.');
                 response = await Application.axiosInstance.post(endpoint!, dataToSend);
             } else {
                 const uniqueKey = this.getUniquePropertyValue();
-                response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
+                response = await Application.axiosInstance.put(joinUrl(endpoint!, uniqueKey), dataToSend);
             }
 
             const mappedData = this.mapFromPersistentKeys(response.data);
@@ -1126,7 +1131,7 @@ console.log('All validations passed successfully.');
             const uniqueKey = this.getUniquePropertyValue();
             const dataToSend = this.buildRequestPayload();
 
-            const response = await Application.axiosInstance.put(`${endpoint}/${uniqueKey}`, dataToSend);
+            const response = await Application.axiosInstance.put(joinUrl(endpoint!, uniqueKey), dataToSend);
             const mappedData = this.mapFromPersistentKeys(response.data);
             Object.assign(this, mappedData);
             this._originalState = deepClone(this.toPersistentObject());
@@ -1183,7 +1188,7 @@ console.log('All validations passed successfully.');
             const endpoint = this.getApiEndpoint();
             const uniqueKey = this.getUniquePropertyValue();
 
-            await Application.axiosInstance.delete(`${endpoint}/${uniqueKey}`);
+            await Application.axiosInstance.delete(joinUrl(endpoint!, uniqueKey));
             this.afterDelete();
         } catch (error: unknown) {
             this.deleteFailed();
@@ -1828,7 +1833,7 @@ console.log('All validations passed successfully.');
         }
 
         try {
-            const response = await Application.axiosInstance.get(`${endpoint}/${entityObjectId}`);
+            const response = await Application.axiosInstance.get(joinUrl(endpoint, entityObjectId));
             const mappedData = this.mapFromPersistentKeys(response.data as EntityData);
             const instance = new this(mappedData);
             instance.afterGetElement();
