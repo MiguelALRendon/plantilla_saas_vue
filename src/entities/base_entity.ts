@@ -72,6 +72,7 @@ import type {
 import type { TransformationSchema } from '@/types/service.types';
 import type { ListQueryParams, PaginatedListResult } from '@/types/service.types';
 import type { ExtraFunctions } from '@/types/extra_functions';
+import { isCanceled } from '@/composables/useCancellableLoader';
 import type { OnViewFunctionMetadata } from '@/decorations';
 
 function getErrorMessage(error: unknown): string {
@@ -1819,7 +1820,8 @@ console.log('All validations passed successfully.');
      */
     public static async getElement<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
-        entityObjectId: string
+        entityObjectId: string,
+        signal?: AbortSignal
     ): Promise<T> {
         const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
         if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
@@ -1833,12 +1835,15 @@ console.log('All validations passed successfully.');
         }
 
         try {
-            const response = await Application.axiosInstance.get(joinUrl(endpoint, entityObjectId));
+            const response = await Application.axiosInstance.get(joinUrl(endpoint, entityObjectId), { signal });
             const mappedData = this.mapFromPersistentKeys(response.data as EntityData);
             const instance = new this(mappedData);
             instance.afterGetElement();
             return instance;
         } catch (error: unknown) {
+            if (isCanceled(error)) {
+                throw error;
+            }
             const tempInstance = new this({});
             tempInstance.getElementFailed();
             Application.ApplicationUIService.openConfirmationMenu(
@@ -1946,11 +1951,12 @@ console.log('All validations passed successfully.');
             throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
         }
 
-        const { page = 1, limit = 20, filter = '' } = params;
+        const { page = 1, limit = 20, filter = '', signal } = params;
 
         try {
             const response = await Application.axiosInstance.get(endpoint, {
-                params: { page, limit, filter }
+                params: { page, limit, filter },
+                signal,
             });
             const responseData = response.data as unknown;
 
@@ -1997,6 +2003,9 @@ console.log('All validations passed successfully.');
                 limit
             };
         } catch (error: unknown) {
+            if (isCanceled(error)) {
+                throw error;
+            }
             const tempInstance = new this({});
             tempInstance.getElementListFailed();
             Application.ApplicationUIService.openConfirmationMenu(

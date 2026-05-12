@@ -6,6 +6,10 @@ import type { EntityCtor } from '@/models/view';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
+import { useCancellableLoader, isCanceled } from '@/composables/useCancellableLoader';
+
+/** One shared loader for all router-driven getElement calls. */
+const routerLoader = useCancellableLoader();
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -125,7 +129,10 @@ router.beforeEach(async (to, _from, next) => {
                     Application.setButtonList();
                 } else {
                     try {
-                        const loadedEntity: BaseEntity = await concreteModuleClass.getElement(entityObjectId);
+                        const loadedEntity: BaseEntity = await concreteModuleClass.getElement(
+                            entityObjectId,
+                            routerLoader.getSignal()
+                        );
                         Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                         Application.View.value.entityObject = loadedEntity;
                         Application.View.value.component = moduleClass.getModuleDetailComponent();
@@ -133,6 +140,10 @@ router.beforeEach(async (to, _from, next) => {
                         Application.View.value.entityOid = entityObjectId;
                         Application.setButtonList();
                     } catch (error: unknown) {
+                        if (isCanceled(error)) {
+                            next(false);
+                            return;
+                        }
                         console.error('[Router] Failed to load entity with ID:', entityObjectId, error);
                         next(false);
                         return;

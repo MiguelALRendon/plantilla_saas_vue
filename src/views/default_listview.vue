@@ -23,12 +23,14 @@ import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import type { ConcreteEntityClass } from '@/types/entity.types';
 import DataTableComponent, { type RequestDataParams } from '@/components/DataTableComponent.vue';
+import { useCancellableLoader, isCanceled } from '@/composables/useCancellableLoader';
 
 // #region STATE
 
 const data = ref<BaseEntity[]>([]);
 const totalFromServer = ref<number>(0);
 const isLoading = ref<boolean>(false);
+const { getSignal } = useCancellableLoader();
 
 // #endregion
 
@@ -79,6 +81,8 @@ async function loadData(params?: RequestDataParams): Promise<void> {
     const pageSizeVal = params?.pageSize ?? 10;
     const limit = pageSizeVal === 'ALL' ? 999999 : (pageSizeVal as number);
 
+    const signal = getSignal();
+
     isLoading.value = true;
     try {
         const result = await ec.getElementListPaginated({
@@ -87,15 +91,22 @@ async function loadData(params?: RequestDataParams): Promise<void> {
             filter: '',
             sortBy: params?.sortBy,
             sortDir: params?.sortDir || undefined,
+            signal,
         });
         data.value = result.data;
         totalFromServer.value = result.total;
     } catch (error: unknown) {
+        if (isCanceled(error)) return;
         console.error('[DefaultListView] Failed to load entity list', error);
         data.value = [];
         totalFromServer.value = 0;
     } finally {
-        isLoading.value = false;
+        // Only release the loading state if this specific request was not superseded.
+        // If signal.aborted is true, a newer loadData() call is already in flight
+        // with isLoading = true — resetting here would hide its spinner.
+        if (!signal.aborted) {
+            isLoading.value = false;
+        }
     }
 }
 

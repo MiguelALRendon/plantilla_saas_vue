@@ -16,6 +16,7 @@ export interface ListQueryParams {
     filter?: string;
     sortBy?: string;
     sortDir?: 'asc' | 'desc';
+    signal?: AbortSignal;
 }
 
 /**

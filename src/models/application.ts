@@ -16,6 +16,7 @@ import { Language } from '@/enums/language';
 import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
+import { isCanceled } from '@/composables/useCancellableLoader';
 
 import type { Events } from '@/types/events';
 import type { ExtraFunctions } from '@/types/extra_functions';
@@ -227,6 +228,10 @@ class ApplicationClass implements ApplicationUIContext {
                 }
 
                 if (status === undefined) {
+                    // Intentional cancellation via AbortController — do not retry or notify.
+                    if (isCanceled(error)) {
+                        return Promise.reject(error);
+                    }
                     // T233: Retry with bounded exponential backoff for offline/transient connectivity errors
                     if (
                         requestConfig &&
