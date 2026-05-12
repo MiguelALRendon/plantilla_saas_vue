@@ -1,33 +1,18 @@
 <template>
     <div
-        class="TextInput TagInput"
+        class="TagInput"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
-        <label class="label-input">{{ metadata.propertyName }}</label>
+        <label class="tag-label">{{ metadata.propertyName }}</label>
 
-        <!-- Tag chips -->
-        <div class="tag-chips-container">
+        <!-- Chips + input siempre visible inline -->
+        <div class="tag-chips-container" @click="focusInput">
             <span
                 v-for="(tag, index) in tags"
                 :key="index"
                 class="tag-chip"
             >
-                <span
-                    v-if="editingIndex !== index"
-                    class="tag-chip-label"
-                    @click="startEditing(index)"
-                >{{ tag }}</span>
-                <input
-                    v-else
-                    ref="editInputRef"
-                    class="tag-chip-edit"
-                    type="text"
-                    :value="tag"
-                    @keydown.enter.prevent="commitEdit(index, ($event.target as HTMLInputElement).value)"
-                    @keydown.comma.prevent="commitEdit(index, ($event.target as HTMLInputElement).value)"
-                    @keydown.escape="cancelEdit"
-                    @blur="commitEdit(index, ($event.target as HTMLInputElement).value)"
-                />
+                <span class="tag-chip-label">{{ tag }}</span>
                 <button
                     type="button"
                     class="tag-chip-remove"
@@ -38,30 +23,19 @@
                 </button>
             </span>
 
-            <!-- Add-tag input -->
-            <span v-if="addingTag" class="tag-chip tag-chip-new">
-                <input
-                    ref="addInputRef"
-                    class="tag-chip-edit"
-                    type="text"
-                    placeholder="..."
-                    @keydown.enter.prevent="commitAdd(($event.target as HTMLInputElement).value)"
-                    @keydown.comma.prevent="commitAdd(($event.target as HTMLInputElement).value)"
-                    @keydown.escape="cancelAdd"
-                    @blur="commitAdd(($event.target as HTMLInputElement).value)"
-                />
-            </span>
-
-            <!-- Add button -->
-            <button
-                v-if="!addingTag"
-                type="button"
-                class="tag-add-btn"
+            <input
+                ref="tagInputRef"
+                class="tag-inline-input"
+                type="text"
+                :value="inputValue"
+                :placeholder="tags.length === 0 ? 'Escribe etiquetas separadas por comas…' : ''"
                 :disabled="metadata.disabled.value || metadata.readonly.value"
-                @click="beginAdd"
-            >
-                <span :class="GGCLASS">{{ GGICONS.ADD }}</span>
-            </button>
+                @keydown.enter.prevent="commitCurrent"
+                @keydown.comma.prevent="commitCurrent"
+                @keydown.backspace="onBackspace"
+                @input="inputValue = ($event.target as HTMLInputElement).value"
+                @paste.prevent="onPaste"
+            />
         </div>
     </div>
 
@@ -80,7 +54,7 @@ import { useInputMetadata } from '@/composables/useInputMetadata';
 import type { BaseEntity } from '@/entities/base_entity';
 import { ToastType } from '@/enums/toast_type';
 import { GGICONS, GGCLASS } from '@/constants/ggicons';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface Props {
     entityClass: typeof BaseEntity;
@@ -98,10 +72,8 @@ const emit = defineEmits<{
 const metadata = useInputMetadata(props.entityClass, props.entity, props.propertyKey);
 const isInputValidated = ref(true);
 const validationMessages = ref<string[]>([]);
-const editingIndex = ref<number | null>(null);
-const addingTag = ref(false);
-const editInputRef = ref<HTMLInputElement | null>(null);
-const addInputRef = ref<HTMLInputElement | null>(null);
+const inputValue = ref('');
+const tagInputRef = ref<HTMLInputElement | null>(null);
 
 /** Split the comma-separated modelValue into an array of non-empty trimmed tags */
 const tags = computed<string[]>(() => {
@@ -151,78 +123,46 @@ function validateTotalSize(joined: string): boolean {
     return true;
 }
 
-// ── Editing existing chips ────────────────────────────────────────────────
-
-async function startEditing(index: number): Promise<void> {
-    if (metadata.disabled.value || metadata.readonly.value) return;
-    editingIndex.value = index;
-    await nextTick();
-    editInputRef.value?.focus();
-}
-
-function commitEdit(index: number, raw: string): void {
-    // Guard against double-firing (blur after enter)
-    if (editingIndex.value !== index) return;
-
-    const label = raw.replace(/,/g, '').trim();
-    editingIndex.value = null;
-
-    if (!label) {
-        // Remove empty tag
-        const updated = [...tags.value];
-        updated.splice(index, 1);
-        emitTags(updated);
-        return;
-    }
-
-    if (!validateTagSize(label)) return;
-
-    const updated = [...tags.value];
-    updated[index] = label;
-
-    if (!validateTotalSize(updated.join(','))) return;
-
-    emitTags(updated);
-}
-
-function cancelEdit(): void {
-    editingIndex.value = null;
-}
-
 // ── Adding new chips ──────────────────────────────────────────────────────
 
-async function beginAdd(): Promise<void> {
-    addingTag.value = true;
-    await nextTick();
-    addInputRef.value?.focus();
+function focusInput(): void {
+    tagInputRef.value?.focus();
 }
 
-function commitAdd(raw: string): void {
-    addingTag.value = false;
-
-    if (!raw.trim()) return;
-
-    // Support pasting or typing multiple comma-separated tags at once
+function commitCurrent(): void {
+    const raw = inputValue.value.trim();
+    inputValue.value = '';
+    if (!raw) return;
     const candidates = raw.split(',').map(t => t.trim()).filter(t => t.length > 0);
     const current = [...tags.value];
-
     for (const candidate of candidates) {
         if (!validateTagSize(candidate)) continue;
         if (!validateTagCount(current.length + 1)) break;
-
         current.push(candidate);
-
-        if (!validateTotalSize(current.join(','))) {
-            current.pop();
-            break;
-        }
+        if (!validateTotalSize(current.join(','))) { current.pop(); break; }
     }
-
     emitTags(current);
 }
 
-function cancelAdd(): void {
-    addingTag.value = false;
+function onBackspace(): void {
+    if (inputValue.value === '' && tags.value.length > 0) {
+        removeTag(tags.value.length - 1);
+    }
+}
+
+function onPaste(e: ClipboardEvent): void {
+    const text = e.clipboardData?.getData('text') ?? '';
+    if (!text) return;
+    const candidates = text.split(',').map(t => t.trim()).filter(t => t.length > 0);
+    const current = [...tags.value];
+    for (const candidate of candidates) {
+        if (!validateTagSize(candidate)) continue;
+        if (!validateTagCount(current.length + 1)) break;
+        current.push(candidate);
+        if (!validateTotalSize(current.join(','))) { current.pop(); break; }
+    }
+    emitTags(current);
+    inputValue.value = '';
 }
 
 // ── Removal ───────────────────────────────────────────────────────────────
@@ -273,6 +213,24 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* ── Wrapper ─────────────────────────────────────────────────────────────── */
+.TagInput {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--margin-medium);
+}
+
+/* ── Label ───────────────────────────────────────────────────────────────── */
+.tag-label {
+    font-size: var(--font-size-small);
+    color: var(--blue-1);
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Chips container ─────────────────────────────────────────────────────── */
 .tag-chips-container {
     display: flex;
     flex-wrap: wrap;
@@ -280,9 +238,21 @@ onBeforeUnmount(() => {
     align-items: center;
     padding: var(--spacing-small);
     min-height: 2.5rem;
-    /* border, border-radius, and background are controlled by form.css */
+    border: var(--border-width-thin) solid var(--sky);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-gray);
 }
 
+.TagInput.disabled .tag-chips-container {
+    border-color: var(--gray-light);
+    cursor: not-allowed;
+}
+
+.TagInput.nonvalidated .tag-chips-container {
+    border-color: var(--accent-red);
+}
+
+/* ── Individual chip ─────────────────────────────────────────────────────── */
 .tag-chip {
     display: inline-flex;
     align-items: center;
@@ -297,23 +267,10 @@ onBeforeUnmount(() => {
 }
 
 .tag-chip-label {
-    cursor: pointer;
     user-select: none;
 }
 
-.tag-chip-label:hover {
-    text-decoration: underline;
-}
-
-.tag-chip-edit {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 0.8rem;
-    width: 80px;
-    min-width: 40px;
-}
-
+/* ── Remove button — sin cambios de estilo por estado ───────────────────── */
 .tag-chip-remove {
     display: inline-flex;
     align-items: center;
@@ -324,32 +281,19 @@ onBeforeUnmount(() => {
     color: var(--gray-dark, #6b7280);
 }
 
-.tag-chip-remove:hover {
-    color: var(--red, #ef4444);
-}
-
 .tag-chip-remove span {
     font-size: 16px;
 }
 
-.tag-add-btn {
-    display: inline-flex;
-    align-items: center;
-    border: var(--border-width-thin) dashed var(--sky);
+/* ── Inline input dentro del chips container ────────────────────────────── */
+.tag-inline-input {
+    border: none;
+    outline: none;
     background: transparent;
-    border-radius: 12px;
-    padding: 2px 6px;
-    cursor: pointer;
-    color: var(--sky);
     font-size: var(--font-size-small);
-}
-
-.tag-add-btn:hover {
-    background: var(--bg-gray);
-    border-style: solid;
-}
-
-.tag-add-btn span {
-    font-size: var(--font-size-large);
+    font-family: 'Inter', sans-serif;
+    color: var(--gray-medium);
+    min-width: 140px;
+    flex: 1;
 }
 </style>

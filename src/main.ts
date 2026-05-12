@@ -10,6 +10,7 @@ import router from '@/router';
 import { Home } from '@/entities/home';
 import { Capitulo } from './entities/capitulo';
 import { Imagen } from './entities/imagen';
+import { Super } from './entities/super';
 
 // T084: Create and activate Pinia before the Application singleton is instantiated
 // so stores are available when ApplicationClass constructor is called.
@@ -20,6 +21,7 @@ Application.initializeApplication(router);
 Application.registerModule(Home);
 Application.registerModule(Capitulo);
 Application.registerModule(Imagen);
+Application.registerModule(Super);
 
 const app: VueApp = createApp(App);
 app.use(pinia);
