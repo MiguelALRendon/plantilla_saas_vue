@@ -4,7 +4,7 @@
         <slot name="toolbar" />
 
         <div class="dt-scroll">
-            <table>
+            <table data-testid="data-table">
                 <thead>
                     <tr>
                         <!-- Selection header cell — only when selectable=true -->
@@ -57,6 +57,7 @@
                     <tr
                         v-for="item in paginatedItems"
                         :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')"
+                        :data-testid="`row-${String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')}`"
                         :class="{ selected: selectedItems?.includes(item) }"
                         @click="emit('row-click', item)"
                     >

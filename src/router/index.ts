@@ -4,6 +4,7 @@ import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
 import type { EntityCtor } from '@/models/view';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
+import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import { useCancellableLoader, isCanceled } from '@/composables/useCancellableLoader';
@@ -56,6 +57,51 @@ const router: Router = createRouter({
     routes
 });
 
+/** Decodes a JWT and returns true when its `exp` claim is in the past. Fail-open on decode errors. */
+function isTokenExpired(token: string): boolean {
+    try {
+        const payloadSegment = token.split('.')[1];
+        if (!payloadSegment) {
+            return false;
+        }
+        const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(normalized)) as { exp?: number };
+        if (typeof payload.exp !== 'number') {
+            return false;
+        }
+        return Date.now() >= payload.exp * 1000;
+    } catch {
+        return false;
+    }
+}
+
+/** Returns true when a non-expired session exists; clears an expired session as a side effect. */
+function hasValidSession(): boolean {
+    if (!sessionStorage.getItem('current_user')) {
+        return false;
+    }
+    const { authTokenKey, authRefreshTokenKey } = Application.AppConfiguration.value;
+    const token = sessionStorage.getItem(authTokenKey);
+    if (token && isTokenExpired(token)) {
+        sessionStorage.removeItem('current_user');
+        sessionStorage.removeItem(authTokenKey);
+        sessionStorage.removeItem(authRefreshTokenKey);
+        return false;
+    }
+    return true;
+}
+
+/** Resolves a registered module entity class by its `:module` route param (case-insensitive). */
+function resolveModuleByName(name: string | undefined): typeof BaseEntity | undefined {
+    if (!name) {
+        return undefined;
+    }
+    return Application.ModuleList.value.find((mod: typeof BaseEntity) => {
+        const modName = mod.getModuleName() || mod.name;
+        return modName.toLowerCase() === name.toLowerCase();
+    });
+}
+
 /**
  * Navigation guard to synchronize Application state with URL changes
  * Executes before each route navigation to update Application.View based on URL parameters
@@ -68,11 +114,37 @@ router.beforeEach(async (to, _from, next) => {
         return;
     }
 
-    // Auth guard — redirect unauthenticated users to login
-    const userData = sessionStorage.getItem('current_user');
-    if (!userData) {
+    const moduleName = to.params.module as string;
+    const entityObjectId = to.params.oid as string;
+
+    /** Find the corresponding module class from ModuleList by name matching */
+    const moduleClass = resolveModuleByName(moduleName);
+
+    // Auth guard — honor @NotRequiresLogin per module and validate token expiry (TD-02/TD-04)
+    const moduleAllowsAnonymous =
+        moduleClass !== undefined &&
+        (moduleClass as typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
+            .createNewInstance()
+            .isNotRequiresLogin();
+    if (!moduleAllowsAnonymous && !hasValidSession()) {
         next({ name: 'Login' });
         return;
+    }
+
+    // Permission guard — honor @ModulePermission (TD-05)
+    if (moduleClass) {
+        const requiredPermission = moduleClass.getModulePermission();
+        if (requiredPermission !== undefined) {
+            const userPermissions = (Application.CurrentUser()?.permissions as string[] | undefined) ?? [];
+            if (!moduleClass.hasPermission(userPermissions)) {
+                Application.ApplicationUIService.showToast(
+                    GetLanguagedText('errors.no_permissions'),
+                    ToastType.ERROR
+                );
+                next(false);
+                return;
+            }
+        }
     }
 
     /** Dirty state guard — spec §8.7 Navigation with Dirty State Guard */
@@ -92,15 +164,6 @@ router.beforeEach(async (to, _from, next) => {
         next(false);
         return;
     }
-
-    const moduleName = to.params.module as string;
-    const entityObjectId = to.params.oid as string;
-
-    /** Find the corresponding module class from ModuleList by name matching */
-    const moduleClass = Application.ModuleList.value.find((mod: typeof BaseEntity) => {
-        const modName = mod.getModuleName() || mod.name;
-        return modName.toLowerCase() === moduleName?.toLowerCase();
-    });
 
     if (moduleClass) {
         const concreteModuleClass = moduleClass as typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity);

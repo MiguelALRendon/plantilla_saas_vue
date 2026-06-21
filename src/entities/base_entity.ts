@@ -1041,15 +1041,12 @@ export abstract class BaseEntity {
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
-console.log('Persistence configuration validated successfully.');
         if (!this.validateApiMethod(this.isNew() ? 'POST' : 'PUT')) {
             return this;
         }
-console.log('API method validation passed successfully.');
         if (!(await this.validateInputs())) {
             return this;
         }
-console.log('All validations passed successfully.');
         this._isSaving = true;
         Application.ApplicationUIService.showLoadingMenu();
         await new Promise((resolve) => setTimeout(resolve, 400));
@@ -1103,6 +1100,9 @@ console.log('All validations passed successfully.');
      * @throws Error if persistence configuration invalid, entity is new, or API request fails
      */
     public async update(): Promise<this> {
+        // beforeUpdate() runs before validation, mirroring save()
+        this.beforeUpdate();
+
         if (!this.validatePersistenceConfiguration()) {
             return this;
         }
@@ -1123,8 +1123,13 @@ console.log('All validations passed successfully.');
             return this;
         }
 
+        // BD-01: validate inputs before persisting, like save()
+        if (!(await this.validateInputs())) {
+            return this;
+        }
+
         this._isSaving = true;
-        this.beforeUpdate();
+        Application.ApplicationUIService.showLoadingMenu();
 
         try {
             this.onUpdating();
@@ -1138,9 +1143,12 @@ console.log('All validations passed successfully.');
             this._originalState = deepClone(this.toPersistentObject());
             this._isSaving = false;
             this.afterUpdate();
+            Application.ApplicationUIService.hideLoadingMenu();
+            Application.ApplicationUIService.showToast(GetLanguagedText('common.saved_successfully'), ToastType.SUCCESS);
             return this;
         } catch (error: unknown) {
             this._isSaving = false;
+            Application.ApplicationUIService.hideLoadingMenu();
             this.updateFailed();
             Application.ApplicationUIService.openConfirmationMenu(
                 confMenuType.ERROR,
