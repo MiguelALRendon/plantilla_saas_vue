@@ -7,6 +7,7 @@
         <input
             :id="`id-${metadata.propertyName}`"
             :name="metadata.propertyName"
+            :data-testid="`input-${propertyKey}`"
             :type="inputType"
             class="main-input"
             placeholder=" "

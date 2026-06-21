@@ -19,7 +19,7 @@
             <div class="login-form-wrapper">
                 <h2 class="login-title">{{ t('common.auth.login') }}</h2>
 
-                <form @submit.prevent="handleLogin" class="login-form" novalidate>
+                <form @submit.prevent="handleLogin" class="login-form" data-testid="login-form" novalidate>
                     <TextInputComponent
                         :entity-class="userClass"
                         :entity="loginEntity"
@@ -36,7 +36,7 @@
                         @update:model-value="loginEntity.contraseña = $event"
                     />
 
-                    <button type="submit" class="login-submit" :disabled="isLoading">
+                    <button type="submit" class="login-submit" data-testid="login-submit" :disabled="isLoading">
                         {{ isLoading ? t('common.loading') : t('common.auth.login') }}
                     </button>
                 </form>

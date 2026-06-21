@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ],
+    "allow": [
+      "Bash(node node_modules/vue-tsc/bin/vue-tsc.js *)",
+      "Bash(node node_modules/typescript/bin/tsc *)",
+      "Bash(npm run build)",
+      "Bash(npm run dev)",
+      "Bash(npx vitest *)",
+      "Bash(npx playwright *)"
+    ]
+  }
+}

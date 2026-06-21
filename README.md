@@ -1,5 +1,7 @@
 # Framework SaaS Vue - Configuración de Proyecto
 
+> ℹ️ **Para trabajar con Claude Code / agentes, la guía vigente es [`CLAUDE.md`](CLAUDE.md), [`.claude/rules/`](.claude/rules/) y [`docs/generated/`](docs/generated/).** El código es la fuente de la verdad. Este proyecto se trabaja únicamente con Claude (el antiguo sistema Spec Kit / Copilot fue eliminado).
+
 ## 1. Propósito
 
 Proporcionar instrucciones de configuración, instalación y ejecución del Framework SaaS Vue construido sobre Vue 3 y Vite.
@@ -114,9 +116,9 @@ Copia `.env.example` a `.env` y ajusta los valores para tu entorno.
 ## 9. Relaciones
 
 Este documento se relaciona con:
-- [copilot/00-CONTRACT.md](copilot/00-CONTRACT.md) - Contrato de desarrollo
-- [copilot/03-QUICK-START.md](copilot/03-QUICK-START.md) - Guía de inicio rápido
-- [copilot/README.md](copilot/README.md) - Índice de documentación
+- [CLAUDE.md](CLAUDE.md) - Guía para agentes (Claude Code)
+- [.claude/rules/](.claude/rules/) - Reglas por capa
+- [docs/generated/](docs/generated/) - Referencia generada desde el código
 - package.json - Configuración de dependencias
 - vite.config.js - Configuración de Vite
 
@@ -149,8 +151,7 @@ https://marketplace.visualstudio.com/items?itemName=Vue.volar
 ## 11. Referencias Cruzadas
 
 Documentación del framework:
-- [copilot/00-CONTRACT.md](copilot/00-CONTRACT.md) - Principios contractuales
-- [copilot/01-FRAMEWORK-OVERVIEW.md](copilot/01-FRAMEWORK-OVERVIEW.md) - Visión general
-- [copilot/02-FLOW-ARCHITECTURE.md](copilot/02-FLOW-ARCHITECTURE.md) - Arquitectura
-- [copilot/03-QUICK-START.md](copilot/03-QUICK-START.md) - Inicio rápido
-- [copilot/README.md](copilot/README.md) - Índice completo de documentación
+- [CLAUDE.md](CLAUDE.md) - Visión, comandos y reglas duras
+- [.claude/rules/](.claude/rules/) - Reglas por capa (entities, decorators, components, ...)
+- [docs/generated/](docs/generated/) - Decoradores, entidades y variables de entorno (generado)
+- [claude-plugin/README.md](claude-plugin/README.md) - Plugin saas-framework-kit (skills, subagentes, hooks)

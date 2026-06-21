@@ -1,0 +1,13 @@
+{
+  "name": "saas-vue-local",
+  "owner": {
+    "name": "plantilla_saas_vue"
+  },
+  "plugins": [
+    {
+      "name": "saas-framework-kit",
+      "source": "./claude-plugin",
+      "description": "Agente y gobernanza del framework SaaS Vue (skills de scaffolding, subagentes, hooks de enforcement, LSP)."
+    }
+  ]
+}

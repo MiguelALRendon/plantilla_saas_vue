@@ -1,0 +1,8 @@
+{
+  "name": "saas-framework-kit",
+  "description": "Agente y gobernanza para el framework SaaS Vue dirigido por metadatos. Incluye skills de scaffolding (entidades, decoradores, inputs), subagentes (browser-tester con Playwright, architecture-reviewer, change-verifier), hooks de enforcement (bloquean violaciones de arquitectura) y verificación. El código es la fuente de la verdad.",
+  "version": "0.1.0",
+  "author": {
+    "name": "plantilla_saas_vue"
+  }
+}
