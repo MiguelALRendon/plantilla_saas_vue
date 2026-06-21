@@ -7,6 +7,7 @@
         <div class="body">
             <SideBarItemComponent
                 v-for="module in Application.ModuleList.values()"
+                :key="module.name"
                 :module="module"
                 :collapsed="!toggled"
                 :on-select-module="onSelectModule"

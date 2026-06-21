@@ -4,6 +4,7 @@
             <div
                 class="tab"
                 v-for="(tab, index) in tabs"
+                :key="index"
                 :class="[{ active: index == selectedTab }]"
                 @click="setActiveTab(index)"
             >

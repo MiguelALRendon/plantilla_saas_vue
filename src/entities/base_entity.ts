@@ -408,7 +408,7 @@ export abstract class BaseEntity {
             return false;
         }
 
-        let value = metadata.validation !== undefined ? metadata.validation : metadata.condition;
+        const value = metadata.validation !== undefined ? metadata.validation : metadata.condition;
 
         if (value === undefined) {
             return false;

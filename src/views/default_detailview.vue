@@ -24,7 +24,7 @@
 
     <FormGroupComponent v-if="entity.getArrayKeysOrdered().length > 0" title="Listas">
         <TabControllerComponent :tabs="getArrayListsTabs()">
-            <TabComponent v-for="tab in entity.getArrayKeysOrdered()">
+            <TabComponent v-for="tab in entity.getArrayKeysOrdered()" :key="tab">
                 <ArrayInputComponent
                     :entity="entity"
                     :property-key="tab"

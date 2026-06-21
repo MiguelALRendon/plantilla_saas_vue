@@ -90,9 +90,9 @@ describe('BaseEntity CRUD (axios mockeado)', () => {
     });
 
     it('getElementListPaginated() interpreta el envelope { data, total }', async () => {
-        const get = vi
-            .spyOn(Application.axiosInstance, 'get')
-            .mockResolvedValue({ data: { data: [{ id: '1', nombre: 'a' }], total: 7, page: 1, limit: 20 } });
+        vi.spyOn(Application.axiosInstance, 'get').mockResolvedValue({
+            data: { data: [{ id: '1', nombre: 'a' }], total: 7, page: 1, limit: 20 },
+        });
 
         const result = await CrudEntity.getElementListPaginated({ page: 1, limit: 20 });
 

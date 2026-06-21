@@ -88,6 +88,7 @@ export default {
 
             if (!modal || !modal.modalView) return null;
 
+            // eslint-disable-next-line vue/no-side-effects-in-computed-properties -- cachea el módulo activo para modalModuleName
             this.modalModule = modal.modalView;
 
             switch (modal.viewType as ViewTypes) {

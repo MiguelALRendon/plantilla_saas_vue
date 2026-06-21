@@ -31,7 +31,6 @@
                 :placeholder="tags.length === 0 ? 'Escribe etiquetas separadas por comas…' : ''"
                 :disabled="metadata.disabled.value || metadata.readonly.value"
                 @keydown.enter.prevent="commitCurrent"
-                @keydown.comma.prevent="commitCurrent"
                 @keydown.backspace="onBackspace"
                 @input="inputValue = ($event.target as HTMLInputElement).value"
                 @paste.prevent="onPaste"

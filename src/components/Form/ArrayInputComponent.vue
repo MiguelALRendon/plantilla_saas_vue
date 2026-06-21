@@ -20,7 +20,7 @@
                         <div class="advice" v-if="!isInputValidated">
                             <div class="alert-btn">!</div>
                             <div class="val-list">
-                                <span v-for="message in validationMessages">{{ message }}</span>
+                                <span v-for="message in validationMessages" :key="message">{{ message }}</span>
                             </div>
                         </div>
                     </div>

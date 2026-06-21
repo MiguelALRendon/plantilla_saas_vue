@@ -22,6 +22,7 @@ interface ImportMeta {
 
 declare module '*.vue' {
     import type { DefineComponent } from 'vue';
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- shim estándar de Vue para *.vue
     const component: DefineComponent<{}, {}, unknown>;
     export default component;
 }

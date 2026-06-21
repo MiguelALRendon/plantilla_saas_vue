@@ -13,7 +13,7 @@ export default defineConfigWithVueTs(
     },
     {
         name: 'app/ignores',
-        ignores: ['dist/**', 'coverage/**', 'docs/**', 'claude-plugin/**', 'tests/e2e/**'],
+        ignores: ['dist/**', 'coverage/**', 'docs/**', 'claude-plugin/**', 'scripts/**', 'tests/e2e/**'],
     },
     pluginVue.configs['flat/essential'],
     vueTsConfigs.recommended,
@@ -35,6 +35,15 @@ export default defineConfigWithVueTs(
                 'warn',
                 { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
             ],
+        },
+    },
+    {
+        // El sistema de metadatos usa `Function`/constructores como tipo de target de los
+        // decoradores y como clave del input registry — es idiomático en esta capa.
+        name: 'app/decorator-function-types',
+        files: ['src/decorations/**/*.ts', 'src/models/input_registry.ts', 'src/composables/useFormRenderer.ts'],
+        rules: {
+            '@typescript-eslint/no-unsafe-function-type': 'off',
         },
     },
 );
