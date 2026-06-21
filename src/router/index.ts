@@ -8,6 +8,7 @@ import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import { useCancellableLoader, isCanceled } from '@/composables/useCancellableLoader';
+import { logger } from '@/utils/logger';
 
 /** One shared loader for all router-driven getElement calls. */
 const routerLoader = useCancellableLoader();
@@ -57,40 +58,6 @@ const router: Router = createRouter({
     routes
 });
 
-/** Decodes a JWT and returns true when its `exp` claim is in the past. Fail-open on decode errors. */
-function isTokenExpired(token: string): boolean {
-    try {
-        const payloadSegment = token.split('.')[1];
-        if (!payloadSegment) {
-            return false;
-        }
-        const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(atob(normalized)) as { exp?: number };
-        if (typeof payload.exp !== 'number') {
-            return false;
-        }
-        return Date.now() >= payload.exp * 1000;
-    } catch {
-        return false;
-    }
-}
-
-/** Returns true when a non-expired session exists; clears an expired session as a side effect. */
-function hasValidSession(): boolean {
-    if (!sessionStorage.getItem('current_user')) {
-        return false;
-    }
-    const { authTokenKey, authRefreshTokenKey } = Application.AppConfiguration.value;
-    const token = sessionStorage.getItem(authTokenKey);
-    if (token && isTokenExpired(token)) {
-        sessionStorage.removeItem('current_user');
-        sessionStorage.removeItem(authTokenKey);
-        sessionStorage.removeItem(authRefreshTokenKey);
-        return false;
-    }
-    return true;
-}
-
 /** Resolves a registered module entity class by its `:module` route param (case-insensitive). */
 function resolveModuleByName(name: string | undefined): typeof BaseEntity | undefined {
     if (!name) {
@@ -126,7 +93,7 @@ router.beforeEach(async (to, _from, next) => {
         (moduleClass as typeof BaseEntity & (new (data: Record<string, unknown>) => BaseEntity))
             .createNewInstance()
             .isNotRequiresLogin();
-    if (!moduleAllowsAnonymous && !hasValidSession()) {
+    if (!moduleAllowsAnonymous && !Application.Session.hasValidSession()) {
         next({ name: 'Login' });
         return;
     }
@@ -207,7 +174,7 @@ router.beforeEach(async (to, _from, next) => {
                             next(false);
                             return;
                         }
-                        console.error('[Router] Failed to load entity with ID:', entityObjectId, error);
+                        logger.error('[Router] Failed to load entity with ID:', entityObjectId, error);
                         next(false);
                         return;
                     }
@@ -232,7 +199,7 @@ router.beforeEach(async (to, _from, next) => {
         next();
     } else {
         /** Module not found - Log warning and prevent navigation */
-        console.warn('[Router] Module not found:', moduleName);
+        logger.warn('[Router] Module not found:', moduleName);
         next(false);
     }
 });

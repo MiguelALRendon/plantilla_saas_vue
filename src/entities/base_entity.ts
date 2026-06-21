@@ -49,6 +49,9 @@ import { ToastType } from '@/enums/toast_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import { deepClone, deepEqual } from '@/utils/deep_compare';
+import { logger } from '@/utils/logger';
+import { getErrorMessage, joinUrl } from './entity_http_utils';
+import * as entityRepository from './entity_repository';
 import DefaultDetailView from '@/views/default_detailview.vue';
 import DefaultListview from '@/views/default_listview.vue';
 
@@ -72,35 +75,9 @@ import type {
 import type { TransformationSchema } from '@/types/service.types';
 import type { ListQueryParams, PaginatedListResult } from '@/types/service.types';
 import type { ExtraFunctions } from '@/types/extra_functions';
-import { isCanceled } from '@/composables/useCancellableLoader';
 import type { OnViewFunctionMetadata } from '@/decorations';
 
-function getErrorMessage(error: unknown): string {
-    if (error && typeof error === 'object') {
-        const errorRecord = error as Record<string, unknown>;
-        const response = errorRecord.response as Record<string, unknown> | undefined;
-        const responseData = response?.data as Record<string, unknown> | undefined;
-        const responseMessage = responseData?.message;
-
-        if (typeof responseMessage === 'string' && responseMessage.length > 0) {
-            return responseMessage;
-        }
-
-        const message = errorRecord.message;
-        if (typeof message === 'string' && message.length > 0) {
-            return message;
-        }
-    }
-
-    return GetLanguagedText('errors.unknown_error');
-}
-
 const I18N_KEY_PATTERN = /^(common|errors|validation|navigation|custom)\./;
-
-/** Joins an API endpoint with an ID segment, normalising any trailing slash on the base. */
-function joinUrl(endpoint: string, id: unknown): string {
-    return `${endpoint.replace(/\/+$/, '')}/${String(id)}`;
-}
 
 function resolveI18nText(text?: string): string | undefined {
     if (!text) {
@@ -517,7 +494,7 @@ export abstract class BaseEntity {
         try {
             return await rule.condition(this);
         } catch (error) {
-            console.error(`Error in async validation for ${propertyKey}:`, error);
+            logger.error(`Error in async validation for ${propertyKey}:`, error);
             return false;
         }
     }
@@ -1826,44 +1803,12 @@ export abstract class BaseEntity {
      * @returns Promise resolving to entity instance
      * @throws Error if ApiEndpoint not defined or API request fails
      */
-    public static async getElement<T extends BaseEntity>(
+    public static getElement<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
         entityObjectId: string,
         signal?: AbortSignal
     ): Promise<T> {
-        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
-        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
-            return new this({});
-        }
-
-        const endpoint = this.getApiEndpoint();
-
-        if (!endpoint) {
-            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
-        }
-
-        try {
-            const response = await Application.axiosInstance.get(joinUrl(endpoint, entityObjectId), { signal });
-            const mappedData = this.mapFromPersistentKeys(response.data as EntityData);
-            const instance = new this(mappedData);
-            instance.afterGetElement();
-            return instance;
-        } catch (error: unknown) {
-            if (isCanceled(error)) {
-                throw error;
-            }
-            const tempInstance = new this({});
-            tempInstance.getElementFailed();
-            Application.ApplicationUIService.openConfirmationMenu(
-                confMenuType.ERROR,
-                GetLanguagedText('errors.error_obtaining_element'),
-                getErrorMessage(error),
-                undefined,
-                GetLanguagedText('common.accept'),
-                GetLanguagedText('common.close')
-            );
-            throw error;
-        }
+        return entityRepository.getElement(this, entityObjectId, signal);
     }
 
     /**
@@ -1875,60 +1820,11 @@ export abstract class BaseEntity {
      * @returns Promise resolving to array of entity instances
      * @throws Error if ApiEndpoint not defined or API request fails
      */
-    public static async getElementList<T extends BaseEntity>(
+    public static getElementList<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
         paramsOrFilter: ListQueryParams | string = ''
     ): Promise<T[]> {
-        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
-        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
-            return [];
-        }
-
-        const endpoint = this.getApiEndpoint();
-
-        if (!endpoint) {
-            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
-        }
-
-        // Normalise to params object so the API receives standard query keys
-        const params: Record<string, unknown> =
-            typeof paramsOrFilter === 'string'
-                ? { filter: paramsOrFilter }
-                : { ...paramsOrFilter };
-
-        try {
-            const response = await Application.axiosInstance.get(endpoint, { params });
-            const responseData = response.data as unknown;
-
-            // Detect paginated envelope { data: [...], total, ... }
-            const rawItems: unknown[] =
-                responseData &&
-                typeof responseData === 'object' &&
-                !Array.isArray(responseData) &&
-                'data' in (responseData as object)
-                    ? (responseData as { data: unknown[] }).data
-                    : (responseData as unknown[]);
-
-            const instances = rawItems.map((item: unknown) => {
-                const mappedData = this.mapFromPersistentKeys(item as EntityData);
-                return new this(mappedData);
-            });
-            // T223: afterGetElementList called on EVERY instance
-            instances.forEach((instance) => instance.afterGetElementList());
-            return instances;
-        } catch (error: unknown) {
-            const tempInstance = new this({});
-            tempInstance.getElementListFailed();
-            Application.ApplicationUIService.openConfirmationMenu(
-                confMenuType.ERROR,
-                GetLanguagedText('errors.error_obtaining_list'),
-                getErrorMessage(error),
-                undefined,
-                GetLanguagedText('common.accept'),
-                GetLanguagedText('common.close')
-            );
-            throw error;
-        }
+        return entityRepository.getElementList(this, paramsOrFilter);
     }
 
     /**
@@ -1939,93 +1835,11 @@ export abstract class BaseEntity {
      * @returns Promise resolving to PaginatedListResult with data array and pagination metadata
      * @throws Error if ApiEndpoint not defined or API request fails
      */
-    public static async getElementListPaginated<T extends BaseEntity>(
+    public static getElementListPaginated<T extends BaseEntity>(
         this: ConcreteEntityClass<T>,
         params: ListQueryParams = {}
     ): Promise<PaginatedListResult<T>> {
-        const constructorMetadata = this as unknown as Record<PropertyKey, unknown>;
-        if (!Boolean(constructorMetadata[PERSISTENT_KEY])) {
-            return {
-                data: [],
-                total: 0,
-                page: params.page ?? 1,
-                limit: params.limit ?? 20,
-            };
-        }
-
-        const endpoint = this.getApiEndpoint();
-
-        if (!endpoint) {
-            throw new Error(GetLanguagedText('errors.api_endpoint_not_defined'));
-        }
-
-        const { page = 1, limit = 20, filter = '', signal } = params;
-
-        try {
-            const response = await Application.axiosInstance.get(endpoint, {
-                params: { page, limit, filter },
-                signal,
-            });
-            const responseData = response.data as unknown;
-
-            // Detect paginated envelope { data: [...], total, page?, limit? }
-            if (
-                responseData &&
-                typeof responseData === 'object' &&
-                !Array.isArray(responseData) &&
-                'data' in (responseData as object) &&
-                'total' in (responseData as object)
-            ) {
-                const envelope = responseData as {
-                    data: unknown[];
-                    total: number;
-                    page?: number;
-                    limit?: number;
-                };
-                const instances = envelope.data.map((item: unknown) => {
-                    const mappedData = this.mapFromPersistentKeys(item as EntityData);
-                    return new this(mappedData);
-                });
-                instances.forEach((instance) => instance.afterGetElementList());
-                return {
-                    data: instances,
-                    total: envelope.total,
-                    page: envelope.page ?? page,
-                    limit: envelope.limit ?? limit
-                };
-            }
-
-            // Flat array response — paginate in-memory and report full length as total
-            const allItems = responseData as unknown[];
-            const allInstances = allItems.map((item: unknown) => {
-                const mappedData = this.mapFromPersistentKeys(item as EntityData);
-                return new this(mappedData);
-            });
-            allInstances.forEach((instance) => instance.afterGetElementList());
-            const start = (page - 1) * limit;
-            const pageData = allInstances.slice(start, start + limit);
-            return {
-                data: pageData,
-                total: allInstances.length,
-                page,
-                limit
-            };
-        } catch (error: unknown) {
-            if (isCanceled(error)) {
-                throw error;
-            }
-            const tempInstance = new this({});
-            tempInstance.getElementListFailed();
-            Application.ApplicationUIService.openConfirmationMenu(
-                confMenuType.ERROR,
-                GetLanguagedText('errors.error_obtaining_list'),
-                getErrorMessage(error),
-                undefined,
-                GetLanguagedText('common.accept'),
-                GetLanguagedText('common.close')
-            );
-            throw error;
-        }
+        return entityRepository.getElementListPaginated(this, params);
     }
 }
 

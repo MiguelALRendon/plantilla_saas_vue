@@ -19,6 +19,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 import { BaseEntity } from '@/entities/base_entity';
 import { GetLanguagedText } from '@/helpers/language_helper';
+import { logger } from '@/utils/logger';
 import { ViewTypes } from '@/enums/view_type';
 import Application from '@/models/application';
 import type { ConcreteEntityClass } from '@/types/entity.types';
@@ -97,7 +98,7 @@ async function loadData(params?: RequestDataParams): Promise<void> {
         totalFromServer.value = result.total;
     } catch (error: unknown) {
         if (isCanceled(error)) return;
-        console.error('[DefaultListView] Failed to load entity list', error);
+        logger.error('[DefaultListView] Failed to load entity list', error);
         data.value = [];
         totalFromServer.value = 0;
     } finally {

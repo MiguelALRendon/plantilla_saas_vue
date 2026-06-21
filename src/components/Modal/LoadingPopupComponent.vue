@@ -29,7 +29,6 @@ export default {
     // #region LIFECYCLE
     mounted() {
         Application.eventBus.on('show-loading-menu', () => {
-            console.log('show-loading-menu event received');
             this.showing = true;
         });
         Application.eventBus.on('hide-loading-menu', () => {

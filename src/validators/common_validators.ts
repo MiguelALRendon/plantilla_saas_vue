@@ -2,6 +2,7 @@ import { AsyncValidation, Validation } from '@/decorations';
 import type { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
 import { GetLanguagedText } from '@/helpers/language_helper';
+import { logger } from '@/utils/logger';
 
 /**
  * Contractual validator catalog IDs for traceability with documentation.
@@ -215,7 +216,7 @@ export class AsyncValidators {
 
                     return response.data?.isUnique === true;
                 } catch (error: unknown) {
-                    console.error('[AsyncValidators] Error validating uniqueness', error);
+                    logger.error('[AsyncValidators] Error validating uniqueness', error);
                     return false;
                 }
             }, message)(target, propertyKey);

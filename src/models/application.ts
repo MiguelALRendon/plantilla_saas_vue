@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia';
 import type { Router } from 'vue-router';
 
 import axios from 'axios';
-import type { AxiosError, AxiosInstance } from 'axios';
+import type { AxiosInstance } from 'axios';
 import mitt, { Emitter } from 'mitt';
 
 import { useAppConfigStore, useUiStore, useViewStore } from '@/stores';
@@ -16,15 +16,16 @@ import { Language } from '@/enums/language';
 import { ToastType } from '@/enums/toast_type';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
-import { isCanceled } from '@/composables/useCancellableLoader';
 
 import type { Events } from '@/types/events';
 import type { ExtraFunctions } from '@/types/extra_functions';
-import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
 import { AppConfiguration } from './app_configuration';
 import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
+import { setupHttpInterceptors } from './application_http';
+import { SessionService } from './session_service';
+import { logger } from '@/utils/logger';
 import { confirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
 import type { EntityCtor } from './view';
@@ -121,6 +122,11 @@ class ApplicationClass implements ApplicationUIContext {
      */
     ApplicationUIService: ApplicationUIService;
     /**
+     * Session/auth service: sessionStorage-backed user data, tokens and token-expiry validation.
+     * Type: SessionService
+     */
+    Session: SessionService;
+    /**
      * Vue Router instance for programmatic navigation
      * Type: Router | null
      * Initialized by initializeRouter() and used to synchronize view changes with URL routes
@@ -189,6 +195,7 @@ class ApplicationClass implements ApplicationUIContext {
         this.eventBus = mitt<Events>();
         this.ApplicationDataService = new ApplicationDataService();
         this.ApplicationUIService = new ApplicationUIService(this);
+        this.Session = new SessionService(() => this.AppConfiguration.value);
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
             timeout: this.AppConfiguration.value.apiTimeout,
@@ -197,193 +204,7 @@ class ApplicationClass implements ApplicationUIContext {
             }
         });
 
-        this.axiosInstance.interceptors.request.use(
-            (config) => {
-                const token = sessionStorage.getItem(this.AppConfiguration.value.authTokenKey);
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
-                const mutatingMethods = ['post', 'put', 'patch', 'delete'];
-                if (config.method && mutatingMethods.includes(config.method.toLowerCase())) {
-                    const csrfToken = sessionStorage.getItem('csrf_token');
-                    if (csrfToken) {
-                        config.headers['X-CSRF-Token'] = csrfToken;
-                    }
-                }
-                return config;
-            },
-            (error) => {
-                return Promise.reject(error);
-            }
-        );
-
-        this.axiosInstance.interceptors.response.use(
-            (response) => response,
-            async (error: AxiosError) => {
-                const status = error.response?.status;
-                const requestConfig = error.config as RetryableAxiosRequestConfig | undefined;
-
-                if (requestConfig && requestConfig.__retryCount === undefined) {
-                    requestConfig.__retryCount = 0;
-                }
-
-                if (status === undefined) {
-                    // Intentional cancellation via AbortController — do not retry or notify.
-                    if (isCanceled(error)) {
-                        return Promise.reject(error);
-                    }
-                    // T233: Retry with bounded exponential backoff for offline/transient connectivity errors
-                    if (
-                        requestConfig &&
-                        (requestConfig.__retryCount ?? 0) < this.AppConfiguration.value.apiRetryAttempts
-                    ) {
-                        requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
-                        const retryDelay = Math.pow(2, requestConfig.__retryCount) * 1000;
-                        this.ApplicationUIService.showToast(
-                            ApplicationClass.formatText('errors.connection_retrying', {
-                                current: requestConfig.__retryCount,
-                                max: this.AppConfiguration.value.apiRetryAttempts
-                            }),
-                            ToastType.WARNING
-                        );
-                        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-                        return this.axiosInstance.request(requestConfig);
-                    }
-                    this.ApplicationUIService.showToast(
-                        GetLanguagedText('errors.connection_error'),
-                        ToastType.ERROR
-                    );
-                    return Promise.reject(error);
-                }
-
-                switch (status) {
-                    case 401: {
-                        const isLoginEndpoint = requestConfig?.url?.includes('/auth/login');
-
-                        if (isLoginEndpoint) {
-                            const responseData = error.response?.data as Record<string, unknown> | undefined;
-                            const errors = responseData?.errors;
-                            const message = Array.isArray(errors) && errors.length > 0
-                                ? errors.map(String).join(', ')
-                                : GetLanguagedText('errors.invalid_credentials');
-                            this.ApplicationUIService.showToast(message, ToastType.ERROR);
-                            (error as unknown as Record<string, unknown>).__handled = true;
-                        } else {
-                            const refreshToken = sessionStorage.getItem(this.AppConfiguration.value.authRefreshTokenKey);
-                            if (refreshToken && requestConfig && !requestConfig.__retryCount) {
-                                try {
-                                    const refreshResponse = await this.axiosInstance.post(
-                                        '/auth/refresh',
-                                        {},
-                                        { headers: { Authorization: `Bearer ${refreshToken}` } }
-                                    );
-                                    const newAccessToken = (refreshResponse.data as Record<string, unknown>).access_token as string;
-                                    sessionStorage.setItem(this.AppConfiguration.value.authTokenKey, newAccessToken);
-                                    requestConfig.__retryCount = 1;
-                                    requestConfig.headers = {
-                                        ...requestConfig.headers,
-                                        Authorization: `Bearer ${newAccessToken}`,
-                                    };
-                                    return this.axiosInstance.request(requestConfig);
-                                } catch {}
-                            }
-                            sessionStorage.removeItem(this.AppConfiguration.value.authTokenKey);
-                            sessionStorage.removeItem(this.AppConfiguration.value.authRefreshTokenKey);
-                            sessionStorage.removeItem('current_user');
-                            this.ApplicationUIService.showToast(
-                                GetLanguagedText('errors.session_expired'),
-                                ToastType.ERROR
-                            );
-                            if (this.router) {
-                                this.router.push('/login').catch(() => {});
-                            }
-                        }
-                        break;
-                    }
-
-                    case 403:
-                        this.ApplicationUIService.showToast(
-                            GetLanguagedText('errors.no_permissions'),
-                            ToastType.ERROR
-                        );
-                        break;
-
-                    case 404:
-                        this.ApplicationUIService.showToast(
-                            GetLanguagedText('errors.resource_not_found'),
-                            ToastType.WARNING
-                        );
-                        break;
-
-                    case 422: {
-                        const responseData = error.response?.data as Record<string, unknown> | undefined;
-                        const validationErrors = responseData?.errors as Record<string, unknown> | undefined;
-
-                        if (validationErrors && Object.keys(validationErrors).length > 0) {
-                            const messages = Object.values(validationErrors)
-                                .flatMap((item) => (Array.isArray(item) ? item : [item]))
-                                .map((item) => String(item))
-                                .join(', ');
-
-                            this.ApplicationUIService.showToast(
-                                ApplicationClass.formatText('validation.validation_errors', { messages }),
-                                ToastType.ERROR
-                            );
-                        } else {
-                            this.ApplicationUIService.showToast(
-                                GetLanguagedText('validation.validation_data_error'),
-                                ToastType.ERROR
-                            );
-                        }
-                        break;
-                    }
-
-                    case 500:
-                    case 502:
-                    case 503:
-                        if (
-                            requestConfig &&
-                            (requestConfig.__retryCount ?? 0) < this.AppConfiguration.value.apiRetryAttempts
-                        ) {
-                            requestConfig.__retryCount = (requestConfig.__retryCount ?? 0) + 1;
-
-                            this.ApplicationUIService.showToast(
-                                ApplicationClass.formatText('errors.server_retrying', {
-                                    current: requestConfig.__retryCount,
-                                    max: this.AppConfiguration.value.apiRetryAttempts
-                                }),
-                                ToastType.WARNING
-                            );
-
-                            const delay = Math.pow(2, requestConfig.__retryCount) * 1000;
-                            await new Promise((resolve) => setTimeout(resolve, delay));
-                            return this.axiosInstance.request(requestConfig);
-                        }
-
-                        this.ApplicationUIService.showToast(
-                            GetLanguagedText('errors.server_error'),
-                            ToastType.ERROR
-                        );
-                        break;
-
-                    default:
-                        this.ApplicationUIService.showToast(
-                            ApplicationClass.formatText('errors.unexpected_error_with_status', { status }),
-                            ToastType.ERROR
-                        );
-                }
-
-                return Promise.reject(error);
-            }
-        );
-    }
-
-    private static formatText(path: string, replacements: Record<string, string | number> = {}): string {
-        let text = GetLanguagedText(path);
-        for (const [key, value] of Object.entries(replacements)) {
-            text = text.split(`{${key}}`).join(String(value));
-        }
-        return text;
+        setupHttpInterceptors(this);
     }
 
     private static wait(ms: number): Promise<void> {
@@ -536,7 +357,7 @@ class ApplicationClass implements ApplicationUIContext {
                     .catch((err: unknown): void => {
                         /** Ignore duplicated navigation errors */
                         if (err instanceof Error && err.name !== 'NavigationDuplicated') {
-                            console.error('[Application] Error al navegar:', err);
+                            logger.error('[Application] Error al navegar:', err);
                         }
                     });
             }
@@ -551,7 +372,7 @@ class ApplicationClass implements ApplicationUIContext {
                     })
                     .catch((err: unknown): void => {
                         if (err instanceof Error && err.name !== 'NavigationDuplicated') {
-                            console.error('[Application] Error al navegar:', err);
+                            logger.error('[Application] Error al navegar:', err);
                         }
                     });
             }
@@ -752,7 +573,7 @@ class ApplicationClass implements ApplicationUIContext {
                 isDarkMode: Boolean(parsed.isDarkMode ?? this.AppConfiguration.value.isDarkMode),
             });
         } catch (error) {
-            console.warn('[Application] Invalid stored configuration payload. Falling back to defaults.', error);
+            logger.warn('[Application] Invalid stored configuration payload. Falling back to defaults.', error);
         }
     }
 
@@ -766,7 +587,7 @@ class ApplicationClass implements ApplicationUIContext {
         });
 
         if (hasDuplicateNames) {
-            console.warn('[Application] Duplicate module names detected. Route resolution may be unstable.');
+            logger.warn('[Application] Duplicate module names detected. Route resolution may be unstable.');
         }
     }
 
@@ -794,7 +615,7 @@ class ApplicationClass implements ApplicationUIContext {
         });
 
         if (isDuplicate) {
-            console.warn(
+            logger.warn(
                 `[Application] Duplicate module name detected: "${incomingName}". The module "${moduleClass.name}" was NOT registered to prevent route collision. Ensure each entity has a unique @ModuleName value.`
             );
             return false;
@@ -818,17 +639,7 @@ class ApplicationClass implements ApplicationUIContext {
      * @param refreshToken JWT refresh token
      */
     SaveUserData(userData: Record<string, unknown>, accessToken: string, refreshToken: string, csrfToken: string = ''): void {
-        const { authTokenKey, authRefreshTokenKey } = this.AppConfiguration.value;
-        try {
-            sessionStorage.setItem('current_user', JSON.stringify(userData));
-            sessionStorage.setItem(authTokenKey, accessToken);
-            sessionStorage.setItem(authRefreshTokenKey, refreshToken);
-            if (csrfToken) {
-                sessionStorage.setItem('csrf_token', csrfToken);
-            }
-        } catch (error) {
-            console.error('[Application] Failed to save user data to SessionStorage.', error);
-        }
+        this.Session.saveUserData(userData, accessToken, refreshToken, csrfToken);
     }
 
     /**
@@ -836,24 +647,14 @@ class ApplicationClass implements ApplicationUIContext {
      * @returns The stored user data object, or null if not found or invalid.
      */
     CurrentUser(): Record<string, unknown> | null {
-        try {
-            const raw = sessionStorage.getItem('current_user');
-            if (!raw) return null;
-            return JSON.parse(raw) as Record<string, unknown>;
-        } catch {
-            return null;
-        }
+        return this.Session.getCurrentUser();
     }
 
     /**
      * Clears session data from SessionStorage and redirects to the login view.
      */
     Logout(): void {
-        const { authTokenKey, authRefreshTokenKey } = this.AppConfiguration.value;
-        sessionStorage.removeItem('current_user');
-        sessionStorage.removeItem(authTokenKey);
-        sessionStorage.removeItem(authRefreshTokenKey);
-        sessionStorage.removeItem('csrf_token');
+        this.Session.clear();
         this.ApplicationUIService.showToast(
             GetLanguagedText('common.auth.logout_success'),
             ToastType.SUCCESS
