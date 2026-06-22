@@ -16,6 +16,12 @@ Patrón canónico (ver `src/entities/user.ts`, `src/entities/capitulo.ts`). El c
 - Una propiedad con `@PropertyName` **se incluye** en el payload de la API (`toPersistentObject`).
 - Una propiedad **sin** `@PropertyName` (p.ej. `created_at`, relaciones expandidas) NO se serializa: úsalas para campos de solo-respuesta. Decláralas como `campo?: Tipo`.
 
+## Gotcha: campos sin inicializador
+Declara los campos de datos como `campo?: Tipo` (sin `= valor`). Con `useDefineForClassFields:false` + decoradores legacy, los inicializadores de subclase corren **tras `super()`** y **pisan** los datos del constructor (`new Entidad(data)`). Patrón correcto en `capitulo.ts`.
+
+## Persistencia (implementación)
+Las consultas (`getElement/getElementList/getElementListPaginated`) las implementa `src/entities/entity_repository.ts` (BaseEntity delega). Helpers HTTP compartidos en `src/entities/entity_http_utils.ts` (`joinUrl`, `getErrorMessage`).
+
 ## Tipos i18n
 `@PropertyName`, mensajes de validación, `@HelpText` y `name` del módulo aceptan claves i18n (`custom.*`, `common.*`, ...) que se resuelven con `GetLanguagedText`.
 

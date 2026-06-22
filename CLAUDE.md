@@ -16,15 +16,24 @@ Framework Vue 3 + TypeScript **dirigido por metadatos**: declaras una entidad y 
 
 Reglas de oro: la UI nunca accede a entidades directamente, **todo pasa por `Application`**; las entidades nunca usan `axios` directo, usan **`Application.axiosInstance`**.
 
+### Módulos núcleo (dónde vive cada cosa)
+- Interceptores HTTP (retry/backoff, refresh 401, CSRF, errores i18n): `src/models/application_http.ts` (`setupHttpInterceptors`).
+- Sesión/auth (tokens, expiración JWT): `src/models/session_service.ts` → `Application.Session`.
+- Acceso a datos de entidades (queries): `src/entities/entity_repository.ts` (BaseEntity delega `getElement/getElementList/getElementListPaginated`).
+- Helpers HTTP de entidad: `src/entities/entity_http_utils.ts` (`joinUrl`, `getErrorMessage`).
+- Logging: `src/utils/logger.ts` (`logger`, respeta `VITE_LOG_LEVEL`).
+- Tests: unit en `tests/unit/` (Vitest), E2E en `tests/e2e/` (Playwright).
+
 ## Stack
 Vue 3 (Composition API) · TypeScript strict + `experimentalDecorators` · Pinia (`src/stores/`) · vue-router · axios · mitt · Vite. i18n propio en `src/languages/` vía `GetLanguagedText` (claves `common.*`, `errors.*`, `validation.*`, `navigation.*`, `custom.*`).
 
 ## Comandos
-- **Dev:** `npm run dev` (Vite → http://localhost:5173).
-- **Build:** `npm run build`.
-- **Type-check (USAR ESTE):** `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit` — exit 0 = limpio.
-  ⚠️ `npm run type-check` y `npx` **fallan** en este entorno (error de path de Windows al hacer spawn de npx); NO es un error de código.
-- **Tests:** `npx playwright test` (E2E) · `npx vitest` (unit).
+- **Dev:** `npm run dev` (Vite → http://localhost:5173). **Build:** `npm run build`.
+- ⚠️ En este sandbox `npm run <script>` y `npx` **fallan** (spawn de Windows); ejecuta los binarios con `node` directo. En terminal normal/CI usa los scripts `npm run …`.
+- **Type-check:** `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit` (exit 0 = limpio).
+- **Unit tests:** `node node_modules/vitest/vitest.mjs run`.
+- **Lint:** `node node_modules/eslint/bin/eslint.js .` — 0 errores (`no-explicit-any` es error; backlog legacy en warn).
+- **E2E (Playwright):** `npm run test:e2e` — requiere dev server + backend `saas-api`.
 
 ## Reglas duras (las aplica el hook del plugin; ver `.claude/rules/`)
 - Toda entidad **DEBE** `extends BaseEntity`.
@@ -33,6 +42,7 @@ Vue 3 (Composition API) · TypeScript strict + `experimentalDecorators` · Pinia
 - **Prohibido `README.md`/`INDEX.md`** dentro de `src/`.
 - CSS: sin `!important`, sin colores/`z-index` hardcodeados (tokens en `src/css/constants.css`), animar solo `transform`/`opacity`.
 - `.env` no se trackea ni se lee.
+- **Sin `console.*`** → usa `logger` de `src/utils/logger.ts`.
 
 ## Estilo
 4 espacios (TS) / 2 (templates Vue) · comillas simples · trailing commas en multilínea · tipado explícito · JSDoc en métodos/propiedades públicos · `// #region` en clases. Naming: `snake_case.ts` para entidades, `PascalCase` para clases, `XxxComponent.vue`, `useXxx.ts` para composables, `SCREAMING_SNAKE_CASE` para constantes.

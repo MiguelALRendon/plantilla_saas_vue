@@ -10,5 +10,5 @@ Conciso y verificable. Para detalles por capa, ver las otras reglas en `.claude/
 - **`// #region` / `// #endregion`** para organizar secciones de clases (PROPERTIES, METHODS, ...).
 - **Imports** en orden: framework Vue → librerías externas → alias `@/` → relativos.
 - **Naming:** `snake_case.ts` (entidades/archivos), `PascalCase` (clases/decoradores), `XxxComponent.vue`, `useXxx.ts` (composables), `SCREAMING_SNAKE_CASE` (constantes), `camelCase` (métodos/vars). Nombres descriptivos, no ambiguos (evita `data`, `value`, `temp`, `item`).
-- **Sin `console.*`** en código de producción (usa el manejo de errores del framework).
+- **Sin `console.*`** → usa `logger` de `@/utils/logger` (respeta `VITE_LOG_LEVEL`).
 - **Sin `README.md`/`INDEX.md`** dentro de `src/`.

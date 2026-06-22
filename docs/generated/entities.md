@@ -4,12 +4,14 @@
 
 _Generado: 2026-06-21_
 
-Fuente: `src/entities/` + registro en `src/main.ts`. Total: 6.
+Fuente: `src/entities/` + registro en `src/main.ts`. Total: 8.
 
 | Archivo | Clase | @Module name | Registrada en main.ts |
 |---|---|---|---|
 | `capitulo.ts` | `Capitulo` | `custom.capitulo.title` | sí |
 | `configuration.ts` | `Configuration` | `common.configuration` | no |
+| `entity_http_utils.ts` | `-` | `-` | no |
+| `entity_repository.ts` | `-` | `-` | no |
 | `home.ts` | `Home` | `common.home` | sí |
 | `imagen.ts` | `Imagen` | `custom.imagen.title` | sí |
 | `super.ts` | `Super` | `custom.super.title` | sí |
