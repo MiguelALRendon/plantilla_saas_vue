@@ -20,9 +20,9 @@ export default {
     // #region METHODS
     methods: {
         removeToast(toastId: string) {
-            const index = this.Application.ToastList.findIndex((toast) => toast.id === toastId);
+            const index = Application.ToastList.value.findIndex((toast) => toast.id === toastId);
             if (index !== -1) {
-                this.Application.ToastList.splice(index, 1);
+                Application.ToastList.value.splice(index, 1);
             }
         }
     },

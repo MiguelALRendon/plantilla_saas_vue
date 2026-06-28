@@ -26,7 +26,7 @@ import { ApplicationUIService } from './application_ui_service';
 import { setupHttpInterceptors } from './application_http';
 import { SessionService } from './session_service';
 import { logger } from '@/utils/logger';
-import { confirmationMenu } from './confirmation_menu';
+import { ConfirmationMenu } from './confirmation_menu';
 import { DropdownMenu } from './dropdown_menu';
 import type { EntityCtor } from './view';
 import type { View } from './view';
@@ -81,10 +81,10 @@ class ApplicationClass implements ApplicationUIContext {
     dropdownMenu: Ref<DropdownMenu>;
     /**
      * Confirmation dialog configuration for user action verification
-     * Type: Ref<confirmationMenu>
+     * Type: Ref<ConfirmationMenu>
      * Displays confirmation prompts with type, title, message, and callback action
      */
-    confirmationMenu: Ref<confirmationMenu>;
+    confirmationMenu: Ref<ConfirmationMenu>;
     /**
      * Global event bus for cross-component communication
      * Type: Emitter<Events>
@@ -185,7 +185,7 @@ class ApplicationClass implements ApplicationUIContext {
             activeElementWidth: '0px',
             activeElementHeight: '0px',
         });
-        this.confirmationMenu = ref<confirmationMenu>({
+        this.confirmationMenu = ref<ConfirmationMenu>({
             type: confMenuType.INFO,
             title: '',
             message: '',
@@ -509,7 +509,7 @@ class ApplicationClass implements ApplicationUIContext {
         this.ToastList = toastList as Ref<Toast[]>;
         this.modal = modal as Ref<Modal>;
         this.dropdownMenu = dropdownMenu as Ref<DropdownMenu>;
-        this.confirmationMenu = confirmationMenu as Ref<confirmationMenu>;
+        this.confirmationMenu = confirmationMenu as Ref<ConfirmationMenu>;
     }
 
     /**

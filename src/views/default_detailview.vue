@@ -31,7 +31,7 @@
                     :required="entity.isRequired(tab)"
                     :disabled="entity.isDisabled(tab)"
                     :validated="entity.isValidation(tab)"
-                    :requiredd-message="entity.requiredMessage(tab)"
+                    :required-message="entity.requiredMessage(tab)"
                     :validated-message="entity.validationMessage(tab)"
                     :model-value="getArrayModel(tab)"
                     @update:model-value="setArrayModel(tab, $event)"

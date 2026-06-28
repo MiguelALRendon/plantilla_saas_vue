@@ -9,6 +9,7 @@ import type { RetryableAxiosRequestConfig } from '@/types/service.types';
 
 import type { AppConfiguration } from './app_configuration';
 import type { ApplicationUIService } from './application_ui_service';
+import { logger } from '@/utils/logger';
 
 /** Minimal surface the HTTP interceptors need from the Application singleton. */
 export interface HttpInterceptorHost {
@@ -121,7 +122,9 @@ export function setupHttpInterceptors(app: HttpInterceptorHost): void {
                                     Authorization: `Bearer ${newAccessToken}`,
                                 };
                                 return app.axiosInstance.request(requestConfig);
-                            } catch {}
+                            } catch (refreshError) {
+                                logger.error('[HTTP] Token refresh failed — forcing logout.', refreshError);
+                            }
                         }
                         sessionStorage.removeItem(app.AppConfiguration.value.authTokenKey);
                         sessionStorage.removeItem(app.AppConfiguration.value.authRefreshTokenKey);

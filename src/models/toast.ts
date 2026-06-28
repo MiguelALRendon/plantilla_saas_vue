@@ -31,7 +31,7 @@ export class Toast {
      * @param type Visual type of the toast.
      */
     constructor(message: string, type: ToastType) {
-        this.id = Math.random().toString(36).substr(2, 9);
+        this.id = Math.random().toString(36).substring(2, 11);
         this.message = message;
         this.type = type;
     }

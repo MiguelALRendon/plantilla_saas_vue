@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 import { ViewTypes } from '@/enums/view_type';
-import type { confirmationMenu } from '@/models/confirmation_menu';
+import type { ConfirmationMenu } from '@/models/confirmation_menu';
 import type { DropdownMenu } from '@/models/dropdown_menu';
 import type { Modal } from '@/models/modal';
 import type { Toast } from '@/models/toast';
@@ -34,7 +34,7 @@ export const useUiStore = defineStore('ui', () => {
         activeElementHeight: '0px',
     });
 
-    const confirmationMenu = ref<confirmationMenu>({
+    const confirmationMenu = ref<ConfirmationMenu>({
         type: confMenuType.INFO,
         title: '',
         message: '',

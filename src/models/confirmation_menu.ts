@@ -1,6 +1,6 @@
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
 
-export interface confirmationMenu {
+export interface ConfirmationMenu {
     type: confMenuType;
     title: string;
     message: string;

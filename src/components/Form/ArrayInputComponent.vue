@@ -72,7 +72,7 @@ interface Props {
     entity?: BaseEntity;
     propertyKey?: string;
     required?: boolean;
-    requireddMessage?: string;
+    requiredMessage?: string;
     disabled?: boolean;
     validated?: boolean;
     validatedMessage?: string;
@@ -81,7 +81,7 @@ interface Props {
 // #region PROPERTIES
 const props = withDefaults(defineProps<Props>(), {
     required: false,
-    requireddMessage: '',
+    requiredMessage: '',
     disabled: false,
     validated: true,
     validatedMessage: ''
@@ -215,7 +215,7 @@ async function isValidated(): Promise<boolean> {
     validationMessages.value = [];
 
     if (props.required && (!props.modelValue || props.modelValue.length === 0)) {
-        validationMessages.value.push(props.requireddMessage || `${props.typeValue?.getModuleName()} is required.`);
+        validationMessages.value.push(props.requiredMessage || `${props.typeValue?.getModuleName()} is required.`);
     }
 
     if (props.entity && props.propertyKey) {

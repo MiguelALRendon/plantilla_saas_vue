@@ -67,25 +67,29 @@ export class SessionService {
         return sessionStorage.getItem(CURRENT_USER_KEY) !== null;
     }
 
-    /** Decodifica el JWT y determina si su claim `exp` ya venció. Fail-open ante errores. */
+    /** Decodifica el JWT y determina si su claim `exp` ya venció. Fail-closed: un token malformado se trata como expirado. */
     isTokenExpired(): boolean {
         const token = this.getToken();
         if (!token) {
-            return false;
+            return true;
         }
         try {
             const payloadSegment = token.split('.')[1];
             if (!payloadSegment) {
-                return false;
+                logger.warn('[SessionService] JWT sin payload — tratando como expirado.');
+                return true;
             }
             const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
             const payload = JSON.parse(atob(normalized)) as { exp?: number };
             if (typeof payload.exp !== 'number') {
-                return false;
+                // Token sin claim exp: no podemos verificar expiración, asumimos inválido.
+                logger.warn('[SessionService] JWT sin claim exp — tratando como expirado.');
+                return true;
             }
             return Date.now() >= payload.exp * 1000;
-        } catch {
-            return false;
+        } catch (error) {
+            logger.warn('[SessionService] JWT parse fallido — tratando como expirado.', error);
+            return true;
         }
     }
 

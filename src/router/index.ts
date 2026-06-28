@@ -180,18 +180,12 @@ router.beforeEach(async (to, _from, next) => {
                     }
                 }
             } else {
-                /** Default view takes priority over list view when module has @ModuleDefaultComponent */
-                const defaultComponent = moduleClass.getModuleDefaultComponent();
+                /** getModuleDefaultComponent() siempre retorna un componente (fallback a DefaultListview) */
                 Application.View.value.entityClass = moduleClass as unknown as EntityCtor;
                 Application.View.value.entityObject = null;
                 Application.View.value.entityOid = '';
-                if (defaultComponent) {
-                    Application.View.value.component = defaultComponent;
-                    Application.View.value.viewType = ViewTypes.DEFAULTVIEW;
-                } else {
-                    Application.View.value.component = moduleClass.getModuleListComponent();
-                    Application.View.value.viewType = ViewTypes.LISTVIEW;
-                }
+                Application.View.value.component = moduleClass.getModuleDefaultComponent();
+                Application.View.value.viewType = ViewTypes.DEFAULTVIEW;
                 Application.setButtonList();
             }
         }
@@ -214,10 +208,3 @@ router.afterEach((_to) => {
 
 export default router;
 
-/**
- * Legacy function kept for backwards compatibility
- * No longer performs any initialization as Application is imported directly
- */
-export function initializeRouterWithApplication(): void {
-    /** No-op - Application imported directly at module level */
-}

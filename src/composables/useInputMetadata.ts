@@ -32,7 +32,7 @@ export function useInputMetadata(
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const stopWatch = watch(
-        required, // re-evaluate when the required state changes (acts as a reactive proxy for entity mutation)
+        () => (entity as Record<string, unknown>)[propertyKey],
         () => {
             if (debounceTimer) clearTimeout(debounceTimer);
             const delay = Application.AppConfiguration.value?.asyncValidationDebounce ?? 300;
