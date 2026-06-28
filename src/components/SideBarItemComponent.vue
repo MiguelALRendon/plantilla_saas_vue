@@ -1,61 +1,73 @@
 <template>
-    <div :class="['side-bar-item', { active: isActive, collapsed }]" @click="setNewView">
+    <div
+        :class="['side-bar-item', { active: isActive, collapsed }]"
+        @click="setNewView"
+        @mouseenter="onHoverIn"
+        @mouseleave="onHoverOut"
+    >
         <div class="icon">
-            <img :src="moduleIcon" alt="" />
+            <img ref="iconRef" :src="moduleIcon" alt="" />
         </div>
         <span class="module-title">{{ moduleName }}</span>
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, PropType } from 'vue';
+import gsap from 'gsap';
 import { BaseEntity } from '@/entities/base_entity';
 import Application from '@/models/application';
-import { PropType } from 'vue';
 
-export default {
-    name: 'SideBarItemComponent',
-    props: {
-        module: {
-            type: Function as unknown as PropType<typeof BaseEntity>,
-            required: true
-        },
-        onSelectModule: {
-            type: Function as PropType<(module: typeof BaseEntity) => void>,
-            required: false
-        },
-        collapsed: {
-            type: Boolean,
-            required: false,
-            default: false
-        }
+// #region PROPERTIES
+const props = defineProps({
+    module: {
+        type: Function as unknown as PropType<typeof BaseEntity>,
+        required: true,
     },
-
-    // #region COMPUTED
-    computed: {
-        moduleIcon(): string | undefined {
-            return this.module?.getModuleIcon();
-        },
-        moduleName(): string | undefined {
-            return this.module?.getModuleName();
-        },
-        isActive(): boolean {
-            return Application.View.value.entityClass?.getModuleName() === (this.module && this.module.getModuleName());
-        }
+    onSelectModule: {
+        type: Function as PropType<(module: typeof BaseEntity) => void>,
+        required: false,
+        default: undefined,
     },
-    // #endregion
+    collapsed: {
+        type: Boolean,
+        required: false,
+        default: false,
+    },
+});
 
-    // #region METHODS
-    methods: {
-        setNewView() {
-            if (this.onSelectModule) {
-                this.onSelectModule(this.module as typeof BaseEntity);
-                return;
-            }
-            Application.changeViewToDefaultView(this.module as typeof BaseEntity);
-        }
+const iconRef = ref<HTMLImageElement | null>(null);
+// #endregion
+
+// #region COMPUTED
+const moduleIcon = computed<string | undefined>(() => props.module?.getModuleIcon());
+const moduleName = computed<string | undefined>(() => props.module?.getModuleName());
+const isActive = computed<boolean>(() =>
+    Application.View.value.entityClass?.getModuleName() === props.module?.getModuleName()
+);
+// #endregion
+
+// #region METHODS
+function setNewView(): void {
+    if (props.onSelectModule) {
+        props.onSelectModule(props.module as typeof BaseEntity);
+        return;
     }
-    // #endregion
-};
+    Application.changeViewToDefaultView(props.module as typeof BaseEntity);
+}
+
+function onHoverIn(): void {
+    const el = iconRef.value;
+    if (!el) return;
+    gsap.to(el, { scale: 1.22, rotation: -8, duration: 0.28, ease: 'back.out(2.5)' });
+}
+
+function onHoverOut(): void {
+    const el = iconRef.value;
+    if (!el) return;
+    gsap.to(el, { scale: 1, rotation: 0, duration: 0.32, ease: 'power2.out' });
+}
+// #endregion
 </script>
 
 <style scoped>

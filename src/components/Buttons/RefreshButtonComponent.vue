@@ -1,5 +1,5 @@
 <template>
-    <button class="button success-green" @click="refreshList">
+    <button v-liquid class="button success-green" @click="refreshList">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.REFRESH }}</span>
         <span class="btn-label">{{ t('common.refresh') }}</span>
     </button>

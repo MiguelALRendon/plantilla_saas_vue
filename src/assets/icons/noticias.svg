@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Noticias">
+  <title>Noticias</title>
+  <defs>
+    <!-- Main page front -->
+    <radialGradient id="page" cx="30%" cy="22%" r="78%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#DBEAFE"/>
+      <stop offset="30%"  stop-color="#93c5fd"/>
+      <stop offset="65%"  stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </radialGradient>
+    <radialGradient id="spec" cx="30%" cy="22%" r="55%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.48"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Fold back page -->
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+    <!-- Right side fold -->
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <filter id="shd" x="-16%" y="-14%" width="132%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#1e3a8a" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Back/folded inner page visible at right edge -->
+    <polygon points="36,6 44,10 44,42 36,42" fill="url(#fold)" opacity="0.80"/>
+    <!-- Main newspaper front page -->
+    <rect x="4" y="6" width="32" height="38" rx="2" fill="url(#page)"/>
+    <!-- Specular -->
+    <rect x="4" y="6" width="32" height="38" rx="2" fill="url(#spec)"/>
+    <!-- Top edge highlight -->
+    <line x1="4" y1="6" x2="36" y2="6" stroke="white" stroke-width="1.1" opacity="0.55"/>
+    <!-- Newspaper name / masthead -->
+    <rect x="6" y="9" width="28" height="4" rx="1" fill="white" opacity="0.72"/>
+    <!-- Headline divider line -->
+    <line x1="6" y1="15" x2="34" y2="15" stroke="white" stroke-width="0.8" opacity="0.42"/>
+    <!-- HEADLINE text block (large, bold look) -->
+    <rect x="6" y="16" width="28" height="4" rx="1" fill="white" opacity="0.62"/>
+    <rect x="6" y="21.5" width="22" height="3" rx="1" fill="white" opacity="0.45"/>
+    <!-- Column separator -->
+    <line x1="20" y1="26" x2="20" y2="42" stroke="white" stroke-width="0.7" opacity="0.28"/>
+    <!-- Left column text lines -->
+    <rect x="6" y="27" width="12" height="1.8" rx="0.9" fill="white" opacity="0.42"/>
+    <rect x="6" y="30.5" width="12" height="1.8" rx="0.9" fill="white" opacity="0.38"/>
+    <rect x="6" y="34" width="10" height="1.8" rx="0.9" fill="white" opacity="0.35"/>
+    <rect x="6" y="37.5" width="12" height="1.8" rx="0.9" fill="white" opacity="0.35"/>
+    <rect x="6" y="41" width="8"  height="1.8" rx="0.9" fill="white" opacity="0.30"/>
+    <!-- Right column text lines -->
+    <rect x="22" y="27" width="12" height="1.8" rx="0.9" fill="white" opacity="0.42"/>
+    <rect x="22" y="30.5" width="10" height="1.8" rx="0.9" fill="white" opacity="0.38"/>
+    <rect x="22" y="34" width="12" height="1.8" rx="0.9" fill="white" opacity="0.35"/>
+    <rect x="22" y="37.5" width="9"  height="1.8" rx="0.9" fill="white" opacity="0.30"/>
+    <!-- Fold crease on right edge -->
+    <line x1="36" y1="6" x2="36" y2="44" stroke="white" stroke-width="0.7" opacity="0.30"/>
+  </g>
+</svg>

@@ -1,5 +1,5 @@
 <template>
-    <button class="button info" data-testid="btn-new" @click="openNewDetailView">
+    <button v-liquid class="button info" data-testid="btn-new" @click="openNewDetailView">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.ADD }}</span>
         <span class="btn-label">{{ t('common.new') }}</span>
     </button>

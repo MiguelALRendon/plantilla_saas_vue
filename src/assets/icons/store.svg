@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Tienda">
+  <title>Tienda</title>
+  <defs>
+    <!-- Roof top face -->
+    <linearGradient id="roof" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0%"   stop-color="#D1FAE5"/>
+      <stop offset="100%" stop-color="#6ee7b7"/>
+    </linearGradient>
+    <!-- Awning front -->
+    <linearGradient id="awn" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%"   stop-color="#A7F3D0"/>
+      <stop offset="50%"  stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <!-- Facade front -->
+    <linearGradient id="fac" x1="0.1" y1="0" x2="0.4" y2="1">
+      <stop offset="0%"   stop-color="#34d399"/>
+      <stop offset="50%"  stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#065f46"/>
+    </linearGradient>
+    <!-- Right side face -->
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <filter id="shd" x="-18%" y="-15%" width="136%" height="145%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#064e3b" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Right side of building (shadow) -->
+    <polygon points="36,14 44,10 44,40 36,44" fill="url(#side)"/>
+    <!-- Main facade -->
+    <rect x="4" y="14" width="32" height="30" fill="url(#fac)"/>
+    <!-- Awning (scalloped) -->
+    <path d="M4,14 L36,14 L36,22 Q30,28 24,22 Q18,16 12,22 Q8,26 4,22 Z" fill="url(#awn)"/>
+    <!-- Awning highlight top -->
+    <line x1="4" y1="14" x2="36" y2="14" stroke="white" stroke-width="1" opacity="0.60"/>
+    <!-- Roof sign bar -->
+    <rect x="4" y="8" width="32" height="6" rx="2" fill="url(#roof)"/>
+    <!-- Roof right face -->
+    <polygon points="36,8 44,4 44,10 36,14" fill="#6ee7b7" opacity="0.70"/>
+    <!-- Sign highlight -->
+    <rect x="4" y="8" width="32" height="2.5" rx="2" fill="white" opacity="0.30"/>
+    <!-- Door opening -->
+    <path d="M18,44 L18,33 Q24,29 30,33 L30,44 Z" fill="#065f46" opacity="0.55"/>
+    <!-- Door highlight -->
+    <path d="M19,33 Q24,30 29,33 L29,34 Q24,31 19,34 Z" fill="white" opacity="0.20"/>
+    <!-- Left window -->
+    <rect x="6" y="24" width="8" height="7" rx="1.5" fill="#065f46" opacity="0.45"/>
+    <rect x="6" y="24" width="8" height="2.5" rx="1.5" fill="white" opacity="0.22"/>
+    <!-- Right window -->
+    <rect x="23" y="24" width="8" height="7" rx="1.5" fill="#065f46" opacity="0.45"/>
+    <rect x="23" y="24" width="8" height="2.5" rx="1.5" fill="white" opacity="0.22"/>
+    <!-- Right side edge line -->
+    <line x1="36" y1="14" x2="36" y2="44" stroke="white" stroke-width="0.7" opacity="0.30"/>
+  </g>
+</svg>

@@ -1,5 +1,5 @@
 <template>
-    <button class="button secondary" @click="saveItem">
+    <button v-liquid class="button secondary" @click="saveItem">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.SAVE }}</span>
         <span class="btn-label">{{ t('common.save') }}</span>
     </button>

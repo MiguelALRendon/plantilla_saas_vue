@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Inventario">
+  <title>Inventario</title>
+  <defs>
+    <linearGradient id="top" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%"   stop-color="#EFF6FF"/>
+      <stop offset="50%"  stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#7dd3fc"/>
+    </linearGradient>
+    <linearGradient id="right" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#60a5fa"/>
+      <stop offset="50%"  stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="left" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#3b82f6"/>
+      <stop offset="50%"  stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <filter id="shd" x="-18%" y="-15%" width="136%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#1e3a8a" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Left face (most shadow) -->
+    <polygon points="8,19 8,34 24,43 24,28" fill="url(#left)"/>
+    <!-- Right face (medium shadow) -->
+    <polygon points="40,19 40,34 24,43 24,28" fill="url(#right)"/>
+    <!-- Top face (brightest — light from above) -->
+    <polygon points="24,9 40,19 24,28 8,19" fill="url(#top)"/>
+    <!-- Top face specular highlight -->
+    <polygon points="24,9 32,14 24,19 16,14" fill="white" opacity="0.35"/>
+    <!-- Edge highlights -->
+    <line x1="24" y1="9" x2="40" y2="19" stroke="white" stroke-width="0.9" opacity="0.50"/>
+    <line x1="24" y1="9" x2="8" y2="19" stroke="white" stroke-width="0.9" opacity="0.50"/>
+    <!-- Vertical edge center -->
+    <line x1="24" y1="28" x2="24" y2="43" stroke="white" stroke-width="0.6" opacity="0.30"/>
+  </g>
+</svg>

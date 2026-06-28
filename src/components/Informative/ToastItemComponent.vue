@@ -1,5 +1,5 @@
 <template>
-    <div class="toast-card" :class="[setToastClass(), { show: showToast }]">
+    <div ref="cardRef" class="toast-card" :class="setToastClass()">
         <div class="toast" :class="setToastClass()" @mouseenter="pauseDismiss" @mouseleave="resumeDismiss">
             <span>{{ toast.message }}</span>
             <button class="toast-close-button" @click="handleClose">
@@ -9,117 +9,110 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import type { PropType } from 'vue';
+import gsap from 'gsap';
 import type { Toast } from '@/models/toast';
 import { ToastType } from '@/enums/toast_type';
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 
-export default {
-    name: 'ToastItemComponent',
-    emits: ['remove'],
-    props: {
-        toast: {
-            type: Object as PropType<Toast>,
-            required: true
-        }
+// #region PROPERTIES
+const props = defineProps({
+    toast: {
+        type: Object as PropType<Toast>,
+        required: true,
     },
+});
 
-    // #region METHODS
-    methods: {
-        setToastClass(): string {
-            switch (this.toast.type) {
-                case ToastType.ERROR:
-                    return 'toast-error';
-                case ToastType.SUCCESS:
-                    return 'toast-success';
-                case ToastType.INFO:
-                    return 'toast-info';
-                case ToastType.WARNING:
-                    return 'toast-warning';
-                default:
-                    return '';
-            }
-        },
-        startDismissTimer() {
-            this.clearDismissTimer();
-            this.dismissStartAt = Date.now();
-            this.dismissTimerId = window.setTimeout(() => {
-                this.dismissToast();
-            }, this.remainingDismissMs);
-        },
-        clearDismissTimer() {
-            if (this.dismissTimerId !== null) {
-                clearTimeout(this.dismissTimerId);
-                this.dismissTimerId = null;
-            }
-        },
-        clearRemoveTimer() {
-            if (this.removeTimerId !== null) {
-                clearTimeout(this.removeTimerId);
-                this.removeTimerId = null;
-            }
-        },
-        pauseDismiss() {
-            if (this.isDismissing || this.dismissTimerId === null) {
-                return;
-            }
-            const elapsed = Date.now() - this.dismissStartAt;
-            this.remainingDismissMs = Math.max(this.remainingDismissMs - elapsed, 0);
-            this.clearDismissTimer();
-        },
-        resumeDismiss() {
-            if (this.isDismissing || this.remainingDismissMs <= 0) {
-                return;
-            }
-            this.startDismissTimer();
-        },
-        dismissToast() {
-            if (this.isDismissing) {
-                return;
-            }
-            this.isDismissing = true;
-            this.showToast = false;
-            this.clearDismissTimer();
-            this.clearRemoveTimer();
-            this.removeTimerId = window.setTimeout(() => {
-                this.$emit('remove', this.toast.id);
-            }, 300);
-        },
-        handleClose() {
-            this.dismissToast();
-        }
-    },
-    // #endregion
+const emit = defineEmits<{ remove: [id: string] }>();
 
-    // #region LIFECYCLE
-    mounted() {
-        setTimeout(() => {
-            this.showToast = true;
-        }, 50);
-        this.startDismissTimer();
-    },
-    beforeUnmount() {
-        this.clearDismissTimer();
-        this.clearRemoveTimer();
-    },
-    // #endregion
+const cardRef = ref<HTMLElement | null>(null);
 
-    // #region PROPERTIES
-    data() {
-        return {
-            GGICONS,
-            GGCLASS,
-            showToast: false,
-            dismissTimerId: null as number | null,
-            removeTimerId: null as number | null,
-            dismissStartAt: 0,
-            remainingDismissMs: 5000,
-            isDismissing: false
-        };
+let dismissTimerId: number | null = null;
+let dismissStartAt = 0;
+let remainingDismissMs = 5000;
+let isDismissing = false;
+// #endregion
+
+// #region METHODS
+function setToastClass(): string {
+    switch (props.toast.type) {
+        case ToastType.ERROR:   return 'toast-error';
+        case ToastType.SUCCESS: return 'toast-success';
+        case ToastType.INFO:    return 'toast-info';
+        case ToastType.WARNING: return 'toast-warning';
+        default:                return '';
     }
-    // #endregion
-};
+}
+
+function clearDismissTimer(): void {
+    if (dismissTimerId !== null) {
+        clearTimeout(dismissTimerId);
+        dismissTimerId = null;
+    }
+}
+
+function startDismissTimer(): void {
+    clearDismissTimer();
+    dismissStartAt = Date.now();
+    dismissTimerId = window.setTimeout(() => {
+        dismissToast();
+    }, remainingDismissMs);
+}
+
+function pauseDismiss(): void {
+    if (isDismissing || dismissTimerId === null) return;
+    const elapsed = Date.now() - dismissStartAt;
+    remainingDismissMs = Math.max(remainingDismissMs - elapsed, 0);
+    clearDismissTimer();
+    gsap.to(cardRef.value, { opacity: 1, duration: 0.15 });
+}
+
+function resumeDismiss(): void {
+    if (isDismissing || remainingDismissMs <= 0) return;
+    startDismissTimer();
+    gsap.to(cardRef.value, { opacity: 0.82, duration: 0.3 });
+}
+
+function dismissToast(): void {
+    if (isDismissing) return;
+    isDismissing = true;
+    clearDismissTimer();
+
+    gsap.to(cardRef.value, {
+        x: '110%',
+        opacity: 0,
+        scale: 0.94,
+        duration: 0.32,
+        ease: 'power2.in',
+        onComplete: () => emit('remove', props.toast.id),
+    });
+}
+
+function handleClose(): void {
+    dismissToast();
+}
+// #endregion
+
+// #region LIFECYCLE
+onMounted(() => {
+    gsap.set(cardRef.value, { x: '110%', opacity: 0, scale: 0.92 });
+    gsap.to(cardRef.value, {
+        x: 0,
+        opacity: 0.82,
+        scale: 1,
+        duration: 0.48,
+        ease: 'back.out(1.4)',
+        delay: 0.04,
+    });
+    startDismissTimer();
+});
+
+onBeforeUnmount(() => {
+    clearDismissTimer();
+});
+// #endregion
 </script>
 
 <style scoped>
@@ -132,15 +125,7 @@ export default {
     padding: var(--spacing-xs);
     box-sizing: border-box;
     background-color: var(--white);
-    transform: var(--transform-translateX-hide);
-    transition: var(--transition-normal) var(--timing-bounce);
-    opacity: var(--opacity-toast-rest);
-}
-.toast-card.show {
-    transform: var(--transform-translateX-show);
-}
-.toast-card:hover {
-    opacity: 1;
+    will-change: transform, opacity;
 }
 
 .toast {
@@ -159,18 +144,10 @@ export default {
     gap: var(--spacing-xs);
 }
 
-.toast-card.toast-error {
-    background-color: var(--accent-red);
-}
-.toast-card.toast-success {
-    background-color: var(--green-main);
-}
-.toast-card.toast-info {
-    background-color: var(--sky);
-}
-.toast-card.toast-warning {
-    background-color: var(--btn-warning);
-}
+.toast-card.toast-error   { background-color: var(--accent-red); }
+.toast-card.toast-success { background-color: var(--green-main); }
+.toast-card.toast-info    { background-color: var(--sky); }
+.toast-card.toast-warning { background-color: var(--btn-warning); }
 
 .toast span {
     color: var(--white);

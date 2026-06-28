@@ -1,14 +1,13 @@
 <template>
-    <div :class="['modal-background', { closed: !isShowing }]">
-        <div :class="['modal-structure', { closed: !isShowing }]">
+    <div ref="overlayRef" class="modal-background">
+        <div ref="panelRef" class="modal-structure">
             <div class="modal-head">
                 <div class="left-side">
                     <div class="icon">
-                        <img v-if="modalView && modalModule" :src="modalModuleIcon" alt="" />
+                        <img v-if="modalModule" :src="modalModuleIcon" alt="" />
                     </div>
-                    <span class="title" v-if="modalView && modalModule">{{ modalModuleName }}</span>
+                    <span class="title" v-if="modalModule">{{ modalModuleName }}</span>
                 </div>
-
                 <button class="close-button" @click="closeModal">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                 </button>
@@ -32,100 +31,110 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import gsap from 'gsap';
 import { GGCLASS, GGICONS } from '@/constants/ggicons';
-import ICONS from '@/constants/icons';
 import { BaseEntity } from '@/entities/base_entity';
 import { ViewTypes } from '@/enums/view_type';
 import { GetLanguagedText } from '@/helpers/language_helper';
 import Application from '@/models/application';
 import { Modal } from '@/models/modal';
 import Defaultlookuplistview from '@/views/default_lookup_listview.vue';
-import { Component } from 'vue';
 
-export default {
-    name: 'ModalComponent',
+// #region PROPERTIES
+const overlayRef = ref<HTMLElement | null>(null);
+const panelRef   = ref<HTMLElement | null>(null);
+const isShowing  = ref(false);
+// #endregion
 
-    // #region METHODS
-    methods: {
-        closeModal() {
-            Application.ApplicationUIService.closeModal();
-        },
-        handleKeydown(e: KeyboardEvent) {
-            if (e.key === 'Escape' && this.isShowing) {
-                Application.ApplicationUIService.closeModal();
-            }
-        },
-        t(path: string): string {
-            return GetLanguagedText(path);
-        }
-    },
-    // #endregion
+// #region COMPUTED
+const modalModule = computed<typeof BaseEntity | null>(() => {
+    const modal = Application.modal.value as Modal;
+    return modal?.modalView ?? null;
+});
 
-    // #region PROPERTIES
-    data() {
-        return {
-            ICONS,
-            GGCLASS,
-            GGICONS,
-            Application,
-            modalModule: null as typeof BaseEntity | null,
-            isShowing: false
-        };
-    },
-    // #endregion
+const modalModuleIcon = computed(() => modalModule.value?.getModuleIcon());
+const modalModuleName = computed(() => modalModule.value?.getModuleName());
 
-    // #region COMPUTED
-    computed: {
-        modalModuleIcon(): string | undefined {
-            return this.modalModule?.getModuleIcon();
-        },
-        modalModuleName(): string | undefined {
-            return this.modalModule?.getModuleName();
-        },
-        modalView(): Component | null {
-            const modal = Application.modal.value as Modal;
+const modalView = computed(() => {
+    const modal = Application.modal.value as Modal;
+    if (!modal || !modal.modalView) return null;
 
-            if (!modal || !modal.modalView) return null;
-
-            // eslint-disable-next-line vue/no-side-effects-in-computed-properties -- cachea el módulo activo para modalModuleName
-            this.modalModule = modal.modalView;
-
-            switch (modal.viewType as ViewTypes) {
-                case ViewTypes.LISTVIEW:
-                    return modal.modalView.getModuleListComponent();
-                case ViewTypes.DETAILVIEW:
-                    return modal.modalView.getModuleDetailComponent();
-                case ViewTypes.DEFAULTVIEW:
-                    return modal.modalView.getModuleDefaultComponent();
-                case ViewTypes.LOOKUPVIEW:
-                    return Defaultlookuplistview;
-                case ViewTypes.CUSTOMVIEW:
-                    return modal.modalView.getModuleCustomComponents()?.get(modal.customViewId!) || null;
-                default:
-                    return null;
-            }
-        }
-    },
-    // #endregion
-
-    // #region LIFECYCLE
-    mounted() {
-        window.addEventListener('keydown', this.handleKeydown);
-        Application.eventBus.on('show-modal', () => {
-            this.isShowing = true;
-        });
-        Application.eventBus.on('hide-modal', () => {
-            this.isShowing = false;
-        });
-    },
-    beforeUnmount() {
-        window.removeEventListener('keydown', this.handleKeydown);
-        Application.eventBus.off('show-modal');
-        Application.eventBus.off('hide-modal');
+    switch (modal.viewType as ViewTypes) {
+        case ViewTypes.LISTVIEW:    return modal.modalView.getModuleListComponent();
+        case ViewTypes.DETAILVIEW:  return modal.modalView.getModuleDetailComponent();
+        case ViewTypes.DEFAULTVIEW: return modal.modalView.getModuleDefaultComponent();
+        case ViewTypes.LOOKUPVIEW:  return Defaultlookuplistview;
+        case ViewTypes.CUSTOMVIEW:  return modal.modalView.getModuleCustomComponents()?.get(modal.customViewId!) || null;
+        default: return null;
     }
-    // #endregion
-};
+});
+// #endregion
+
+// #region METHODS
+function t(path: string): string {
+    return GetLanguagedText(path);
+}
+
+function closeModal(): void {
+    Application.ApplicationUIService.closeModal();
+}
+
+function handleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && isShowing.value) {
+        Application.ApplicationUIService.closeModal();
+    }
+}
+
+function showModal(): void {
+    const overlay = overlayRef.value;
+    const panel   = panelRef.value;
+    if (!overlay || !panel) return;
+
+    isShowing.value = true;
+    gsap.set(overlay, { display: 'flex', pointerEvents: 'all' });
+
+    gsap.fromTo(overlay,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.2, ease: 'power2.out' }
+    );
+    gsap.fromTo(panel,
+        { scale: 0.86, opacity: 0, y: -20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.7)' }
+    );
+}
+
+function hideModal(): void {
+    const overlay = overlayRef.value;
+    const panel   = panelRef.value;
+    if (!overlay || !panel) return;
+
+    const tl = gsap.timeline({
+        onComplete: () => {
+            isShowing.value = false;
+            gsap.set(overlay, { display: 'none', pointerEvents: 'none' });
+        },
+    });
+    tl.to(panel,   { scale: 0.9, opacity: 0, y: 10, duration: 0.22, ease: 'power2.in' })
+      .to(overlay, { opacity: 0, duration: 0.18, ease: 'power2.in' }, '-=0.1');
+}
+// #endregion
+
+// #region LIFECYCLE
+onMounted(() => {
+    gsap.set(overlayRef.value, { display: 'none', opacity: 0, pointerEvents: 'none' });
+    window.addEventListener('keydown', handleKeydown);
+    Application.eventBus.on('show-modal', showModal);
+    Application.eventBus.on('hide-modal', hideModal);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeydown);
+    Application.eventBus.off('show-modal', showModal);
+    Application.eventBus.off('hide-modal', hideModal);
+});
+// #endregion
 </script>
 
 <style scoped>
@@ -136,16 +145,11 @@ export default {
     width: 100vw;
     height: 100vh;
     background-color: var(--overlay-dark);
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     z-index: var(--z-modal);
-    opacity: 1;
-    transition: var(--transition-quick) var(--timing-ease);
-}
-.modal-background.closed {
-    opacity: 0;
-    pointer-events: none;
+    will-change: opacity;
 }
 
 .modal-structure {
@@ -157,11 +161,7 @@ export default {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    transition: var(--transition-normal) var(--timing-bounce);
-}
-.modal-structure.closed {
-    max-width: 0;
-    max-height: 0;
+    will-change: transform, opacity;
 }
 
 .modal-head {
@@ -173,10 +173,9 @@ export default {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-}
-.modal-head {
     box-sizing: border-box;
 }
+
 .modal-head .left-side {
     width: 100%;
     height: 100%;

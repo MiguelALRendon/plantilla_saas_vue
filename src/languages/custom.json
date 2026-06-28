@@ -47,5 +47,41 @@
         "actions": {
             "random_toast": { "en": "Random Toast", "es": "Toast Aleatorio", "jp": "ランダムトースト" }
         }
+    },
+    "imagenes": {
+        "title": { "en": "Media Library", "es": "Galería de Medios", "jp": "メディアライブラリ" },
+        "groups": {
+            "imagen":    { "en": "Image",           "es": "Imagen",             "jp": "画像" },
+            "clasif":    { "en": "Classification",  "es": "Clasificación",      "jp": "分類" },
+            "tecnico":   { "en": "Technical Data",  "es": "Datos técnicos",     "jp": "技術データ" },
+            "contacto":  { "en": "Contact",         "es": "Contacto",           "jp": "連絡先" }
+        },
+        "fields": {
+            "nombre":          { "en": "Name",            "es": "Nombre",             "jp": "名前" },
+            "descripcion":     { "en": "Description",     "es": "Descripción",        "jp": "説明" },
+            "url_imagen":      { "en": "Image URL",       "es": "URL de imagen",      "jp": "画像URL" },
+            "archivo":         { "en": "File",            "es": "Archivo",            "jp": "ファイル" },
+            "categoria":       { "en": "Category",        "es": "Categoría",          "jp": "カテゴリ" },
+            "etiquetas":       { "en": "Tags",            "es": "Etiquetas",          "jp": "タグ" },
+            "color_dominante": { "en": "Dominant Color",  "es": "Color dominante",    "jp": "主色" },
+            "peso_kb":         { "en": "Size (KB)",       "es": "Peso (KB)",          "jp": "サイズ (KB)" },
+            "visible":         { "en": "Visible",         "es": "Visible",            "jp": "表示" },
+            "fecha_captura":   { "en": "Capture Date",    "es": "Fecha de captura",   "jp": "撮影日" },
+            "hora_captura":    { "en": "Capture Time",    "es": "Hora de captura",    "jp": "撮影時刻" },
+            "fecha_hora":      { "en": "Date & Time",     "es": "Fecha y hora",       "jp": "日時" },
+            "email_contacto":  { "en": "Contact Email",   "es": "Email de contacto",  "jp": "連絡先メール" },
+            "url_referencia":  { "en": "Reference URL",   "es": "URL de referencia",  "jp": "参照URL" },
+            "telefono":        { "en": "Phone",           "es": "Teléfono",           "jp": "電話" }
+        },
+        "help": {
+            "url_imagen":      { "en": "Direct link to the image for preview", "es": "Enlace directo a la imagen para previsualización", "jp": "プレビュー用の直接リンク" },
+            "archivo":         { "en": "Upload an image file (PNG, JPG, WEBP)", "es": "Sube un archivo de imagen (PNG, JPG, WEBP)", "jp": "画像ファイルをアップロード (PNG, JPG, WEBP)" },
+            "etiquetas":       { "en": "Add tags to organize your media", "es": "Agrega etiquetas para organizar tus medios", "jp": "メディアを整理するためのタグを追加" },
+            "color_dominante": { "en": "Pick the dominant color of the image", "es": "Selecciona el color dominante de la imagen", "jp": "画像の主な色を選択" },
+            "email_contacto":  { "en": "Contact for rights or licensing", "es": "Contacto para derechos o licencias", "jp": "権利またはライセンスの連絡先" }
+        },
+        "validation": {
+            "nombre_required": { "en": "Image name is required", "es": "El nombre de la imagen es requerido", "jp": "画像名は必須です" }
+        }
     }
 }

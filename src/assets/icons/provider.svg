@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Proveedores">
+  <title>Proveedores</title>
+  <defs>
+    <!-- Cargo body top -->
+    <linearGradient id="ct" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%"   stop-color="#CCFBF1"/>
+      <stop offset="100%" stop-color="#6ee7b7"/>
+    </linearGradient>
+    <!-- Cargo body front -->
+    <linearGradient id="cf" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%"   stop-color="#34d399"/>
+      <stop offset="50%"  stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#065f46"/>
+    </linearGradient>
+    <!-- Cab front -->
+    <linearGradient id="cab" x1="0.1" y1="0" x2="0.5" y2="1">
+      <stop offset="0%"   stop-color="#A7F3D0"/>
+      <stop offset="50%"  stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <!-- Cab top -->
+    <linearGradient id="cabt" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%"   stop-color="#D1FAE5"/>
+      <stop offset="100%" stop-color="#6ee7b7"/>
+    </linearGradient>
+    <!-- Wheel gradient -->
+    <radialGradient id="whl" cx="38%" cy="32%" r="65%">
+      <stop offset="0%"   stop-color="#6b7280"/>
+      <stop offset="60%"  stop-color="#374151"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </radialGradient>
+    <filter id="shd" x="-12%" y="-18%" width="124%" height="148%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#064e3b" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Cargo box top face -->
+    <polygon points="4,14 34,14 34,8 4,8" fill="url(#ct)"/>
+    <!-- Cargo top right corner -->
+    <polygon points="34,8 40,11 40,17 34,14" fill="#a7f3d0" opacity="0.65"/>
+    <!-- Cargo box front face -->
+    <rect x="4" y="14" width="30" height="20" fill="url(#cf)"/>
+    <!-- Cargo door line -->
+    <line x1="19" y1="14" x2="19" y2="34" stroke="white" stroke-width="1" opacity="0.30"/>
+    <!-- Cargo front top edge highlight -->
+    <line x1="4" y1="14" x2="34" y2="14" stroke="white" stroke-width="0.9" opacity="0.50"/>
+    <!-- Cab top face -->
+    <polygon points="34,8 44,11 44,17 34,14" fill="url(#cabt)"/>
+    <!-- Cab front/side -->
+    <rect x="34" y="14" width="10" height="20" rx="2" fill="url(#cab)"/>
+    <!-- Windshield -->
+    <rect x="35.5" y="15.5" width="7" height="8" rx="1.5" fill="#065f46" opacity="0.50"/>
+    <!-- Windshield shine -->
+    <rect x="35.5" y="15.5" width="7" height="3" rx="1.5" fill="white" opacity="0.22"/>
+    <!-- Chassis -->
+    <rect x="4" y="34" width="40" height="3" rx="1.5" fill="#374151" opacity="0.35"/>
+    <!-- Wheel rear -->
+    <circle cx="13" cy="38" r="5.5" fill="url(#whl)"/>
+    <circle cx="13" cy="38" r="2.5" fill="#9ca3af" opacity="0.55"/>
+    <circle cx="13" cy="38" r="1" fill="white" opacity="0.40"/>
+    <!-- Wheel front -->
+    <circle cx="38" cy="38" r="5.5" fill="url(#whl)"/>
+    <circle cx="38" cy="38" r="2.5" fill="#9ca3af" opacity="0.55"/>
+    <circle cx="38" cy="38" r="1" fill="white" opacity="0.40"/>
+  </g>
+</svg>

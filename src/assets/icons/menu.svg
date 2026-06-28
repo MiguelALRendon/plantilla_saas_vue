@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Menú">
+  <title>Menú</title>
+  <defs>
+    <radialGradient id="dot" cx="35%" cy="30%" r="70%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#F9FAFB"/>
+      <stop offset="30%"  stop-color="#d1d5db"/>
+      <stop offset="70%"  stop-color="#6b7280"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </radialGradient>
+    <filter id="shd" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#1f2937" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <!-- 3×3 dot grid — each dot is a sphere with radial gradient -->
+  <circle cx="14" cy="14" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="24" cy="14" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="34" cy="14" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="14" cy="24" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="24" cy="24" r="6.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="34" cy="24" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="14" cy="34" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="24" cy="34" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <circle cx="34" cy="34" r="5.5" fill="url(#dot)" filter="url(#shd)"/>
+  <!-- Specular highlight on each dot (simulated with overlay circles) -->
+  <circle cx="12.5" cy="12.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="22.5" cy="12.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="32.5" cy="12.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="12.5" cy="22.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="22.5" cy="22.5" r="2.5" fill="white" opacity="0.45"/>
+  <circle cx="32.5" cy="22.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="12.5" cy="32.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="22.5" cy="32.5" r="2.2" fill="white" opacity="0.45"/>
+  <circle cx="32.5" cy="32.5" r="2.2" fill="white" opacity="0.45"/>
+</svg>

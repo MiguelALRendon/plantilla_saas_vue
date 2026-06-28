@@ -4,9 +4,9 @@
             <img :src="headerLogo" class="header-logo" :class="{ squared: !toggled }" alt="Logo" />
         </div>
 
-        <div class="body">
+        <div ref="bodyRef" class="body">
             <SideBarItemComponent
-                v-for="module in Application.ModuleList.values()"
+                v-for="module in moduleList"
                 :key="module.name"
                 :module="module"
                 :collapsed="!toggled"
@@ -22,62 +22,67 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import gsap from 'gsap';
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import Application from '@/models/application';
 import ICONS from '@/constants/icons';
 import { BaseEntity } from '@/entities/base_entity';
 
-export default {
-    name: 'SideBarComponent',
-    components: {
-        SideBarItemComponent
-    },
+// #region PROPERTIES
+const bodyRef = ref<HTMLElement | null>(null);
+const toggled = ref(typeof window !== 'undefined' ? window.innerWidth > 1200 : true);
+// #endregion
 
-    // #region PROPERTIES
-    data() {
-        return {
-            Application,
-            ICONS,
-            toggled: typeof window !== 'undefined' ? window.innerWidth > 1200 : true
-        };
-    },
-    // #endregion
+// #region COMPUTED
+const moduleList = computed(() => Application.ModuleList.value);
+const appName = computed(() => Application.AppConfiguration.value.appName);
+const appVersion = computed(() => Application.AppConfiguration.value.appVersion);
+const headerLogo = computed(() =>
+    toggled.value
+        ? ICONS.SYSTEM_NAME
+        : (Application.AppConfiguration.value.squared_app_logo_image || ICONS.SQUARED_APP_LOGO)
+);
+// #endregion
 
-    // #region COMPUTED
-    computed: {
-        appName(): string {
-            return Application.AppConfiguration.value.appName;
-        },
-        appVersion(): string {
-            return Application.AppConfiguration.value.appVersion;
-        },
-        headerLogo(): string {
-            return this.toggled
-                ? ICONS.SYSTEM_NAME
-                : (Application.AppConfiguration.value.squared_app_logo_image || ICONS.SQUARED_APP_LOGO);
-        }
-    },
-    methods: {
-        onSelectModule(moduleClass: typeof BaseEntity): void {
-            Application.changeViewToDefaultView(moduleClass);
-        }
-    },
-    // #endregion
+// #region METHODS
+function onSelectModule(moduleClass: typeof BaseEntity): void {
+    Application.changeViewToDefaultView(moduleClass);
+}
 
-    // #region LIFECYCLE
-    mounted() {
-        Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
-            this.toggled = state !== undefined ? state : !this.toggled;
-        });
-        // Sync TopBarComponent with initial state derived from viewport width
-        Application.eventBus.emit('toggle-sidebar', this.toggled);
-    },
-    beforeUnmount() {
-        Application.eventBus.off('toggle-sidebar');
-    }
-    // #endregion
-};
+async function animateItems(): Promise<void> {
+    await nextTick();
+    const body = bodyRef.value;
+    if (!body) return;
+    const items = body.querySelectorAll('.side-bar-item');
+    if (items.length === 0) return;
+    gsap.fromTo(
+        items,
+        { x: -10, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.3, stagger: 0.045, ease: 'power2.out', clearProps: 'x,opacity' }
+    );
+}
+// #endregion
+
+// #region LIFECYCLE
+watch(toggled, (newVal) => {
+    if (newVal) animateItems();
+});
+
+onMounted(() => {
+    Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
+        toggled.value = state !== undefined ? state : !toggled.value;
+    });
+    Application.eventBus.emit('toggle-sidebar', toggled.value);
+
+    if (toggled.value) animateItems();
+});
+
+onBeforeUnmount(() => {
+    Application.eventBus.off('toggle-sidebar');
+});
+// #endregion
 </script>
 
 <style scoped>
@@ -88,7 +93,7 @@ export default {
     width: 100%;
     height: 100%;
     max-height: 100vh;
-    flex-shrink: 0; /* never yield space to the content container — sidebar width is structural */
+    flex-shrink: 0;
     transition: max-width var(--transition-slow) var(--timing-ease); /* EXC-007: max-width — layout-trigger justified for structural sidebar collapse */
     position: relative;
     z-index: var(--z-dropdown);
@@ -190,20 +195,12 @@ export default {
     margin-bottom: var(--spacing-xxs);
 }
 
-/* Desktop standard (1201px–1400px): sidebar slightly reduced to free horizontal space.
-   1400px corresponds to --breakpoint-xl in the design system.
-   var() is unsupported in @media per CSS spec — raw value required. */
 @media (max-width: 1400px) {
     .sidebar.toggled {
-        max-width: 200px; /* 250px → 200px — preserves full label visibility but gains 50px */
+        max-width: 200px;
     }
 }
 
-/* Floating sidebar — shown as fixed overlay below 1200px.
-   Sidebar leaves flex flow so ComponentContainer always fills full width.
-   Uses transform (not max-width) for smooth slide-in/out animation.
-   1200px corresponds to --breakpoint-lg in the design system;
-   var() is unsupported in @media per CSS spec — raw value required. */
 @media (max-width: 1200px) {
     .sidebar {
         position: fixed;
@@ -212,16 +209,15 @@ export default {
         height: 100vh;
         max-width: var(--sidebar-width-expanded);
         z-index: var(--z-overlay);
-        transform: translateX(-105%); /* fully off-screen left */
+        transform: translateX(-105%);
         transition: transform var(--transition-slow) var(--timing-ease),
                     box-shadow var(--transition-slow) var(--timing-ease);
     }
     .sidebar.toggled {
-        transform: translateX(0); /* slide in */
+        transform: translateX(0);
         box-shadow: var(--shadow-dark);
         max-width: var(--sidebar-width-expanded);
     }
-    /* Always show text labels when sidebar is a floating drawer */
     .sidebar span {
         opacity: 0;
     }

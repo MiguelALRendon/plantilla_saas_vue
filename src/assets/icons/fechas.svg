@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Fechas">
+  <title>Fechas</title>
+  <defs>
+    <!-- Calendar top header face -->
+    <linearGradient id="hdr" x1="0.1" y1="0" x2="0.5" y2="1">
+      <stop offset="0%"   stop-color="#A7F3D0"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <!-- Calendar body face -->
+    <linearGradient id="body" x1="0.1" y1="0" x2="0.3" y2="1">
+      <stop offset="0%"   stop-color="#F0FDF4"/>
+      <stop offset="50%"  stop-color="#bbf7d0"/>
+      <stop offset="100%" stop-color="#4ade80"/>
+    </linearGradient>
+    <!-- Right depth face -->
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#059669"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <!-- Highlighted date circle -->
+    <radialGradient id="date" cx="35%" cy="30%" r="70%">
+      <stop offset="0%"   stop-color="#6ee7b7"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </radialGradient>
+    <filter id="shd" x="-16%" y="-14%" width="132%" height="136%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#064e3b" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Right side depth face -->
+    <polygon points="38,10 44,13 44,45 38,44" fill="url(#side)"/>
+    <!-- Calendar body -->
+    <rect x="4" y="10" width="34" height="34" rx="2" fill="url(#body)"/>
+    <!-- Header bar (colored top section) -->
+    <rect x="4" y="10" width="34" height="12" rx="2" fill="url(#hdr)"/>
+    <!-- Mask bottom corners of header -->
+    <rect x="4" y="18" width="34" height="4" fill="url(#hdr)"/>
+    <!-- Header top highlight -->
+    <line x1="4" y1="10" x2="38" y2="10" stroke="white" stroke-width="1" opacity="0.55"/>
+    <!-- Ring bindings at top of header -->
+    <circle cx="13" cy="10" r="3"  fill="#059669"/>
+    <circle cx="13" cy="10" r="3"  fill="none" stroke="white" stroke-width="1" opacity="0.55"/>
+    <circle cx="25" cy="10" r="3"  fill="#059669"/>
+    <circle cx="25" cy="10" r="3"  fill="none" stroke="white" stroke-width="1" opacity="0.55"/>
+    <circle cx="37" cy="10" r="3"  fill="#059669"/>
+    <circle cx="37" cy="10" r="3"  fill="none" stroke="white" stroke-width="1" opacity="0.55"/>
+    <!-- Month name area -->
+    <rect x="9" y="13" width="24" height="2.5" rx="1.25" fill="white" opacity="0.70"/>
+    <!-- Day grid dots -->
+    <circle cx="10" cy="27" r="2"  fill="#059669" opacity="0.40"/>
+    <circle cx="17" cy="27" r="2"  fill="#059669" opacity="0.40"/>
+    <circle cx="24" cy="27" r="2"  fill="#059669" opacity="0.40"/>
+    <circle cx="31" cy="27" r="2"  fill="#059669" opacity="0.40"/>
+    <circle cx="10" cy="34" r="2"  fill="#059669" opacity="0.40"/>
+    <circle cx="17" cy="34" r="2"  fill="#059669" opacity="0.40"/>
+    <!-- Highlighted date (large) -->
+    <circle cx="28" cy="35" r="7"  fill="url(#date)"/>
+    <circle cx="26.5" cy="33.5" r="2.5" fill="white" opacity="0.40"/>
+    <text x="24.5" y="37.5" font-size="8" font-weight="800" fill="white"
+      font-family="system-ui,-apple-system,sans-serif">15</text>
+    <circle cx="31" cy="41" r="2"  fill="#059669" opacity="0.40"/>
+    <!-- Body-side edge highlight -->
+    <line x1="38" y1="10" x2="38" y2="44" stroke="white" stroke-width="0.7" opacity="0.30"/>
+  </g>
+</svg>

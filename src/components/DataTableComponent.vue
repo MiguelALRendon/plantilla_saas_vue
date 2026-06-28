@@ -53,7 +53,7 @@
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody ref="tbodyRef">
                     <tr
                         v-for="item in paginatedItems"
                         :key="String(item.getUniquePropertyValue() ?? item.entityObjectId ?? '')"
@@ -136,7 +136,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount } from 'vue';
+import { computed, onBeforeUnmount, ref, watch, nextTick } from 'vue';
+import gsap from 'gsap';
 
 import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import { BaseEntity } from '@/entities/base_entity';
@@ -204,6 +205,12 @@ const emit = defineEmits<{
 
 // #endregion
 
+// #region PROPERTIES
+
+const tbodyRef = ref<HTMLElement | null>(null);
+
+// #endregion
+
 // #region COMPOSABLE
 
 const sourceDataRef = computed(() => props.sourceData);
@@ -264,6 +271,17 @@ const {
 // #endregion
 
 // #region LIFECYCLE
+
+watch(paginatedItems, async () => {
+    await nextTick();
+    const rows = tbodyRef.value?.querySelectorAll('tr');
+    if (!rows || rows.length === 0) return;
+    gsap.fromTo(
+        rows,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.28, stagger: 0.035, ease: 'power2.out', clearProps: 'opacity,y' }
+    );
+});
 
 onBeforeUnmount(() => cleanup());
 

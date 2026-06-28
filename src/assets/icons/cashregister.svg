@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Caja registradora">
+  <title>Caja registradora</title>
+  <defs>
+    <!-- Terminal top face -->
+    <linearGradient id="top" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%"   stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#7dd3fc"/>
+    </linearGradient>
+    <!-- Terminal front face -->
+    <linearGradient id="front" x1="0.1" y1="0" x2="0.4" y2="1">
+      <stop offset="0%"   stop-color="#38bdf8"/>
+      <stop offset="50%"  stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0c4a6e"/>
+    </linearGradient>
+    <!-- Screen gradient -->
+    <linearGradient id="scr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#0c4a6e" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#082f49" stop-opacity="0.75"/>
+    </linearGradient>
+    <!-- Side face -->
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0c4a6e"/>
+    </linearGradient>
+    <filter id="shd" x="-18%" y="-15%" width="136%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#0c4a6e" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Terminal top face -->
+    <polygon points="8,12 38,12 38,8 8,8" fill="url(#top)"/>
+    <!-- Top right depth face -->
+    <polygon points="38,8 44,10 44,14 38,12" fill="#7dd3fc" opacity="0.60"/>
+    <!-- Terminal front body -->
+    <rect x="8" y="12" width="30" height="24" rx="2" fill="url(#front)"/>
+    <!-- Side face -->
+    <polygon points="38,12 44,14 44,36 38,36" fill="url(#side)"/>
+    <!-- Screen bezel -->
+    <rect x="11" y="14" width="24" height="14" rx="2" fill="#082f49" opacity="0.70"/>
+    <!-- Screen display -->
+    <rect x="12" y="15" width="22" height="12" rx="1.5" fill="url(#scr)"/>
+    <!-- Screen shine -->
+    <rect x="12" y="15" width="22" height="3.5" rx="1.5" fill="white" opacity="0.22"/>
+    <!-- Screen content lines -->
+    <rect x="14" y="20.5" width="10" height="1.8" rx="0.9" fill="white" opacity="0.55"/>
+    <rect x="14" y="23.5" width="7" height="1.5" rx="0.75" fill="white" opacity="0.38"/>
+    <!-- Keypad row -->
+    <circle cx="13" cy="32.5" r="2"   fill="#0c4a6e" opacity="0.50"/>
+    <circle cx="19" cy="32.5" r="2"   fill="#0c4a6e" opacity="0.50"/>
+    <circle cx="25" cy="32.5" r="2"   fill="#0c4a6e" opacity="0.50"/>
+    <circle cx="31" cy="32.5" r="2.5" fill="#0284c7" opacity="0.55"/>
+    <!-- Receipt slot -->
+    <rect x="8" y="36" width="30" height="2.5" rx="1.25" fill="#0c4a6e" opacity="0.35"/>
+    <!-- Receipt strip emerging -->
+    <rect x="16" y="36" width="12" height="5" rx="1" fill="white" opacity="0.70"/>
+    <!-- Base stand -->
+    <polygon points="12,42 36,42 38,46 10,46" fill="#0c4a6e" opacity="0.55"/>
+    <polygon points="12,42 36,42 38,44 10,44" fill="#0284c7" opacity="0.40"/>
+  </g>
+</svg>

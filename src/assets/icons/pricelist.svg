@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Lista de precios">
+  <title>Lista de precios</title>
+  <defs>
+    <radialGradient id="tag" cx="60%" cy="28%" r="78%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#FBCFE8"/>
+      <stop offset="28%"  stop-color="#f472b6"/>
+      <stop offset="65%"  stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#831843"/>
+    </radialGradient>
+    <radialGradient id="spec" cx="60%" cy="28%" r="58%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.50"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Side face of tag -->
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#be185d"/>
+      <stop offset="100%" stop-color="#831843"/>
+    </linearGradient>
+    <filter id="shd" x="-18%" y="-15%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#831843" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Tag side/depth (drawn behind) -->
+    <path d="M38,11 L44,14 L44,42 L38,45 L14,45 L8,32 L14,19 Z"
+      fill="url(#side)" opacity="0.70"/>
+    <!-- Main tag face (front) -->
+    <path d="M36,9 L36,43 L12,43 L5,26 L12,9 Z" fill="url(#tag)"/>
+    <!-- Specular on front face -->
+    <path d="M36,9 L36,43 L12,43 L5,26 L12,9 Z" fill="url(#spec)"/>
+    <!-- Top edge highlight -->
+    <line x1="12" y1="9" x2="36" y2="9" stroke="white" stroke-width="1" opacity="0.55"/>
+    <!-- Point tip highlight -->
+    <line x1="5" y1="26" x2="12" y2="9" stroke="white" stroke-width="0.8" opacity="0.38"/>
+    <!-- Hole punch -->
+    <circle cx="31" cy="15" r="3.5" fill="#831843" opacity="0.60"/>
+    <circle cx="31" cy="15" r="2" fill="white" opacity="0.22"/>
+    <!-- String -->
+    <line x1="31" y1="9" x2="31" y2="12" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.50"/>
+    <!-- $ large -->
+    <text x="9" y="29" font-size="18" font-weight="800" fill="white" opacity="0.82"
+      font-family="system-ui,-apple-system,sans-serif">$</text>
+    <!-- Price lines -->
+    <rect x="9" y="33" width="24" height="2.5" rx="1.25" fill="white" opacity="0.42"/>
+    <rect x="9" y="37" width="17" height="2" rx="1"    fill="white" opacity="0.30"/>
+  </g>
+</svg>

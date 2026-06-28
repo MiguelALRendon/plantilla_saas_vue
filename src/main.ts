@@ -8,6 +8,8 @@ import App from './App.vue';
 import Application from '@/models/application';
 import router from '@/router';
 import { Home } from '@/entities/home';
+import { Imagenes } from '@/entities/imagenes';
+import { vLiquid } from '@/directives/liquid';
 
 // T084: Create and activate Pinia before the Application singleton is instantiated
 // so stores are available when ApplicationClass constructor is called.
@@ -16,10 +18,12 @@ setActivePinia(pinia);
 
 Application.initializeApplication(router);
 Application.registerModule(Home);
+Application.registerModule(Imagenes);
 
 const app: VueApp = createApp(App);
 app.use(pinia);
 app.use(router);
+app.directive('liquid', vLiquid);
 app.mount('#app');
 
 /** Set document title from AppConfiguration */

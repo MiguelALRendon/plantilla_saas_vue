@@ -1,5 +1,5 @@
 <template>
-    <button class="button primary">
+    <button v-liquid class="button primary">
         <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.DEVICES }}</span>
         <span class="btn-label">{{ t('common.send_to_device') }}</span>
     </button>

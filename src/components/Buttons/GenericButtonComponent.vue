@@ -1,5 +1,5 @@
 <template>
-    <button class="button info" type="button" @click="handleClick">
+    <button v-liquid class="button info" type="button" @click="handleClick">
         <span v-if="iconGlyph" :class="[GGCLASS, 'btn-icon']">{{ iconGlyph }}</span>
         <span>{{ text }}</span>
     </button>

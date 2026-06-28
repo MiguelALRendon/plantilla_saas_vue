@@ -55,26 +55,38 @@ input[type="password"], .TextInput.PasswordInput input[type="text"], .TextInput.
 }
 input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus {
     border: var(--border-width-medium) solid var(--lavender);
+    box-shadow: 0 0 0 3px rgba(167, 150, 190, 0.18);
 }
 
+/* Float label — GPU-accelerated via transform only (no top/font-size/left animation).
+   The label is always positioned at its "floated" (focused) coordinates.
+   In resting state a transform offsets it back into the input field visually.
+   Transitions: transform + color + background-color only → compositor-thread, zero reflow. */
 .label-input {
     position: absolute;
-    left: var(--input-padding);
-    top: var(--label-initial-top);
+    left: var(--label-focused-left);      /* 1.5rem — always at float X */
+    top: var(--label-focused-top);        /* -0.1rem — always at float Y */
+    font-size: var(--font-size-small);    /* 0.75rem — always small */
+    padding: var(--label-focused-padding);
+    border-top-left-radius: var(--padding-small);
+    border-top-right-radius: var(--padding-small);
     color: var(--blue-1);
-    font-size: var(--font-size-base);
-    transition: color var(--transition-slow) var(--timing-ease),
-                font-size var(--transition-slow) var(--timing-ease),
-                top var(--transition-slow) var(--timing-ease),
-                left var(--transition-slow) var(--timing-ease),
-                padding var(--transition-slow) var(--timing-ease),
-                background-color var(--transition-slow) var(--timing-ease),
-                border-radius var(--transition-slow) var(--timing-ease);
+    transform-origin: left top;
+    /* Resting: translateX moves back to input-padding; translateY moves down into field;
+       scale fakes font-size-base visually without layout cost. */
+    transform:
+        translateX(calc(var(--input-padding) - var(--label-focused-left)))
+        translateY(calc(var(--label-initial-top) - var(--label-focused-top)))
+        scale(var(--label-scale-resting));
+    transition: transform var(--transition-slow) var(--timing-ease),
+                color var(--transition-slow) var(--timing-ease),
+                background-color var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;
     flex-direction: row;
     align-items: end;
+    will-change: transform;
 }
 .help-text {
     margin-top: var(--spacing-xs);
@@ -104,8 +116,12 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--blue-1);
     margin-left: var(--spacing-xxs);
 }
+/* NumberInput: resting label starts further right (buttons on the left occupy space) */
 .TextInput.NumberInput .label-input {
-    left: var(--number-input-label-left);
+    transform:
+        translateX(calc(var(--number-input-label-left) - var(--label-focused-left)))
+        translateY(calc(var(--label-initial-top) - var(--label-focused-top)))
+        scale(var(--label-scale-resting));
 }
 .TextInput:has(.main-input:not(:placeholder-shown)) .label-input{
     background-color: var(--sky);
@@ -113,15 +129,10 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput:has(.main-input:focus) .label-input, .TextInput:has(button:focus) .label-input{
     background-color: var(--lavender);
 }
-.TextInput:has(.main-input:focus) .label-input, .TextInput:has(button:focus) .label-input, 
+.TextInput:has(.main-input:focus) .label-input, .TextInput:has(button:focus) .label-input,
 .TextInput:has(.main-input:not(:placeholder-shown)) .label-input {
     color: var(--white);
-    font-size: var(--font-size-small);
-    top: var(--label-focused-top);
-    left: var(--label-focused-left);
-    padding: var(--label-focused-padding);
-    border-top-left-radius: var(--padding-small);
-    border-top-right-radius: var(--padding-small);
+    transform: none; /* label returns to its natural floated position */
 }
 .TextInput:has(.main-input:focus) .label-input span, .TextInput:has(button:focus) .label-input span, 
 .TextInput:has(.main-input:not(:placeholder-shown)) .label-input span {
@@ -184,6 +195,18 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--gray-light);
 }
 
+@keyframes form-shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-5px); }
+    40%       { transform: translateX(5px); }
+    60%       { transform: translateX(-3px); }
+    80%       { transform: translateX(3px); }
+}
+
+.TextInput.nonvalidated {
+    animation: form-shake 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
 .TextInput.nonvalidated input, .TextInput.nonvalidated textarea, .TextInput.nonvalidated button, .TextInput.nonvalidated .label-input {
     border-color: var(--accent-red);
 }
@@ -226,7 +249,11 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     }
 
     .TextInput.NumberInput .label-input {
-        left: var(--input-padding);
+        /* On mobile: number input label starts at input-padding (same as other inputs) */
+        transform:
+            translateX(calc(var(--input-padding) - var(--label-focused-left)))
+            translateY(calc(var(--label-initial-top) - var(--label-focused-top)))
+            scale(var(--label-scale-resting));
     }
 }
 
@@ -255,12 +282,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput.TagInput:has(.tag-chip-edit) .label-input {
     background-color: var(--sky);
     color: var(--white);
-    font-size: var(--font-size-small);
-    top: var(--label-focused-top);
-    left: var(--label-focused-left);
-    padding: var(--label-focused-padding);
-    border-top-left-radius: var(--padding-small);
-    border-top-right-radius: var(--padding-small);
+    transform: none;
 }
 .TextInput.TagInput:has(.tag-chip-label) .label-input span,
 .TextInput.TagInput:has(.tag-chip-edit) .label-input span {
@@ -277,12 +299,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput.TagInput:has(.tag-add-btn:focus) .label-input {
     background-color: var(--lavender);
     color: var(--white);
-    font-size: var(--font-size-small);
-    top: var(--label-focused-top);
-    left: var(--label-focused-left);
-    padding: var(--label-focused-padding);
-    border-top-left-radius: var(--padding-small);
-    border-top-right-radius: var(--padding-small);
+    transform: none;
 }
 
 /* Disabled */

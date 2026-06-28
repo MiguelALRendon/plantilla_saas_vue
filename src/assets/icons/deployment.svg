@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Deployment">
+  <title>Deployment</title>
+  <defs>
+    <radialGradient id="body" cx="35%" cy="22%" r="75%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#EDE9FE"/>
+      <stop offset="28%"  stop-color="#a78bfa"/>
+      <stop offset="60%"  stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#3730a3"/>
+    </radialGradient>
+    <radialGradient id="spec" cx="32%" cy="20%" r="55%" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.52"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="window" cx="35%" cy="30%" r="65%">
+      <stop offset="0%"   stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </radialGradient>
+    <linearGradient id="fin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+    <linearGradient id="flame1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#fde68a"/>
+      <stop offset="50%"  stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="flame2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#fed7aa"/>
+      <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shd" x="-20%" y="-15%" width="140%" height="145%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#3730a3" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Rocket exhaust flames (behind everything) -->
+    <ellipse cx="21" cy="40" rx="4" ry="7" fill="url(#flame1)"/>
+    <ellipse cx="27" cy="40" rx="4" ry="7" fill="url(#flame1)"/>
+    <ellipse cx="24" cy="43" rx="3" ry="5" fill="url(#flame2)"/>
+    <!-- Left fin -->
+    <path d="M16,32 L8,40 L16,38 Z" fill="url(#fin)"/>
+    <path d="M16,32 L14,40 L16,38 Z" fill="white" opacity="0.22"/>
+    <!-- Right fin -->
+    <path d="M32,32 L40,40 L32,38 Z" fill="url(#fin)"/>
+    <!-- Rocket body (oval + rectangle) -->
+    <rect x="16" y="20" width="16" height="18" fill="url(#body)"/>
+    <!-- Rocket nose cone (top pointed oval) -->
+    <path d="M16,20 Q16,5 24,4 Q32,5 32,20 Z" fill="url(#body)"/>
+    <!-- Specular on whole rocket body -->
+    <path d="M16,20 Q16,5 24,4 Q32,5 32,20 L32,38 L16,38 Z" fill="url(#spec)"/>
+    <!-- Nose top highlight -->
+    <path d="M20,12 Q24,4.5 28,12" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
+    <!-- Porthole window -->
+    <circle cx="24" cy="22" r="5.5" fill="url(#window)"/>
+    <circle cx="24" cy="22" r="5.5" fill="white" opacity="0.12"/>
+    <circle cx="22.5" cy="20.5" r="2" fill="white" opacity="0.42"/>
+    <!-- Body side edge highlight -->
+    <line x1="16" y1="20" x2="16" y2="38" stroke="white" stroke-width="0.9" opacity="0.40"/>
+    <!-- Body bottom edge -->
+    <rect x="15" y="36" width="18" height="3" rx="1" fill="#4c1d95" opacity="0.45"/>
+  </g>
+</svg>

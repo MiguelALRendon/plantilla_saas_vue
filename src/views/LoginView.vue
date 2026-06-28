@@ -36,7 +36,7 @@
                         @update:model-value="loginEntity.contraseña = $event"
                     />
 
-                    <button type="submit" class="login-submit" data-testid="login-submit" :disabled="isLoading">
+                    <button v-liquid type="submit" class="login-submit" data-testid="login-submit" :disabled="isLoading">
                         {{ isLoading ? t('common.loading') : t('common.auth.login') }}
                     </button>
                 </form>

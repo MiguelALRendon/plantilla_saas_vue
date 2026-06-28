@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Movimientos de inventario">
+  <title>Movimientos de inventario</title>
+  <defs>
+    <linearGradient id="arc1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#EDE9FE"/>
+      <stop offset="40%"  stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+    <linearGradient id="arc2" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#9333ea"/>
+      <stop offset="50%"  stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+    <filter id="shd" x="-18%" y="-18%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#4c1d95" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+  <g filter="url(#shd)">
+    <!-- Outer ring arc (top-right, going clockwise) — bright -->
+    <path d="M24,5 A20,20 0 1 1 5,25" fill="none" stroke="url(#arc1)" stroke-width="6" stroke-linecap="round"/>
+    <!-- Outer ring arc (bottom-left continuation) — darker -->
+    <path d="M5,25 A20,20 0 0 1 24,5" fill="none" stroke="url(#arc2)" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+    <!-- Arrow head at top (pointing away from arc start, clockwise) -->
+    <polygon points="24,2 18,10 30,10" fill="#c4b5fd"/>
+    <!-- Highlight on top arrow -->
+    <polygon points="24,2 21,7 24,7" fill="white" opacity="0.45"/>
+    <!-- Inner ring (counter direction) — thinner -->
+    <path d="M24,13 A12,12 0 1 0 13,24" fill="none" stroke="#7c3aed" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+    <!-- Inner arrow at bottom-left pointing inward -->
+    <polygon points="13,24 10,18 16,18" fill="#7c3aed" opacity="0.65"/>
+  </g>
+</svg>
