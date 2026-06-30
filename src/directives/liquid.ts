@@ -1,32 +1,18 @@
 import gsap from 'gsap';
 import type { Directive } from 'vue';
 
+import { ensureGooFilter } from '@/utils/liquid_filter';
+
 // #region CONSTANTS
 /** How far (px) the liquid field extends beyond the button on each side. */
 const BLEED = 40;
 
-const FILTER_HOST_ID = 'liq-filter-host';
-const STYLE_HOST_ID  = 'liq-style-host';
+const STYLE_HOST_ID = 'liq-style-host';
 // #endregion
 
 // #region GLOBAL ASSETS
 function ensureAssets(): void {
-    if (!document.getElementById(FILTER_HOST_ID)) {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.id = FILTER_HOST_ID;
-        svg.setAttribute('aria-hidden', 'true');
-        svg.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;overflow:hidden;';
-        svg.innerHTML = `<defs>
-            <filter id="liq-gooey" x="-60%" y="-60%" width="220%" height="220%"
-                    color-interpolation-filters="sRGB">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur"/>
-                <feColorMatrix in="blur" mode="matrix"
-                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"
-                    result="gooey"/>
-            </filter>
-        </defs>`;
-        document.body.prepend(svg);
-    }
+    ensureGooFilter();
 
     if (!document.getElementById(STYLE_HOST_ID)) {
         const style = document.createElement('style');
@@ -85,6 +71,10 @@ interface LiqState {
 // #region DIRECTIVE
 export const vLiquid: Directive = {
     mounted(el: HTMLElement) {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
         ensureAssets();
 
         const cs = getComputedStyle(el);

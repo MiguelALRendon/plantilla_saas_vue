@@ -17,6 +17,7 @@
             @keydown.enter.prevent="onHexBlur"
         />
         <button
+            v-spark
             class="right color-swatch-btn"
             type="button"
             :style="{ backgroundColor: modelValue || '#ffffff' }"
@@ -37,7 +38,7 @@
                 @update:model-value="onPickerUpdate"
             />
             <div class="color-footer">
-                <button type="button" class="color-accept-btn" @click="confirmColor">
+                <button v-spark type="button" class="color-accept-btn" @click="confirmColor">
                     {{ GetLanguagedText('common.accept') }}
                 </button>
             </div>

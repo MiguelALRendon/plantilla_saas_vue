@@ -15,7 +15,7 @@
             :disabled="metadata.disabled.value"
             :readonly="true"
         />
-        <button class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
+        <button v-spark class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
             <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
         </button>
     </div>

@@ -16,7 +16,7 @@
             :readonly="metadata.readonly.value"
             @input="handleInput"
         />
-        <button class="right" @click="togglePasswordVisibility" :disabled="metadata.disabled.value || metadata.readonly.value">
+        <button v-spark class="right" @click="togglePasswordVisibility" :disabled="metadata.disabled.value || metadata.readonly.value">
             <span :class="[GGCLASS]">{{ visibilityIcon }}</span>
         </button>
     </div>

@@ -1,6 +1,12 @@
 <template>
-    <Teleport to="body">
-        <div ref="screenRef" class="loading-screen" aria-live="polite" aria-label="Cargando aplicación">
+    <Teleport to="body" :disabled="!fullscreen">
+        <div
+            ref="screenRef"
+            class="loading-screen"
+            :class="{ scoped: !fullscreen }"
+            aria-live="polite"
+            aria-label="Cargando aplicación"
+        >
 
             <div class="loading-content">
                 <!-- Logo de marca (desde AppConfiguration) -->
@@ -63,6 +69,15 @@ import gsap from 'gsap';
 import Application from '@/models/application';
 
 // #region PROPERTIES
+/**
+ * `fullscreen` (default true): covers the entire viewport via Teleport to `body` —
+ * used pre-auth (login) where there is no app chrome to preserve.
+ * Pass `false` to render in place (no Teleport) and cover only the nearest
+ * positioned ancestor — used inside `.ComponentContainer` so the sidebar/topbar
+ * stay visible and interactive while a module loads.
+ */
+const { fullscreen = true } = defineProps<{ fullscreen?: boolean }>();
+
 const screenRef   = ref<HTMLElement | null>(null);
 const logoRef     = ref<HTMLElement | null>(null);
 const nameRef     = ref<HTMLElement | null>(null);
@@ -209,6 +224,14 @@ onBeforeUnmount(() => {
     background-color: var(--white);
     z-index: var(--z-toast);
     will-change: opacity, clip-path;
+}
+
+/* Scoped mode (fullscreen=false): rendered in place (Teleport disabled) inside
+   `.ComponentContainer`, which is already `position: relative` — covers only that
+   area so the sidebar/topbar stay visible and interactive while a module loads. */
+.loading-screen.scoped {
+    position: absolute;
+    z-index: var(--z-overlay);
 }
 
 .loading-content {

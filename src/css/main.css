@@ -74,18 +74,41 @@ table, span{color: var(--gray-medium);}
 }
 
 .button {
+    position: relative;
     background-color: var(--white);
     border: var(--border-width-thin) solid var(--button-color);
     color: var(--button-color);
     height: var(--button-height);
     padding-inline: var(--padding-large);
     border-radius: var(--border-radius);
+    overflow: hidden;
+    border-width: var(--border-width-medium);
+    box-shadow: 0 3px 12px -2px color-mix(in srgb, var(--button-color) 60%, transparent);
+    transition: box-shadow var(--transition-normal) var(--timing-ease),
+                border-color var(--transition-normal) var(--timing-ease),
+                transform var(--transition-fast) var(--timing-ease);
+}
+/* Soft tinted sheen — gives the flat outline buttons depth without touching
+   `background-color` (v-liquid reads that for its blob fill, see src/directives/liquid.ts). */
+.button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--button-color) 22%, transparent) 0%, transparent 70%);
+    pointer-events: none;
 }
 .button span{
     color: var(--button-color);
 }
 .button:hover {
     filter: var(--filter-brightness-hover);
+    box-shadow: 0 6px 18px -2px color-mix(in srgb, var(--button-color) 70%, transparent);
+    transform: translateY(-2px);
+}
+.button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--button-color) 55%, transparent);
 }
 .button.fill {
     background-color: var(--button-color);
@@ -93,6 +116,9 @@ table, span{color: var(--gray-medium);}
 }
 .button.fill span{
     color: var(--white);
+}
+.button.fill::before {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--white) 30%, transparent) 0%, transparent 65%);
 }
 
 .button.primary { --button-color: var(--btn-primary); }
@@ -110,6 +136,11 @@ button:disabled, .button[disabled] {
     color: var(--gray-light);
     cursor: not-allowed;
     filter: none;
+    box-shadow: none;
+    transform: none;
+}
+button:disabled::before, .button[disabled]::before {
+    display: none;
 }
 button:disabled span, .button[disabled] span {
     color: var(--gray-light);

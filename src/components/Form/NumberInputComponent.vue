@@ -1,7 +1,7 @@
 <template>
     <div class="TextInput NumberInput" :class="containerClasses">
         <label :for="`id-${metadata.propertyName}`" class="label-input">{{ metadata.propertyName }}</label>
-        <button class="left" @click="decrementValue" :disabled="metadata.disabled.value || metadata.readonly.value">
+        <button v-spark class="left" @click="decrementValue" :disabled="metadata.disabled.value || metadata.readonly.value">
             <span :class="[GGCLASS]">{{ GGICONS.REMOVE }}</span>
         </button>
 
@@ -17,7 +17,7 @@
             @blur="handleBlur"
         />
 
-        <button class="right" @click="incrementValue" :disabled="metadata.disabled.value || metadata.readonly.value">
+        <button v-spark class="right" @click="incrementValue" :disabled="metadata.disabled.value || metadata.readonly.value">
             <span :class="[GGCLASS]">{{ GGICONS.ADD }}</span>
         </button>
     </div>

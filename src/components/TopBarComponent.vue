@@ -1,7 +1,7 @@
 <template>
     <div class="topbar">
         <div class="top-left-side">
-            <button @click="toggleSidebar" :class="['push-side-nav-button', { toggled: !toggled_bar }]">
+            <button v-spark @click="toggleSidebar" :class="['push-side-nav-button', { toggled: !toggled_bar }]">
                 <img :src="ICONS.MENU" alt="" />
             </button>
             <div class="icon">
@@ -11,6 +11,7 @@
         </div>
         <div class="top-right-side">
             <button
+                v-spark
                 ref="profileBtnRef"
                 @click.stop="openDropdown"
                 :class="['profile_button', { toggled: toggled_profile }]"
@@ -118,12 +119,17 @@ export default {
 .topbar .push-side-nav-button img,
 .topbar .profile_button img {
     height: 100%;
-    transition: var(--transition-slow) var(--timing-ease);
+    transition: filter var(--transition-slow) var(--timing-ease),
+                transform var(--transition-slow) var(--timing-bounce);
 }
 
 .topbar .push-side-nav-button.toggled img,
 .topbar .profile_button.toggled img {
     filter: grayscale(100%) brightness(1.3);
+}
+
+.topbar .push-side-nav-button.toggled img {
+    transform: rotate(180deg);
 }
 
 .topbar .top-left-side {

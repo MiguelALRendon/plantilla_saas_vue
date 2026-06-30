@@ -1,5 +1,6 @@
 <template>
     <div
+        v-spark
         :class="['side-bar-item', { active: isActive, collapsed }]"
         @click="setNewView"
         @mouseenter="onHoverIn"
@@ -72,6 +73,8 @@ function onHoverOut(): void {
 
 <style scoped>
 .side-bar-item {
+    position: relative;
+    z-index: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -82,15 +85,22 @@ function onHoverOut(): void {
     transition: var(--transition-normal) var(--timing-ease);
 }
 .side-bar-item:hover {
-    background-color: var(--gray-lightest);
     cursor: pointer;
 }
+/* Scoped to :not(.active) — the active item's own background is the shared
+   liquid indicator (SideBarComponent.vue, z-index: -1 behind this item); a flat
+   hover fill here would paint over it (z-index: 0) and hide it completely. */
+.side-bar-item:hover:not(.active) {
+    background-color: var(--gray-lightest);
+}
 .side-bar-item.active {
-    background: var(--grad-red-warm);
     box-sizing: border-box;
     color: white;
     border-radius: var(--border-radius);
 }
+/* The colored pill itself now lives in SideBarComponent.vue as a single shared
+   SVG (`.active-indicator`) that glides + squishes between items via GSAP —
+   see that component for the rationale. This item only owns its text/icon state. */
 
 .side-bar-item.active .icon img,
 .icon img {
@@ -101,16 +111,29 @@ function onHoverOut(): void {
     width: var(--sidebar-min-width);
     height: var(--sidebar-min-width);
     flex-shrink: 0;
+    /* EXC-007-style: width/height are layout-triggering, but justified here —
+       a single small icon box, transitioned only on the infrequent collapse/expand
+       toggle, so it shrinks smoothly instead of snapping to its collapsed size. */
+    transition: width var(--transition-slow) var(--timing-bounce),
+                height var(--transition-slow) var(--timing-bounce);
 }
 .side-bar-item .icon img {
     width: var(--sidebar-min-width);
     height: var(--sidebar-min-width);
+    transition: width var(--transition-slow) var(--timing-bounce),
+                height var(--transition-slow) var(--timing-bounce);
 }
 
 .side-bar-item .module-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 12rem;
+    opacity: 1;
+    margin-left: 0;
+    transition: max-width var(--transition-slow) var(--timing-ease),
+                opacity var(--transition-quick) var(--timing-ease),
+                margin-left var(--transition-slow) var(--timing-ease);
 }
 
 .side-bar-item.collapsed {
@@ -122,10 +145,18 @@ function onHoverOut(): void {
     margin: var(--spacing-xxs) 0;
     padding: var(--spacing-xxs);
     border-radius: var(--border-radius);
+    transition: width var(--transition-slow) var(--timing-bounce),
+                height var(--transition-slow) var(--timing-bounce),
+                margin var(--transition-slow) var(--timing-ease),
+                padding var(--transition-slow) var(--timing-ease);
 }
 
+/* Was `display:none` — not animatable, which is exactly what made the label
+   "vanish abruptly" on collapse. Collapsing the box instead lets it transition. */
 .side-bar-item.collapsed .module-title {
-    display: none;
+    max-width: 0;
+    opacity: 0;
+    margin-left: calc(-1 * var(--spacing-small));
 }
 
 .side-bar-item.collapsed .icon,

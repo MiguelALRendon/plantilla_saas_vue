@@ -11,6 +11,7 @@
                         <th v-if="selectable" class="dt-selection" :class="{ display: isSelection }">
                             <button
                                 v-if="isSelection"
+                                v-spark
                                 class="select-btn"
                                 :class="{ added: isAllSelected }"
                                 :title="isAllSelected ? t('common.deselect_all') : t('common.select_all')"
@@ -34,6 +35,7 @@
                             :class="{ 'drag-over': dragOverKey === colKey }"
                         >
                             <button
+                                v-spark
                                 class="col-sort-btn"
                                 :class="{ 'is-sorted': sortColumn === colKey }"
                                 @click.stop="toggleSort(colKey)"
@@ -42,6 +44,7 @@
                             </button>
                             <span class="col-label">{{ visibleProperties[colKey] }}</span>
                             <button
+                                v-spark
                                 class="col-filter-btn"
                                 :class="{ 'has-filter': (columnFilters[colKey]?.length ?? 0) > 0 }"
                                 @click.stop="openColumnFilter($event, colKey)"
@@ -64,6 +67,7 @@
                         <!-- Selection cell -->
                         <td v-if="selectable" class="dt-selection" :class="{ display: isSelection }">
                             <button
+                                v-spark
                                 class="select-btn"
                                 :class="{ added: selectedItems?.includes(item) }"
                                 @click.stop="emit('toggle-item-selection', item)"
@@ -109,6 +113,7 @@
                 </select>
                 <div class="pagination-nav">
                     <button
+                        v-spark
                         class="page-btn"
                         :disabled="currentPage === 1 || pageSize === 'ALL'"
                         @click="prevPage"
@@ -116,6 +121,7 @@
                     >&#8249;</button>
                     <button
                         v-for="page in visiblePages"
+                        v-spark
                         :key="page"
                         class="page-btn"
                         :class="{ active: page === currentPage }"
@@ -123,6 +129,7 @@
                         @click="goToPage(page)"
                     >{{ page }}</button>
                     <button
+                        v-spark
                         class="page-btn"
                         :disabled="currentPage === totalPages || pageSize === 'ALL'"
                         @click="nextPage"
@@ -403,13 +410,35 @@ tbody {
 }
 
 tbody tr {
+    position: relative;
+    z-index: 0;
     display: flex;
     min-width: 100%;
     cursor: pointer;
 }
 
+/* Liquid row accent — a thin bar that grows in from the left on hover instead of
+   an instant flat background swap. transform-only: safe to animate on large tables. */
+tbody tr::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    width: 3px;
+    background: var(--grad-lavender-blue);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform var(--transition-normal) var(--timing-bounce);
+}
+
 tbody tr:hover {
     background-color: var(--bg-gray);
+}
+
+tbody tr:hover::before {
+    transform: scaleY(1);
 }
 
 tbody tr.selected {

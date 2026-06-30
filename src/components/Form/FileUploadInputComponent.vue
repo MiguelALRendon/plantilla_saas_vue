@@ -18,6 +18,7 @@
         <!-- Preview button — only shown when a file is loaded -->
         <button
             v-if="currentFile"
+            v-spark
             type="button"
             class="preview-btn"
             @click="openPreview"
@@ -28,6 +29,7 @@
 
         <!-- Upload trigger button -->
         <button
+            v-spark
             type="button"
             class="right"
             @click="triggerFileInput"

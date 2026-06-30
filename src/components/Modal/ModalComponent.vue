@@ -1,6 +1,7 @@
 <template>
     <div ref="overlayRef" class="modal-background">
         <div ref="panelRef" class="modal-structure">
+            <span ref="rippleRef" class="modal-ripple" aria-hidden="true"></span>
             <div class="modal-head">
                 <div class="left-side">
                     <div class="icon">
@@ -8,7 +9,7 @@
                     </div>
                     <span class="title" v-if="modalModule">{{ modalModuleName }}</span>
                 </div>
-                <button class="close-button" @click="closeModal">
+                <button v-spark class="close-button" @click="closeModal">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                 </button>
             </div>
@@ -18,7 +19,7 @@
             </div>
 
             <div class="modal-footer">
-                <button class="button alert fill" @click="closeModal">
+                <button v-spark class="button alert fill" @click="closeModal">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                     <span class="btn-label">{{ t('common.close') }}</span>
                 </button>
@@ -41,6 +42,7 @@ import Defaultlookuplistview from '@/views/default_lookup_listview.vue';
 // #region PROPERTIES
 const overlayRef = ref<HTMLElement | null>(null);
 const panelRef   = ref<HTMLElement | null>(null);
+const rippleRef  = ref<HTMLElement | null>(null);
 const isShowing  = ref(false);
 // #endregion
 
@@ -99,6 +101,14 @@ function showModal(): void {
         { scale: 0.86, opacity: 0, y: -20 },
         { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.7)' }
     );
+
+    const ripple = rippleRef.value;
+    if (ripple) {
+        gsap.fromTo(ripple,
+            { scale: 0, opacity: 0.5 },
+            { scale: 1, opacity: 0, duration: 0.6, ease: 'power2.out' }
+        );
+    }
 }
 
 function hideModal(): void {
@@ -149,6 +159,8 @@ onBeforeUnmount(() => {
 }
 
 .modal-structure {
+    position: relative;
+    z-index: 0;
     background-color: var(--white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-dark);
@@ -158,6 +170,22 @@ onBeforeUnmount(() => {
     height: 100%;
     overflow: hidden;
     will-change: transform, opacity;
+}
+
+/* Liquid ripple — a soft wave released from the center on open, layered under
+   the content (z-index: -1) so it reads as the panel "settling" rather than a card popping in. */
+.modal-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 140%;
+    aspect-ratio: 1 / 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--lavender) 0%, transparent 70%);
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .modal-head {

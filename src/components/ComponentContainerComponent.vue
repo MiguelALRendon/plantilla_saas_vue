@@ -4,6 +4,7 @@
         <div ref="containerRef" class="ComponentContainer">
             <ActionsComponent />
             <component v-if="currentComponent" :is="currentComponent" />
+            <LoadingScreenComponent :fullscreen="false" />
         </div>
     </div>
 </template>
@@ -13,6 +14,7 @@ import { getCurrentInstance, markRaw, provide, ref, watch, type Component } from
 import TopBarComponent from './TopBarComponent.vue';
 import Application from '@/models/application';
 import ActionsComponent from './ActionsComponent.vue';
+import LoadingScreenComponent from './LoadingScreenComponent.vue';
 import { COMPONENT_CONTAINER_EL_KEY } from '@/types/injection_keys';
 
 // #region PROPERTIES

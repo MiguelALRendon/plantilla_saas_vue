@@ -14,6 +14,7 @@
             >
                 <span class="tag-chip-label">{{ tag }}</span>
                 <button
+                    v-spark
                     type="button"
                     class="tag-chip-remove"
                     :disabled="metadata.disabled.value || metadata.readonly.value"

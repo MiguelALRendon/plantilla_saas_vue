@@ -5,6 +5,7 @@
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
         <button
+            v-spark
             class="list-input-header"
             @click="openOptions"
             :id="`id-4-click-on${metadata.propertyName}`"

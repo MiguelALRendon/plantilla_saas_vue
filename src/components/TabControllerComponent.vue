@@ -73,7 +73,13 @@ onMounted(() => {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     border: var(--border-width-thin) solid var(--border-gray);
     border-bottom: none;
-    transition: var(--transition-slow) var(--timing-ease);
+    transition: border-color var(--transition-slow) var(--timing-bounce),
+                background-color var(--transition-slow) var(--timing-bounce),
+                transform var(--transition-fast) var(--timing-ease);
+}
+
+.tab-container-row .tab:active {
+    transform: scale(0.96);
 }
 
 .tab-container-row .tab.active {

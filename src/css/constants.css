@@ -260,7 +260,37 @@
     
     /* Filter effects */
     --filter-brightness-hover: brightness(0.9);
-    
+
+    /* Liquid Interface: shared spark-burst tuning (src/directives/spark.ts) */
+    --spark-particle-size: 14px;
+    --spark-duration: 0.55s;
+
+    /* Liquid Interface: Login — "deep aurora" palette (dark, single-panel, centered) */
+    --login-bg-deep: #050714;
+    --login-bg-mid: #0b1030;
+    --login-aurora-teal: #2dd4bf;
+    --login-aurora-violet: #7c5cff;
+    --login-aurora-magenta: #d946a8;
+    --login-card-bg: rgba(13, 17, 43, 0.62);
+    --login-card-border: rgba(124, 92, 255, 0.28);
+    --login-text-bright: #f4f5ff;
+    --login-text-muted: rgba(231, 233, 255, 0.62);
+    --grad-login-bg: radial-gradient(circle at 18% 14%, rgba(124, 92, 255, 0.35) 0%, transparent 45%),
+        radial-gradient(circle at 84% 80%, rgba(217, 70, 168, 0.28) 0%, transparent 50%),
+        linear-gradient(160deg, var(--login-bg-deep) 0%, var(--login-bg-mid) 55%, var(--login-bg-deep) 100%);
+    --grad-login-submit: linear-gradient(120deg, var(--login-aurora-violet) 0%, var(--login-aurora-teal) 100%);
+    --shadow-login-card: 0 24px 60px rgba(5, 7, 20, 0.55);
+
+    /* Liquid Interface: Toast — same "deep aurora" glass family as login, semantic color as accent only */
+    --toast-card-bg: rgba(11, 16, 41, 0.74);
+    --toast-card-border: rgba(124, 92, 255, 0.22);
+    --toast-text-bright: var(--login-text-bright);
+    --toast-accent-error: #ff6b8b;
+    --toast-accent-success: #2dd4bf;
+    --toast-accent-info: #7c9cff;
+    --toast-accent-warning: #f5b85a;
+    --shadow-toast-card: 0 14px 38px rgba(5, 7, 20, 0.5);
+
     /* Component-specific dimensions */
     --dropdown-max-height: 300px;
     --form-group-header-height: 30px;

@@ -24,8 +24,8 @@
         <DropdownMenuComponent />
         <ConfirmationDialogComponent />
         <LoadingPopupComponent />
-        <!-- T232: LoadingScreenComponent at app-root level for full-viewport body coverage -->
-        <LoadingScreenComponent />
+        <!-- LoadingScreenComponent moved inside ComponentContainerComponent (scoped, fullscreen=false)
+             so it covers only the module content area — sidebar/topbar stay visible during loads. -->
     </div>
 </template>
 

@@ -15,7 +15,7 @@
             readonly="true"
             @input="emitCurrentValue"
         />
-        <button class="right" @click="openModal" :disabled="metadata.disabled.value">
+        <button v-spark class="right" @click="openModal" :disabled="metadata.disabled.value">
             <span :class="[GGCLASS]">{{ GGICONS.SEARCH }}</span>
         </button>
     </div>

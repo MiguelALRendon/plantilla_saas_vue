@@ -31,6 +31,7 @@
                             <input type="text" class="main-input" placeholder=" " v-model="search" :disabled="disabled" />
                         </div>
                         <button
+                            v-spark
                             class="button alert fill"
                             :disabled="selectedItems.length == 0 || disabled"
                             @click="showDeleteModal"
@@ -39,6 +40,7 @@
                             <span class="btn-label">{{ t('common.delete') }}</span>
                         </button>
                         <button
+                            v-spark
                             class="button success fill"
                             @click="toggleSelection"
                             :disabled="modelValue.length == 0 || disabled"
@@ -46,7 +48,7 @@
                             <span :class="[GGCLASS, 'btn-icon']">{{ selectionIcon }}</span>
                             <span class="btn-label">{{ t('common.select') }}</span>
                         </button>
-                        <button class="button secondary fill" @click="openModal" :disabled="disabled">
+                        <button v-spark class="button secondary fill" @click="openModal" :disabled="disabled">
                             <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.ADD }}</span>
                             <span class="btn-label">{{ t('common.add') }}</span>
                         </button>

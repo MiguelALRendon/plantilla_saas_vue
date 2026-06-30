@@ -10,6 +10,8 @@ import router from '@/router';
 import { Home } from '@/entities/home';
 import { Imagenes } from '@/entities/imagenes';
 import { vLiquid } from '@/directives/liquid';
+import { vSpark } from '@/directives/spark';
+import { ensureGooFilter } from '@/utils/liquid_filter';
 
 // T084: Create and activate Pinia before the Application singleton is instantiated
 // so stores are available when ApplicationClass constructor is called.
@@ -24,6 +26,8 @@ const app: VueApp = createApp(App);
 app.use(pinia);
 app.use(router);
 app.directive('liquid', vLiquid);
+app.directive('spark', vSpark);
+ensureGooFilter();
 app.mount('#app');
 
 /** Set document title from AppConfiguration */

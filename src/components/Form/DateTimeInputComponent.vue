@@ -15,7 +15,7 @@
             :disabled="metadata.disabled.value"
             :readonly="true"
         />
-        <button class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
+        <button v-spark class="right" type="button" @click="toggleDropdown" :disabled="metadata.disabled.value || metadata.readonly.value">
             <span :class="[GGCLASS]">{{ GGICONS.CALENDAR }}</span>
         </button>
     </div>
@@ -36,7 +36,7 @@
                 <ClockPickerComponent @select="onTimeSelected" />
             </div>
             <div class="datetime-footer">
-                <button type="button" class="datetime-accept-btn" @click="confirmSelection">
+                <button v-spark type="button" class="datetime-accept-btn" @click="confirmSelection">
                     {{ GetLanguagedText('common.accept') }}
                 </button>
             </div>

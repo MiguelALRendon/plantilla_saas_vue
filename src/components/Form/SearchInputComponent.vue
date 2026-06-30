@@ -14,7 +14,7 @@
             @input="handleInput"
             @keyup.enter="handleSearch"
         />
-        <button class="right" :disabled="metadata.disabled.value || metadata.readonly.value" @click="handleSearch">
+        <button v-spark class="right" :disabled="metadata.disabled.value || metadata.readonly.value" @click="handleSearch">
             <span :class="[GGCLASS]">{{ GGICONS.SEARCH }}</span>
         </button>
     </div>

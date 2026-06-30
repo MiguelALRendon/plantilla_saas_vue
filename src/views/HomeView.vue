@@ -8,7 +8,7 @@
                 <span class="home-date-full">{{ fullDateLabel }}</span>
             </div>
 
-            <div class="home-stats">
+            <div ref="statsRef" class="home-stats">
                 <div class="home-stat-card">
                     <span class="home-stat-value">{{ dayOfYear }}</span>
                     <span class="home-stat-label">{{ t('custom.home.day_of_year') }}</span>
@@ -31,9 +31,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import gsap from 'gsap';
 import CalendarComponent from '@/components/Informative/CalendarComponent.vue';
 import { GetLanguagedText } from '@/helpers/language_helper';
+
+const statsRef = ref<HTMLElement | null>(null);
 
 function t(path: string): string {
     return GetLanguagedText(path);
@@ -82,6 +85,16 @@ const weekNumber = computed<number>(() => {
 const daysUntilYearEnd = computed<number>(() => {
     const yearEnd = new Date(today.getFullYear(), 11, 31);
     return Math.round((yearEnd.getTime() - today.getTime()) / 86_400_000);
+});
+
+onMounted(() => {
+    const cards = statsRef.value?.querySelectorAll('.home-stat-card');
+    if (!cards || cards.length === 0) return;
+    gsap.fromTo(
+        cards,
+        { y: 14, opacity: 0, scale: 0.94 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.4, stagger: 0.08, ease: 'back.out(1.7)', clearProps: 'transform,opacity' }
+    );
 });
 </script>
 
@@ -140,6 +153,13 @@ const daysUntilYearEnd = computed<number>(() => {
     border: var(--border-width-thin) solid var(--gray-300);
     border-radius: var(--border-radius);
     gap: 0.2rem;
+    transition: transform var(--transition-normal) var(--timing-bounce),
+                box-shadow var(--transition-normal) var(--timing-ease);
+}
+
+.home-stat-card:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: var(--shadow-medium);
 }
 
 .home-stat-value {

@@ -3,7 +3,7 @@
         class="boolean-input-container"
         :class="[{ disabled: metadata.disabled.value }, { nonvalidated: !isInputValidated }]"
     >
-        <button class="BooleanInput" @click="value = !value" :disabled="metadata.disabled.value">
+        <button v-spark class="BooleanInput" @click="value = !value" :disabled="metadata.disabled.value">
             <label :for="`id-${metadata.propertyName}`" class="label-input-boolean"
                 >{{ metadata.propertyName }}:
             </label>

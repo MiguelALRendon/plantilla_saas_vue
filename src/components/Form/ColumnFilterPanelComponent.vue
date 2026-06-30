@@ -4,6 +4,7 @@
         <div class="column-filter-list">
             <button
                 v-for="value in distinctValues"
+                v-spark
                 :key="String(value)"
                 class="select-btn"
                 :class="[{ added: isSelected(value) }]"
@@ -14,11 +15,11 @@
             </button>
         </div>
         <div class="column-filter-actions">
-            <button class="button success fill" @click="applyFilter">
+            <button v-spark class="button success fill" @click="applyFilter">
                 <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
                 <span>{{ t('common.accept') }}</span>
             </button>
-            <button class="button secondary fill" @click="clearFilter">
+            <button v-spark class="button secondary fill" @click="clearFilter">
                 <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLEAR_ALL }}</span>
                 <span>{{ t('common.clear') }}</span>
             </button>

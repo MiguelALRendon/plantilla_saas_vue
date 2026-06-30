@@ -79,14 +79,31 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
         translateY(calc(var(--label-initial-top) - var(--label-focused-top)))
         scale(var(--label-scale-resting));
     transition: transform var(--transition-slow) var(--timing-ease),
-                color var(--transition-slow) var(--timing-ease),
-                background-color var(--transition-slow) var(--timing-ease);
+                color var(--transition-slow) var(--timing-ease);
     pointer-events: none;
     overflow: visible;
     display: flex;
     flex-direction: row;
     align-items: end;
     will-change: transform;
+}
+/* Liquid backdrop — a droplet anchored at the label's left edge that stretches
+   into the full pill on focus/fill. The bottom edge bleeds past the label's own
+   box down toward the input's top border (negative bottom inset) and tapers
+   (asymmetric radius) so it reads as a drop *landing on* the input surface
+   instead of a separate badge floating above it. Lives behind the text
+   (z-index: -1) so the gooey blur never touches the glyphs. */
+.label-input::before {
+    content: '';
+    position: absolute;
+    inset: -0.05rem -0.35rem -0.7rem -0.35rem;
+    z-index: -1;
+    border-radius: 999px 999px 0.3rem 0.3rem;
+    filter: url(#liq-gooey-sm);
+    transform: scaleX(0.12);
+    transform-origin: left center;
+    transition: transform var(--transition-slow) var(--timing-bounce),
+                background-color var(--transition-slow) var(--timing-ease);
 }
 .help-text {
     margin-top: var(--spacing-xs);
@@ -123,11 +140,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
         translateY(calc(var(--label-initial-top) - var(--label-focused-top)))
         scale(var(--label-scale-resting));
 }
-.TextInput:has(.main-input:not(:placeholder-shown)) .label-input{
+.TextInput:has(.main-input:not(:placeholder-shown)) .label-input::before {
     background-color: var(--sky);
+    transform: scaleX(1);
 }
-.TextInput:has(.main-input:focus) .label-input, .TextInput:has(button:focus) .label-input{
+.TextInput:has(.main-input:focus) .label-input::before, .TextInput:has(button:focus) .label-input::before {
     background-color: var(--lavender);
+    transform: scaleX(1);
 }
 .TextInput:has(.main-input:focus) .label-input, .TextInput:has(button:focus) .label-input,
 .TextInput:has(.main-input:not(:placeholder-shown)) .label-input {
@@ -188,7 +207,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     color: var(--gray-light);
     cursor: not-allowed;
 }
-.TextInput:has(.main-input:not(:placeholder-shown)).disabled .label-input {
+.TextInput:has(.main-input:not(:placeholder-shown)).disabled .label-input::before {
     background-color: var(--gray-lighter);
 }
 .TextInput.disabled button span {
@@ -213,9 +232,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .TextInput.nonvalidated button, .TextInput.nonvalidated button span { color: var(--accent-red); }
 .TextInput.nonvalidated .label-input { color: var(--accent-rose); }
 
+.TextInput:has(.main-input:not(:placeholder-shown)).nonvalidated .label-input::before,
+.TextInput:has(.main-input:focus).nonvalidated .label-input::before {
+    background-color: var(--accent-red);
+    transform: scaleX(1);
+}
 .TextInput:has(.main-input:not(:placeholder-shown)).nonvalidated .label-input,
 .TextInput:has(.main-input:focus).nonvalidated .label-input  {
-    background-color: var(--accent-red);
     color: var(--white);
 }
 .TextInput.nonvalidated .label-input span {
@@ -278,9 +301,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 }
 
 /* Float label when chips are present or an inline edit input is visible */
+.TextInput.TagInput:has(.tag-chip-label) .label-input::before,
+.TextInput.TagInput:has(.tag-chip-edit) .label-input::before {
+    background-color: var(--sky);
+    transform: scaleX(1);
+}
 .TextInput.TagInput:has(.tag-chip-label) .label-input,
 .TextInput.TagInput:has(.tag-chip-edit) .label-input {
-    background-color: var(--sky);
     color: var(--white);
     transform: none;
 }
@@ -295,9 +322,13 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     border: var(--border-width-medium) solid var(--lavender);
     background-color: var(--white);
 }
+.TextInput.TagInput:has(.tag-chip-edit:focus) .label-input::before,
+.TextInput.TagInput:has(.tag-add-btn:focus) .label-input::before {
+    background-color: var(--lavender);
+    transform: scaleX(1);
+}
 .TextInput.TagInput:has(.tag-chip-edit:focus) .label-input,
 .TextInput.TagInput:has(.tag-add-btn:focus) .label-input {
-    background-color: var(--lavender);
     color: var(--white);
     transform: none;
 }
