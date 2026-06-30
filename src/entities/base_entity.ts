@@ -93,6 +93,22 @@ function resolveI18nText(text?: string): string | undefined {
 }
 
 /**
+ * Tick-flush delay used twice in `validateInputs()`: once before emitting
+ * `'validate-inputs'` (lets the loading overlay actually paint before the
+ * potentially-blocking validation pass starts) and once after awaiting all
+ * async validations (lets input components process their results into
+ * `Application.View.value.isValid` before it is read back).
+ */
+const VALIDATION_DEBOUNCE_MS = 50;
+
+/**
+ * Settle delay in `save()` between showing the loading overlay and starting the
+ * request — gives the loading-overlay enter animation time to finish so the
+ * request/response cycle doesn't visually collide with it.
+ */
+const SAVE_VALIDATION_SETTLE_MS = 400;
+
+/**
  * Abstract base class for all entities in the meta-programming framework
  *
  * Provides decorator-based metadata extraction, automatic CRUD operations,
@@ -401,19 +417,27 @@ export abstract class BaseEntity {
      */
     public isRequired(propertyKey: string): boolean {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
-        const metadata = requiredFields[propertyKey];
+        const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata[]>) ?? {};
+        const rules = requiredFields[propertyKey] ?? [];
 
-        if (!metadata) {
-            return false;
-        }
+        // OR semantics: stacking multiple @Required on one property models
+        // independent reasons the field could become required ("required if A"
+        // OR "required if B") — any one triggering is enough.
+        return rules.some((metadata) => this._evaluateRequiredRule(metadata));
+    }
 
+    /**
+     * Evaluates a single @Required rule's condition/validation against this instance.
+     * Intentionally NOT `private`: BaseEntity's index signature combined with a `private`
+     * instance member makes `ref<View>({ entityObject: ... })` fail to type-check — Vue's
+     * `UnwrapRef<View>` re-expands BaseEntity structurally and that expansion can't see
+     * TS-private members, so assignability breaks. Leading-underscore convention only.
+     */
+    _evaluateRequiredRule(metadata: RequiredMetadata): boolean {
         const value = metadata.validation !== undefined ? metadata.validation : metadata.condition;
-
         if (value === undefined) {
             return false;
         }
-
         return typeof value === 'function' ? value(this) : value;
     }
 
@@ -424,38 +448,41 @@ export abstract class BaseEntity {
      */
     public requiredMessage(propertyKey: string): string | undefined {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata>) ?? {};
-        const metadata = requiredFields[propertyKey];
-        return resolveI18nText(metadata?.message);
+        const requiredFields = (proto[REQUIRED_KEY] as Record<string, RequiredMetadata[]>) ?? {};
+        const rules = requiredFields[propertyKey] ?? [];
+        // Message of the first rule that actually triggered the requirement.
+        const triggeredRule = rules.find((metadata) => this._evaluateRequiredRule(metadata));
+        return resolveI18nText(triggeredRule?.message);
     }
 
     /**
-     * Validates a property against its Validation decorator condition
+     * Validates a property against its Validation decorator condition(s)
      * @param propertyKey The property key to validate
-     * @returns True if validation passes, false otherwise
+     * @returns True if every stacked validation rule passes, false otherwise
      */
     public isValidation(propertyKey: string): boolean {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
-        const rule = validationRules[propertyKey];
+        const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata[]>) ?? {};
+        const rules = validationRules[propertyKey] ?? [];
 
-        if (!rule) {
-            return true;
-        }
-
-        return typeof rule.condition === 'function' ? rule.condition(this) : rule.condition;
+        // AND semantics: stacking multiple @Validation on one property models
+        // independent business rules that must ALL hold (e.g. "> 0" and "< 100").
+        return rules.every((rule) => (typeof rule.condition === 'function' ? rule.condition(this) : rule.condition));
     }
 
     /**
      * Retrieves the validation error message for a property
      * @param propertyKey The property key to query
-     * @returns Validation error message or undefined
+     * @returns Message of the first failing validation rule, or undefined if all pass
      */
     public validationMessage(propertyKey: string): string | undefined {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata>) ?? {};
-        const rule = validationRules[propertyKey];
-        return resolveI18nText(rule?.message);
+        const validationRules = (proto[VALIDATION_KEY] as Record<string, ValidationMetadata[]>) ?? {};
+        const rules = validationRules[propertyKey] ?? [];
+        const failingRule = rules.find(
+            (rule) => !(typeof rule.condition === 'function' ? rule.condition(this) : rule.condition)
+        );
+        return resolveI18nText(failingRule?.message);
     }
 
     /**
@@ -477,38 +504,50 @@ export abstract class BaseEntity {
     }
 
     /**
-     * Executes asynchronous validation for a property
+     * Last async-validation failure message per property, populated by isAsyncValidation()
+     * and read by asyncValidationMessage(). Form components always await isAsyncValidation()
+     * immediately before reading the message, so this avoids re-running async rules just
+     * to recover which one failed.
+     */
+    _lastAsyncValidationMessage: Record<string, string | undefined> = {};
+
+    /**
+     * Executes asynchronous validation for a property (all stacked rules, in declaration order)
      * Used for server-side validations or complex async checks
      * @param propertyKey The property key to validate
-     * @returns Promise resolving to true if valid, false if invalid
+     * @returns Promise resolving to true if every rule passes, false if any fails
      */
     public async isAsyncValidation(propertyKey: string): Promise<boolean> {
         const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
-        const rule = asyncValidationRules[propertyKey];
+        const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata[]>) ?? {};
+        const rules = asyncValidationRules[propertyKey] ?? [];
 
-        if (!rule) {
-            return true;
+        for (const rule of rules) {
+            try {
+                const passed = await rule.condition(this);
+                if (!passed) {
+                    this._lastAsyncValidationMessage[propertyKey] = resolveI18nText(rule.message);
+                    return false;
+                }
+            } catch (error) {
+                logger.error(`Error in async validation for ${propertyKey}:`, error);
+                this._lastAsyncValidationMessage[propertyKey] = undefined;
+                return false;
+            }
         }
 
-        try {
-            return await rule.condition(this);
-        } catch (error) {
-            logger.error(`Error in async validation for ${propertyKey}:`, error);
-            return false;
-        }
+        this._lastAsyncValidationMessage[propertyKey] = undefined;
+        return true;
     }
 
     /**
-     * Retrieves the async validation error message for a property
+     * Retrieves the async validation error message for a property, from the most
+     * recent isAsyncValidation() call.
      * @param propertyKey The property key to query
      * @returns Async validation error message or undefined
      */
     public asyncValidationMessage(propertyKey: string): string | undefined {
-        const proto = ((this.constructor as typeof BaseEntity) as DecoratedConstructor<this>).prototype;
-        const asyncValidationRules = (proto[ASYNC_VALIDATION_KEY] as Record<string, AsyncValidationMetadata>) ?? {};
-        const rule = asyncValidationRules[propertyKey];
-        return resolveI18nText(rule?.message);
+        return this._lastAsyncValidationMessage[propertyKey];
     }
 
     /**
@@ -893,7 +932,7 @@ export abstract class BaseEntity {
         Application.ApplicationUIService.showLoadingMenu();
 
         /** Esperar un tick para que el loading se muestre */
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, VALIDATION_DEBOUNCE_MS));
 
         /** Emitir evento para que los inputs validen */
         Application.eventBus.emit('validate-inputs');
@@ -904,7 +943,7 @@ export abstract class BaseEntity {
         await Promise.all(asyncValidationPromises);
 
         /** Esperar un momento adicional para que los inputs procesen los resultados */
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, VALIDATION_DEBOUNCE_MS));
 
         this.onValidated();
         Application.ApplicationUIService.hideLoadingMenu();
@@ -1026,7 +1065,7 @@ export abstract class BaseEntity {
         }
         this._isSaving = true;
         Application.ApplicationUIService.showLoadingMenu();
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, SAVE_VALIDATION_SETTLE_MS));
 
         try {
             this.onSaving();

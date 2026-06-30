@@ -9,13 +9,16 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
+import { inject, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 
 import Application from '@/models/application';
+import { COMPONENT_CONTAINER_EL_KEY } from '@/types/injection_keys';
 
 // #region PROPERTIES
 const isAtTop: Ref<boolean> = ref(true);
-const scrollContainer: Ref<HTMLElement | null> = ref(null);
+// Provided by ComponentContainerComponent — avoids a global `document.querySelector`
+// that could match the wrong element if that component were ever instantiated twice.
+const scrollContainer = inject(COMPONENT_CONTAINER_EL_KEY, ref(null));
 // #endregion
 
 // #region METHODS
@@ -28,8 +31,6 @@ function handleScroll(): void {
 
 // #region LIFECYCLE
 onMounted((): void => {
-    scrollContainer.value = document.querySelector('.ComponentContainer');
-
     if (scrollContainer.value) {
         scrollContainer.value.addEventListener('scroll', handleScroll);
         handleScroll();

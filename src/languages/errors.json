@@ -109,11 +109,6 @@
         "es": "Sesión expirada. Por favor, inicia sesión nuevamente.",
         "jp": "セッションの有効期限が切れました。再度ログインしてください。"
     },
-    "invalid_credentials": {
-        "en": "Invalid credentials.",
-        "es": "Credenciales inválidas.",
-        "jp": "認証情報が無効です。"
-    },
     "no_permissions": {
         "en": "You do not have permission to perform this action.",
         "es": "No tienes permisos para realizar esta acción.",
@@ -153,5 +148,10 @@
         "en": "Invalid username or password.",
         "es": "Usuario o contraseña inválidos.",
         "jp": "ユーザー名またはパスワードが無効です。"
+    },
+    "file_too_large": {
+        "en": "The file exceeds the maximum allowed size",
+        "es": "El archivo excede el tamaño máximo permitido",
+        "jp": "ファイルが許可された最大サイズを超えています"
     }
 }

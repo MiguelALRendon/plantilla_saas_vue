@@ -8,3 +8,16 @@ export interface ConfirmationMenu {
     acceptButtonText?: string;
     cancelButtonText?: string;
 }
+
+/**
+ * Builds a fresh empty confirmation-menu default state.
+ * Shared by `ApplicationClass`'s pre-Pinia bootstrap ref and `useUiStore`.
+ */
+export function createDefaultConfirmationMenu(): ConfirmationMenu {
+    return {
+        type: confMenuType.INFO,
+        title: '',
+        message: '',
+        confirmationAction: () => {},
+    };
+}

@@ -1,5 +1,5 @@
 <template>
-    <div class="tab-container">
+    <div ref="rootRef" class="tab-container">
         <div class="tab-container-row">
             <div
                 class="tab"
@@ -15,61 +15,41 @@
     </div>
 </template>
 
-<script lang="ts">
-import { computed, useSlots } from 'vue';
-import TabComponent from '@/components/TabComponent.vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
 
-export default {
-    name: 'TabControllerComponent',
-    props: {
-        tabs: {
-            type: Array<string>,
-            required: true
-        }
-    },
-
-    // #region METHODS
-    methods: {
-        setActiveTab(index: number) {
-            this.selectedTab = index;
-            this.tabElements?.forEach((el, i) => {
-                el.classList.remove('active');
-                if (i === index) {
-                    el.classList.add('active');
-                }
-            });
-        }
-    },
-    // #endregion
-
-    // #region PROPERTIES
-    data() {
-        return {
-            selectedTab: 0,
-            tabElements: null as NodeListOf<Element> | null
-        };
-    },
-    // #endregion
-    setup() {
-        const slots = useSlots();
-
-        const isValid = computed(() => {
-            const nodes = slots.default?.();
-            if (!nodes) return true;
-
-            return nodes.every((vnode) => vnode.type === TabComponent);
-        });
-
-        return { isValid };
-    },
-
-    // #region LIFECYCLE
-    mounted() {
-        this.tabElements = document.querySelectorAll('.tab-component');
-        this.setActiveTab(0);
+// #region PROPERTIES
+defineProps({
+    tabs: {
+        type: Array<string>,
+        required: true
     }
-    // #endregion
-};
+});
+
+const rootRef = ref<HTMLElement | null>(null);
+const selectedTab = ref(0);
+// #endregion
+
+// #region METHODS
+function setActiveTab(index: number): void {
+    selectedTab.value = index;
+    // Scoped to this component's own root — avoids matching `.tab-component`
+    // elements belonging to a different TabControllerComponent instance on the page.
+    const tabElements = rootRef.value?.querySelectorAll('.tab-component');
+    tabElements?.forEach((el, i) => {
+        el.classList.remove('active');
+        if (i === index) {
+            el.classList.add('active');
+        }
+    });
+}
+// #endregion
+
+// #region LIFECYCLE
+onMounted(() => {
+    setActiveTab(0);
+});
+// #endregion
 </script>
 
 <style scoped>

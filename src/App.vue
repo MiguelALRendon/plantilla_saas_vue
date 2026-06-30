@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watchEffect } from 'vue';
+import { computed, onMounted, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 
 import LoginView from './views/LoginView.vue';
@@ -66,9 +66,9 @@ watchEffect(() => {
 const route = useRoute();
 const isLoginRoute = computed(() => route.path === '/login');
 
-// Track sidebar open/closed state to control overlay visibility.
-// Initialized to match SideBarComponent initial state (open only at > 1200px).
-const sidebarOpen = ref(typeof window !== 'undefined' ? window.innerWidth > 1200 : true);
+// Single source of truth for overlay visibility — read directly from Application,
+// no local ref kept in sync via events (see ui_store.ts sidebarOpen).
+const sidebarOpen = computed(() => Application.sidebarOpen.value);
 // #endregion
 
 // #region METHODS
@@ -79,18 +79,10 @@ function closeSidebar(): void {
 
 // #region LIFECYCLE
 onMounted(() => {
-    Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
-        sidebarOpen.value = state !== undefined ? !!state : !sidebarOpen.value;
-    });
-
     // Redirect to login if no authenticated session exists
     if (!Application.CurrentUser() && Application.router?.currentRoute.value.path !== '/login') {
         Application.router?.push('/login').catch(() => {});
     }
-});
-
-onBeforeUnmount(() => {
-    Application.eventBus.off('toggle-sidebar');
 });
 // #endregion
 </script>

@@ -83,5 +83,13 @@
         "validation": {
             "nombre_required": { "en": "Image name is required", "es": "El nombre de la imagen es requerido", "jp": "画像名は必須です" }
         }
+    },
+    "home": {
+        "greeting_morning":   { "en": "Good morning",   "es": "Buenos días",    "jp": "おはようございます" },
+        "greeting_afternoon": { "en": "Good afternoon", "es": "Buenas tardes",  "jp": "こんにちは" },
+        "greeting_evening":   { "en": "Good evening",   "es": "Buenas noches",  "jp": "こんばんは" },
+        "day_of_year":        { "en": "Day of year",    "es": "Día del año",    "jp": "年間日数" },
+        "week":               { "en": "Week",           "es": "Semana",         "jp": "週" },
+        "remaining_days":     { "en": "Days remaining",  "es": "Días restantes", "jp": "残り日数" }
     }
 }

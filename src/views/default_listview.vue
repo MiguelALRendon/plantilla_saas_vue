@@ -26,6 +26,9 @@ import type { ConcreteEntityClass } from '@/types/entity.types';
 import DataTableComponent, { type RequestDataParams } from '@/components/DataTableComponent.vue';
 import { useCancellableLoader, isCanceled } from '@/composables/useCancellableLoader';
 
+/** Sentinel page size for the "ALL" page-size option — large enough to cover any realistic dataset in one request. */
+const ALL_RECORDS_LIMIT = 999_999;
+
 // #region STATE
 
 const data = ref<BaseEntity[]>([]);
@@ -80,7 +83,7 @@ async function loadData(params?: RequestDataParams): Promise<void> {
 
     const page = params?.page ?? 1;
     const pageSizeVal = params?.pageSize ?? 10;
-    const limit = pageSizeVal === 'ALL' ? 999999 : (pageSizeVal as number);
+    const limit = pageSizeVal === 'ALL' ? ALL_RECORDS_LIMIT : (pageSizeVal as number);
 
     const signal = getSignal();
 

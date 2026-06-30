@@ -64,6 +64,10 @@ export function Required<T = unknown>(conditionOrValidation: RequiredCondition<T
                 ? { condition: conditionOrValidation, message: message }
                 : { validation: conditionOrValidation };
 
-        proto[REQUIRED_KEY][propertyKey] = metadata;
+        // Stored as an array so stacking multiple @Required on the same property
+        // accumulates rules (property is required if ANY rule triggers) instead of
+        // the last one silently overwriting the previous ones.
+        const existing = (proto[REQUIRED_KEY][propertyKey] as RequiredMetadata<T>[] | undefined) ?? [];
+        proto[REQUIRED_KEY][propertyKey] = [...existing, metadata];
     };
 }

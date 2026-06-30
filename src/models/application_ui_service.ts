@@ -42,11 +42,12 @@ export class ApplicationUIService {
     };
 
     /**
-     * Emite evento toggle-sidebar para colapsar/expandir sidebar.
-     * SideBarComponent escucha evento y actualiza estado local.
+     * Invierte el estado de sidebarOpen (colapsar/expandir).
+     * App.vue, SideBarComponent.vue y TopBarComponent.vue leen `sidebarOpen`
+     * directamente — un único Ref compartido, sin estado local duplicado.
      */
     toggleSidebar = () => {
-        this.app.eventBus.emit('toggle-sidebar');
+        this.app.sidebarOpen.value = !this.app.sidebarOpen.value;
     };
 
     /**
@@ -54,7 +55,7 @@ export class ApplicationUIService {
      * @param state True para expandir sidebar, false para colapsar.
      */
     setSidebar = (state: boolean) => {
-        this.app.eventBus.emit('toggle-sidebar', state);
+        this.app.sidebarOpen.value = state;
     };
 
     /**

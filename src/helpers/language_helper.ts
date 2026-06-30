@@ -25,8 +25,10 @@
  *   - Falls back to 'MissingNO' when path cannot be resolved
  */
 
+import { getActivePinia } from 'pinia';
+
 import { Language } from '@/enums/language';
-import Application from '@/models/application';
+import { useAppConfigStore } from '@/stores';
 
 // ── Category catalog imports ─────────────────────────────────────────────────
 import commonCatalog from '@/languages/common.json';
@@ -51,8 +53,19 @@ const LANG_CODE_MAP: Record<Language, LangCode> = {
     [Language.JP]: 'jp',
 };
 
+/**
+ * Reads the active language directly from the Pinia config store rather than the
+ * `Application` facade — avoids a module-level dependency on `Application` (which
+ * pulls in BaseEntity, Vue components, axios, etc.) from this otherwise-leaf helper,
+ * breaking a potential circular-import vector (helper → Application → validators → helper).
+ * Falls back to English when called before Pinia is active (e.g. unit tests that
+ * exercise validation messages without bootstrapping the app).
+ */
 function activeLangCode(): LangCode {
-    return LANG_CODE_MAP[Application.AppConfiguration.value.selectedLanguage] ?? 'en';
+    if (!getActivePinia()) {
+        return 'en';
+    }
+    return LANG_CODE_MAP[useAppConfigStore().config.selectedLanguage] ?? 'en';
 }
 
 // ── Catalog registry ─────────────────────────────────────────────────────────

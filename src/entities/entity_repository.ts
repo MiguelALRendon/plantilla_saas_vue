@@ -15,7 +15,20 @@ import type { ListQueryParams, PaginatedListResult } from '@/types/service.types
  * HTTP operations (single, list, paginated) so BaseEntity delegates persistence I/O
  * here instead of owning it directly (SRP). Behaviour is identical to the previous
  * BaseEntity static methods.
+ *
+ * On request failure this layer only emits `'data-error'` on the shared event bus —
+ * it never calls `ApplicationUIService` directly, so the data layer stays decoupled
+ * from UI concerns. `ApplicationClass` owns the reaction (opening the confirmation menu).
  */
+
+/** Emits the shared `'data-error'` event so Application can react with UI feedback. */
+function emitDataError(title: string, error: unknown): void {
+    Application.eventBus.emit('data-error', {
+        type: confMenuType.ERROR,
+        title,
+        message: getErrorMessage(error),
+    });
+}
 
 /** Retrieves a single entity by its unique identifier. */
 export async function getElement<T extends BaseEntity>(
@@ -46,14 +59,7 @@ export async function getElement<T extends BaseEntity>(
         }
         const tempInstance = new EntityClass({});
         tempInstance.getElementFailed();
-        Application.ApplicationUIService.openConfirmationMenu(
-            confMenuType.ERROR,
-            GetLanguagedText('errors.error_obtaining_element'),
-            getErrorMessage(error),
-            undefined,
-            GetLanguagedText('common.accept'),
-            GetLanguagedText('common.close')
-        );
+        emitDataError(GetLanguagedText('errors.error_obtaining_element'), error);
         throw error;
     }
 }
@@ -102,14 +108,7 @@ export async function getElementList<T extends BaseEntity>(
     } catch (error: unknown) {
         const tempInstance = new EntityClass({});
         tempInstance.getElementListFailed();
-        Application.ApplicationUIService.openConfirmationMenu(
-            confMenuType.ERROR,
-            GetLanguagedText('errors.error_obtaining_list'),
-            getErrorMessage(error),
-            undefined,
-            GetLanguagedText('common.accept'),
-            GetLanguagedText('common.close')
-        );
+        emitDataError(GetLanguagedText('errors.error_obtaining_list'), error);
         throw error;
     }
 }
@@ -192,14 +191,7 @@ export async function getElementListPaginated<T extends BaseEntity>(
         }
         const tempInstance = new EntityClass({});
         tempInstance.getElementListFailed();
-        Application.ApplicationUIService.openConfirmationMenu(
-            confMenuType.ERROR,
-            GetLanguagedText('errors.error_obtaining_list'),
-            getErrorMessage(error),
-            undefined,
-            GetLanguagedText('common.accept'),
-            GetLanguagedText('common.close')
-        );
+        emitDataError(GetLanguagedText('errors.error_obtaining_list'), error);
         throw error;
     }
 }

@@ -1,4 +1,4 @@
-﻿import { Component, defineComponent, h, markRaw, ref, Ref } from 'vue';
+﻿import { Component, defineComponent, h, ref, Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import type { Router } from 'vue-router';
 
@@ -8,7 +8,6 @@ import mitt, { Emitter } from 'mitt';
 
 import { useAppConfigStore, useUiStore, useViewStore } from '@/stores';
 import { DefaultButtonLists } from '@/constants/default_button_lists';
-import ICONS from '@/constants/icons';
 import GenericButtonComponent from '@/components/Buttons/GenericButtonComponent.vue';
 import { BaseEntity } from '@/entities/base_entity';
 import { ConfMenuType as confMenuType } from '@/enums/conf_menu_type';
@@ -20,19 +19,19 @@ import { GetLanguagedText } from '@/helpers/language_helper';
 import type { Events } from '@/types/events';
 import type { ExtraFunctions } from '@/types/extra_functions';
 
-import { AppConfiguration } from './app_configuration';
+import { AppConfiguration, createDefaultAppConfig } from './app_configuration';
 import { ApplicationDataService } from './application_data_service';
 import { ApplicationUIService } from './application_ui_service';
 import { setupHttpInterceptors } from './application_http';
 import { SessionService } from './session_service';
 import { logger } from '@/utils/logger';
-import { ConfirmationMenu } from './confirmation_menu';
-import { DropdownMenu } from './dropdown_menu';
+import { ConfirmationMenu, createDefaultConfirmationMenu } from './confirmation_menu';
+import { DropdownMenu, createDefaultDropdownMenu } from './dropdown_menu';
 import type { EntityCtor } from './view';
 import type { View } from './view';
 
 import type { ApplicationUIContext } from './application_ui_context';
-import type { Modal } from './modal';
+import { createDefaultModal, type Modal } from './modal';
 import type { Toast } from './toast';
 
 /**
@@ -85,6 +84,13 @@ class ApplicationClass implements ApplicationUIContext {
      * Displays confirmation prompts with type, title, message, and callback action
      */
     confirmationMenu: Ref<ConfirmationMenu>;
+    /**
+     * Single source of truth for sidebar open/closed state.
+     * Type: Ref<boolean>
+     * Read directly by App.vue, SideBarComponent.vue and TopBarComponent.vue instead
+     * of each keeping a local ref kept in sync via events.
+     */
+    sidebarOpen: Ref<boolean>;
     /**
      * Global event bus for cross-component communication
      * Type: Emitter<Events>
@@ -139,24 +145,7 @@ class ApplicationClass implements ApplicationUIContext {
         // Initialize with plain refs so this can safely run at module evaluation
         // time (before Pinia is active). _connectPinia() replaces these with
         // Pinia-backed refs once initializeApplication() is called.
-        this.AppConfiguration = ref<AppConfiguration>({
-            appName: (import.meta.env.VITE_APP_NAME as string) || 'My SaaS Application',
-            appVersion: (import.meta.env.VITE_APP_VERSION as string) || '1.0.0',
-            squared_app_logo_image: (import.meta.env.VITE_SQUARED_APP_LOGO_IMAGE as string) || ICONS.SQUARED_APP_LOGO,
-            apiBaseUrl: (import.meta.env.VITE_API_BASE_URL as string) || 'https://api.my-saas-app.com',
-            apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
-            apiRetryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
-            environment: (import.meta.env.VITE_ENVIRONMENT as string) || 'development',
-            logLevel: (import.meta.env.VITE_LOG_LEVEL as string) || 'info',
-            authTokenKey: (import.meta.env.VITE_AUTH_TOKEN_KEY as string) || 'auth_token',
-            authRefreshTokenKey: (import.meta.env.VITE_AUTH_REFRESH_TOKEN_KEY as string) || 'refresh_token',
-            sessionTimeout: Number(import.meta.env.VITE_SESSION_TIMEOUT) || 3600000,
-            itemsPerPage: Number(import.meta.env.VITE_ITEMS_PER_PAGE) || 20,
-            maxFileSize: Number(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880,
-            isDarkMode: false,
-            selectedLanguage: (Number(import.meta.env.VITE_SELECTED_LANGUAGE) as Language) || Language.EN,
-            asyncValidationDebounce: Number(import.meta.env.VITE_ASYNC_VALIDATION_DEBOUNCE) || 300,
-        });
+        this.AppConfiguration = ref<AppConfiguration>(createDefaultAppConfig());
         this.View = ref<View>({
             entityClass: null,
             entityObject: null,
@@ -168,33 +157,20 @@ class ApplicationClass implements ApplicationUIContext {
         this.ModuleList = ref<(typeof BaseEntity)[]>([]);
         this.ListButtons = ref<Component[]>([]);
         this.ToastList = ref<Toast[]>([]);
-        this.modal = ref<Modal>({
-            modalView: null,
-            modalOnCloseFunction: null,
-            viewType: ViewTypes.LISTVIEW,
-        });
-        this.dropdownMenu = ref<DropdownMenu>({
-            showing: false,
-            title: '',
-            component: null,
-            width: '250px',
-            position_x: '0px',
-            position_y: '0px',
-            canvasWidth: typeof window !== 'undefined' ? `${window.innerWidth}px` : '1024px',
-            canvasHeight: typeof window !== 'undefined' ? `${window.innerHeight}px` : '768px',
-            activeElementWidth: '0px',
-            activeElementHeight: '0px',
-        });
-        this.confirmationMenu = ref<ConfirmationMenu>({
-            type: confMenuType.INFO,
-            title: '',
-            message: '',
-            confirmationAction: () => {},
-        });
+        this.modal = ref<Modal>(createDefaultModal());
+        this.dropdownMenu = ref<DropdownMenu>(createDefaultDropdownMenu());
+        this.confirmationMenu = ref<ConfirmationMenu>(createDefaultConfirmationMenu());
+        this.sidebarOpen = ref<boolean>(typeof window !== 'undefined' ? window.innerWidth > 1200 : true);
 
         this.eventBus = mitt<Events>();
         this.ApplicationDataService = new ApplicationDataService();
         this.ApplicationUIService = new ApplicationUIService(this);
+        // Data-access layer (entity_repository.ts) only emits this event on request
+        // failure; the reaction (opening the confirmation menu) is a UI concern that
+        // belongs here, keeping the repository decoupled from ApplicationUIService.
+        this.eventBus.on('data-error', ({ type, title, message }) => {
+            this.ApplicationUIService.openConfirmationMenu(type, title, message);
+        });
         this.Session = new SessionService(() => this.AppConfiguration.value);
         this.axiosInstance = axios.create({
             baseURL: this.AppConfiguration.value.apiBaseUrl,
@@ -442,7 +418,7 @@ class ApplicationClass implements ApplicationUIContext {
         );
         buttonList = [...buttonList, ...customButtons];
 
-        this.ListButtons.value = buttonList.map(markRaw);
+        useViewStore().setListButtons(buttonList);
     }
 
     /**
@@ -505,11 +481,13 @@ class ApplicationClass implements ApplicationUIContext {
         this.ModuleList = moduleList as Ref<(typeof BaseEntity)[]>;
         this.ListButtons = listButtons as Ref<Component[]>;
 
-        const { toastList, modal, dropdownMenu, confirmationMenu } = storeToRefs(uiStore);
+        uiStore.sidebarOpen = this.sidebarOpen.value;
+        const { toastList, modal, dropdownMenu, confirmationMenu, sidebarOpen } = storeToRefs(uiStore);
         this.ToastList = toastList as Ref<Toast[]>;
         this.modal = modal as Ref<Modal>;
         this.dropdownMenu = dropdownMenu as Ref<DropdownMenu>;
         this.confirmationMenu = confirmationMenu as Ref<ConfirmationMenu>;
+        this.sidebarOpen = sidebarOpen as Ref<boolean>;
     }
 
     /**

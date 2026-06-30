@@ -312,7 +312,7 @@ onBeforeUnmount(() => cleanup());
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 150;
+    z-index: var(--z-overlay);
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--transition-normal) var(--timing-ease);

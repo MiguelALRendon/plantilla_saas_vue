@@ -50,4 +50,5 @@ export interface ApplicationUIContextState {
     dropdownMenu: Ref<DropdownMenu>;
     confirmationMenu: Ref<ConfirmationMenu>;
     ToastList: Ref<Toast[]>;
+    sidebarOpen: Ref<boolean>;
 }

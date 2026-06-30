@@ -1,7 +1,7 @@
 <template>
     <div class="toast-container">
         <ToastItemComponent
-            v-for="toast in Application.ToastList"
+            v-for="toast in toastList"
             :key="toast.id"
             :toast="toast"
             @remove="removeToast"
@@ -9,33 +9,23 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { computed } from 'vue';
 import Application from '@/models/application';
 import ToastItemComponent from './ToastItemComponent.vue';
 
-export default {
-    name: 'ToastContainerComponent',
-    components: { ToastItemComponent },
+// #region COMPUTED
+const toastList = computed(() => Application.ToastList.value);
+// #endregion
 
-    // #region METHODS
-    methods: {
-        removeToast(toastId: string) {
-            const index = Application.ToastList.value.findIndex((toast) => toast.id === toastId);
-            if (index !== -1) {
-                Application.ToastList.value.splice(index, 1);
-            }
-        }
-    },
-    // #endregion
-
-    // #region PROPERTIES
-    data() {
-        return {
-            Application: Application
-        };
+// #region METHODS
+function removeToast(toastId: string): void {
+    const index = Application.ToastList.value.findIndex((toast) => toast.id === toastId);
+    if (index !== -1) {
+        Application.ToastList.value.splice(index, 1);
     }
-    // #endregion
-};
+}
+// #endregion
 </script>
 
 <style scoped>

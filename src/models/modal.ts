@@ -7,3 +7,15 @@ export interface Modal {
     viewType: ViewTypes;
     customViewId?: string;
 }
+
+/**
+ * Builds a fresh closed-modal default state.
+ * Shared by `ApplicationClass`'s pre-Pinia bootstrap ref and `useUiStore`.
+ */
+export function createDefaultModal(): Modal {
+    return {
+        modalView: null,
+        modalOnCloseFunction: null,
+        viewType: ViewTypes.LISTVIEW,
+    };
+}

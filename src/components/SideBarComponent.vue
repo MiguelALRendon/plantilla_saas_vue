@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import gsap from 'gsap';
 import SideBarItemComponent from './SideBarItemComponent.vue';
 import Application from '@/models/application';
@@ -32,7 +32,9 @@ import { BaseEntity } from '@/entities/base_entity';
 
 // #region PROPERTIES
 const bodyRef = ref<HTMLElement | null>(null);
-const toggled = ref(typeof window !== 'undefined' ? window.innerWidth > 1200 : true);
+// Single source of truth — read directly from Application, no local ref kept
+// in sync via events (see ui_store.ts sidebarOpen).
+const toggled = computed(() => Application.sidebarOpen.value);
 // #endregion
 
 // #region COMPUTED
@@ -71,16 +73,7 @@ watch(toggled, (newVal) => {
 });
 
 onMounted(() => {
-    Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
-        toggled.value = state !== undefined ? state : !toggled.value;
-    });
-    Application.eventBus.emit('toggle-sidebar', toggled.value);
-
     if (toggled.value) animateItems();
-});
-
-onBeforeUnmount(() => {
-    Application.eventBus.off('toggle-sidebar');
 });
 // #endregion
 </script>

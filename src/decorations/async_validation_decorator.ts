@@ -49,6 +49,11 @@ export function AsyncValidation<T = unknown>(condition: (entity: T) => Promise<b
         if (!proto[ASYNC_VALIDATION_KEY]) {
             proto[ASYNC_VALIDATION_KEY] = {};
         }
-        proto[ASYNC_VALIDATION_KEY][propertyKey] = { condition, message };
+
+        // Stored as an array so stacking multiple @AsyncValidation on the same property
+        // accumulates rules (all must pass, evaluated in declaration order) instead of
+        // the last one silently overwriting the previous ones.
+        const existing = (proto[ASYNC_VALIDATION_KEY][propertyKey] as AsyncValidationMetadata[] | undefined) ?? [];
+        proto[ASYNC_VALIDATION_KEY][propertyKey] = [...existing, { condition, message }];
     };
 }

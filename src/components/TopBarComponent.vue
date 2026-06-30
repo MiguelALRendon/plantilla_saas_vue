@@ -73,6 +73,11 @@ export default {
         },
         icon() {
             return Application.View.value.entityClass?.getModuleIcon() ?? '';
+        },
+        // Single source of truth — read directly from Application, no local data
+        // property kept in sync via events (see ui_store.ts sidebarOpen).
+        toggled_bar() {
+            return Application.sidebarOpen.value;
         }
     },
     // #endregion
@@ -81,20 +86,8 @@ export default {
     data() {
         return {
             ICONS,
-            toggled_profile: false,
-            toggled_bar: true
+            toggled_profile: false
         };
-    },
-    // #endregion
-
-    // #region LIFECYCLE
-    mounted() {
-        Application.eventBus.on('toggle-sidebar', (state?: boolean | void) => {
-            this.toggled_bar = state !== undefined ? state : !this.toggled_bar;
-        });
-    },
-    beforeUnmount() {
-        Application.eventBus.off('toggle-sidebar');
     }
     // #endregion
 };

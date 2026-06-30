@@ -59,9 +59,10 @@ export function Validation<T = unknown>(condition: ValidationCondition<T>, messa
             proto[VALIDATION_KEY] = {};
         }
 
-        proto[VALIDATION_KEY][propertyKey] = {
-            condition: condition,
-            message: message
-        };
+        // Stored as an array so stacking multiple @Validation on the same property
+        // accumulates rules (all must pass) instead of the last one silently
+        // overwriting the previous ones.
+        const existing = (proto[VALIDATION_KEY][propertyKey] as ValidationMetadata[] | undefined) ?? [];
+        proto[VALIDATION_KEY][propertyKey] = [...existing, { condition, message }];
     };
 }

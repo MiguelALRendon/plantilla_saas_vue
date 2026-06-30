@@ -33,6 +33,29 @@ describe('deepEqual', () => {
     it('detecta distinto número de claves', () => {
         expect(deepEqual({ a: 1 }, { a: 1, b: 2 })).toBe(false);
     });
+
+    it('compara Maps por entradas', () => {
+        expect(deepEqual(new Map([['a', 1]]), new Map([['a', 1]]))).toBe(true);
+        expect(deepEqual(new Map([['a', 1]]), new Map([['a', 2]]))).toBe(false);
+        expect(deepEqual(new Map([['a', 1]]), new Map([['a', 1], ['b', 2]]))).toBe(false);
+    });
+
+    it('compara Sets sin importar el orden', () => {
+        expect(deepEqual(new Set([1, 2, 3]), new Set([3, 2, 1]))).toBe(true);
+        expect(deepEqual(new Set([1, 2]), new Set([1, 3]))).toBe(false);
+    });
+
+    it('no entra en loop infinito con referencias circulares', () => {
+        const a: Record<string, unknown> = { name: 'a' };
+        a.self = a;
+        const b: Record<string, unknown> = { name: 'a' };
+        b.self = b;
+        expect(deepEqual(a, b)).toBe(true);
+
+        const c: Record<string, unknown> = { name: 'c' };
+        c.self = c;
+        expect(deepEqual(a, c)).toBe(false);
+    });
 });
 
 describe('deepClone', () => {
@@ -55,5 +78,27 @@ describe('deepClone', () => {
         expect(deepClone(null)).toBeNull();
         expect(deepClone(undefined)).toBeUndefined();
         expect(deepClone(5)).toBe(5);
+    });
+
+    it('clona Maps y Sets sin compartir referencias', () => {
+        const map = new Map([['a', { x: 1 }]]);
+        const clonedMap = deepClone(map);
+        expect(clonedMap).not.toBe(map);
+        expect(clonedMap.get('a')).toEqual({ x: 1 });
+        expect(clonedMap.get('a')).not.toBe(map.get('a'));
+
+        const set = new Set([{ x: 1 }]);
+        const clonedSet = deepClone(set);
+        expect(clonedSet).not.toBe(set);
+        expect([...clonedSet]).toEqual([...set]);
+    });
+
+    it('clona referencias circulares sin desbordar la pila', () => {
+        const src: Record<string, unknown> = { name: 'a' };
+        src.self = src;
+        const copy = deepClone(src);
+        expect(copy.name).toBe('a');
+        expect(copy.self).toBe(copy);
+        expect(copy).not.toBe(src);
     });
 });

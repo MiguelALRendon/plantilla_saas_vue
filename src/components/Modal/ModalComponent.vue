@@ -18,10 +18,6 @@
             </div>
 
             <div class="modal-footer">
-                <button class="button info fill">
-                    <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CHECK }}</span>
-                    <span class="btn-label">{{ t('common.accept') }}</span>
-                </button>
                 <button class="button alert fill" @click="closeModal">
                     <span :class="[GGCLASS, 'btn-icon']">{{ GGICONS.CLOSE }}</span>
                     <span class="btn-label">{{ t('common.close') }}</span>

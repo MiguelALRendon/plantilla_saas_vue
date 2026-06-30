@@ -30,6 +30,7 @@
         "jp": "削除しようとしている要素は復元できません。続行しますか？"
     },
     "loading": { "en": "Loading...", "es": "Cargando...", "jp": "読み込み中..." },
+    "file_uploaded_successfully": { "en": "File uploaded successfully.", "es": "Archivo cargado correctamente.", "jp": "ファイルが正常にアップロードされました。" },
     "home": { "en": "Home", "es": "Inicio", "jp": "ホーム" },
     "configuration": { "en": "Configuration", "es": "Configuración", "jp": "設定" },
     "settings": { "en": "Settings", "es": "Configuración", "jp": "設定" },

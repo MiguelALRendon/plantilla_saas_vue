@@ -1,80 +1,71 @@
 <template>
     <div class="ViewContainer">
         <TopBarComponent />
-        <div class="ComponentContainer">
+        <div ref="containerRef" class="ComponentContainer">
             <ActionsComponent />
             <component v-if="currentComponent" :is="currentComponent" />
         </div>
     </div>
 </template>
 
-<script lang="ts">
-import { Component, markRaw, watch } from 'vue';
+<script setup lang="ts">
+import { getCurrentInstance, markRaw, provide, ref, watch, type Component } from 'vue';
 import TopBarComponent from './TopBarComponent.vue';
 import Application from '@/models/application';
-import GGICONS, { GGCLASS } from '@/constants/ggicons';
 import ActionsComponent from './ActionsComponent.vue';
+import { COMPONENT_CONTAINER_EL_KEY } from '@/types/injection_keys';
 
-export default {
-    name: 'ComponentContainerComponent',
-    components: {
-        TopBarComponent,
-        ActionsComponent
-    },
+// #region PROPERTIES
+const currentComponent = ref<Component | null>(null);
+const containerRef = ref<HTMLElement | null>(null);
 
-    // #region PROPERTIES
-    data() {
-        return {
-            GGICONS,
-            GGCLASS,
-            currentComponent: null as Component | null
-        };
-    },
-    // #endregion
+// Shares the scroll container with descendants (e.g. ActionsComponent) via
+// provide/inject instead of a global `document.querySelector('.ComponentContainer')`,
+// which could match the wrong element if this component were ever instantiated twice.
+provide(COMPONENT_CONTAINER_EL_KEY, containerRef);
+// #endregion
 
-    // #region METHODS
-    methods: {
-        registerModuleCustomComponents() {
-            const moduleClass = Application.View.value.entityClass;
-            const customComponents = moduleClass?.getModuleCustomComponents();
+// #region METHODS
+function registerModuleCustomComponents(): void {
+    const moduleClass = Application.View.value.entityClass;
+    const customComponents = moduleClass?.getModuleCustomComponents();
 
-            if (!customComponents || customComponents.size === 0) {
-                return;
-            }
-
-            const app = (this as unknown as { $: { appContext: { app: { component: (name: string, component?: Component) => unknown } } } }).$.appContext.app;
-
-            for (const [name, component] of customComponents.entries()) {
-                if (!app.component(name)) {
-                    app.component(name, markRaw(component));
-                }
-            }
-        }
-    },
-    // #endregion
-
-    // #region LIFECYCLE
-    created() {
-        const init = Application.View.value.component;
-        if (init) {
-            this.registerModuleCustomComponents();
-            this.currentComponent = markRaw(init);
-        }
-
-        watch(
-            () => Application.View.value.component,
-            async (newVal: Component | null) => {
-                if (newVal) {
-                    this.registerModuleCustomComponents();
-                    this.currentComponent = markRaw(newVal);
-                    await document.fonts.ready;
-                    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-                }
-            }
-        );
+    if (!customComponents || customComponents.size === 0) {
+        return;
     }
-    // #endregion
-};
+
+    const app = getCurrentInstance()?.appContext.app;
+    if (!app) {
+        return;
+    }
+
+    for (const [name, component] of customComponents.entries()) {
+        if (!app.component(name)) {
+            app.component(name, markRaw(component));
+        }
+    }
+}
+// #endregion
+
+// #region LIFECYCLE
+const initialComponent = Application.View.value.component;
+if (initialComponent) {
+    registerModuleCustomComponents();
+    currentComponent.value = markRaw(initialComponent);
+}
+
+watch(
+    () => Application.View.value.component,
+    async (newVal: Component | null) => {
+        if (newVal) {
+            registerModuleCustomComponents();
+            currentComponent.value = markRaw(newVal);
+            await document.fonts.ready;
+            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        }
+    }
+);
+// #endregion
 </script>
 
 <style scoped>

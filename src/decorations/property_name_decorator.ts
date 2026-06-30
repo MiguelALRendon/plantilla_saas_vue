@@ -1,5 +1,6 @@
 import type { BaseEntity } from '@/entities/base_entity';
 import { EnumAdapter } from '@/models/enum_adapter';
+import type { EntityConstructor } from '@/types/entity.types';
 
 // #region CONSTANTS
 
@@ -25,7 +26,6 @@ export const ARRAY_ELEMENT_TYPE_KEY = Symbol('array_element_type');
 
 // #region TYPES
 
-export type EntityConstructor<T extends BaseEntity = BaseEntity> = new (data: Record<string, unknown>) => T;
 export type EnumLike = Record<string, string | number>;
 
 /**

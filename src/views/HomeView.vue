@@ -11,15 +11,15 @@
             <div class="home-stats">
                 <div class="home-stat-card">
                     <span class="home-stat-value">{{ dayOfYear }}</span>
-                    <span class="home-stat-label">Día del año</span>
+                    <span class="home-stat-label">{{ t('custom.home.day_of_year') }}</span>
                 </div>
                 <div class="home-stat-card">
                     <span class="home-stat-value">{{ weekNumber }}</span>
-                    <span class="home-stat-label">Semana</span>
+                    <span class="home-stat-label">{{ t('custom.home.week') }}</span>
                 </div>
                 <div class="home-stat-card">
                     <span class="home-stat-value">{{ daysUntilYearEnd }}</span>
-                    <span class="home-stat-label">Días restantes</span>
+                    <span class="home-stat-label">{{ t('custom.home.remaining_days') }}</span>
                 </div>
             </div>
         </div>
@@ -33,6 +33,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import CalendarComponent from '@/components/Informative/CalendarComponent.vue';
+import { GetLanguagedText } from '@/helpers/language_helper';
+
+function t(path: string): string {
+    return GetLanguagedText(path);
+}
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -46,9 +51,9 @@ const todayStr = computed<string>(() => {
 
 const greetingLabel = computed<string>(() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Buenos días';
-    if (h < 18) return 'Buenas tardes';
-    return 'Buenas noches';
+    if (h < 12) return t('custom.home.greeting_morning');
+    if (h < 18) return t('custom.home.greeting_afternoon');
+    return t('custom.home.greeting_evening');
 });
 
 const fullDateLabel = computed<string>(() =>
